@@ -17,7 +17,7 @@ class CreateAttributesMediaTypeTable extends Migration
             $table->integer('id', true);
             $table->integer('value');
             $table->string('name');
-            $table->string('unit_of_length');
+            $table->integer('unit_of_length');
         });
     }
 

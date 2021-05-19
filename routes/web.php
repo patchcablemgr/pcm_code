@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Models\Media;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,8 +19,12 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth'])->name('dashboard');
+    return view('dashboard', ['media' => Media::all()]);
+})->middleware(['auth:sanctum'])->name('dashboard');
+
+Route::get('/pendingActivation', function () {
+    return view('pendingActivation');
+})->name('pendingActivation');
 
 require __DIR__.'/auth.php';
 

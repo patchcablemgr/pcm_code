@@ -6,7 +6,6 @@ use Closure;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Log;
 
 class EnsureUserIsActive
 {
@@ -34,7 +33,6 @@ class EnsureUserIsActive
 				throw ValidationException::withMessages([
 					'email' => __('auth.inactive'),
 				]);
-				Log::info('Inactive');
 			}
 		}
 		

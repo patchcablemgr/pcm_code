@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
+use Illuminate\Validation\ValidationException;
 
 class RegisteredUserController extends Controller
 {
@@ -52,9 +53,16 @@ class RegisteredUserController extends Controller
         ]);
 
         event(new Registered($user));
+		
+		if(!$active) {
+			
+			return redirect()->route('pendingActivation');
+			
+		} else {
 
-        Auth::login($user);
+			Auth::login($user);
 
-        return redirect(RouteServiceProvider::HOME);
+			return redirect(RouteServiceProvider::HOME);
+		}
     }
 }

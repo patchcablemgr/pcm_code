@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Models\Media;
+use App\Http\Controllers\ApplicationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,18 +14,6 @@ use App\Models\Media;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
-
-Route::get('/dashboard', function () {
-    return view('dashboard', ['media' => Media::all()]);
-})->middleware(['auth:sanctum'])->name('dashboard');
-
-Route::get('/pendingActivation', function () {
-    return view('pendingActivation');
-})->name('pendingActivation');
-
-require __DIR__.'/auth.php';
+Route::get('/{any}', [ApplicationController::class, 'index'])->where('any', '.*');
 
 URL::forceScheme('https');

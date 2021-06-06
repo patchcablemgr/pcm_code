@@ -1,0 +1,308 @@
+<template>
+    
+  <b-row>
+    <b-form @submit.prevent>
+
+      <!-- Name -->
+      <dl class="row">
+        <dt class="col-sm-4">
+          Name
+        </dt>
+        <dd class="col-sm-8">
+          <b-form-input
+            id="h-name"
+            placeholder="New_Template"
+          />
+        </dd>
+      </dl>
+
+      <!-- Category -->
+      <dl class="row">
+        <dt class="col-sm-3">
+          Category
+        </dt>
+        <dd class="col-sm-1 my-auto">
+          <b-button
+            v-ripple.400="'rgba(40, 199, 111, 0.15)'"
+            variant="flat-success"
+            class="btn-icon"
+            v-b-modal.modal-templates-category
+          >
+            <feather-icon icon="EditIcon" />
+          </b-button>
+        </dd>
+        <dd class="col-sm-8">
+          <b-form-select
+          v-model="selectedCategory"
+          :options="optionsCategory"
+          />
+        </dd>
+      </dl>
+
+      <!-- Template Type -->
+      <dl class="row">
+        <dt class="col-sm-4">
+          Template Type
+        </dt>
+        <dd class="col-sm-8">
+          <b-form-radio-group
+          v-model="inputTemplateType"
+          :options="optionsTemplateType"
+          name="radios-template-type"
+          stacked
+          />
+        </dd>
+      </dl>
+
+      <!-- RU Size -->
+      <dl class="row">
+        <dt class="col-sm-4">
+          RU Size
+        </dt>
+        <dd class="col-sm-8">
+          <b-form-input
+          id="h-ru-size"
+          type="number"
+          />
+        </dd>
+      </dl>
+
+      <!-- Template Function -->
+      <dl class="row">
+        <dt class="col-sm-4">
+          Template Function
+        </dt>
+        <dd class="col-sm-8">
+          <b-form-radio-group
+          v-model="selected"
+          :options="optionsTemplateFunction"
+          name="radios-template-function"
+          stacked
+          />
+        </dd>
+      </dl>
+
+      <!-- Mounting Configuration -->
+      <dl class="row">
+        <dt class="col-sm-4">
+          Mounting Configuration
+        </dt>
+        <dd class="col-sm-8">
+          <b-form-radio-group
+            v-model="selected"
+            :options="optionsMountingConfiguration"
+            name="radios-mounting-configuration"
+            stacked
+            />
+        </dd>
+      </dl>
+
+      <!-- Partition Type -->
+      <dl class="row">
+        <dt class="col-sm-4">
+          Mounting Configuration
+        </dt>
+        <dd class="col-sm-8">
+          <b-form-radio-group
+          v-model="selected"
+          :options="optionsPartitionType"
+          name="radios-partition-type"
+          stacked
+          />
+        </dd>
+      </dl>
+
+      <!-- Add/remove Partition -->
+      <dl class="row">
+        <dt class="col-sm-4">
+          Add/Remove Partition
+        </dt>
+        <dd class="col-sm-8">
+          <b-form-radio-group
+          v-model="selected"
+          :options="optionsAddRemovePartition"
+          name="radios-add-remove-partition"
+          stacked
+          />
+        </dd>
+      </dl>
+
+      <!-- Partition Size -->
+      <dl class="row">
+        <dt class="col-sm-4">
+          Partition Size
+        </dt>
+        <dd class="col-sm-8">
+          <b-form-input
+          id="h-partition-size"
+          type="number"
+          />
+        </dd>
+      </dl>
+
+      <!-- Port ID -->
+      <dl class="row">
+        <dt class="col-sm-3">
+          Port ID
+        </dt>
+        <dd class="col-sm-1 my-auto">
+          <b-button
+            v-ripple.400="'rgba(40, 199, 111, 0.15)'"
+            variant="flat-success"
+            class="btn-icon"
+            v-b-modal.modal-templates-port-id
+          >
+            <feather-icon icon="EditIcon" />
+          </b-button>
+        </dd>
+        <dd class="col-sm-8 my-auto">
+          Port1...
+        </dd>
+      </dl>
+
+      <!-- Port Layout -->
+      <dl class="row">
+        <dt class="col-sm-4">
+          Partition Size
+        </dt>
+        <dd class="col-sm-8">
+          <b-container>
+            <b-row>
+              <b-col>
+                Col:
+              </b-col>
+              <b-col>
+                <b-form-input
+                  id="h-port-layout-column"
+                  type="number"
+                />
+              </b-col>
+            </b-row>
+            <b-row>
+              <b-col>
+                Row:
+              </b-col>
+              <b-col>
+                <b-form-input
+                  id="h-port-layout-row"
+                  type="number"
+                />
+              </b-col>
+            </b-row>
+          </b-container>
+        </dd>
+      </dl>
+
+      <!-- Submit and Reset -->
+      <div offset-md="4">
+        <b-button
+            v-ripple.400="'rgba(255, 255, 255, 0.15)'"
+            type="submit"
+            variant="primary"
+            class="mr-1"
+        >
+            Submit
+        </b-button>
+        <b-button
+            v-ripple.400="'rgba(186, 191, 199, 0.15)'"
+            type="reset"
+            variant="outline-secondary"
+        >
+            Reset
+        </b-button>
+      </div>
+    </b-form>
+
+    <!-- Category Modal -->
+    <modal-templates-category
+      v-on:categoriesUpdated="updateCategories($event)"
+      v-on:categoriesSetDefault="setDefaultCategory($event)"
+    />
+
+    <!-- Port ID Modal -->
+    <modal-templates-port-id/>
+
+  </b-row>
+</template>
+
+<script>
+import { BContainer, BRow, BCol, BForm, BFormGroup, BFormInput, BFormSelect, BFormRadioGroup, BButton, VBModal, } from 'bootstrap-vue'
+import Ripple from 'vue-ripple-directive'
+import ModalTemplatesCategory from './ModalTemplatesCategory.vue'
+import ModalTemplatesPortId from './ModalTemplatesPortId.vue'
+
+const inputTemplateType = 'standard'
+const inputTemplateRU = 1
+const inputTemplateFunction = 'endpoint'
+const inputMountingConfiguration = '2-post'
+
+export default {
+  components: {
+    BContainer,
+    BRow,
+    BCol,
+    BForm,
+    BFormGroup,
+    BFormInput,
+    BFormSelect,
+    BFormRadioGroup,
+    BButton,
+    VBModal,
+
+    ModalTemplatesCategory,
+    ModalTemplatesPortId,
+  },
+  directives: {
+    Ripple,
+    'b-modal': VBModal,
+  },
+  data() {
+    return {
+      inputTemplateType,
+      inputTemplateRU,
+      inputTemplateFunction,
+      inputMountingConfiguration,
+      selected: null,
+      selectedCategory: null,
+      optionsCategory: [],
+      optionsTemplateType: [
+        { text: 'Standard', value: 'standard' },
+        { text: 'Insert', value: 'insert' },
+      ],
+      optionsTemplateFunction: [
+        { text: 'Endpoint', value: 'endpoint' },
+        { text: 'Passive', value: 'passive' },
+      ],
+      optionsMountingConfiguration: [
+        { text: '2-Post', value: '2-post' },
+        { text: '4-Post', value: '4-post' },
+      ],
+      optionsPartitionType: [
+        { text: 'Generic', value: 0 },
+        { text: 'Connectable', value: 1 },
+        { text: 'Enclosure', value: 2 },
+      ],
+      optionsAddRemovePartition: [
+        { text: 'Horizontal', value: 0 },
+        { text: 'Vertical', value: 1 },
+      ],
+    }
+  },
+  methods: {
+    updateCategories: function(v) {
+      this.optionsCategory = [];
+      let x;
+      for (x in v) {
+        this.optionsCategory.push({value: v[x].id, text: v[x].name});
+      }
+    },
+    setDefaultCategory: function(v) {
+      this.selectedCategory = v;
+    },
+  },
+}
+</script>
+
+<style>
+
+</style>

@@ -1,0 +1,28 @@
+/*================================================================================
+
+NOTE:
+------
+PLACE HERE YOUR OWN SCSS CODES AND IF NEEDED, OVERRIDE THE STYLES FROM THE OTHER STYLESHEETS.
+WE WILL RELEASE FUTURE UPDATES SO IN ORDER TO NOT OVERWRITE YOUR STYLES IT'S BETTER LIKE THIS.  */
+
+div.pcm_box {
+    border: solid gray 1px;
+    border-radius: 3px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    padding: 3px;
+    cursor: pointer;
+    color: black;
+}
+
+.pcm_selected {
+    border: solid yellow 1px !important;
+}
+
+.pcm_cabinet_structure {
+    text-align: center;
+    color: black;
+    border: solid lightslategray 1px;
+    background-color: whitesmoke;
+    padding: 0px;
+}

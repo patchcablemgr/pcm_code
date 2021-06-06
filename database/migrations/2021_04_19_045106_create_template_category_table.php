@@ -15,6 +15,8 @@ class CreateTemplateCategoryTable extends Migration
     {
         Schema::connection('mysql')->create('template_category', function (Blueprint $table) {
             $table->integer('id', true);
+            $table->datetime('created_at');
+            $table->datetime('created_at');
             $table->string('name');
             $table->string('color');
             $table->integer('defaultOption');

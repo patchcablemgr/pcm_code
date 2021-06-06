@@ -17,7 +17,7 @@ class CreateAttributesMediaCategoryTable extends Migration
             $table->integer('id', true);
             $table->integer('value');
             $table->string('name');
-            $table->integer('media_type_id');
+            $table->integer('category_type_id');
         });
     }
 

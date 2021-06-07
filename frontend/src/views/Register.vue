@@ -181,6 +181,7 @@ import { required, email } from '@validations'
 import { togglePasswordVisibility } from '@core/mixins/ui/forms'
 import store from '@/store/index'
 import useJwt from '@/auth/jwt/useJwt'
+import ToastGeneral from './templates/ToastGeneral.vue'
 
 export default {
   components: {
@@ -201,6 +202,7 @@ export default {
     // validations
     ValidationProvider,
     ValidationObserver,
+    ToastGeneral,
   },
   mixins: [togglePasswordVisibility],
   data() {
@@ -230,6 +232,9 @@ export default {
   },
   methods: {
     register() {
+
+      const vm = this
+
       this.$refs.registerForm.validate().then(success => {
         if (success) {
           this.$http.post('/api/auth/register', {
@@ -237,7 +242,17 @@ export default {
             email: this.userEmail,
             password: this.password,
             c_password: this.password
-          }).then(res => console.log(res))
+          })
+          .then( vm.$router.push({ name: 'login' }) )
+          .catch(error => {
+    
+            // Display error to user via toast
+            vm.$bvToast.toast(JSON.stringify(error.response.data), {
+              title: 'Error',
+              variant: 'danger',
+            })
+
+          });
         }
       })
     },

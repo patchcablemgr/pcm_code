@@ -68,6 +68,7 @@ const ObjectData = [
     "id": 1,
     "location_id": 1,
     "cabinet_ru": 1,
+    "cabinet_face": "front",
     "template_id": 1,
     "name": "Object",
   }
@@ -75,14 +76,34 @@ const ObjectData = [
 const TemplateData = [
   {
     "id": 1,
+    "mount_config": "4-post",
+    "ru_size": "2",
     "blueprint": {
       "front": [
         {
-          "type": "generic",
+          "type": "generic1",
+          "children": [
+            {
+              "type": "child1",
+              "children": [],
+            }
+          ],
+        },{
+          "type": "generic2",
+          "children": [
+            {
+              "type": "child2",
+              "children": [],
+            }
+          ],
+        }
+      ],
+      "rear": [
+        {
+          "type": "generic1",
           "children": [],
         }
       ],
-      "rear": [],
     }
   }
 ]

@@ -1,17 +1,18 @@
 <template>
-  <div>
+  <div class="pcm_cabinet_object_container">
     <!-- Template categories modal -->
-    <!--
     <div
-      v-for="Partition in PartitionList"
-      :key="Partition"
-      :PartitionList="Partition.children"
+      v-for="(Partition, PartitionIndex) in TemplateBlueprint"
+      :key="PartitionIndex"
+      class="pcm_debug_box"
+      :DepthCounter="DepthCounter"
     >
-      {{ Partition.type }}
+      <Object
+        :TemplateBlueprint="Partition.children"
+        :InitialDepthCounter="DepthCounterProp"
+        v-on:IncrementPartitionDepth="IncrementPartitionDepth()"
+      />
     </div>
-    -->
-    {{ RackObjectIndex }}
-    {{ RackObject.id }}
   </div>
 </template>
 
@@ -19,24 +20,33 @@
 import { BContainer, BRow, BCol, } from 'bootstrap-vue'
 
 export default {
+  name: "Object",
   components: {
     BContainer,
     BRow,
     BCol,
   },
   props: {
-    TemplateData: {type: Array},
-    ObjectData: {type: Array},
-    RackObjectIndex: {type: Number},
-    TemplateIndex: {type: Number},
+    TemplateBlueprint: {type: Array},
+    InitialDepthCounter: {type: Number},
   },
   data() {
     return {
-      RackObject: ObjectData[this.RackObjectIndex]
     }
   },
+  methods: {
+    IncrementPartitionDepth: function() {
+      this.DepthCounterProp++
+      this.$emit('IncrementPartitionDepth')
+    },
+  },
+  created() {
+    this.DepthCounter = this.InitialDepthCounter
+    this.DepthCounterProp = this.InitialDepthCounter
+    this.$emit('IncrementPartitionDepth')
+  },
   mounted() {
-    console.log(this.RackObjectIndex);
-  }
+    //this.$emit('IncrementPartitionDepth')
+  },
 }
 </script>

@@ -5,6 +5,10 @@ NOTE:
 PLACE HERE YOUR OWN SCSS CODES AND IF NEEDED, OVERRIDE THE STYLES FROM THE OTHER STYLESHEETS.
 WE WILL RELEASE FUTURE UPDATES SO IN ORDER TO NOT OVERWRITE YOUR STYLES IT'S BETTER LIKE THIS.  */
 
+div.pcm_debug_box {
+    border: solid gray 1px;
+}
+
 div.pcm_box {
     border: solid gray 1px;
     border-radius: 3px;
@@ -19,10 +23,29 @@ div.pcm_box {
     border: solid yellow 1px !important;
 }
 
-.pcm_cabinet_structure {
+.pcm_cabinet {
     text-align: center;
     color: black;
     border: solid lightslategray 1px;
     background-color: whitesmoke;
     padding: 0px;
+}
+
+.pcm_cabinet_row {
+    height: 25px;
+}
+
+.pcm_cabinet_rail {
+    width: 40px;
+}
+
+.pcm_cabinet_ru {
+    height: inherit;
+    width: 100%;
+    padding: 0px;
+}
+
+.pcm_cabinet_object_container {
+    height: 100%;
+    display: flex;
 }

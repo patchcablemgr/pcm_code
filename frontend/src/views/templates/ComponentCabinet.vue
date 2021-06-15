@@ -15,8 +15,9 @@
       <td class="pcm_cabinet">{{ CabinetRU }}</td>
       <td class="pcm_cabinet_ru" v-if=" ObjectIsPresent(CabinetData.id, CabinetFace, CabinetRU) !== false " :rowspan="RackObjectSize(CabinetData.id, CabinetRU)">
         <component-object
-          :TemplateBlueprint=" TemplateBlueprint(CabinetData.id, CabinetFace, CabinetRU) "
-          :InitialDepthCounter="0"
+          :TemplateBlueprint=" TemplateBlueprint(CabinetData.id, CabinetRU) "
+          :TemplateRUSize=" TemplateRUSize(CabinetData.id, CabinetRU) "
+          :InitialDepthCounter=" InitialDepthCounter "
         />
       </td>
       <td class="pcm_cabinet_ru" v-else-if=" RUIsOccupied(CabinetData.id, CabinetFace, CabinetRU) === false "></td>
@@ -35,6 +36,8 @@
 import { BContainer, BRow, BCol, } from 'bootstrap-vue'
 import ComponentObject from './ComponentObject.vue'
 
+const InitialDepthCounter = ""
+
 export default {
   components: {
     BContainer,
@@ -43,18 +46,29 @@ export default {
 
     ComponentObject,
   },
-  data() {
-    return {
-    }
-  },
   props: {
     CabinetData: {type: Object},
     ObjectData: {type: Array},
     TemplateData: {type: Array},
     CabinetFace: {type: String},
   },
+  data() {
+    return {
+      InitialDepthCounter
+    }
+  },
   methods: {
-    TemplateBlueprint(CabinetID, CabinetFace, CabinetRU) {
+    TemplateRUSize(CabinetID, CabinetRU) {
+
+      // Store variables
+      const vm = this;
+      let ObjectIndex = vm.RackObjectIndex(CabinetID, CabinetRU)
+      let TemplateIndex = vm.TemplateIndex(ObjectIndex)
+      let TemplateRUSize = vm.TemplateData[TemplateIndex].ru_size
+
+      return TemplateRUSize
+    },
+    TemplateBlueprint(CabinetID, CabinetRU) {
 
       // Store variables
       const vm = this;
@@ -70,15 +84,12 @@ export default {
       const vm = this;
       let CabinetObjects = vm.ObjectData.filter((object) => object.location_id == CabinetID);
       let ObjectIsPresent = false
-      console.log(CabinetObjects)
 
       CabinetObjects.forEach(function(object){
 
         // Store object dependent variables
         let ObjectID = object.id
-        console.log("Debug (ObjectID): "+ObjectID)
         let ObjectIndex = vm.ObjectData.findIndex((object) => object.id == ObjectID);
-        console.log("Debug (ObjectIndex): "+ObjectIndex)
         let ObjectCabinetFace = vm.ObjectData[ObjectIndex].cabinet_face
         let TemplateIndex = vm.TemplateIndex(ObjectIndex)
         let TemplateSize = vm.TemplateData[TemplateIndex].ru_size
@@ -132,7 +143,6 @@ export default {
       const vm = this;
 
       // Get index of template from TemplateData array
-      console.log("Debug (object): "+vm.ObjectData[ObjectIndex])
       const TemplateID = vm.ObjectData[ObjectIndex].template_id;
       const TemplateIndex = vm.TemplateData.findIndex((template) => template.id == TemplateID);
 
@@ -148,9 +158,6 @@ export default {
 
       return ObjectSize
     },
-  },
-  mounted() {
-    console.log(JSON.stringify(this.ObjectData));
   }
 }
 </script>

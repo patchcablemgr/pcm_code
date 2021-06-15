@@ -77,22 +77,26 @@ const TemplateData = [
   {
     "id": 1,
     "mount_config": "4-post",
-    "ru_size": "2",
+    "ru_size": 2,
     "blueprint": {
       "front": [
         {
-          "type": "generic1",
+          "type": "generic",
+          "units": 12,
           "children": [
             {
-              "type": "child1",
+              "type": "generic",
+              "units": 1,
               "children": [],
             }
           ],
         },{
-          "type": "generic2",
+          "type": "generic",
+          "units": 6,
           "children": [
             {
-              "type": "child2",
+              "type": "generic",
+              "units": 2,
               "children": [],
             }
           ],
@@ -100,7 +104,8 @@ const TemplateData = [
       ],
       "rear": [
         {
-          "type": "generic1",
+          "type": "generic",
+          "units": 2,
           "children": [],
         }
       ],

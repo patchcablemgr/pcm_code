@@ -5,10 +5,6 @@ NOTE:
 PLACE HERE YOUR OWN SCSS CODES AND IF NEEDED, OVERRIDE THE STYLES FROM THE OTHER STYLESHEETS.
 WE WILL RELEASE FUTURE UPDATES SO IN ORDER TO NOT OVERWRITE YOUR STYLES IT'S BETTER LIKE THIS.  */
 
-div.pcm_debug_box {
-    border: solid gray 1px;
-}
-
 div.pcm_box {
     border: solid gray 1px;
     border-radius: 3px;
@@ -48,4 +44,16 @@ div.pcm_box {
 .pcm_cabinet_object_container {
     height: 100%;
     display: flex;
+}
+
+.pcm_template_partition_horizontal {
+    flex-direction: column;
+}
+
+.pcm_template_partition_vertical {
+    flex-direction: row;
+}
+
+div.pcm_template_partition_box {
+    box-shadow: 0 0 0 1px gray inset;
 }

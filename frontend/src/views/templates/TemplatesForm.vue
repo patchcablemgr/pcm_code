@@ -1,7 +1,10 @@
 <template>
     
   <b-row>
-    <b-form @submit.prevent>
+    <b-form
+      @submit.prevent="onSubmit"
+      @reset="onReset"
+    >
 
       <!-- Name -->
       <dl class="row">
@@ -10,6 +13,8 @@
         </dt>
         <dd class="col-sm-8">
           <b-form-input
+            v-model="InputTemplateName"
+            @change="$emit('TemplateNameUpdated', $event)"
             id="h-name"
             placeholder="New_Template"
           />
@@ -33,8 +38,9 @@
         </dd>
         <dd class="col-sm-8">
           <b-form-select
-          v-model="selectedCategory"
-          :options="optionsCategory"
+            v-model="InputTemplateCategory"
+            :options="optionsCategory"
+            @change="$emit('TemplateCategoryUpdated', $event)"
           />
         </dd>
       </dl>
@@ -46,10 +52,11 @@
         </dt>
         <dd class="col-sm-8">
           <b-form-radio-group
-          v-model="inputTemplateType"
-          :options="optionsTemplateType"
-          name="radios-template-type"
-          stacked
+            v-model="inputTemplateType"
+            :options="optionsTemplateType"
+            @change="$emit('TemplateTypeUpdated', $event)"
+            name="radios-template-type"
+            stacked
           />
         </dd>
       </dl>
@@ -61,8 +68,9 @@
         </dt>
         <dd class="col-sm-8">
           <b-form-input
-          id="h-ru-size"
-          type="number"
+            v-model="inputTemplateRU"
+            id="h-ru-size"
+            type="number"
           />
         </dd>
       </dl>
@@ -74,7 +82,7 @@
         </dt>
         <dd class="col-sm-8">
           <b-form-radio-group
-          v-model="selected"
+          v-model="inputTemplateFunction"
           :options="optionsTemplateFunction"
           name="radios-template-function"
           stacked
@@ -89,8 +97,8 @@
         </dt>
         <dd class="col-sm-8">
           <b-form-radio-group
-            v-model="selected"
-            :options="optionsMountingConfiguration"
+            v-model="inputTemplateMountConfig"
+            :options="optionsTemplateMountConfig"
             name="radios-mounting-configuration"
             stacked
             />
@@ -100,12 +108,12 @@
       <!-- Partition Type -->
       <dl class="row">
         <dt class="col-sm-4">
-          Mounting Configuration
+          Partition Type
         </dt>
         <dd class="col-sm-8">
           <b-form-radio-group
-          v-model="selected"
-          :options="optionsPartitionType"
+          v-model="InputTemplatePartitionType"
+          :options="optionsTemplatePartitionType"
           name="radios-partition-type"
           stacked
           />
@@ -231,11 +239,6 @@ import Ripple from 'vue-ripple-directive'
 import ModalTemplatesCategory from './ModalTemplatesCategory.vue'
 import ModalTemplatesPortId from './ModalTemplatesPortId.vue'
 
-const inputTemplateType = 'standard'
-const inputTemplateRU = 1
-const inputTemplateFunction = 'endpoint'
-const inputMountingConfiguration = '2-post'
-
 export default {
   components: {
     BContainer,
@@ -256,14 +259,20 @@ export default {
     Ripple,
     'b-modal': VBModal,
   },
+  props: {
+    TemplateData: {type: Array},
+    CabinetFace: {type: String},
+    SelectedPartitionAddress: {type: Object},
+  },
   data() {
     return {
-      inputTemplateType,
-      inputTemplateRU,
-      inputTemplateFunction,
-      inputMountingConfiguration,
+      InputTemplateName: this.TemplateData[0].name,
+      InputTemplateCategory: this.TemplateData[0].category_id,
+      inputTemplateType: this.TemplateData[0].type,
+      inputTemplateRU: this.TemplateData[0].ru_size,
+      inputTemplateFunction: this.TemplateData[0].function,
+      inputTemplateMountConfig: this.TemplateData[0].mount_config,
       selected: null,
-      selectedCategory: null,
       optionsCategory: [],
       optionsTemplateType: [
         { text: 'Standard', value: 'standard' },
@@ -273,14 +282,14 @@ export default {
         { text: 'Endpoint', value: 'endpoint' },
         { text: 'Passive', value: 'passive' },
       ],
-      optionsMountingConfiguration: [
+      optionsTemplateMountConfig: [
         { text: '2-Post', value: '2-post' },
         { text: '4-Post', value: '4-post' },
       ],
-      optionsPartitionType: [
-        { text: 'Generic', value: 0 },
-        { text: 'Connectable', value: 1 },
-        { text: 'Enclosure', value: 2 },
+      optionsTemplatePartitionType: [
+        { text: 'Generic', value: 'generic' },
+        { text: 'Connectable', value: 'connectable' },
+        { text: 'Enclosure', value: 'enclosure' },
       ],
       optionsAddRemovePartition: [
         { text: 'Horizontal', value: 0 },
@@ -288,7 +297,58 @@ export default {
       ],
     }
   },
+  computed: {
+    InputTemplatePartitionType: {
+      get() {
+
+        // Store variables
+        const vm = this
+        const SelectedPartition = vm.GetSelectedPartition()
+        
+        // Return selected partition type
+        return SelectedPartition.type
+      },
+      set(newValue) {
+
+        // Store variables
+        const vm = this
+
+        // Emit new value
+        vm.$emit('PartitionTypeUpdated', newValue)
+
+      }
+    }
+  },
   methods: {
+    onSubmit: function() {
+      console.log("Debug (Submit): "+JSON.stringify(this.TemplateData[0]))
+    },
+    onReset: function() {
+      console.log("Debug (Reset): ")
+      this.$emit('FormReset')
+    },
+    GetSelectedPartition: function() {
+
+      // Store variables
+      const vm = this
+      const TemplateData = vm.TemplateData[0]
+      const CabinetFace = vm.CabinetFace
+      const SelectedPartitionAddress = vm.SelectedPartitionAddress[CabinetFace]
+      const SelectedPartitionAddressArray = SelectedPartitionAddress.split('-')
+      let SelectedPartition = TemplateData.blueprint[CabinetFace]
+
+      // Traverse blueprint until selected partition is reached
+      SelectedPartitionAddressArray.forEach(function(AddressIndex, Index) {
+        if(Index) {
+          SelectedPartition = SelectedPartition.children[AddressIndex]
+        } else {
+          SelectedPartition = SelectedPartition[AddressIndex]
+        }
+      })
+
+      // Return selected partition
+      return SelectedPartition
+    },
     updateCategories: function(v) {
       this.optionsCategory = [];
       let x;

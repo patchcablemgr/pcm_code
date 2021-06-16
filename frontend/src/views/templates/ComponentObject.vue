@@ -1,20 +1,26 @@
 <template>
+
   <div
     class="pcm_cabinet_object_container"
     :class="PartitionDirectionClass()"
   >
-    <!-- Template categories modal -->
+    
     <div
       v-for="(Partition, PartitionIndex) in TemplateBlueprint"
       :key="PartitionIndex"
       class="pcm_template_partition_box"
+      :class="{ pcm_template_partition_selected: PartitionIsSelected(PartitionIndex) }"
       :style="{ 'flex-grow': GetPartitionFlexGrow(Partition.units) }"
       :DepthCounter="GetDepthCounter(PartitionIndex)"
+      @click.stop=" $emit('PartitionClicked', GetDepthCounter(PartitionIndex)) "
     >
       <Object
         :TemplateBlueprint="Partition.children"
         :TemplateRUSize="TemplateRUSize"
         :InitialDepthCounter="GetDepthCounter(PartitionIndex)"
+        :SelectedPartitionAddress="SelectedPartitionAddress"
+        :CabinetFace="CabinetFace"
+        @PartitionClicked=" $emit('PartitionClicked', $event) "
       />
     </div>
   </div>
@@ -34,8 +40,16 @@ export default {
     TemplateBlueprint: {type: Array},
     TemplateRUSize: {type: Number},
     InitialDepthCounter: {type: String},
+    SelectedPartitionAddress: {type: Object},
+    CabinetFace: {type: String},
   },
   methods: {
+    PartitionIsSelected: function(PartitionIndex) {
+      const vm = this
+      const PartitionIsSelected = vm.SelectedPartitionAddress[vm.CabinetFace] === vm.GetDepthCounter(PartitionIndex)
+
+      return PartitionIsSelected
+    },
     GetDepthCounter: function(PartitionIndex) {
 
       // Store variables

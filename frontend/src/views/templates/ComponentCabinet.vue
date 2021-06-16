@@ -13,11 +13,14 @@
       :CabinetID="CabinetData.id"
     >
       <td class="pcm_cabinet">{{ CabinetRU }}</td>
-      <td class="pcm_cabinet_ru" v-if=" ObjectIsPresent(CabinetData.id, CabinetFace, CabinetRU) !== false " :rowspan="RackObjectSize(CabinetData.id, CabinetRU)">
+      <td class="pcm_cabinet_ru" v-if=" RackObjectID(CabinetData.id, CabinetFace, CabinetRU) !== false " :rowspan=" RackObjectSize(CabinetData.id, CabinetFace, CabinetRU) ">
         <component-object
-          :TemplateBlueprint=" TemplateBlueprint(CabinetData.id, CabinetRU) "
-          :TemplateRUSize=" TemplateRUSize(CabinetData.id, CabinetRU) "
+          :TemplateBlueprint=" TemplateBlueprint(CabinetData.id, CabinetFace, CabinetRU) "
+          :TemplateRUSize=" RackObjectSize(CabinetData.id, CabinetFace, CabinetRU) "
           :InitialDepthCounter=" InitialDepthCounter "
+          :SelectedPartitionAddress=" SelectedPartitionAddress "
+          :CabinetFace=" CabinetFace "
+          @PartitionClicked=" $emit('PartitionClicked', $event) "
         />
       </td>
       <td class="pcm_cabinet_ru" v-else-if=" RUIsOccupied(CabinetData.id, CabinetFace, CabinetRU) === false "></td>
@@ -51,6 +54,7 @@ export default {
     ObjectData: {type: Array},
     TemplateData: {type: Array},
     CabinetFace: {type: String},
+    SelectedPartitionAddress: {type: Object},
   },
   data() {
     return {
@@ -58,44 +62,71 @@ export default {
     }
   },
   methods: {
-    TemplateRUSize(CabinetID, CabinetRU) {
-
-      // Store variables
-      const vm = this;
-      let ObjectIndex = vm.RackObjectIndex(CabinetID, CabinetRU)
-      let TemplateIndex = vm.TemplateIndex(ObjectIndex)
-      let TemplateRUSize = vm.TemplateData[TemplateIndex].ru_size
-
-      return TemplateRUSize
-    },
-    TemplateBlueprint(CabinetID, CabinetRU) {
-
-      // Store variables
-      const vm = this;
-      let ObjectIndex = vm.RackObjectIndex(CabinetID, CabinetRU)
-      let TemplateIndex = vm.TemplateIndex(ObjectIndex)
-      let TemplateBlueprint = vm.TemplateData[TemplateIndex].blueprint[vm.CabinetFace]
-
-      return TemplateBlueprint
-    },
-    RUIsOccupied(CabinetID, CabinetFace, CabinetRU) {
+    RackObjectID: function(CabinetID, CabinetFace, CabinetRU) {
       
       // Store variables
       const vm = this;
-      let CabinetObjects = vm.ObjectData.filter((object) => object.location_id == CabinetID);
+      const ObjectIndex = vm.ObjectData.findIndex((object) => object.location_id == CabinetID && object.cabinet_ru == CabinetRU);
+      let RackObjectID = false
+
+      if(ObjectIndex !== -1) {
+
+        // Store object dependent variables
+        const Object = vm.ObjectData[ObjectIndex]
+        const ObjectID = Object.id
+        const TemplateID = Object.template_id;
+        const TemplateIndex = vm.TemplateData.findIndex((template) => template.id == TemplateID);
+        const Template = vm.TemplateData[TemplateIndex]
+        const ObjectCabinetFace = Object.cabinet_face
+        const TemplateMountConfig = Template.mount_config
+
+        // Detmerine if object is present at cabinet RU
+        if(ObjectCabinetFace == CabinetFace || TemplateMountConfig == "4-post") {
+          RackObjectID = ObjectID
+        }
+      }
+
+      return RackObjectID
+    },
+    RackObjectSize: function(CabinetID, CabinetFace, CabinetRU) {
+
+      // Store variables
+      const vm = this
+      const ObjectID = vm.RackObjectID(CabinetID, CabinetFace, CabinetRU)
+      const TemplateID = vm.ObjectData[ObjectID].template_id;
+      const TemplateIndex = vm.TemplateData.findIndex((template) => template.id == TemplateID);
+      const ObjectSize = vm.TemplateData[TemplateIndex].ru_size
+
+      return ObjectSize
+    },
+    TemplateBlueprint: function(CabinetID, CabinetFace, CabinetRU) {
+
+      // Store variables
+      const vm = this;
+      const ObjectID = vm.RackObjectID(CabinetID, CabinetFace, CabinetRU)
+      const TemplateID = vm.ObjectData[ObjectID].template_id
+      const TemplateIndex = vm.TemplateData.findIndex((template) => template.id == TemplateID);
+      const TemplateBlueprint = vm.TemplateData[TemplateIndex].blueprint[CabinetFace]
+
+      return TemplateBlueprint
+    },
+    RUIsOccupied: function(CabinetID, CabinetFace, CabinetRU) {
+      
+      // Store variables
+      const vm = this;
+      const CabinetObjects = vm.ObjectData.filter((object) => object.location_id == CabinetID);
       let ObjectIsPresent = false
 
       CabinetObjects.forEach(function(object){
 
         // Store object dependent variables
-        let ObjectID = object.id
-        let ObjectIndex = vm.ObjectData.findIndex((object) => object.id == ObjectID);
-        let ObjectCabinetFace = vm.ObjectData[ObjectIndex].cabinet_face
-        let TemplateIndex = vm.TemplateIndex(ObjectIndex)
-        let TemplateSize = vm.TemplateData[TemplateIndex].ru_size
-        let TemplateMountConfig = vm.TemplateData[TemplateIndex].mount_config
-        let ObjectFirstRU = vm.ObjectData[ObjectIndex].cabinet_ru
-        let ObjectLastRU = ObjectFirstRU + (TemplateSize - 1)
+        const ObjectID = object.id
+        const ObjectCabinetFace = vm.ObjectData[ObjectID].cabinet_face
+        const TemplateID = vm.ObjectData[ObjectID].template_id
+        const TemplateSize = vm.TemplateData[TemplateID].ru_size
+        const TemplateMountConfig = vm.TemplateData[TemplateID].mount_config
+        const ObjectFirstRU = vm.ObjectData[ObjectID].cabinet_ru
+        const ObjectLastRU = ObjectFirstRU + (TemplateSize - 1)
 
         // Determine if object is present at cabinet RU
         if(ObjectCabinetFace == CabinetFace || TemplateMountConfig == "4-post") {
@@ -106,57 +137,6 @@ export default {
       });
 
       return ObjectIsPresent
-    },
-    ObjectIsPresent(CabinetID, CabinetFace, CabinetRU) {
-      
-      // Store variables
-      const vm = this;
-      let ObjectIndex = vm.RackObjectIndex(CabinetID, CabinetRU)
-      let ObjectIsPresent = false
-
-      if(ObjectIndex !== false) {
-
-        // Stor object dependent variables
-        let TemplateIndex = vm.TemplateIndex(ObjectIndex)
-        let ObjectCabinetFace = vm.ObjectData[ObjectIndex].cabinet_face
-        let TemplateMountConfig = vm.TemplateData[TemplateIndex].mount_config
-
-        // Detmerine if object is present at cabinet RU
-        if(ObjectCabinetFace == CabinetFace || TemplateMountConfig == "4-post") {
-          ObjectIsPresent = true
-        }
-      }
-
-      return ObjectIsPresent
-    },
-    RackObjectIndex(CabinetID, CabinetRU) {
-
-      const vm = this;
-
-      // Get index of object from ObjectData array
-      const ObjectIndex = vm.ObjectData.findIndex((object) => object.location_id == CabinetID && object.cabinet_ru == CabinetRU);
-      
-      return (ObjectIndex > -1) ? ObjectIndex : false;
-    },
-    TemplateIndex(ObjectIndex) {
-
-      const vm = this;
-
-      // Get index of template from TemplateData array
-      const TemplateID = vm.ObjectData[ObjectIndex].template_id;
-      const TemplateIndex = vm.TemplateData.findIndex((template) => template.id == TemplateID);
-
-      return (TemplateIndex > -1) ? TemplateIndex : false;
-    },
-    RackObjectSize(CabinetID, CabinetRU) {
-
-      // Store variables
-      const vm = this
-      let ObjectIndex = vm.RackObjectIndex(CabinetID, CabinetRU)
-      let TemplateIndex = vm.TemplateIndex(ObjectIndex)
-      let ObjectSize = vm.TemplateData[TemplateIndex].ru_size
-
-      return ObjectSize
     },
   }
 }

@@ -68,9 +68,14 @@
         </dt>
         <dd class="col-sm-8">
           <b-form-input
-            v-model="inputTemplateRU"
+            v-model.number="InputTemplateRUSize"
+            @change="$emit('TemplateRUSizeUpdated', $event)"
             id="h-ru-size"
+            ref="ElementTemplateRUSize"
             type="number"
+            min=1
+            max=5
+            :formatter="CastToInteger"
           />
         </dd>
       </dl>
@@ -99,6 +104,7 @@
           <b-form-radio-group
             v-model="inputTemplateMountConfig"
             :options="optionsTemplateMountConfig"
+            @change="$emit('TemplateMountConfigUpdated', $event)"
             name="radios-mounting-configuration"
             stacked
             />
@@ -112,7 +118,7 @@
         </dt>
         <dd class="col-sm-8">
           <b-form-radio-group
-          v-model="InputTemplatePartitionType"
+          v-model="ComputedInputTemplatePartitionType"
           :options="optionsTemplatePartitionType"
           name="radios-partition-type"
           stacked
@@ -149,7 +155,9 @@
       </dl>
 
       <!-- Port ID -->
-      <dl class="row">
+      <dl class="row"
+        v-show="ComputedInputTemplatePartitionType == 'connectable'"
+      >
         <dt class="col-sm-3">
           Port ID
         </dt>
@@ -269,7 +277,7 @@ export default {
       InputTemplateName: this.TemplateData[0].name,
       InputTemplateCategory: this.TemplateData[0].category_id,
       inputTemplateType: this.TemplateData[0].type,
-      inputTemplateRU: this.TemplateData[0].ru_size,
+      InputTemplateRUSize: this.TemplateData[0].ru_size,
       inputTemplateFunction: this.TemplateData[0].function,
       inputTemplateMountConfig: this.TemplateData[0].mount_config,
       selected: null,
@@ -298,7 +306,7 @@ export default {
     }
   },
   computed: {
-    InputTemplatePartitionType: {
+    ComputedInputTemplatePartitionType: {
       get() {
 
         // Store variables
@@ -314,7 +322,7 @@ export default {
         const vm = this
 
         // Emit new value
-        vm.$emit('PartitionTypeUpdated', newValue)
+        vm.$emit('TemplatePartitionTypeUpdated', newValue)
 
       }
     }
@@ -358,6 +366,27 @@ export default {
     },
     setDefaultCategory: function(v) {
       this.selectedCategory = v;
+    },
+    CastToInteger: function(value) {
+
+      // Store variables
+      const Element = this.$refs.ElementTemplateRUSize.$el
+      const min = Element.getAttribute('min')
+      const max = Element.getAttribute('max')
+
+      // Convert value from String to Integer
+      let formattedValue = parseInt(value)
+
+      // Restrict input to min/max
+      if(formattedValue < min) {
+        formattedValue = min
+      }
+      if(formattedValue > max) {
+        formattedValue = max
+      }
+
+      // Return input as integer
+      return formattedValue
     },
   },
 }

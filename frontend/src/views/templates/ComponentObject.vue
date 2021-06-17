@@ -14,7 +14,9 @@
       :DepthCounter="GetDepthCounter(PartitionIndex)"
       @click.stop=" $emit('PartitionClicked', GetDepthCounter(PartitionIndex)) "
     >
+      <!-- Generic partition -->
       <Object
+        v-if=" Partition.type == 'generic' "
         :TemplateBlueprint="Partition.children"
         :TemplateRUSize="TemplateRUSize"
         :InitialDepthCounter="GetDepthCounter(PartitionIndex)"
@@ -22,6 +24,25 @@
         :CabinetFace="CabinetFace"
         @PartitionClicked=" $emit('PartitionClicked', $event) "
       />
+
+      <!-- Connectable partition -->
+      <div
+        v-if=" Partition.type == 'connectable' "
+        class="b-container"
+      >
+        <div
+          v-for=" (PortLayoutRow) in range(Partition.port_layout.rows) "
+          :key=" PortLayoutRow "
+          class="b-row"
+        >
+          <div
+            v-for=" (PortLayoutCol) in range(Partition.port_layout.cols) "
+            :key=" PortLayoutCol "
+            class="b-col"
+          >
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>

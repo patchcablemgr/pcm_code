@@ -56,13 +56,33 @@ div.pcm_box {
 
 div.pcm_template_partition_box {
     box-shadow: 0 0 0 1px gray inset;
+    flex-basis: 0;
+    overflow: hidden;
 }
 
 div.pcm_template_partition_selected {
     box-shadow: 0 0 0 2px red inset;
 }
 
-div.pcm_template_port_unk {
+div.pcm_template_connectable_row {
+    display: flex;
+    justify-content: space-evenly;
+}
+
+div.pcm_template_connectable_col {
+    display: flex;
+}
+
+
+
+div.pcm_template_connectable_container {
+    display: grid;
+    justify-items: center;
+    align-items: center;
+    height: 100%;
+}
+
+div.pcm_template_connectable_port_unk {
     height: 5px;
     width: 5px;
     background-color: black;

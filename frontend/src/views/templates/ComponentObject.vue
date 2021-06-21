@@ -8,7 +8,7 @@
     <div
       v-for="(Partition, PartitionIndex) in TemplateBlueprint"
       :key="PartitionIndex"
-      class="pcm_template_partition_box"
+      class=" pcm_template_partition_box "
       :class="{ pcm_template_partition_selected: PartitionIsSelected(PartitionIndex) }"
       :style="{ 'flex-grow': GetPartitionFlexGrow(Partition.units) }"
       :DepthCounter="GetDepthCounter(PartitionIndex)"
@@ -28,19 +28,20 @@
       <!-- Connectable partition -->
       <div
         v-if=" Partition.type == 'connectable' "
-        class="b-container"
+        class=" pcm_template_connectable_container "
+        :style="{
+          'grid-template-rows': GetConnectablePartitionGrid(Partition.port_layout.rows),
+          'grid-template-columns': GetConnectablePartitionGrid(Partition.port_layout.cols),
+          'grid-template-areas': GetConnectablePartitionAreas(Partition.port_layout.rows, Partition.port_layout.cols),
+        }"
+
       >
         <div
-          v-for=" (PortLayoutRow) in range(Partition.port_layout.rows) "
-          :key=" PortLayoutRow "
-          class="b-row"
+          v-for=" portIndex in (Partition.port_layout.rows * Partition.port_layout.cols) "
+          :key=" portIndex "
+          class=" pcm_template_connectable_port_unk "
+          :style="{ 'grid-area': 'port'+(portIndex-1) }"
         >
-          <div
-            v-for=" (PortLayoutCol) in range(Partition.port_layout.cols) "
-            :key=" PortLayoutCol "
-            class="b-col"
-          >
-          </div>
         </div>
       </div>
     </div>
@@ -88,6 +89,35 @@ export default {
 
       // Return partition address string
       return PartitionAddressArray.join('-')
+    },
+    GetConnectablePartitionGrid: function(units) {
+
+      let GridArray = []
+      for(let i=0; i<units; i++) {
+        GridArray.push('1fr')
+      }
+
+      return GridArray.join(' ')
+    },
+    GetConnectablePartitionAreas: function(rows, cols) {
+
+      let AreasArray = []
+      let AreaCounter = 0
+      for(let r=0; r<rows; r++) {
+
+        AreasArray.push([])
+        for(let c=0; c<cols; c++) {
+          
+          AreasArray[r].push([])
+          AreasArray[r][c] = 'port'+AreaCounter
+          AreaCounter++
+        }
+      }
+      console.log(AreasArray)
+      const AreasString = "'" + AreasArray.map(arr => arr.join(' ')).join("' '") + "'";
+      console.log(AreasString)
+
+      return AreasString
     },
     GetPartitionFlexGrow: function(PartitionUnits) {
 

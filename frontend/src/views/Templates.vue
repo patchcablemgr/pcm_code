@@ -109,7 +109,11 @@ const TemplateData = [
           "children": [
             {
               "type": "connectable",
-              "units": 1,
+              "units": 3,
+              "port_layout": {
+                "rows": 2,
+                "cols": 24,
+              },
               "children": [],
             }
           ],

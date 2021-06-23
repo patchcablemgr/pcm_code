@@ -149,7 +149,11 @@
         <dd class="col-sm-8">
           <b-form-input
           id="h-partition-size"
+          v-model="ComputedInputTemplatePartitionSize"
           type="number"
+          min=1
+          max=10
+          :formatter="CastToInteger"
           />
         </dd>
       </dl>
@@ -190,6 +194,7 @@
               <b-col>
                 <b-form-input
                   id="h-port-layout-column"
+                  v-model="ComputedInputTemplatePortLayoutCols"
                   type="number"
                 />
               </b-col>
@@ -201,6 +206,7 @@
               <b-col>
                 <b-form-input
                   id="h-port-layout-row"
+                  v-model="ComputedInputTemplatePortLayoutRows"
                   type="number"
                 />
               </b-col>
@@ -231,6 +237,7 @@
 
     <!-- Category Modal -->
     <modal-templates-category
+      :CategoryData="CategoryData"
       v-on:categoriesUpdated="updateCategories($event)"
       v-on:categoriesSetDefault="setDefaultCategory($event)"
     />
@@ -268,6 +275,7 @@ export default {
     'b-modal': VBModal,
   },
   props: {
+    CategoryData: {type: Array},
     TemplateData: {type: Array},
     CabinetFace: {type: String},
     SelectedPartitionAddress: {type: Object},
@@ -325,7 +333,69 @@ export default {
         vm.$emit('TemplatePartitionTypeUpdated', newValue)
 
       }
-    }
+    },
+    ComputedInputTemplatePartitionSize: {
+      get() {
+
+        // Store variables
+        const vm = this
+        const SelectedPartition = vm.GetSelectedPartition()
+        
+        // Return selected partition type
+        return SelectedPartition.units
+      },
+      set(newValue) {
+
+        // Store variables
+        const vm = this
+
+        // Emit new value
+        vm.$emit('TemplatePartitionSizeUpdated', newValue)
+
+      }
+    },
+    ComputedInputTemplatePortLayoutCols: {
+      get() {
+
+        // Store variables
+        const vm = this
+        const SelectedPartition = vm.GetSelectedPartition()
+        const PortLayoutCols = (SelectedPartition.type == 'connectable') ? SelectedPartition.port_layout.cols : 0
+        
+        // Return selected partition type
+        return PortLayoutCols
+      },
+      set(newValue) {
+
+        // Store variables
+        const vm = this
+
+        // Emit new value
+        vm.$emit('TemplatePartitionPortLayoutColsUpdated', newValue)
+
+      }
+    },
+    ComputedInputTemplatePortLayoutRows: {
+      get() {
+
+        // Store variables
+        const vm = this
+        const SelectedPartition = vm.GetSelectedPartition()
+        const PortLayoutCols = (SelectedPartition.type == 'connectable') ? SelectedPartition.port_layout.rows : 0
+        
+        // Return selected partition type
+        return PortLayoutCols
+      },
+      set(newValue) {
+
+        // Store variables
+        const vm = this
+
+        // Emit new value
+        vm.$emit('TemplatePartitionPortLayoutRowsUpdated', newValue)
+
+      }
+    },
   },
   methods: {
     onSubmit: function() {

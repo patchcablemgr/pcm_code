@@ -17,6 +17,9 @@
                 @TemplateRUSizeUpdated="TemplateRUSizeUpdated($event)"
                 @TemplateMountConfigUpdated="TemplateMountConfigUpdated($event)"
                 @TemplatePartitionTypeUpdated="TemplatePartitionTypeUpdated($event)"
+                @TemplatePartitionSizeUpdated="TemplatePartitionSizeUpdated($event)"
+                @TemplatePartitionPortLayoutColsUpdated="TemplatePartitionPortLayoutColsUpdated($event)"
+                @TemplatePartitionPortLayoutRowsUpdated="TemplatePartitionPortLayoutRowsUpdated($event)"
                 @FormReset="FormReset($event)"
               />
             </b-card-body>
@@ -72,6 +75,7 @@ import TemplatesForm from './templates/TemplatesForm.vue'
 import ToastGeneral from './templates/ToastGeneral.vue'
 import ComponentCabinet from './templates/ComponentCabinet.vue'
 
+const CategoryData = []
 const CabinetFace = "front"
 const SelectedPartitionAddress = {
   "front": "0",
@@ -156,6 +160,7 @@ export default {
   },
   data() {
     return {
+      CategoryData,
       CabinetData,
       ObjectData,
       TemplateData,
@@ -207,6 +212,24 @@ export default {
         }
       }
     },
+    TemplatePartitionSizeUpdated: function(newValue) {
+
+      // Store variables
+      let SelectedPartition = this.GetSelectedPartition()
+      SelectedPartition.units = newValue
+    },
+    TemplatePartitionPortLayoutColsUpdated: function(newValue) {
+
+      // Store variables
+      let SelectedPartition = this.GetSelectedPartition()
+      SelectedPartition.port_layout.cols = newValue
+    },
+    TemplatePartitionPortLayoutRowsUpdated: function(newValue) {
+
+      // Store variables
+      let SelectedPartition = this.GetSelectedPartition()
+      SelectedPartition.port_layout.rows = newValue
+    },
     FormReset: function() {
       const vm = this
       for (const [key] of Object.entries(vm.TemplateData[0])) {
@@ -235,6 +258,22 @@ export default {
       // Return selected partition
       return SelectedPartition
     },
+    categoryGET: function() {
+
+      const vm = this;
+
+      this.$http.get('/api/category').then(function(response){
+        vm.CategoryData = response.data;
+        const defaultCategoryIndex = vm.CategoryData.findIndex((category) => category.default);
+        const defaultCategoryID = vm.CategoryData[defaultCategoryIndex].id
+      });
+    },
+  },
+  mounted() {
+
+    const vm = this;
+
+    vm.categoryGET();
   },
 }
 </script>

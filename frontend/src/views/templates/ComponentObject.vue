@@ -7,11 +7,11 @@
     
     <div
       v-for="(Partition, PartitionIndex) in TemplateBlueprint"
-      :key="PartitionIndex"
+      :key=" GetDepthCounter(PartitionIndex) "
       class=" pcm_template_partition_box "
       :class="{ pcm_template_partition_selected: PartitionIsSelected(PartitionIndex) }"
       :style="{ 'flex-grow': GetPartitionFlexGrow(Partition.units) }"
-      :DepthCounter="GetDepthCounter(PartitionIndex)"
+      :DepthCounter=" GetDepthCounter(PartitionIndex) "
       @click.stop=" $emit('PartitionClicked', GetDepthCounter(PartitionIndex)) "
     >
       <!-- Generic partition -->

@@ -92,7 +92,7 @@
           >
             <b-card-text>
               <div
-                v-for="(Category, CategoryIndex) in Categories"
+                v-for="(Category, CategoryIndex) in CategoryData"
                 v-bind:key="Category.id"
                 class="pcm_box"
                 :class="Category.id == CategorySelected ? 'pcm_selected' : ''"
@@ -139,6 +139,9 @@ export default {
   },
   directives: {
     Ripple,
+  },
+  props: {
+    CategoryData: {type: Array},
   },
   data () {
     return {
@@ -257,7 +260,6 @@ export default {
 
       const vm = this;
 
-      console.log('Deubg (testMethod): here1');
       this.$http.get('/api/category').then(function(response){
         vm.Categories = response.data;
         vm.$emit('categoriesUpdated', vm.Categories);

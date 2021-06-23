@@ -273,7 +273,7 @@ export default {
 
     const vm = this;
 
-    vm.categoryGET();
+    //vm.categoryGET();
   },
 }
 </script>

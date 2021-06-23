@@ -8,6 +8,7 @@
           >
             <b-card-body>
               <templates-form
+                :CategoryData="CategoryData"
                 :TemplateData="TemplateData"
                 :CabinetFace="CabinetFace"
                 :SelectedPartitionAddress="SelectedPartitionAddress"
@@ -266,6 +267,8 @@ export default {
         vm.CategoryData = response.data;
         const defaultCategoryIndex = vm.CategoryData.findIndex((category) => category.default);
         const defaultCategoryID = vm.CategoryData[defaultCategoryIndex].id
+        console.log(defaultCategoryID)
+        vm.TemplateData[0].category_id = defaultCategoryID
       });
     },
   },

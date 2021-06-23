@@ -13,7 +13,7 @@
         </dt>
         <dd class="col-sm-8">
           <b-form-input
-            v-model="InputTemplateName"
+            v-model="TemplateData[0].name"
             @change="$emit('TemplateNameUpdated', $event)"
             id="h-name"
             placeholder="New_Template"
@@ -38,8 +38,8 @@
         </dd>
         <dd class="col-sm-8">
           <b-form-select
-            v-model="InputTemplateCategory"
-            :options="optionsCategory"
+            v-model="TemplateData[0].category_id"
+            :options="GetCategoryOptions()"
             @change="$emit('TemplateCategoryUpdated', $event)"
           />
         </dd>
@@ -152,7 +152,7 @@
           v-model="ComputedInputTemplatePartitionSize"
           type="number"
           min=1
-          max=10
+          :max="GetSelectedPartitionSizeMax()"
           :formatter="CastToInteger"
           />
         </dd>
@@ -282,8 +282,6 @@ export default {
   },
   data() {
     return {
-      InputTemplateName: this.TemplateData[0].name,
-      InputTemplateCategory: this.TemplateData[0].category_id,
       inputTemplateType: this.TemplateData[0].type,
       InputTemplateRUSize: this.TemplateData[0].ru_size,
       inputTemplateFunction: this.TemplateData[0].function,
@@ -331,6 +329,22 @@ export default {
 
         // Emit new value
         vm.$emit('TemplatePartitionTypeUpdated', newValue)
+
+      }
+    },
+    ComputedInputTemplatePartitionSizeMax: {
+      get() {
+
+        // Store variables
+        const vm = this
+        const SelectedPartition = vm.GetSelectedPartition()
+        const PartitionType = SelectedPartition.type
+
+        if(PartitionType == "connectable") {
+
+        }
+      },
+      set(newValue) {
 
       }
     },
@@ -405,6 +419,39 @@ export default {
       console.log("Debug (Reset): ")
       this.$emit('FormReset')
     },
+    GetSelectedPartitionSizeMax: function() {
+
+      // Store variables
+      const vm = this
+      const TemplateData = vm.TemplateData[0]
+      const CabinetFace = vm.CabinetFace
+      const SelectedPartitionAddress = vm.SelectedPartitionAddress[CabinetFace]
+      const SelectedPartitionAddressArray = SelectedPartitionAddress.split('-')
+      const SelectedPartitionDepth = SelectedPartitionAddressArray.length
+      const SelectedPartitionDirection = (SelectedPartitionDepth % 2) ? 'column' : 'row'
+      let SelectedPartitionSizeMax = 0
+
+      if(SelectedPartitionDirection == 'row') {
+        SelectedPartitionSizeMax = TemplateData.ru_size * 2
+      } else {
+        let WorkingMax = 24
+        let WorkingPartition = JSON.parse(JSON.stringify(TemplateData.blueprint[CabinetFace]))
+        SelectedPartitionAddressArray.forEach(function(AddressIndex, Index) {
+          let WorkingPartitionDirection = (Index % 2) ? 'column' : 'row'
+          if(WorkingPartitionDirection == 'column') {
+            SelectedPartitionAddressArray.forEach(function(sibling) {
+              WorkingMax = WorkingMax - sibling.units
+            })
+            WorkingPartition = WorkingPartition.children[Index]
+          }
+        })
+        SelectedPartitionSizeMax = WorkingMax
+      }
+
+      console.log('Debug (Partition Direction): '+SelectedPartitionDirection)
+      console.log('Debug (Partition Size Max): '+SelectedPartitionSizeMax)
+      return SelectedPartitionSizeMax;
+    },
     GetSelectedPartition: function() {
 
       // Store variables
@@ -413,6 +460,8 @@ export default {
       const CabinetFace = vm.CabinetFace
       const SelectedPartitionAddress = vm.SelectedPartitionAddress[CabinetFace]
       const SelectedPartitionAddressArray = SelectedPartitionAddress.split('-')
+
+      // Set to default ("0") first partition on currently selected face
       let SelectedPartition = TemplateData.blueprint[CabinetFace]
 
       // Traverse blueprint until selected partition is reached
@@ -426,6 +475,21 @@ export default {
 
       // Return selected partition
       return SelectedPartition
+    },
+    GetCategoryOptions: function() {
+
+      // Store variables
+      const vm = this
+      let WorkingArray = []
+
+      // Populate working array with data to be used as select options
+      for(let i = 0; i < vm.CategoryData.length; i++) {
+
+        let Category = vm.CategoryData[i]
+        WorkingArray.push({'value': Category.id, 'text': Category.name})
+      }
+
+      return WorkingArray
     },
     updateCategories: function(v) {
       this.optionsCategory = [];

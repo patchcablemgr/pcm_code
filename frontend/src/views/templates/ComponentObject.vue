@@ -10,7 +10,7 @@
       :key=" GetDepthCounter(PartitionIndex) "
       class=" pcm_template_partition_box "
       :class="{ pcm_template_partition_selected: PartitionIsSelected(PartitionIndex) }"
-      :style="{ 'flex-grow': GetPartitionFlexGrow(Partition.units) }"
+      :style="{ 'flex-grow': GetPartitionFlexGrow(Partition.units, PartitionIndex) }"
       :DepthCounter=" GetDepthCounter(PartitionIndex) "
       @click.stop=" $emit('PartitionClicked', GetDepthCounter(PartitionIndex)) "
     >
@@ -18,6 +18,7 @@
       <Object
         v-if=" Partition.type == 'generic' "
         :TemplateBlueprint="Partition.children"
+        :TemplateBlueprintOriginal="TemplateBlueprintOriginal"
         :TemplateRUSize="TemplateRUSize"
         :InitialDepthCounter="GetDepthCounter(PartitionIndex)"
         :SelectedPartitionAddress="SelectedPartitionAddress"
@@ -60,6 +61,7 @@ export default {
   },
   props: {
     TemplateBlueprint: {type: Array},
+    TemplateBlueprintOriginal: {type: Array},
     TemplateRUSize: {type: Number},
     InitialDepthCounter: {type: String},
     SelectedPartitionAddress: {type: Object},
@@ -119,34 +121,59 @@ export default {
 
       return AreasString
     },
-    GetPartitionFlexGrow: function(PartitionUnits) {
+    GetPartitionParentSize: function(PartitionAddress) {
+
+      // Store variables
+      const vm = this
+      const PartitionAddressArray = PartitionAddress.split('-')
+      const PartitionDirection = vm.PartitionDirection()
+      let WorkingMax = (PartitionDirection == 'column') ? 24 : vm.TemplateRUSize * 2
+      let WorkingPartition = JSON.parse(JSON.stringify(vm.TemplateBlueprintOriginal))
+
+      PartitionAddressArray.pop()
+      PartitionAddressArray.forEach(function(PartitionAddressIndex, Depth){
+        let WorkingPartitionDirection = (Depth % 2) ? 'row' : 'column'
+        if(WorkingPartitionDirection == PartitionDirection) {
+          WorkingMax = WorkingPartition[PartitionAddressIndex].units
+        }
+        WorkingPartition = WorkingPartition[PartitionAddressIndex].children
+      })
+
+      return WorkingMax
+    },
+    GetPartitionFlexGrow: function(PartitionUnits, PartitionIndex) {
 
       const vm = this;
-      const PartitionDirection = vm.PartitionDirection()
-      const TemplateRUSize = vm.TemplateRUSize
       let PartitionFlexGrow
+      const PartitionAddress = vm.GetDepthCounter(PartitionIndex)
+      const PartitionParentSize = vm.GetPartitionParentSize(PartitionAddress)
 
-      if(PartitionDirection) {
-        PartitionFlexGrow = PartitionUnits / (TemplateRUSize * 2)
-      } else {
-        PartitionFlexGrow = PartitionUnits / 24
-      }
+      PartitionFlexGrow = PartitionUnits / PartitionParentSize
 
       return PartitionFlexGrow
     },
     PartitionDirection: function() {
 
       const vm = this;
-      const InitialPartitionAddress = vm.InitialDepthCounter
+      const PartitionAddress = vm.InitialDepthCounter
+      let PartitionDirection
 
-      return InitialPartitionAddress.replace('-','').length % 2
+      if(PartitionAddress.length == 0) {
+        PartitionDirection = 'column'
+      } else {
+        const PartitionAddressArray = PartitionAddress.split('-')
+        const PartitionDepth = PartitionAddressArray.length + 1
+        PartitionDirection = (PartitionDepth % 2) ? 'column' : 'row'
+      }
+
+      return PartitionDirection
     },
     PartitionDirectionClass: function() {
 
       const vm = this;
       const PartitionDirection = vm.PartitionDirection()
 
-      return PartitionDirection ? 'pcm_template_partition_horizontal' : 'pcm_template_partition_vertical'
+      return (PartitionDirection == "row") ? 'pcm_template_partition_horizontal' : 'pcm_template_partition_vertical'
     },
   },
 }

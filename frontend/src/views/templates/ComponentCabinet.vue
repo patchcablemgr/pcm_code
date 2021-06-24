@@ -16,6 +16,7 @@
       <td class="pcm_cabinet_ru" v-if=" RackObjectID(CabinetData.id, CabinetFace, CabinetRU) !== false " :rowspan=" RackObjectSize(CabinetData.id, CabinetFace, CabinetRU) ">
         <component-object
           :TemplateBlueprint=" TemplateBlueprint(CabinetData.id, CabinetFace, CabinetRU) "
+          :TemplateBlueprintOriginal=" TemplateBlueprint(CabinetData.id, CabinetFace, CabinetRU) "
           :TemplateRUSize=" RackObjectSize(CabinetData.id, CabinetFace, CabinetRU) "
           :InitialDepthCounter=" InitialDepthCounter "
           :SelectedPartitionAddress=" SelectedPartitionAddress "

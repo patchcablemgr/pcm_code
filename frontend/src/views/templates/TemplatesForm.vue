@@ -419,6 +419,29 @@ export default {
       console.log("Debug (Reset): ")
       this.$emit('FormReset')
     },
+    GetSelectedPartitionParentSize: function() {
+
+      // Store variables
+      const vm = this
+      const TemplateData = vm.TemplateData[0]
+      const CabinetFace = vm.CabinetFace
+      const SelectedPartitionAddress = vm.SelectedPartitionAddress[CabinetFace]
+      const SelectedPartitionAddressArray = SelectedPartitionAddress.split('-')
+      const SelectedPartitionDepth = SelectedPartitionAddressArray.length - 1
+      const SelectedPartitionDirection = (SelectedPartitionDepth % 2) ? 'row' : 'column'
+      let WorkingMax = (SelectedPartitionDirection == 'column') ? 24 : TemplateData.ru_size * 2
+      let WorkingPartition = JSON.parse(JSON.stringify(TemplateData.blueprint[CabinetFace]))
+
+      SelectedPartitionAddressArray.pop()
+      SelectedPartitionAddressArray.forEach(function(PartitionAddressIndex, Depth){
+        let WorkingPartitionDirection = (Depth % 2) ? 'row' : 'column'
+        if(WorkingPartitionDirection == SelectedPartitionDirection) {
+          WorkingMax = WorkingPartition[PartitionAddressIndex].units
+        }
+      })
+
+      return WorkingMax
+    },
     GetSelectedPartitionSizeMax: function() {
 
       // Store variables
@@ -427,29 +450,34 @@ export default {
       const CabinetFace = vm.CabinetFace
       const SelectedPartitionAddress = vm.SelectedPartitionAddress[CabinetFace]
       const SelectedPartitionAddressArray = SelectedPartitionAddress.split('-')
-      const SelectedPartitionDepth = SelectedPartitionAddressArray.length
-      const SelectedPartitionDirection = (SelectedPartitionDepth % 2) ? 'column' : 'row'
-      let SelectedPartitionSizeMax = 0
+      const SelectedPartitionDepth = SelectedPartitionAddressArray.length - 1
+      const SelectedPartitionDirection = (SelectedPartitionDepth % 2) ? 'row' : 'column'
+      const SelectedPartitionParentSize = vm.GetSelectedPartitionParentSize()
+      let SelectedPartitionSizeMax = SelectedPartitionParentSize
+      let WorkingPartition = JSON.parse(JSON.stringify(TemplateData.blueprint[CabinetFace]))
+      let WorkingPartitionAddress = ""
+      let WorkingSiblingPartitionAddress = ""
 
-      if(SelectedPartitionDirection == 'row') {
-        SelectedPartitionSizeMax = TemplateData.ru_size * 2
-      } else {
-        let WorkingMax = 24
-        let WorkingPartition = JSON.parse(JSON.stringify(TemplateData.blueprint[CabinetFace]))
-        SelectedPartitionAddressArray.forEach(function(AddressIndex, Index) {
-          let WorkingPartitionDirection = (Index % 2) ? 'column' : 'row'
-          if(WorkingPartitionDirection == 'column') {
-            SelectedPartitionAddressArray.forEach(function(sibling) {
-              WorkingMax = WorkingMax - sibling.units
-            })
-            WorkingPartition = WorkingPartition.children[Index]
-          }
-        })
-        SelectedPartitionSizeMax = WorkingMax
-      }
+      SelectedPartitionAddressArray.forEach(function(PartitionAddressIndex, Depth) {
+        
+        if(Depth == SelectedPartitionDepth) {
 
-      console.log('Debug (Partition Direction): '+SelectedPartitionDirection)
-      console.log('Debug (Partition Size Max): '+SelectedPartitionSizeMax)
+          WorkingPartition.forEach(function(Sibling, SiblingIndex){
+
+            // Set the partition address appropriate for the current partition
+            WorkingSiblingPartitionAddress = (WorkingPartitionAddress.length) ? WorkingPartitionAddress+"-"+SiblingIndex : SiblingIndex
+            
+            // Subtract units if partition is not selected
+            if(WorkingSiblingPartitionAddress != SelectedPartitionAddress) {
+              SelectedPartitionSizeMax = SelectedPartitionSizeMax - Sibling.units
+            }
+          })
+        }
+
+        WorkingPartition = WorkingPartition[PartitionAddressIndex].children
+        WorkingPartitionAddress = (WorkingPartitionAddress.length) ? WorkingPartitionAddress+"-"+PartitionAddressIndex : PartitionAddressIndex
+      })
+
       return SelectedPartitionSizeMax;
     },
     GetSelectedPartition: function() {
@@ -504,9 +532,10 @@ export default {
     CastToInteger: function(value) {
 
       // Store variables
-      const Element = this.$refs.ElementTemplateRUSize.$el
+      const vm = this
+      const Element = vm.$refs.ElementTemplateRUSize.$el
       const min = Element.getAttribute('min')
-      const max = Element.getAttribute('max')
+      const max = vm.GetSelectedPartitionSizeMax()
 
       // Convert value from String to Integer
       let formattedValue = parseInt(value)

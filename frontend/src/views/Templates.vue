@@ -113,23 +113,20 @@ const TemplateData = [
           "units": 12,
           "children": [
             {
-              "type": "connectable",
+              "type": "generic",
               "units": 3,
-              "port_layout": {
-                "rows": 2,
-                "cols": 24,
-              },
-              "children": [],
-            }
-          ],
-        },{
-          "type": "generic",
-          "units": 6,
-          "children": [
-            {
-              "type": "enclosure",
-              "units": 2,
-              "children": [],
+              "children": [
+                {
+                  "type": "generic",
+                  "units": 10,
+                  "children": [],
+                },
+                {
+                  "type": "generic",
+                  "units": 1,
+                  "children": [],
+                }
+              ],
             }
           ],
         }

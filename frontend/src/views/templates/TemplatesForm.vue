@@ -474,7 +474,7 @@ export default {
       const vm = this
 
       PartitionArray.forEach(function(Partition){
-        SelectedPartitionSizeMin = (RelativeDepth % 2) ? SelectedPartitionSizeMin + Partition.units : SelectedPartitionSizeMin
+        SelectedPartitionSizeMin = (RelativeDepth % 2) ? SelectedPartitionSizeMin + parseInt(Partition.units) : SelectedPartitionSizeMin
         SelectedPartitionSizeMin = vm.GetSelectedPartitionSizeMinRecursion(Partition.children, SelectedPartitionSizeMin, RelativeDepth + 1)
       })
 
@@ -572,8 +572,10 @@ export default {
       // Store variables
       const vm = this
       const Element = vm.$refs.ElementTemplateRUSize.$el
-      const min = Element.getAttribute('min')
+      const min = vm.GetSelectedPartitionSizeMin()
       const max = vm.GetSelectedPartitionSizeMax()
+
+      console.log('Debug(min - max): '+min+' - '+max)
 
       // Convert value from String to Integer
       let formattedValue = parseInt(value)

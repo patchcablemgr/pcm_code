@@ -48,6 +48,7 @@
               </b-form-radio>
               <component-cabinet
                 :CabinetData="CabinetData"
+                :CategoryData="CategoryData"
                 :ObjectData="ObjectData"
                 :TemplateData="TemplateData"
                 :CabinetFace="CabinetFace"
@@ -76,7 +77,12 @@ import TemplatesForm from './templates/TemplatesForm.vue'
 import ToastGeneral from './templates/ToastGeneral.vue'
 import ComponentCabinet from './templates/ComponentCabinet.vue'
 
-const CategoryData = []
+const CategoryData = [
+  {
+    "id": 0,
+    "color": "#FFFFFFFF"
+  }
+]
 const CabinetFace = "front"
 const SelectedPartitionAddress = {
   "front": "0",
@@ -84,7 +90,7 @@ const SelectedPartitionAddress = {
 }
 const CabinetData = {
   "id": 1,
-  "size": 10,
+  "size": 25,
   "name": "Cabinet",
 }
 const ObjectData = [

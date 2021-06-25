@@ -15,10 +15,6 @@ div.pcm_box {
     color: black;
 }
 
-.pcm_selected {
-    border: solid yellow 1px !important;
-}
-
 .pcm_cabinet {
     text-align: center;
     color: black;
@@ -41,40 +37,29 @@ div.pcm_box {
     padding: 0px;
 }
 
-.pcm_cabinet_object_container {
+div.pcm_cabinet_object_container {
     box-shadow: 0 0 0 1px gray inset;
     height: 100%;
     display: flex;
 }
 
-.pcm_template_partition_horizontal {
+div.pcm_template_partition_horizontal {
     flex-direction: column;
 }
 
-.pcm_template_partition_vertical {
+div.pcm_template_partition_vertical {
     flex-direction: row;
 }
 
 div.pcm_template_partition_box {
-    box-shadow: 0 0 0 1px gray inset;
+    box-shadow: 0 0 0 1px darkslategray inset;
     flex-basis: 0;
     overflow: hidden;
 }
 
 div.pcm_template_partition_selected {
-    box-shadow: 0 0 0 2px red inset;
+    box-shadow: 0 0 0 3px yellow inset;
 }
-
-div.pcm_template_connectable_row {
-    display: flex;
-    justify-content: space-evenly;
-}
-
-div.pcm_template_connectable_col {
-    display: flex;
-}
-
-
 
 div.pcm_template_connectable_container {
     display: grid;
@@ -87,4 +72,8 @@ div.pcm_template_connectable_port_unk {
     height: 5px;
     width: 5px;
     background-color: black;
+}
+
+div.pcm_template_partition_layered {
+    background-color: rgba(255,255,255,0.1);
 }

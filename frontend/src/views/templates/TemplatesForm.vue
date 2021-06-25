@@ -73,8 +73,8 @@
             id="h-ru-size"
             ref="ElementTemplateRUSize"
             type="number"
-            min=1
-            max=5
+            :min="GetRUSizeMin()"
+            max=25
             :formatter="CastToInteger"
           />
         </dd>
@@ -151,7 +151,7 @@
           id="h-partition-size"
           v-model="ComputedInputTemplatePartitionSize"
           type="number"
-          min=1
+          :min="GetSelectedPartitionSizeMin()"
           :max="GetSelectedPartitionSizeMax()"
           :formatter="CastToInteger"
           />
@@ -419,6 +419,24 @@ export default {
       console.log("Debug (Reset): ")
       this.$emit('FormReset')
     },
+    GetRUSizeMin() {
+
+      const vm = this
+      const TemplateData = vm.TemplateData[0]
+      const CabinetFace = vm.CabinetFace
+      let RUSizeMin = 1
+
+      TemplateData.blueprint[CabinetFace].forEach(function(FirstLayerColumn){
+        let TotalPartitionUnits = 0
+        FirstLayerColumn.children.forEach(function(FirstLayerRow){
+          TotalPartitionUnits = TotalPartitionUnits + FirstLayerRow.units
+        })
+        const WorkingRUSizeMin = Math.ceil(TotalPartitionUnits / 2)
+        RUSizeMin = (WorkingRUSizeMin > RUSizeMin) ? WorkingRUSizeMin : RUSizeMin
+      })
+
+      return RUSizeMin
+    },
     GetSelectedPartitionParentSize: function() {
 
       // Store variables
@@ -441,6 +459,26 @@ export default {
       })
 
       return WorkingMax
+    },
+    GetSelectedPartitionSizeMin: function(){
+
+      const vm = this
+      const SelectedPartition = vm.GetSelectedPartition()
+      const PartitionSizeMin = vm.GetSelectedPartitionSizeMinRecursion(SelectedPartition.children)
+
+      return (PartitionSizeMin > 0) ? PartitionSizeMin : 1
+    },
+    GetSelectedPartitionSizeMinRecursion: function(PartitionArray, SelectedPartitionSizeMin = 0, RelativeDepth = 0) {
+
+      // Store variables
+      const vm = this
+
+      PartitionArray.forEach(function(Partition){
+        SelectedPartitionSizeMin = (RelativeDepth % 2) ? SelectedPartitionSizeMin + Partition.units : SelectedPartitionSizeMin
+        SelectedPartitionSizeMin = vm.GetSelectedPartitionSizeMinRecursion(Partition.children, SelectedPartitionSizeMin, RelativeDepth + 1)
+      })
+
+      return SelectedPartitionSizeMin;
     },
     GetSelectedPartitionSizeMax: function() {
 

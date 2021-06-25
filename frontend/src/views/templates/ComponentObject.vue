@@ -1,7 +1,7 @@
 <template>
 
   <div
-    class="pcm_cabinet_object_container"
+    class="pcm_cabinet_object_container pcm_template_partition_layered"
     :class="PartitionDirectionClass()"
   >
     
@@ -156,6 +156,7 @@ export default {
 
       const vm = this;
       const PartitionAddress = vm.InitialDepthCounter
+      console.log('Debug (PartitionAddress): '+PartitionAddress)
       let PartitionDirection
 
       if(PartitionAddress.length == 0) {

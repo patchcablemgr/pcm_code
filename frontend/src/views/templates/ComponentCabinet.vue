@@ -14,16 +14,24 @@
     >
       <td class="pcm_cabinet">{{ CabinetRU }}</td>
       <td class="pcm_cabinet_ru" v-if=" RackObjectID(CabinetData.id, CabinetFace, CabinetRU) !== false " :rowspan=" RackObjectSize( RackObjectID(CabinetData.id, CabinetFace, CabinetRU) ) ">
-        <component-object
-          :TemplateBlueprint=" ObjectTemplateData( RackObjectID(CabinetData.id, CabinetFace, CabinetRU) ).blueprint[CabinetFace] "
-          :TemplateBlueprintOriginal=" ObjectTemplateData( RackObjectID(CabinetData.id, CabinetFace, CabinetRU) ).blueprint[CabinetFace] "
-          :TemplateRUSize=" RackObjectSize( RackObjectID(CabinetData.id, CabinetFace, CabinetRU) ) "
-          :InitialDepthCounter=" InitialDepthCounter "
-          :SelectedPartitionAddress=" SelectedPartitionAddress "
-          :CabinetFace=" CabinetFace "
-          @PartitionClicked=" $emit('PartitionClicked', $event) "
-          :style="{'background-color': ObjectCategoryData( RackObjectID(CabinetData.id, CabinetFace, CabinetRU) ).color}"
-        />
+        <div
+          :class="{ pcm_template_partition_selected: SelectedPartitionAddress[CabinetFace].length === 0 }"
+          :style="{
+            'background-color': ObjectCategoryData( RackObjectID(CabinetData.id, CabinetFace, CabinetRU) ).color,
+            'height': '100%',
+          }"
+          @click.stop=" $emit('PartitionClicked', InitialDepthCounter) "
+        >
+          <component-object
+            :TemplateBlueprint=" ObjectTemplateData( RackObjectID(CabinetData.id, CabinetFace, CabinetRU) ).blueprint[CabinetFace].children "
+            :TemplateBlueprintOriginal=" ObjectTemplateData( RackObjectID(CabinetData.id, CabinetFace, CabinetRU) ).blueprint[CabinetFace] "
+            :TemplateRUSize=" RackObjectSize( RackObjectID(CabinetData.id, CabinetFace, CabinetRU) ) "
+            :InitialDepthCounter=" InitialDepthCounter "
+            :SelectedPartitionAddress=" SelectedPartitionAddress "
+            :CabinetFace=" CabinetFace "
+            @PartitionClicked=" $emit('PartitionClicked', $event) "
+          />
+        </div>
       </td>
       <td class="pcm_cabinet_ru" v-else-if=" RUIsOccupied(CabinetData.id, CabinetFace, CabinetRU) === false "></td>
       <td class="pcm_cabinet">{{ CabinetRU }}</td>
@@ -40,7 +48,7 @@
 import { BContainer, BRow, BCol, } from 'bootstrap-vue'
 import ComponentObject from './ComponentObject.vue'
 
-const InitialDepthCounter = ""
+const InitialDepthCounter = []
 
 export default {
   components: {

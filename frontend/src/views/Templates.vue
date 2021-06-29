@@ -1,6 +1,6 @@
 <template>
   <div>
-    <b-container class="bv-example-row">
+    <b-container class="bv-example-row" fluid="xs">
       <b-row>
         <b-col>
           <b-card
@@ -18,6 +18,8 @@
                 @TemplateRUSizeUpdated="TemplateRUSizeUpdated($event)"
                 @TemplateMountConfigUpdated="TemplateMountConfigUpdated($event)"
                 @TemplatePartitionTypeUpdated="TemplatePartitionTypeUpdated($event)"
+                @TemplatePartitionAdd="TemplatePartitionAdd()"
+                @TemplatePartitionRemove="TemplatePartitionRemove()"
                 @TemplatePartitionSizeUpdated="TemplatePartitionSizeUpdated($event)"
                 @TemplatePartitionPortLayoutColsUpdated="TemplatePartitionPortLayoutColsUpdated($event)"
                 @TemplatePartitionPortLayoutRowsUpdated="TemplatePartitionPortLayoutRowsUpdated($event)"
@@ -85,8 +87,8 @@ const CategoryData = [
 ]
 const CabinetFace = "front"
 const SelectedPartitionAddress = {
-  "front": "0",
-  "rear": "0"
+  "front": [0],
+  "rear": [0]
 }
 const CabinetData = {
   "id": 1,
@@ -113,37 +115,41 @@ const TemplateData = [
     "function": "endpoint",
     "mount_config": "4-post",
     "blueprint": {
-      "front": [
-        {
-          "type": "generic",
-          "units": 12,
-          "children": [
-            {
-              "type": "generic",
-              "units": 3,
-              "children": [
-                {
-                  "type": "generic",
-                  "units": 10,
-                  "children": [],
-                },
-                {
-                  "type": "generic",
-                  "units": 1,
-                  "children": [],
-                }
-              ],
-            }
-          ],
-        }
-      ],
-      "rear": [
-        {
-          "type": "generic",
-          "units": 2,
-          "children": [],
-        }
-      ],
+      "front": {
+        "children": [
+          {
+            "type": "generic",
+            "units": 12,
+            "children": [
+              {
+                "type": "generic",
+                "units": 3,
+                "children": [
+                  {
+                    "type": "generic",
+                    "units": 10,
+                    "children": [],
+                  },
+                  {
+                    "type": "generic",
+                    "units": 1,
+                    "children": [],
+                  }
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      "rear": {
+        "children": [
+          {
+            "type": "generic",
+            "units": 2,
+            "children": [],
+          },
+        ],
+      },
     }
   }
 ]
@@ -180,7 +186,9 @@ export default {
   },
   methods: {
     PartitionClicked: function(PartitionAddress) {
+
       this.SelectedPartitionAddress[this.CabinetFace] = PartitionAddress
+      console.log('Debug (PartitionAddress): '+PartitionAddress)
     },
     TemplateNameUpdated: function(newValue) {
       this.TemplateData[0].name = newValue
@@ -206,15 +214,68 @@ export default {
 
       // Define port_layout if it doesn't exist
       if(newValue == 'connectable') {
-        console.log('Debug (TemplatePartitionTypeUpdated): connectable')
+        
         if(!('port_layout' in SelectedPartition)) {
-          console.log('Debug (port_layout): undefined')
+          
           SelectedPartition.port_layout = {
             'cols': 1,
             'rows': 1,
           }
         }
       }
+    },
+    TemplatePartitionAdd: function() {
+      
+      // Store variables
+      const vm = this
+      const TemplateData = vm.TemplateData[0]
+      const CabinetFace = vm.CabinetFace
+      const SelectedPartitionAddress = vm.SelectedPartitionAddress[CabinetFace]
+      let SelectedPartition = TemplateData.blueprint[CabinetFace]
+      let PartitionBlank = {
+        "type": "generic",
+        "units": 1,
+        "children": [],
+      }
+
+      // Traverse blueprint until selected partition is reached
+      SelectedPartitionAddress.some(function(AddressIndex) {
+        SelectedPartition = SelectedPartition.children[AddressIndex]
+      })
+
+      // Push blank partition into selected partition
+      SelectedPartition.children.push(PartitionBlank)
+    },
+    TemplatePartitionRemove: function() {
+      
+      // Store variables
+      const vm = this
+      const TemplateData = vm.TemplateData[0]
+      const CabinetFace = vm.CabinetFace
+      const SelectedPartitionAddress = vm.SelectedPartitionAddress[CabinetFace]
+      const SelectedPartitionAddressCopy = JSON.parse(JSON.stringify(SelectedPartitionAddress))
+      let SelectedPartitionParent = TemplateData.blueprint[CabinetFace]
+      const SelectedPartitionIndex = SelectedPartitionAddressCopy.pop()
+      
+      // Traverse blueprint until selected partition is reached
+      if(SelectedPartitionIndex !== 'undefined') {
+
+        // Repoint selected partition address to next available
+        if(SelectedPartitionIndex > 0) {
+          SelectedPartitionAddress[SelectedPartitionAddress.length - 1] = SelectedPartitionIndex - 1
+        } else {
+          SelectedPartitionAddress.pop()
+        }
+
+        // Identify selected partition parent
+        SelectedPartitionAddressCopy.some(function(AddressIndex) {
+          SelectedPartitionParent = SelectedPartitionParent.children[AddressIndex]
+        })
+      }
+
+      // Remove selected partition from parent
+      vm.$delete(SelectedPartitionParent.children, SelectedPartitionIndex)
+
     },
     TemplatePartitionSizeUpdated: function(newValue) {
 
@@ -247,16 +308,11 @@ export default {
       const TemplateData = vm.TemplateData[0]
       const CabinetFace = vm.CabinetFace
       const SelectedPartitionAddress = vm.SelectedPartitionAddress[CabinetFace]
-      const SelectedPartitionAddressArray = SelectedPartitionAddress.split('-')
       let SelectedPartition = TemplateData.blueprint[CabinetFace]
 
       // Traverse blueprint until selected partition is reached
-      SelectedPartitionAddressArray.forEach(function(AddressIndex, Index) {
-        if(Index) {
-          SelectedPartition = SelectedPartition.children[AddressIndex]
-        } else {
-          SelectedPartition = SelectedPartition[AddressIndex]
-        }
+      SelectedPartitionAddress.forEach(function(AddressIndex, Index) {
+        SelectedPartition = SelectedPartition.children[AddressIndex]
       })
 
       // Return selected partition
@@ -270,7 +326,6 @@ export default {
         vm.CategoryData = response.data;
         const defaultCategoryIndex = vm.CategoryData.findIndex((category) => category.default);
         const defaultCategoryID = vm.CategoryData[defaultCategoryIndex].id
-        console.log(defaultCategoryID)
         vm.TemplateData[0].category_id = defaultCategoryID
       });
     },

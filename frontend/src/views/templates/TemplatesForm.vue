@@ -4,6 +4,7 @@
     <b-form
       @submit.prevent="onSubmit"
       @reset="onReset"
+      style="width:100%"
     >
 
       <!-- Name -->
@@ -75,7 +76,7 @@
             type="number"
             :min="GetRUSizeMin()"
             max=25
-            :formatter="CastToInteger"
+            :formatter="CastRUSizeToInteger"
           />
         </dd>
       </dl>
@@ -132,12 +133,22 @@
           Add/Remove Partition
         </dt>
         <dd class="col-sm-8">
-          <b-form-radio-group
-          v-model="selected"
-          :options="optionsAddRemovePartition"
-          name="radios-add-remove-partition"
-          stacked
-          />
+          <b-button
+            v-ripple.400="'rgba(113, 102, 240, 0.15)'"
+            variant="outline-primary"
+            class="btn-icon"
+            @click="$emit('TemplatePartitionAdd')"
+          >
+            <feather-icon icon="PlusIcon" />
+          </b-button>
+          <b-button
+            v-ripple.400="'rgba(113, 102, 240, 0.15)'"
+            variant="outline-primary"
+            class="btn-icon"
+            @click="$emit('TemplatePartitionRemove')"
+          >
+            <feather-icon icon="MinusIcon" />
+          </b-button>
         </dd>
       </dl>
 
@@ -153,13 +164,14 @@
           type="number"
           :min="GetSelectedPartitionSizeMin()"
           :max="GetSelectedPartitionSizeMax()"
-          :formatter="CastToInteger"
+          :formatter="CastPartitionSizeToInteger"
           />
         </dd>
       </dl>
 
       <!-- Port ID -->
-      <dl class="row"
+      <dl
+        class="row"
         v-show="ComputedInputTemplatePartitionType == 'connectable'"
       >
         <dt class="col-sm-3">
@@ -181,9 +193,12 @@
       </dl>
 
       <!-- Port Layout -->
-      <dl class="row">
+      <dl
+        class="row"
+        v-show="ComputedInputTemplatePartitionType == 'connectable'"
+      >
         <dt class="col-sm-4">
-          Partition Size
+          Port Layout
         </dt>
         <dd class="col-sm-8">
           <b-container>
@@ -305,10 +320,6 @@ export default {
         { text: 'Connectable', value: 'connectable' },
         { text: 'Enclosure', value: 'enclosure' },
       ],
-      optionsAddRemovePartition: [
-        { text: 'Horizontal', value: 0 },
-        { text: 'Vertical', value: 1 },
-      ],
     }
   },
   computed: {
@@ -329,22 +340,6 @@ export default {
 
         // Emit new value
         vm.$emit('TemplatePartitionTypeUpdated', newValue)
-
-      }
-    },
-    ComputedInputTemplatePartitionSizeMax: {
-      get() {
-
-        // Store variables
-        const vm = this
-        const SelectedPartition = vm.GetSelectedPartition()
-        const PartitionType = SelectedPartition.type
-
-        if(PartitionType == "connectable") {
-
-        }
-      },
-      set(newValue) {
 
       }
     },
@@ -423,16 +418,18 @@ export default {
 
       const vm = this
       const TemplateData = vm.TemplateData[0]
-      const CabinetFace = vm.CabinetFace
+      const CabinetFaceArray = ['front','rear']
       let RUSizeMin = 1
 
-      TemplateData.blueprint[CabinetFace].forEach(function(FirstLayerColumn){
-        let TotalPartitionUnits = 0
-        FirstLayerColumn.children.forEach(function(FirstLayerRow){
-          TotalPartitionUnits = TotalPartitionUnits + FirstLayerRow.units
+      CabinetFaceArray.forEach(function(CabinetFace){
+        TemplateData.blueprint[CabinetFace].children.forEach(function(FirstLayerColumn){
+          let TotalPartitionUnits = 0
+          FirstLayerColumn.children.forEach(function(FirstLayerRow){
+            TotalPartitionUnits = TotalPartitionUnits + FirstLayerRow.units
+          })
+          const WorkingRUSizeMin = Math.ceil(TotalPartitionUnits / 2)
+          RUSizeMin = (WorkingRUSizeMin > RUSizeMin) ? WorkingRUSizeMin : RUSizeMin
         })
-        const WorkingRUSizeMin = Math.ceil(TotalPartitionUnits / 2)
-        RUSizeMin = (WorkingRUSizeMin > RUSizeMin) ? WorkingRUSizeMin : RUSizeMin
       })
 
       return RUSizeMin
@@ -443,21 +440,22 @@ export default {
       const vm = this
       const TemplateData = vm.TemplateData[0]
       const CabinetFace = vm.CabinetFace
-      const SelectedPartitionAddress = vm.SelectedPartitionAddress[CabinetFace]
-      const SelectedPartitionAddressArray = SelectedPartitionAddress.split('-')
-      const SelectedPartitionDepth = SelectedPartitionAddressArray.length - 1
-      const SelectedPartitionDirection = (SelectedPartitionDepth % 2) ? 'row' : 'column'
+      const SelectedPartitionAddress = JSON.parse(JSON.stringify(vm.SelectedPartitionAddress[CabinetFace]))
+      const SelectedPartitionDepth = SelectedPartitionAddress.length
+      const SelectedPartitionDirection = (SelectedPartitionDepth % 2) ? 'column' : 'row'
       let WorkingMax = (SelectedPartitionDirection == 'column') ? 24 : TemplateData.ru_size * 2
       let WorkingPartition = JSON.parse(JSON.stringify(TemplateData.blueprint[CabinetFace]))
 
-      SelectedPartitionAddressArray.pop()
-      SelectedPartitionAddressArray.forEach(function(PartitionAddressIndex, Depth){
-        let WorkingPartitionDirection = (Depth % 2) ? 'row' : 'column'
+      
+      SelectedPartitionAddress.pop()
+      SelectedPartitionAddress.forEach(function(PartitionAddressIndex, Depth){
+        let WorkingPartitionDirection = ((Depth + 1) % 2) ? 'column' : 'row'
         if(WorkingPartitionDirection == SelectedPartitionDirection) {
-          WorkingMax = WorkingPartition[PartitionAddressIndex].units
+          WorkingMax = WorkingPartition.children[PartitionAddressIndex].units
         }
+        WorkingPartition.children[PartitionAddressIndex]
       })
-
+      
       return WorkingMax
     },
     GetSelectedPartitionSizeMin: function(){
@@ -487,33 +485,33 @@ export default {
       const TemplateData = vm.TemplateData[0]
       const CabinetFace = vm.CabinetFace
       const SelectedPartitionAddress = vm.SelectedPartitionAddress[CabinetFace]
-      const SelectedPartitionAddressArray = SelectedPartitionAddress.split('-')
-      const SelectedPartitionDepth = SelectedPartitionAddressArray.length - 1
-      const SelectedPartitionDirection = (SelectedPartitionDepth % 2) ? 'row' : 'column'
+      const SelectedPartitionDepth = SelectedPartitionAddress.length
       const SelectedPartitionParentSize = vm.GetSelectedPartitionParentSize()
       let SelectedPartitionSizeMax = SelectedPartitionParentSize
       let WorkingPartition = JSON.parse(JSON.stringify(TemplateData.blueprint[CabinetFace]))
-      let WorkingPartitionAddress = ""
-      let WorkingSiblingPartitionAddress = ""
+      let WorkingPartitionAddress = []
+      let WorkingSiblingPartitionAddress = []
 
-      SelectedPartitionAddressArray.forEach(function(PartitionAddressIndex, Depth) {
+      SelectedPartitionAddress.forEach(function(PartitionAddressIndex, Depth) {
         
-        if(Depth == SelectedPartitionDepth) {
+        const WorkingPartitionDepth = Depth + 1
 
-          WorkingPartition.forEach(function(Sibling, SiblingIndex){
+        if(WorkingPartitionDepth == SelectedPartitionDepth) {
+
+          WorkingPartition.children.forEach(function(Sibling, SiblingIndex){
 
             // Set the partition address appropriate for the current partition
-            WorkingSiblingPartitionAddress = (WorkingPartitionAddress.length) ? WorkingPartitionAddress+"-"+SiblingIndex : SiblingIndex
+            WorkingSiblingPartitionAddress = WorkingPartitionAddress.concat([SiblingIndex])
             
             // Subtract units if partition is not selected
-            if(WorkingSiblingPartitionAddress != SelectedPartitionAddress) {
+            if(WorkingSiblingPartitionAddress.length !== SelectedPartitionAddress.length || WorkingSiblingPartitionAddress.every(function(value, index) { return value === SelectedPartitionAddress[index]}) === false) {
               SelectedPartitionSizeMax = SelectedPartitionSizeMax - Sibling.units
             }
           })
         }
 
-        WorkingPartition = WorkingPartition[PartitionAddressIndex].children
-        WorkingPartitionAddress = (WorkingPartitionAddress.length) ? WorkingPartitionAddress+"-"+PartitionAddressIndex : PartitionAddressIndex
+        WorkingPartition = WorkingPartition.children[PartitionAddressIndex]
+        WorkingPartitionAddress.push(PartitionAddressIndex)
       })
 
       return SelectedPartitionSizeMax;
@@ -525,18 +523,12 @@ export default {
       const TemplateData = vm.TemplateData[0]
       const CabinetFace = vm.CabinetFace
       const SelectedPartitionAddress = vm.SelectedPartitionAddress[CabinetFace]
-      const SelectedPartitionAddressArray = SelectedPartitionAddress.split('-')
 
       // Set to default ("0") first partition on currently selected face
       let SelectedPartition = TemplateData.blueprint[CabinetFace]
 
-      // Traverse blueprint until selected partition is reached
-      SelectedPartitionAddressArray.forEach(function(AddressIndex, Index) {
-        if(Index) {
-          SelectedPartition = SelectedPartition.children[AddressIndex]
-        } else {
-          SelectedPartition = SelectedPartition[AddressIndex]
-        }
+      SelectedPartitionAddress.forEach(function(AddressIndex, Index) {
+        SelectedPartition = SelectedPartition.children[AddressIndex]
       })
 
       // Return selected partition
@@ -567,7 +559,7 @@ export default {
     setDefaultCategory: function(v) {
       this.selectedCategory = v;
     },
-    CastToInteger: function(value) {
+    CastPartitionSizeToInteger: function(value) {
 
       // Store variables
       const vm = this
@@ -575,7 +567,27 @@ export default {
       const min = vm.GetSelectedPartitionSizeMin()
       const max = vm.GetSelectedPartitionSizeMax()
 
-      console.log('Debug(min - max): '+min+' - '+max)
+      // Convert value from String to Integer
+      let formattedValue = parseInt(value)
+
+      // Restrict input to min/max
+      if(formattedValue < min) {
+        formattedValue = min
+      }
+      if(formattedValue > max) {
+        formattedValue = max
+      }
+
+      // Return input as integer
+      return formattedValue
+    },
+    CastRUSizeToInteger: function(value) {
+
+      // Store variables
+      const vm = this
+      const Element = vm.$refs.ElementTemplateRUSize.$el
+      const min = vm.GetRUSizeMin()
+      const max = 25
 
       // Convert value from String to Integer
       let formattedValue = parseInt(value)

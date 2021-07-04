@@ -51,7 +51,7 @@
                 </dd>
               </dl>
 
-              <!-- Submit -->
+              <!-- Submit/Update -->
               <div offset-md="4">
                 <b-button
                     v-ripple.400="'rgba(255, 255, 255, 0.15)'"
@@ -61,6 +61,8 @@
                 >
                   {{ (CategorySelected) ? "Update" : "Create" }}
                 </b-button>
+
+                <!-- Reset -->
                 <b-button
                     v-ripple.400="'rgba(255, 255, 255, 0.15)'"
                     type="button"
@@ -70,6 +72,8 @@
                 >
                   Reset
                 </b-button>
+
+                <!-- Delete -->
                 <b-button
                     v-ripple.400="'rgba(255, 255, 255, 0.15)'"
                     type="button"
@@ -156,7 +160,7 @@ export default {
     categorySelected: function(CategoryIndex) {
 
       // Set Categories selected index
-      const selectedCategory = this.Categories[CategoryIndex]
+      const selectedCategory = this.CategoryData[CategoryIndex]
 
       // Set category form to selected category values
       this.CategorySelected = selectedCategory.id
@@ -179,7 +183,8 @@ export default {
       // PUT category form data
       vm.$http.put(url, data).then(function(response){
 
-        vm.categoryGET();
+        // Update categories
+        vm.$emit('TemplateCategoriesUpdated')
 
       }).catch(error => {
 
@@ -205,9 +210,9 @@ export default {
       // POST category form data
       this.$http.post(url, data).then(function(response){
 
-        // Update categories variable
-        vm.Categories.push(response.data)
-        vm.$emit('categoriesUpdated', vm.Categories)
+        // Update categories
+        vm.$emit('TemplateCategoriesUpdated')
+
       }).catch(error => {
 
         // Display error to user via toast
@@ -254,18 +259,6 @@ export default {
           variant: 'danger',
         })
 
-      });
-    },
-    categoryGET: function() {
-
-      const vm = this;
-
-      this.$http.get('/api/category').then(function(response){
-        vm.Categories = response.data;
-        vm.$emit('categoriesUpdated', vm.Categories);
-        const defaultCategoryIndex = vm.Categories.findIndex((category) => category.default);
-        const defaultCategoryID = vm.Categories[defaultCategoryIndex].id
-        vm.$emit('categoriesSetDefault', defaultCategoryID);
       });
     },
   },

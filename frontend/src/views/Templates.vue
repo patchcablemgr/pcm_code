@@ -12,7 +12,11 @@
                 :TemplateData="TemplateData"
                 :CabinetFace="CabinetFace"
                 :SelectedPartitionAddress="SelectedPartitionAddress"
+                :AddPartitionDisabled="AddPartitionDisabled"
+                :RemovePartitionDisabled="RemovePartitionDisabled"
+                :PartitionTypeDisabled="PartitionTypeDisabled"
                 @TemplateNameUpdated="TemplateNameUpdated($event)"
+                @TemplateCategoriesUpdated="TemplateCategoriesUpdated($event)"
                 @TemplateCategoryUpdated="TemplateCategoryUpdated($event)"
                 @TemplateTypeUpdated="TemplateTypeUpdated($event)"
                 @TemplateRUSizeUpdated="TemplateRUSizeUpdated($event)"
@@ -87,8 +91,8 @@ const CategoryData = [
 ]
 const CabinetFace = "front"
 const SelectedPartitionAddress = {
-  "front": [0],
-  "rear": [0]
+  "front": [],
+  "rear": []
 }
 const CabinetData = {
   "id": 1,
@@ -116,6 +120,7 @@ const TemplateData = [
     "mount_config": "4-post",
     "blueprint": {
       "front": {
+        "type": "generic",
         "children": [
           {
             "type": "generic",
@@ -183,15 +188,44 @@ export default {
     CabinetFaceToggleIsDisabled: function() {
       return this.TemplateData[0].mount_config === '2-post'
     },
+    AddPartitionDisabled: function() {
+      // Store variables
+      const vm = this
+
+      return !vm.TemplatePartitionRoomAvailable()
+    },
+    RemovePartitionDisabled: function() {
+      // Store variables
+      const vm = this
+      const CabinetFace = vm.CabinetFace
+      const SelectedPartitionAddress = vm.SelectedPartitionAddress[CabinetFace]
+
+      return !SelectedPartitionAddress.length
+    },
+    PartitionTypeDisabled: function() {
+      // Store variables
+      const vm = this
+      const CabinetFace = vm.CabinetFace
+      const SelectedPartitionAddress = vm.SelectedPartitionAddress[CabinetFace]
+
+      return !SelectedPartitionAddress.length
+    },
   },
   methods: {
     PartitionClicked: function(PartitionAddress) {
 
-      this.SelectedPartitionAddress[this.CabinetFace] = PartitionAddress
-      console.log('Debug (PartitionAddress): '+PartitionAddress)
+      // Store variables
+      const vm = this
+
+      vm.SelectedPartitionAddress[this.CabinetFace] = PartitionAddress
     },
     TemplateNameUpdated: function(newValue) {
       this.TemplateData[0].name = newValue
+    },
+    TemplateCategoriesUpdated: function() {
+      const vm = this;
+
+      vm.categoryGET();
     },
     TemplateCategoryUpdated: function(newValue) {
       this.TemplateData[0].category_id = newValue
@@ -225,26 +259,41 @@ export default {
       }
     },
     TemplatePartitionAdd: function() {
-      
+
       // Store variables
       const vm = this
-      const TemplateData = vm.TemplateData[0]
-      const CabinetFace = vm.CabinetFace
-      const SelectedPartitionAddress = vm.SelectedPartitionAddress[CabinetFace]
-      let SelectedPartition = TemplateData.blueprint[CabinetFace]
+      let SelectedPartition = vm.GetSelectedPartition()
       let PartitionBlank = {
         "type": "generic",
         "units": 1,
         "children": [],
       }
 
-      // Traverse blueprint until selected partition is reached
-      SelectedPartitionAddress.some(function(AddressIndex) {
-        SelectedPartition = SelectedPartition.children[AddressIndex]
+      if(vm.TemplatePartitionRoomAvailable()) {
+        SelectedPartition.children.push(PartitionBlank)
+      }
+
+      console.log('Debug (AddPartitionDisabled): '+vm.AddPartitionDisabled)
+    },
+    TemplatePartitionRoomAvailable: function() {
+      
+      // Store variables
+      const vm = this
+      let SelectedPartition = vm.GetSelectedPartition()
+      const PartitionParentSize = vm.GetSelectedPartitionParentSize()
+
+      // Sum of child partition sizes
+      let PartitionChildUnits = 0
+      SelectedPartition.children.forEach(function(PartitionChild){
+        PartitionChildUnits = PartitionChildUnits + PartitionChild.units
       })
 
-      // Push blank partition into selected partition
-      SelectedPartition.children.push(PartitionBlank)
+      // Return room availability
+      if(PartitionChildUnits < PartitionParentSize) {
+        return true
+      } else {
+        return false
+      }
     },
     TemplatePartitionRemove: function() {
       
@@ -275,7 +324,6 @@ export default {
 
       // Remove selected partition from parent
       vm.$delete(SelectedPartitionParent.children, SelectedPartitionIndex)
-
     },
     TemplatePartitionSizeUpdated: function(newValue) {
 
@@ -318,23 +366,54 @@ export default {
       // Return selected partition
       return SelectedPartition
     },
-    categoryGET: function() {
+    GetSelectedPartitionParentSize: function() {
+
+      // Store variables
+      const vm = this
+      const TemplateData = vm.TemplateData[0]
+      const CabinetFace = vm.CabinetFace
+      const SelectedPartitionAddress = JSON.parse(JSON.stringify(vm.SelectedPartitionAddress[CabinetFace]))
+      const SelectedPartitionDepth = SelectedPartitionAddress.length
+      const SelectedPartitionDirection = (SelectedPartitionDepth % 2) ? 'column' : 'row'
+      let WorkingMax = (SelectedPartitionDirection == 'row') ? 24 : TemplateData.ru_size * 2
+      let WorkingPartition = JSON.parse(JSON.stringify(TemplateData.blueprint[CabinetFace]))
+
+      // Loop through partition address array
+      SelectedPartitionAddress.some(function(PartitionAddressIndex, Depth){
+
+        // If working partition is selected partition parent, set WorkingMax to unit size and break out of loop
+        if((Depth + 1) == (SelectedPartitionAddress.length - 1)) {
+          WorkingMax = WorkingPartition.children[PartitionAddressIndex].units
+          return true
+        }
+
+        // Move to next partition
+        WorkingPartition = WorkingPartition.children[PartitionAddressIndex]
+      })
+      
+      // Return selected partition parent size
+      return WorkingMax
+    },
+    categoryGET: function(SetCategoryToDefault = false) {
 
       const vm = this;
 
       this.$http.get('/api/category').then(function(response){
         vm.CategoryData = response.data;
-        const defaultCategoryIndex = vm.CategoryData.findIndex((category) => category.default);
-        const defaultCategoryID = vm.CategoryData[defaultCategoryIndex].id
-        vm.TemplateData[0].category_id = defaultCategoryID
+        if(SetCategoryToDefault) {
+          const defaultCategoryIndex = vm.CategoryData.findIndex((category) => category.default);
+          const defaultCategoryID = vm.CategoryData[defaultCategoryIndex].id
+          vm.TemplateData[0].category_id = defaultCategoryID
+        }
       });
     },
   },
   mounted() {
 
     const vm = this;
+    const SetCategoryToDefault = true
 
-    vm.categoryGET();
+    vm.categoryGET(SetCategoryToDefault);
   },
 }
 </script>

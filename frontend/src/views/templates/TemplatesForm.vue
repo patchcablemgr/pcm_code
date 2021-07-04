@@ -103,14 +103,18 @@
         </dt>
         <dd class="col-sm-8">
           <b-form-radio-group
-            v-model="inputTemplateMountConfig"
-            :options="optionsTemplateMountConfig"
-            @change="$emit('TemplateMountConfigUpdated', $event)"
-            name="radios-mounting-configuration"
-            stacked
+              v-model="inputTemplateMountConfig"
+              :options="optionsTemplateMountConfig"
+              @change="$emit('TemplateMountConfigUpdated', $event)"
+              name="radios-mounting-configuration"
+              stacked
             />
         </dd>
       </dl>
+
+      <hr
+        class="separator"
+      >
 
       <!-- Partition Type -->
       <dl class="row">
@@ -119,10 +123,11 @@
         </dt>
         <dd class="col-sm-8">
           <b-form-radio-group
-          v-model="ComputedInputTemplatePartitionType"
-          :options="optionsTemplatePartitionType"
-          name="radios-partition-type"
-          stacked
+            v-model="ComputedInputTemplatePartitionType"
+            :options="optionsTemplatePartitionType"
+            name="radios-partition-type"
+            stacked
+            :disabled="PartitionTypeDisabled"
           />
         </dd>
       </dl>
@@ -138,6 +143,7 @@
             variant="outline-primary"
             class="btn-icon"
             @click="$emit('TemplatePartitionAdd')"
+            :disabled="AddPartitionDisabled"
           >
             <feather-icon icon="PlusIcon" />
           </b-button>
@@ -146,6 +152,7 @@
             variant="outline-primary"
             class="btn-icon"
             @click="$emit('TemplatePartitionRemove')"
+            :disabled="RemovePartitionDisabled"
           >
             <feather-icon icon="MinusIcon" />
           </b-button>
@@ -168,6 +175,11 @@
           />
         </dd>
       </dl>
+
+      <hr
+        class="separator"
+        v-show="ComputedInputTemplatePartitionType != 'generic'"
+      >
 
       <!-- Port ID -->
       <dl
@@ -230,6 +242,61 @@
         </dd>
       </dl>
 
+      <!-- Port Type -->
+      <dl
+        class="row"
+        v-show="ComputedInputTemplatePartitionType == 'connectable'"
+      >
+        <dt class="col-sm-4">
+          Port Type
+        </dt>
+        <dd class="col-sm-8">
+          <b-form-select
+            v-model="TemplateData[0].category_id"
+            :options="GetCategoryOptions()"
+            @change="$emit('TemplateCategoryUpdated', $event)"
+          />
+        </dd>
+      </dl>
+
+      <!-- Enclosure Layout -->
+      <dl
+        class="row"
+        v-show="ComputedInputTemplatePartitionType == 'enclosure'"
+      >
+        <dt class="col-sm-4">
+          Enclosure Layout
+        </dt>
+        <dd class="col-sm-8">
+          <b-container>
+            <b-row>
+              <b-col>
+                Col:
+              </b-col>
+              <b-col>
+                <b-form-input
+                  id="h-port-layout-column"
+                  v-model="ComputedInputTemplatePortLayoutCols"
+                  type="number"
+                />
+              </b-col>
+            </b-row>
+            <b-row>
+              <b-col>
+                Row:
+              </b-col>
+              <b-col>
+                <b-form-input
+                  id="h-port-layout-row"
+                  v-model="ComputedInputTemplatePortLayoutRows"
+                  type="number"
+                />
+              </b-col>
+            </b-row>
+          </b-container>
+        </dd>
+      </dl>
+
       <!-- Submit and Reset -->
       <div offset-md="4">
         <b-button
@@ -253,7 +320,8 @@
     <!-- Category Modal -->
     <modal-templates-category
       :CategoryData="CategoryData"
-      v-on:categoriesUpdated="updateCategories($event)"
+      @TemplateCategoriesUpdated="$emit('TemplateCategoriesUpdated')"
+      v-on:categoriesUpdatedOrig="updateCategories($event)"
       v-on:categoriesSetDefault="setDefaultCategory($event)"
     />
 
@@ -294,6 +362,9 @@ export default {
     TemplateData: {type: Array},
     CabinetFace: {type: String},
     SelectedPartitionAddress: {type: Object},
+    AddPartitionDisabled: {type: Boolean},
+    RemovePartitionDisabled: {type: Boolean},
+    PartitionTypeDisabled: {type: Boolean},
   },
   data() {
     return {

@@ -15,12 +15,17 @@
       <td class="pcm_cabinet">{{ CabinetRU }}</td>
       <td class="pcm_cabinet_ru" v-if=" RackObjectID(CabinetData.id, CabinetFace, CabinetRU) !== false " :rowspan=" RackObjectSize( RackObjectID(CabinetData.id, CabinetFace, CabinetRU) ) ">
         <div
-          :class="{ pcm_template_partition_selected: SelectedPartitionAddress[CabinetFace].length === 0 }"
+          :class="{
+            pcm_template_partition_selected: SelectedPartitionAddress[CabinetFace].length === 0,
+            pcm_template_partition_hovered: HoveredPartitionAddress[CabinetFace].length === 0,
+          }"
           :style="{
             'background-color': ObjectCategoryData( RackObjectID(CabinetData.id, CabinetFace, CabinetRU) ).color,
             'height': '100%',
           }"
           @click.stop=" $emit('PartitionClicked', InitialDepthCounter) "
+          @mouseover.stop=" $emit('PartitionHovered', {'PartitionAddress': InitialDepthCounter, 'HoverState': true}) "
+          @mouseleave.stop=" $emit('PartitionHovered', {'PartitionAddress': InitialDepthCounter, 'HoverState': false}) "
         >
           <component-object
             :TemplateBlueprint=" ObjectTemplateData( RackObjectID(CabinetData.id, CabinetFace, CabinetRU) ).blueprint[CabinetFace].children "
@@ -28,8 +33,10 @@
             :TemplateRUSize=" RackObjectSize( RackObjectID(CabinetData.id, CabinetFace, CabinetRU) ) "
             :InitialDepthCounter=" InitialDepthCounter "
             :SelectedPartitionAddress=" SelectedPartitionAddress "
+            :HoveredPartitionAddress=" HoveredPartitionAddress "
             :CabinetFace=" CabinetFace "
             @PartitionClicked=" $emit('PartitionClicked', $event) "
+            @PartitionHovered=" $emit('PartitionHovered', $event) "
           />
         </div>
       </td>
@@ -65,6 +72,7 @@ export default {
     TemplateData: {type: Array},
     CabinetFace: {type: String},
     SelectedPartitionAddress: {type: Object},
+    HoveredPartitionAddress: {type: Object},
   },
   data() {
     return {

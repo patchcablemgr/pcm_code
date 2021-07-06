@@ -61,6 +61,10 @@ div.pcm_template_partition_selected {
     box-shadow: 0 0 0 3px yellow inset;
 }
 
+div.pcm_template_partition_hovered {
+    box-shadow: 0 0 0 6px orange inset;
+}
+
 div.pcm_template_connectable_container {
     display: grid;
     justify-items: center;
@@ -74,10 +78,31 @@ div.pcm_template_connectable_port_unk {
     background-color: black;
 }
 
+div.pcm_template_enclosure_container {
+    display: grid;
+    justify-items: center;
+    align-items: center;
+    height: 100%;
+    background: repeating-linear-gradient(
+		135deg,
+		transparent,
+		transparent 4px,
+		rgba(0, 0, 0, 0.2) 4px,
+		rgba(0, 0, 0, 0.2) 8px
+	);
+}
+
+div.pcm_template_enclosure_area {
+    box-shadow: 0 0 0 1px black inset;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+
 div.pcm_template_partition_layered {
     background-color: rgba(255,255,255,0.1);
 }
 
 hr.separator {
-    border-top: 3px solid #bbb;
+    border-top: 2px solid #bbb;
 }

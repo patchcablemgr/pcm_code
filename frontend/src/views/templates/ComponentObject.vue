@@ -9,10 +9,15 @@
       v-for="(Partition, PartitionIndex) in TemplateBlueprint"
       :key=" GetDepthCounter(PartitionIndex).join('-') "
       class=" pcm_template_partition_box "
-      :class="{ pcm_template_partition_selected: PartitionIsSelected(PartitionIndex) }"
+      :class="{
+        pcm_template_partition_selected: PartitionIsSelected(PartitionIndex),
+        pcm_template_partition_hovered: PartitionIsHovered(PartitionIndex),
+      }"
       :style="{ 'flex-grow': GetPartitionFlexGrow(Partition.units, PartitionIndex) }"
       :DepthCounter=" GetDepthCounter(PartitionIndex) "
       @click.stop=" $emit('PartitionClicked', GetDepthCounter(PartitionIndex)) "
+      @mouseover.stop=" $emit('PartitionHovered', {'PartitionAddress': GetDepthCounter(PartitionIndex), 'HoverState': true}) "
+      @mouseleave.stop=" $emit('PartitionHovered', {'PartitionAddress': GetDepthCounter(PartitionIndex), 'HoverState': false}) "
     >
       <!-- Generic partition -->
       <Object
@@ -22,8 +27,10 @@
         :TemplateRUSize="TemplateRUSize"
         :InitialDepthCounter="GetDepthCounter(PartitionIndex)"
         :SelectedPartitionAddress="SelectedPartitionAddress"
+        :HoveredPartitionAddress="HoveredPartitionAddress"
         :CabinetFace="CabinetFace"
         @PartitionClicked=" $emit('PartitionClicked', $event) "
+        @PartitionHovered=" $emit('PartitionHovered', $event) "
       />
 
       <!-- Connectable partition -->
@@ -31,17 +38,35 @@
         v-if=" Partition.type == 'connectable' "
         class=" pcm_template_connectable_container "
         :style="{
-          'grid-template-rows': GetConnectablePartitionGrid(Partition.port_layout.rows),
-          'grid-template-columns': GetConnectablePartitionGrid(Partition.port_layout.cols),
-          'grid-template-areas': GetConnectablePartitionAreas(Partition.port_layout.rows, Partition.port_layout.cols),
+          'grid-template-rows': GetPartitionGrid(Partition.port_layout.rows),
+          'grid-template-columns': GetPartitionGrid(Partition.port_layout.cols),
+          'grid-template-areas': GetPartitionAreas(Partition.port_layout.rows, Partition.port_layout.cols),
         }"
-
       >
         <div
           v-for=" portIndex in (Partition.port_layout.rows * Partition.port_layout.cols) "
           :key=" portIndex "
           class=" pcm_template_connectable_port_unk "
-          :style="{ 'grid-area': 'port'+(portIndex-1) }"
+          :style="{ 'grid-area': 'area'+(portIndex-1) }"
+        >
+        </div>
+      </div>
+
+      <!-- Enclosure partition -->
+      <div
+        v-if=" Partition.type == 'enclosure' "
+        class=" pcm_template_enclosure_container "
+        :style="{
+          'grid-template-rows': GetPartitionGrid(Partition.enc_layout.rows),
+          'grid-template-columns': GetPartitionGrid(Partition.enc_layout.cols),
+          'grid-template-areas': GetPartitionAreas(Partition.enc_layout.rows, Partition.enc_layout.cols),
+        }"
+      >
+        <div
+          v-for=" encIndex in (Partition.enc_layout.rows * Partition.enc_layout.cols) "
+          :key=" encIndex "
+          class=" pcm_template_enclosure_area "
+          :style="{ 'grid-area': 'area'+(encIndex-1) }"
         >
         </div>
       </div>
@@ -65,6 +90,7 @@ export default {
     TemplateRUSize: {type: Number},
     InitialDepthCounter: {type: Array},
     SelectedPartitionAddress: {type: Object},
+    HoveredPartitionAddress: {type: Object},
     CabinetFace: {type: String},
   },
   methods: {
@@ -79,13 +105,24 @@ export default {
       }
       return PartitionIsSelected
     },
+    PartitionIsHovered: function(PartitionIndex) {
+      const vm = this
+      const HoveredPartitionAddress = vm.HoveredPartitionAddress[vm.CabinetFace]
+      const PartitionAddress = vm.GetDepthCounter(PartitionIndex)
+      let PartitionIsHovered = false
+
+      if(HoveredPartitionAddress.length === PartitionAddress.length && HoveredPartitionAddress.every(function(value, index) { return value === PartitionAddress[index]})) {
+        PartitionIsHovered = true
+      }
+      return PartitionIsHovered
+    },
     GetDepthCounter: function(PartitionIndex) {
 
       // Store variables
       const vm = this;
       return vm.InitialDepthCounter.concat([PartitionIndex])
     },
-    GetConnectablePartitionGrid: function(units) {
+    GetPartitionGrid: function(units) {
 
       let GridArray = []
       for(let i=0; i<units; i++) {
@@ -94,7 +131,7 @@ export default {
 
       return GridArray.join(' ')
     },
-    GetConnectablePartitionAreas: function(rows, cols) {
+    GetPartitionAreas: function(rows, cols) {
 
       let AreasArray = []
       let AreaCounter = 0
@@ -104,7 +141,7 @@ export default {
         for(let c=0; c<cols; c++) {
           
           AreasArray[r].push([])
-          AreasArray[r][c] = 'port'+AreaCounter
+          AreasArray[r][c] = 'area'+AreaCounter
           AreaCounter++
         }
       }

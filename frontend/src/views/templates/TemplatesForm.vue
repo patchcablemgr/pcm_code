@@ -1,11 +1,20 @@
 <template>
     
   <b-row>
+    
     <b-form
       @submit.prevent="onSubmit"
       @reset="onReset"
       style="width:100%"
     >
+
+      <div
+        class="h5 font-weight-bolder m-0"
+      >
+        General:</div>
+      <hr
+        class="separator mt-0"
+      >
 
       <!-- Name -->
       <dl class="row">
@@ -112,9 +121,8 @@
         </dd>
       </dl>
 
-      <hr
-        class="separator"
-      >
+      <div class="h5 font-weight-bolder m-0">Partition:</div>
+      <hr class="separator mt-0">
 
       <!-- Partition Type -->
       <dl class="row">
@@ -139,22 +147,66 @@
         </dt>
         <dd class="col-sm-8">
           <b-button
+            title="Insert inside selected partition"
             v-ripple.400="'rgba(113, 102, 240, 0.15)'"
             variant="outline-primary"
             class="btn-icon"
-            @click="$emit('TemplatePartitionAdd')"
-            :disabled="AddPartitionDisabled"
+            @click="$emit('TemplatePartitionAdd', 'inside')"
+            :disabled="AddChildPartitionDisabled"
           >
+            <feather-icon icon="PlusSquareIcon" />
+          </b-button>
+          <b-button
+            title="Insert after selected partition"
+            v-ripple.400="'rgba(113, 102, 240, 0.15)'"
+            variant="outline-primary"
+            class="btn-icon"
+            @click="$emit('TemplatePartitionAdd', 'after')"
+            :disabled="AddSiblingPartitionDisabled"
+          >
+            <feather-icon
+              icon="MoreVerticalIcon"
+              v-show="ComputedSelectedPartitionDirection == 'row'"
+            />
+            <feather-icon
+              icon="MoreHorizontalIcon"
+              v-show="ComputedSelectedPartitionDirection == 'column'"
+            />
+            <br
+              v-show="ComputedSelectedPartitionDirection == 'row'"
+            >
             <feather-icon icon="PlusIcon" />
           </b-button>
           <b-button
+            title="Insert before selected partition"
+            v-ripple.400="'rgba(113, 102, 240, 0.15)'"
+            variant="outline-primary"
+            class="btn-icon"
+            @click="$emit('TemplatePartitionAdd', 'before')"
+            :disabled="AddSiblingPartitionDisabled"
+          >
+            <feather-icon icon="PlusIcon" />
+            <br
+              v-show="ComputedSelectedPartitionDirection == 'row'"
+            >
+            <feather-icon
+              icon="MoreVerticalIcon"
+              v-show="ComputedSelectedPartitionDirection == 'row'"
+            />
+            <feather-icon
+              icon="MoreHorizontalIcon"
+              v-show="ComputedSelectedPartitionDirection == 'column'"
+            />
+          </b-button>
+          <b-button
+            title="Delete selected partition"
             v-ripple.400="'rgba(113, 102, 240, 0.15)'"
             variant="outline-primary"
             class="btn-icon"
             @click="$emit('TemplatePartitionRemove')"
             :disabled="RemovePartitionDisabled"
           >
-            <feather-icon icon="MinusIcon" />
+            <feather-icon icon="MinusSquareIcon" />
           </b-button>
         </dd>
       </dl>
@@ -176,9 +228,14 @@
         </dd>
       </dl>
 
+      <div
+        class="h5 font-weight-bolder m-0"
+        v-show="ComputedInputTemplatePartitionType == 'connectable'"
+      >
+        Connectable:</div>
       <hr
-        class="separator"
-        v-show="ComputedInputTemplatePartitionType != 'generic'"
+        class="separator mt-0"
+        v-show="ComputedInputTemplatePartitionType == 'connectable'"
       >
 
       <!-- Port ID -->
@@ -242,7 +299,7 @@
         </dd>
       </dl>
 
-      <!-- Port Type -->
+      <!-- Port Connector -->
       <dl
         class="row"
         v-show="ComputedInputTemplatePartitionType == 'connectable'"
@@ -252,12 +309,21 @@
         </dt>
         <dd class="col-sm-8">
           <b-form-select
-            v-model="TemplateData[0].category_id"
-            :options="GetCategoryOptions()"
-            @change="$emit('TemplateCategoryUpdated', $event)"
+            v-model="ComputedInputTemplatePortConnector"
+            :options="GetPortConnectorOptions()"
           />
         </dd>
       </dl>
+
+      <div
+        class="h5 font-weight-bolder m-0"
+        v-show="ComputedInputTemplatePartitionType == 'enclosure'"
+      >
+        Enclosure:</div>
+      <hr
+        class="separator mt-0"
+        v-show="ComputedInputTemplatePartitionType == 'enclosure'"
+      >
 
       <!-- Enclosure Layout -->
       <dl
@@ -275,8 +341,8 @@
               </b-col>
               <b-col>
                 <b-form-input
-                  id="h-port-layout-column"
-                  v-model="ComputedInputTemplatePortLayoutCols"
+                  id="h-enc-layout-column"
+                  v-model="ComputedInputTemplateEncLayoutCols"
                   type="number"
                 />
               </b-col>
@@ -287,8 +353,8 @@
               </b-col>
               <b-col>
                 <b-form-input
-                  id="h-port-layout-row"
-                  v-model="ComputedInputTemplatePortLayoutRows"
+                  id="h-enc-layout-row"
+                  v-model="ComputedInputTemplateEncLayoutRows"
                   type="number"
                 />
               </b-col>
@@ -359,10 +425,12 @@ export default {
   },
   props: {
     CategoryData: {type: Array},
+    PortConnectorData: {type: Array},
     TemplateData: {type: Array},
     CabinetFace: {type: String},
     SelectedPartitionAddress: {type: Object},
-    AddPartitionDisabled: {type: Boolean},
+    AddChildPartitionDisabled: {type: Boolean},
+    AddSiblingPartitionDisabled: {type: Boolean},
     RemovePartitionDisabled: {type: Boolean},
     PartitionTypeDisabled: {type: Boolean},
   },
@@ -394,6 +462,18 @@ export default {
     }
   },
   computed: {
+    ComputedSelectedPartitionDirection: {
+      get() {
+        // Store variables
+        const vm = this
+        const CabinetFace = vm.CabinetFace
+        const SelectedPartitionAddress = vm.SelectedPartitionAddress[CabinetFace]
+        const SelectedPartitionDepth = SelectedPartitionAddress.length
+        const SelectedPartitionDirection = (SelectedPartitionDepth % 2) ? 'column' : 'row'
+
+        return SelectedPartitionDirection
+      }
+    },
     ComputedInputTemplatePartitionType: {
       get() {
 
@@ -476,6 +556,69 @@ export default {
 
       }
     },
+    ComputedInputTemplatePortConnector: {
+      get() {
+
+        // Store variables
+        const vm = this
+        const SelectedPartition = vm.GetSelectedPartition()
+        const PortConnector = (SelectedPartition.type == 'connectable') ? SelectedPartition.port_connector : 0
+        
+        // Return selected partition type
+        return PortConnector
+      },
+      set(newValue) {
+
+        // Store variables
+        const vm = this
+
+        // Emit new value
+        vm.$emit('TemplatePartitionPortConnectorUpdated', newValue)
+
+      }
+    },
+    ComputedInputTemplateEncLayoutCols: {
+      get() {
+
+        // Store variables
+        const vm = this
+        const SelectedPartition = vm.GetSelectedPartition()
+        const EncLayoutCols = (SelectedPartition.type == 'enclosure') ? SelectedPartition.enc_layout.cols : 0
+        
+        // Return selected partition type
+        return EncLayoutCols
+      },
+      set(newValue) {
+
+        // Store variables
+        const vm = this
+
+        // Emit new value
+        vm.$emit('TemplatePartitionEncLayoutColsUpdated', newValue)
+
+      }
+    },
+    ComputedInputTemplateEncLayoutRows: {
+      get() {
+
+        // Store variables
+        const vm = this
+        const SelectedPartition = vm.GetSelectedPartition()
+        const EncLayoutCols = (SelectedPartition.type == 'enclosure') ? SelectedPartition.enc_layout.rows : 0
+        
+        // Return selected partition type
+        return EncLayoutCols
+      },
+      set(newValue) {
+
+        // Store variables
+        const vm = this
+
+        // Emit new value
+        vm.$emit('TemplatePartitionEncLayoutRowsUpdated', newValue)
+
+      }
+    },
   },
   methods: {
     onSubmit: function() {
@@ -512,8 +655,7 @@ export default {
       const TemplateData = vm.TemplateData[0]
       const CabinetFace = vm.CabinetFace
       const SelectedPartitionAddress = JSON.parse(JSON.stringify(vm.SelectedPartitionAddress[CabinetFace]))
-      const SelectedPartitionDepth = SelectedPartitionAddress.length
-      const SelectedPartitionDirection = (SelectedPartitionDepth % 2) ? 'column' : 'row'
+      const SelectedPartitionDirection = vm.ComputedSelectedPartitionDirection
       let WorkingMax = (SelectedPartitionDirection == 'column') ? 24 : TemplateData.ru_size * 2
       let WorkingPartition = JSON.parse(JSON.stringify(TemplateData.blueprint[CabinetFace]))
 
@@ -616,6 +758,21 @@ export default {
 
         let Category = vm.CategoryData[i]
         WorkingArray.push({'value': Category.id, 'text': Category.name})
+      }
+
+      return WorkingArray
+    },
+    GetPortConnectorOptions: function() {
+
+      // Store variables
+      const vm = this
+      let WorkingArray = []
+
+      // Populate working array with data to be used as select options
+      for(let i = 0; i < vm.PortConnectorData.length; i++) {
+
+        let PortConnector = vm.PortConnectorData[i]
+        WorkingArray.push({'value': PortConnector.value, 'text': PortConnector.name})
       }
 
       return WorkingArray

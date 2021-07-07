@@ -10,6 +10,7 @@
               <templates-form
                 :CategoryData="CategoryData"
                 :PortConnectorData="PortConnectorData"
+                :MediaData="MediaData"
                 :TemplateData="TemplateData"
                 :CabinetFace="CabinetFace"
                 :SelectedPartitionAddress="SelectedPartitionAddress"
@@ -29,6 +30,7 @@
                 @TemplatePartitionSizeUpdated="TemplatePartitionSizeUpdated($event)"
                 @TemplatePartitionPortLayoutColsUpdated="TemplatePartitionPortLayoutColsUpdated($event)"
                 @TemplatePartitionPortLayoutRowsUpdated="TemplatePartitionPortLayoutRowsUpdated($event)"
+                @TemplatePartitionMediaUpdated="TemplatePartitionMediaUpdated($event)"
                 @TemplatePartitionPortConnectorUpdated="TemplatePartitionPortConnectorUpdated($event)"
                 @TemplatePartitionEncLayoutColsUpdated="TemplatePartitionEncLayoutColsUpdated($event)"
                 @TemplatePartitionEncLayoutRowsUpdated="TemplatePartitionEncLayoutRowsUpdated($event)"
@@ -106,6 +108,16 @@ const PortConnectorData = [
     "value": 2,
     "name": "blank2",
     "default": false,
+  }
+]
+const MediaData = [
+  {
+    "value": 1,
+    "name": "placeholder",
+    "category_id": 1,
+    "type_id": 1,
+    "display": 1,
+    "default": 1,
   }
 ]
 const CabinetFace = "front"
@@ -203,6 +215,7 @@ export default {
   data() {
     return {
       CategoryData,
+      MediaData,
       PortConnectorData,
       CabinetData,
       ObjectData,
@@ -299,28 +312,22 @@ export default {
     TemplatePartitionTypeUpdated: function(newValue) {
 
       // Store variables
-      let SelectedPartition = this.GetPartition()
+      const vm = this
+      let SelectedPartition = vm.GetPartition()
       SelectedPartition.type = newValue
 
       // Define port_layout if it doesn't exist
       if(newValue == 'connectable') {
         
-        if(!('port_layout' in SelectedPartition)) {
-          
-          SelectedPartition.port_layout = {
-            'cols': 1,
-            'rows': 1,
-          }
-        }
+        SelectedPartition.port_layout = ('port_layout' in SelectedPartition) ? SelectedPartition.port_layout : {'cols': 1, 'rows': 1}
+        const defaultMediaIndex = vm.MediaData.findIndex((media) => media.default);
+        const defaultMediaID = vm.MediaData[defaultMediaIndex].id
+        SelectedPartition.media = ('media' in SelectedPartition) ? SelectedPartition.media : defaultMediaID
+
       } else if(newValue == 'enclosure') {
         
-        if(!('enc_layout' in SelectedPartition)) {
-          
-          SelectedPartition.enc_layout = {
-            'cols': 1,
-            'rows': 1,
-          }
-        }
+        SelectedPartition.enc_layout = ('enc_layout' in SelectedPartition) ? SelectedPartition.enc_layout : {'cols': 1, 'rows': 1}
+
       }
     },
     TemplatePartitionAdd: function(InsertPosition) {
@@ -411,6 +418,12 @@ export default {
       // Store variables
       let SelectedPartition = this.GetPartition()
       SelectedPartition.port_layout.rows = newValue
+    },
+    TemplatePartitionMediaUpdated: function(newValue) {
+
+      // Store variables
+      let SelectedPartition = this.GetPartition()
+      SelectedPartition.media = newValue
     },
     TemplatePartitionPortConnectorUpdated: function(newValue) {
 
@@ -530,13 +543,22 @@ export default {
         }
       });
     },
+    mediaGET: function() {
+
+      const vm = this;
+
+      this.$http.get('/api/media').then(function(response){
+        vm.MediaData = response.data;
+      });
+    },
   },
   mounted() {
 
     const vm = this;
     const SetCategoryToDefault = true
 
-    vm.categoryGET(SetCategoryToDefault);
+    vm.categoryGET(SetCategoryToDefault)
+    vm.mediaGET()
   },
 }
 </script>

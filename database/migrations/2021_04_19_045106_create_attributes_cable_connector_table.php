@@ -17,7 +17,7 @@ class CreateAttributesCableConnectorTable extends Migration
             $table->integer('id', true);
             $table->integer('value');
             $table->string('name');
-            $table->boolean('defaultOption');
+            $table->boolean('default');
         });
     }
 

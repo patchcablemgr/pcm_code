@@ -299,6 +299,22 @@
         </dd>
       </dl>
 
+      <!-- Media -->
+      <dl
+        class="row"
+        v-show="ComputedInputTemplatePartitionType == 'connectable'"
+      >
+        <dt class="col-sm-4">
+          Medium
+        </dt>
+        <dd class="col-sm-8">
+          <b-form-select
+            v-model="ComputedInputTemplateMedia"
+            :options="GetMediaOptions()"
+          />
+        </dd>
+      </dl>
+
       <!-- Port Connector -->
       <dl
         class="row"
@@ -314,6 +330,10 @@
           />
         </dd>
       </dl>
+
+<!--
+  ### Enclosure ###
+-->
 
       <div
         class="h5 font-weight-bolder m-0"
@@ -426,6 +446,7 @@ export default {
   props: {
     CategoryData: {type: Array},
     PortConnectorData: {type: Array},
+    MediaData: {type: Array},
     TemplateData: {type: Array},
     CabinetFace: {type: String},
     SelectedPartitionAddress: {type: Object},
@@ -553,6 +574,27 @@ export default {
 
         // Emit new value
         vm.$emit('TemplatePartitionPortLayoutRowsUpdated', newValue)
+
+      }
+    },
+    ComputedInputTemplateMedia: {
+      get() {
+
+        // Store variables
+        const vm = this
+        const SelectedPartition = vm.GetSelectedPartition()
+        const Media = (SelectedPartition.type == 'connectable') ? SelectedPartition.media : 0
+        
+        // Return selected partition type
+        return Media
+      },
+      set(newValue) {
+
+        // Store variables
+        const vm = this
+
+        // Emit new value
+        vm.$emit('TemplatePartitionMediaUpdated', newValue)
 
       }
     },
@@ -758,6 +800,23 @@ export default {
 
         let Category = vm.CategoryData[i]
         WorkingArray.push({'value': Category.id, 'text': Category.name})
+      }
+
+      return WorkingArray
+    },
+    GetMediaOptions: function() {
+
+      // Store variables
+      const vm = this
+      let WorkingArray = []
+
+      // Populate working array with data to be used as select options
+      for(let i = 0; i < vm.MediaData.length; i++) {
+
+        let Media = vm.MediaData[i]
+        if(Media.display) {
+          WorkingArray.push({'value': Media.value, 'text': Media.name})
+        }
       }
 
       return WorkingArray

@@ -228,6 +228,10 @@
         </dd>
       </dl>
 
+<!--
+  ### Connectable ###
+-->
+
       <div
         class="h5 font-weight-bolder m-0"
         v-show="ComputedInputTemplatePartitionType == 'connectable'"
@@ -327,6 +331,22 @@
           <b-form-select
             v-model="ComputedInputTemplatePortConnector"
             :options="GetPortConnectorOptions()"
+          />
+        </dd>
+      </dl>
+
+      <!-- Port Orientation -->
+      <dl
+        class="row"
+        v-show="ComputedInputTemplatePartitionType == 'connectable'"
+      >
+        <dt class="col-sm-4">
+          Port Orientation
+        </dt>
+        <dd class="col-sm-8">
+          <b-form-select
+            v-model="ComputedInputTemplatePortOrientation"
+            :options="GetPortOrientationOptions()"
           />
         </dd>
       </dl>
@@ -446,6 +466,7 @@ export default {
   props: {
     CategoryData: {type: Array},
     PortConnectorData: {type: Array},
+    PortOrientationData: {type: Array},
     MediaData: {type: Array},
     TemplateData: {type: Array},
     CabinetFace: {type: String},
@@ -583,10 +604,15 @@ export default {
         // Store variables
         const vm = this
         const SelectedPartition = vm.GetSelectedPartition()
-        const Media = (SelectedPartition.type == 'connectable') ? SelectedPartition.media : 0
+        const DefaultMediaIndex = vm.MediaData.findIndex((media) => media.default);
+        const DefaultMediaValue = vm.MediaData[DefaultMediaIndex].value
+
+        const MediaValue = (SelectedPartition.media) ? SelectedPartition.media : DefaultMediaValue
+        
+        console.log('Debug (ComputedInputTemplateMedia): '+MediaValue)
         
         // Return selected partition type
-        return Media
+        return MediaValue
       },
       set(newValue) {
 
@@ -604,10 +630,13 @@ export default {
         // Store variables
         const vm = this
         const SelectedPartition = vm.GetSelectedPartition()
-        const PortConnector = (SelectedPartition.type == 'connectable') ? SelectedPartition.port_connector : 0
+        const DefaultPortConnectorIndex = vm.PortConnectorData.findIndex((PortConnector) => PortConnector.default);
+        const DefaultPortConnectorValue = vm.PortConnectorData[DefaultPortConnectorIndex].value
+
+        const PortConnectorValue = (SelectedPartition.port_connector) ? SelectedPartition.port_connector : DefaultPortConnectorValue
         
         // Return selected partition type
-        return PortConnector
+        return PortConnectorValue
       },
       set(newValue) {
 
@@ -616,6 +645,30 @@ export default {
 
         // Emit new value
         vm.$emit('TemplatePartitionPortConnectorUpdated', newValue)
+
+      }
+    },
+    ComputedInputTemplatePortOrientation: {
+      get() {
+
+        // Store variables
+        const vm = this
+        const SelectedPartition = vm.GetSelectedPartition()
+        const DefaultPortOrientationIndex = vm.PortOrientationData.findIndex((PortOrientation) => PortOrientation.default);
+        const DefaultPortOrientationValue = vm.PortOrientationData[DefaultPortOrientationIndex].value
+
+        const PortOrientationValue = (SelectedPartition.port_orientation) ? SelectedPartition.port_orientation : DefaultPortOrientationValue
+        
+        // Return selected partition type
+        return PortOrientationValue
+      },
+      set(newValue) {
+
+        // Store variables
+        const vm = this
+
+        // Emit new value
+        vm.$emit('TemplatePartitionPortOrientationUpdated', newValue)
 
       }
     },
@@ -832,6 +885,21 @@ export default {
 
         let PortConnector = vm.PortConnectorData[i]
         WorkingArray.push({'value': PortConnector.value, 'text': PortConnector.name})
+      }
+
+      return WorkingArray
+    },
+    GetPortOrientationOptions: function() {
+
+      // Store variables
+      const vm = this
+      let WorkingArray = []
+
+      // Populate working array with data to be used as select options
+      for(let i = 0; i < vm.PortOrientationData.length; i++) {
+
+        let PortOrientation = vm.PortOrientationData[i]
+        WorkingArray.push({'value': PortOrientation.value, 'text': PortOrientation.name})
       }
 
       return WorkingArray

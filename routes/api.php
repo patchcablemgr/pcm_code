@@ -30,7 +30,8 @@ Route::group(['prefix' => 'auth'], function () {
 Route::group(['middleware' => 'auth:sanctum'], function(){
   Route::apiResources([
     'category' => TemplateCategory::class,
-    'media' => AttributesMedia::class,
+    'medium' => AttributesMedia::class,
+    'port-orientation' => AttributesPortOrientation::class,
   ]);
 });
 

@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Media;
+use App\Models\PortOrientation;
 
-class AttributesMedia extends Controller
+class AttributesPortOrientation extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -14,8 +14,8 @@ class AttributesMedia extends Controller
      */
     public function index()
     {
-        $media = Media::all();
-        return $media->toArray();
+        $portOrientation = PortOrientation::all();
+        return $portOrientation->toArray();
     }
 
 }

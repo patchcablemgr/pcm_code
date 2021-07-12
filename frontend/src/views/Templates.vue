@@ -10,6 +10,7 @@
               <templates-form
                 :CategoryData="CategoryData"
                 :PortConnectorData="PortConnectorData"
+                :PortOrientationData="PortOrientationData"
                 :MediaData="MediaData"
                 :TemplateData="TemplateData"
                 :CabinetFace="CabinetFace"
@@ -32,6 +33,7 @@
                 @TemplatePartitionPortLayoutRowsUpdated="TemplatePartitionPortLayoutRowsUpdated($event)"
                 @TemplatePartitionMediaUpdated="TemplatePartitionMediaUpdated($event)"
                 @TemplatePartitionPortConnectorUpdated="TemplatePartitionPortConnectorUpdated($event)"
+                @TemplatePartitionPortOrientationUpdated="TemplatePartitionPortOrientationUpdated($event)"
                 @TemplatePartitionEncLayoutColsUpdated="TemplatePartitionEncLayoutColsUpdated($event)"
                 @TemplatePartitionEncLayoutRowsUpdated="TemplatePartitionEncLayoutRowsUpdated($event)"
                 @FormReset="FormReset($event)"
@@ -101,14 +103,17 @@ const CategoryData = [
 const PortConnectorData = [
   {
     "value": 1,
-    "name": "blank1",
-    "default": true,
+    "name": "RJ45",
+    "category_type_id": 1,
+    "default": 1,
   },
+]
+const PortOrientationData = [
   {
-    "value": 2,
-    "name": "blank2",
-    "default": false,
-  }
+    "value": 1,
+    "name": "Top-Left to Right",
+    "default": 1,
+  },
 ]
 const MediaData = [
   {
@@ -159,29 +164,28 @@ const TemplateData = [
         "children": [
           {
             "type": "generic",
-            "units": 12,
-            "children": [
-              {
-                "type": "generic",
-                "units": 3,
-                "children": [
-                  {
-                    "type": "enclosure",
-                    "units": 10,
-                    "enc_layout": {
-                      "cols": 1,
-                      "rows": 1,
-                    },
-                    "children": [],
-                  },
-                  {
-                    "type": "generic",
-                    "units": 1,
-                    "children": [],
-                  }
-                ],
-              },
-            ],
+            "units": 1,
+            "children": [],
+          },
+          {
+            "type": "generic",
+            "units": 1,
+            "children": [],
+          },
+          {
+            "type": "generic",
+            "units": 1,
+            "children": [],
+          },
+          {
+            "type": "generic",
+            "units": 1,
+            "children": [],
+          },
+          {
+            "type": "generic",
+            "units": 1,
+            "children": [],
           },
         ],
       },
@@ -189,7 +193,7 @@ const TemplateData = [
         "children": [
           {
             "type": "generic",
-            "units": 2,
+            "units": 1,
             "children": [],
           },
         ],
@@ -217,6 +221,7 @@ export default {
       CategoryData,
       MediaData,
       PortConnectorData,
+      PortOrientationData,
       CabinetData,
       ObjectData,
       TemplateData,
@@ -277,6 +282,8 @@ export default {
       const CabinetFace = vm.CabinetFace
 
       vm.SelectedPartitionAddress[CabinetFace] = PartitionAddress
+
+      console.log('Debug (selectedPartition): '+JSON.stringify(vm.GetPartition()))
     },
     PartitionHovered: function(HoverData) {
 
@@ -318,11 +325,24 @@ export default {
 
       // Define port_layout if it doesn't exist
       if(newValue == 'connectable') {
-        
-        SelectedPartition.port_layout = ('port_layout' in SelectedPartition) ? SelectedPartition.port_layout : {'cols': 1, 'rows': 1}
+
+        // Port layout
+        SelectedPartition.port_layout = {'cols': 1, 'rows': 1}
+
+        // Port media type
         const defaultMediaIndex = vm.MediaData.findIndex((media) => media.default);
-        const defaultMediaID = vm.MediaData[defaultMediaIndex].id
-        SelectedPartition.media = ('media' in SelectedPartition) ? SelectedPartition.media : defaultMediaID
+        const defaultMediaValue = vm.MediaData[defaultMediaIndex].value
+        SelectedPartition.media = defaultMediaValue
+
+        // Port connector
+        const defaultPortConnectorIndex = vm.PortConnectorData.findIndex((PortConnector) => PortConnector.default);
+        const defaultPortConnectorValue = vm.PortConnectorData[defaultPortConnectorIndex].value
+        SelectedPartition.port_connector = defaultPortConnectorValue
+
+        // Port orientation
+        const defaultPortOrientationIndex = vm.PortOrientationData.findIndex((PortOrientation) => PortOrientation.default);
+        const defaultPortOrientationValue = vm.PortOrientationData[defaultPortOrientationIndex].value
+        SelectedPartition.port_orientation = defaultPortOrientationValue
 
       } else if(newValue == 'enclosure') {
         
@@ -431,6 +451,12 @@ export default {
       let SelectedPartition = this.GetPartition()
       SelectedPartition.port_connector = newValue
     },
+    TemplatePartitionPortOrientationUpdated: function(newValue) {
+
+      // Store variables
+      let SelectedPartition = this.GetPartition()
+      SelectedPartition.port_orientation = newValue
+    },
     TemplatePartitionEncLayoutColsUpdated: function(newValue) {
 
       // Store variables
@@ -499,43 +525,14 @@ export default {
       // Return selected partition
       return WorkingPartition
     },
-    GetPartitionParent: function(PartAddr = false) {
-
-      // Store variables
-      const vm = this
-      const TemplateData = vm.TemplateData[0]
-      const CabinetFace = vm.CabinetFace
-      const PartitionAddress = (PartAddr) ? PartAddr : vm.SelectedPartitionAddress[CabinetFace]
-      let WorkingPartition = TemplateData.blueprint[CabinetFace]
-
-      // Loop through partition address array
-      PartitionAddress.some(function(PartitionAddressIndex, Depth){
-
-        // If working partition is selected partition parent, set WorkingMax to unit size and break out of loop
-        if((Depth + 1) == (PartitionAddress.length - 1)) {
-          //WorkingMax = WorkingPartition.children[PartitionAddressIndex].units
-          return true
-        }
-
-        // Move to next partition
-        WorkingPartition = WorkingPartition.children[PartitionAddressIndex]
-      });
-
-      return WorkingPartition
-    },
-    GetSelectedPartitionParentSize: function() {
-
-      // Store variables
-      const vm = this
-
-      return vm.GetPartitionParent().units
-    },
     categoryGET: function(SetCategoryToDefault = false) {
 
       const vm = this;
 
       this.$http.get('/api/category').then(function(response){
         vm.CategoryData = response.data;
+
+        // Apply default category to template preview
         if(SetCategoryToDefault) {
           const defaultCategoryIndex = vm.CategoryData.findIndex((category) => category.default);
           const defaultCategoryID = vm.CategoryData[defaultCategoryIndex].id
@@ -543,12 +540,20 @@ export default {
         }
       });
     },
-    mediaGET: function() {
+    mediumGET: function() {
 
       const vm = this;
 
-      this.$http.get('/api/media').then(function(response){
+      this.$http.get('/api/medium').then(function(response){
         vm.MediaData = response.data;
+      });
+    },
+    portOrientationGET: function() {
+
+      const vm = this;
+
+      this.$http.get('/api/port-orientation').then(function(response){
+        vm.PortOrientationData = response.data;
       });
     },
   },
@@ -558,7 +563,8 @@ export default {
     const SetCategoryToDefault = true
 
     vm.categoryGET(SetCategoryToDefault)
-    vm.mediaGET()
+    vm.mediumGET()
+    vm.portOrientationGet()
   },
 }
 </script>

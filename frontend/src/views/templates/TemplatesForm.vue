@@ -432,7 +432,15 @@
     />
 
     <!-- Port ID Modal -->
-    <modal-templates-port-id/>
+    <modal-templates-port-id
+      v-if="ComputedInputTemplatePartitionType == 'connectable'"
+      :TemplateData="TemplateData"
+      :CabinetFace="CabinetFace"
+      :SelectedPartitionAddress="SelectedPartitionAddress"
+      :SelectedPortFormat="SelectedPortFormat"
+      v-on:TemplatePartitionPortFormatTypeUpdated="$emit('TemplatePartitionPortFormatTypeUpdated', $event)"
+      v-on:TemplatePartitionPortFormatValueUpdated="$emit('TemplatePartitionPortFormatValueUpdated', $event)"
+    />
 
   </b-row>
 </template>
@@ -475,6 +483,7 @@ export default {
     AddSiblingPartitionDisabled: {type: Boolean},
     RemovePartitionDisabled: {type: Boolean},
     PartitionTypeDisabled: {type: Boolean},
+    SelectedPortFormat: {type: Array},
   },
   data() {
     return {

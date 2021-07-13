@@ -19,6 +19,7 @@
                 :AddSiblingPartitionDisabled="AddSiblingPartitionDisabled"
                 :RemovePartitionDisabled="RemovePartitionDisabled"
                 :PartitionTypeDisabled="PartitionTypeDisabled"
+                :SelectedPortFormat="SelectedPortFormat"
                 @TemplateNameUpdated="TemplateNameUpdated($event)"
                 @TemplateCategoriesUpdated="TemplateCategoriesUpdated($event)"
                 @TemplateCategoryUpdated="TemplateCategoryUpdated($event)"
@@ -29,6 +30,8 @@
                 @TemplatePartitionAdd="TemplatePartitionAdd($event)"
                 @TemplatePartitionRemove="TemplatePartitionRemove()"
                 @TemplatePartitionSizeUpdated="TemplatePartitionSizeUpdated($event)"
+                @TemplatePartitionPortFormatValueUpdated="TemplatePartitionPortFormatValueUpdated($event)"
+                @TemplatePartitionPortFormatTypeUpdated="TemplatePartitionPortFormatTypeUpdated($event)"
                 @TemplatePartitionPortLayoutColsUpdated="TemplatePartitionPortLayoutColsUpdated($event)"
                 @TemplatePartitionPortLayoutRowsUpdated="TemplatePartitionPortLayoutRowsUpdated($event)"
                 @TemplatePartitionMediaUpdated="TemplatePartitionMediaUpdated($event)"
@@ -273,6 +276,18 @@ export default {
 
       return !SelectedPartitionAddress.length
     },
+    SelectedPortFormat: function() {
+      // Store variables
+      const vm = this
+      const Partition = vm.GetPartition()
+      let SelectedPortFormat = []
+
+      if(Partition.type == 'connectable') {
+        SelectedPortFormat = Partition.port_format
+      }
+
+      return SelectedPortFormat
+    },
   },
   methods: {
     PartitionClicked: function(PartitionAddress) {
@@ -325,6 +340,12 @@ export default {
 
       // Define port_layout if it doesn't exist
       if(newValue == 'connectable') {
+
+        // Port ID
+        SelectedPartition.port_format = [
+          {'type': 'static', 'value': 'Port', 'count': 0, 'order': 0},
+          {'type': 'incremental', 'value': '1', 'count': 0, 'order': 0},
+        ]
 
         // Port layout
         SelectedPartition.port_layout = {'cols': 1, 'rows': 1}
@@ -426,6 +447,24 @@ export default {
       // Store variables
       let SelectedPartition = this.GetPartition()
       SelectedPartition.units = newValue
+    },
+    TemplatePartitionPortFormatValueUpdated: function(newValue) {
+
+      const vm = this
+      const PortFormatIndex = newValue.index
+      const PortFormatValue = newValue.value
+      vm.SelectedPortFormat[PortFormatIndex].value = PortFormatValue
+
+      console.log('Debug (PortFormatType): '+JSON.stringify(newValue))
+    },
+    TemplatePartitionPortFormatTypeUpdated: function(newValue) {
+
+      const vm = this
+      const PortFormatIndex = newValue.index
+      const PortFormatValue = newValue.value
+      vm.SelectedPortFormat[PortFormatIndex].type = PortFormatValue
+
+      console.log('Debug (PortFormatType): '+JSON.stringify(newValue))
     },
     TemplatePartitionPortLayoutColsUpdated: function(newValue) {
 
@@ -564,7 +603,7 @@ export default {
 
     vm.categoryGET(SetCategoryToDefault)
     vm.mediumGET()
-    vm.portOrientationGet()
+    vm.portOrientationGET()
   },
 }
 </script>

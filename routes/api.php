@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\TemplateCategory;
 use App\Http\Controllers\AttributesMedia;
+use App\Http\Controllers\AttributesPortOrientation;
 
 /*
 |--------------------------------------------------------------------------

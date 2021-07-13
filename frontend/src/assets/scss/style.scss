@@ -78,6 +78,10 @@ div.pcm_template_connectable_port_unk {
     background-color: black;
 }
 
+div.pcm_template_port_format_field_selected {
+    box-shadow: 0 0 0 3px yellow;
+}
+
 div.pcm_template_enclosure_container {
     display: grid;
     justify-items: center;

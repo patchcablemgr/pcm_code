@@ -32,6 +32,9 @@
                 @TemplatePartitionSizeUpdated="TemplatePartitionSizeUpdated($event)"
                 @TemplatePartitionPortFormatValueUpdated="TemplatePartitionPortFormatValueUpdated($event)"
                 @TemplatePartitionPortFormatTypeUpdated="TemplatePartitionPortFormatTypeUpdated($event)"
+                @TemplatePartitionPortFormatCountUpdated="TemplatePartitionPortFormatCountUpdated($event)"
+                @TemplatePartitionPortFormatOrderUpdated="TemplatePartitionPortFormatOrderUpdated($event)"
+                @TemplatePartitionPortFormatFieldMove="TemplatePartitionPortFormatFieldMove($event)"
                 @TemplatePartitionPortLayoutColsUpdated="TemplatePartitionPortLayoutColsUpdated($event)"
                 @TemplatePartitionPortLayoutRowsUpdated="TemplatePartitionPortLayoutRowsUpdated($event)"
                 @TemplatePartitionMediaUpdated="TemplatePartitionMediaUpdated($event)"
@@ -166,30 +169,35 @@ const TemplateData = [
         "type": "generic",
         "children": [
           {
-            "type": "generic",
-            "units": 1,
-            "children": [],
-          },
-          {
-            "type": "generic",
-            "units": 1,
-            "children": [],
-          },
-          {
-            "type": "generic",
-            "units": 1,
-            "children": [],
-          },
-          {
-            "type": "generic",
-            "units": 1,
-            "children": [],
-          },
-          {
-            "type": "generic",
-            "units": 1,
-            "children": [],
-          },
+            "type":"connectable",
+            "units":1,
+            "children":[],
+            "port_format":[
+              {
+                "type":"static",
+                "value":"Port",
+                "count":0,
+                "order":0
+              },{
+                "type":"incremental",
+                "value":"1",
+                "count":0,
+                "order":1
+              },{
+                "type":"series",
+                "value":"a,b,c",
+                "count":0,
+                "order":2
+              }
+            ],
+            "port_layout":{
+              "cols":1,
+              "rows":1
+            },
+            "media":1,
+            "port_connector":1,
+            "port_orientation":1
+          }
         ],
       },
       "rear": {
@@ -341,33 +349,42 @@ export default {
       // Define port_layout if it doesn't exist
       if(newValue == 'connectable') {
 
-        // Port ID
-        SelectedPartition.port_format = [
+        // Port Format
+        const PortFormat = [
           {'type': 'static', 'value': 'Port', 'count': 0, 'order': 0},
-          {'type': 'incremental', 'value': '1', 'count': 0, 'order': 0},
+          {'type': 'incremental', 'value': '1', 'count': 0, 'order': 2},
+          {'type': 'series', 'value': 'A,B,C', 'count': 0, 'order': 1},
         ]
 
         // Port layout
-        SelectedPartition.port_layout = {'cols': 1, 'rows': 1}
+        const PortLayout = {'cols': 1, 'rows': 1}
 
         // Port media type
         const defaultMediaIndex = vm.MediaData.findIndex((media) => media.default);
         const defaultMediaValue = vm.MediaData[defaultMediaIndex].value
-        SelectedPartition.media = defaultMediaValue
+        const Media = defaultMediaValue
 
         // Port connector
         const defaultPortConnectorIndex = vm.PortConnectorData.findIndex((PortConnector) => PortConnector.default);
         const defaultPortConnectorValue = vm.PortConnectorData[defaultPortConnectorIndex].value
-        SelectedPartition.port_connector = defaultPortConnectorValue
+        const PortConnector = defaultPortConnectorValue
 
         // Port orientation
         const defaultPortOrientationIndex = vm.PortOrientationData.findIndex((PortOrientation) => PortOrientation.default);
         const defaultPortOrientationValue = vm.PortOrientationData[defaultPortOrientationIndex].value
-        SelectedPartition.port_orientation = defaultPortOrientationValue
+        const PortOrientation = defaultPortOrientationValue
+
+        // Set connectable properties
+        vm.$set(SelectedPartition, 'port_format', PortFormat)
+        vm.$set(SelectedPartition, 'port_layout', PortLayout)
+        vm.$set(SelectedPartition, 'media', Media)
+        vm.$set(SelectedPartition, 'port_connector', PortConnector)
+        vm.$set(SelectedPartition, 'port_orientation', PortOrientation)
 
       } else if(newValue == 'enclosure') {
         
-        SelectedPartition.enc_layout = ('enc_layout' in SelectedPartition) ? SelectedPartition.enc_layout : {'cols': 1, 'rows': 1}
+        const EncLayout = {'cols': 1, 'rows': 1}
+        vm.$set(SelectedPartition, 'enc_layout', EncLayout)
 
       }
     },
@@ -465,6 +482,67 @@ export default {
       vm.SelectedPortFormat[PortFormatIndex].type = PortFormatValue
 
       console.log('Debug (PortFormatType): '+JSON.stringify(newValue))
+    },
+    TemplatePartitionPortFormatCountUpdated: function(newValue) {
+
+      const vm = this
+      const PortFormatIndex = newValue.index
+      const PortFormatValue = newValue.value
+      vm.SelectedPortFormat[PortFormatIndex].count = PortFormatValue
+
+      console.log('Debug (PortFormatCount): '+JSON.stringify(newValue))
+    },
+    TemplatePartitionPortFormatOrderUpdated: function(newValue) {
+
+      console.log('newValue: '+JSON.stringify(newValue))
+
+      const vm = this
+      const SelectedPortFormat = vm.SelectedPortFormat
+      const PortFormatIndex = newValue.index
+      const PortFormatValue = newValue.value
+      const PortFormatValueOrig = SelectedPortFormat[PortFormatIndex].order
+      console.log('PortFormatValue: '+PortFormatValue+' PortFormatValueOrig: '+PortFormatValueOrig)
+
+      SelectedPortFormat.forEach(function(PortFormatField, index){
+
+        if(index != PortFormatIndex) {
+
+          // Is field incrementable?
+          const PortFormatFieldType = PortFormatField.type
+          if(PortFormatFieldType == 'incremental' || PortFormatFieldType == 'series') {
+            
+            // Adjust field order
+            const PortFormatFieldOrder = PortFormatField.order
+            if(PortFormatFieldOrder > PortFormatValue && PortFormatFieldOrder < PortFormatValueOrig) {
+
+              // Increment
+              vm.SelectedPortFormat[index].order = PortFormatFieldOrder + 1
+            } else if(PortFormatFieldOrder < PortFormatValue && PortFormatFieldOrder > PortFormatValueOrig) {
+
+              // Decrement
+              vm.SelectedPortFormat[index].order = PortFormatFieldOrder - 1
+            } else if(PortFormatFieldOrder == PortFormatValue) {
+              if(PortFormatValue > PortFormatValueOrig) {
+
+                // Decrement
+                vm.SelectedPortFormat[index].order = PortFormatFieldOrder - 1
+              } else if(PortFormatValue < PortFormatValueOrig) {
+
+                // Increment
+                vm.SelectedPortFormat[index].order = PortFormatFieldOrder + 1
+              }
+            }
+          }
+        }
+      })
+
+      // Update field order
+      SelectedPortFormat[PortFormatIndex].order = PortFormatValue
+
+      console.log('Debug (PortFormatOrder): '+JSON.stringify(newValue))
+    },
+    TemplatePartitionPortFormatFieldMove: function(direction) {
+      console.log(direction)
     },
     TemplatePartitionPortLayoutColsUpdated: function(newValue) {
 

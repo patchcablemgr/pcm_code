@@ -284,6 +284,7 @@
                   id="h-port-layout-column"
                   v-model="ComputedInputTemplatePortLayoutCols"
                   type="number"
+                  min=1
                 />
               </b-col>
             </b-row>
@@ -296,6 +297,7 @@
                   id="h-port-layout-row"
                   v-model="ComputedInputTemplatePortLayoutRows"
                   type="number"
+                  min=1
                 />
               </b-col>
             </b-row>
@@ -384,6 +386,7 @@
                   id="h-enc-layout-column"
                   v-model="ComputedInputTemplateEncLayoutCols"
                   type="number"
+                  min=1
                 />
               </b-col>
             </b-row>
@@ -396,6 +399,7 @@
                   id="h-enc-layout-row"
                   v-model="ComputedInputTemplateEncLayoutRows"
                   type="number"
+                  min=1
                 />
               </b-col>
             </b-row>
@@ -438,8 +442,11 @@
       :CabinetFace="CabinetFace"
       :SelectedPartitionAddress="SelectedPartitionAddress"
       :SelectedPortFormat="SelectedPortFormat"
-      v-on:TemplatePartitionPortFormatTypeUpdated="$emit('TemplatePartitionPortFormatTypeUpdated', $event)"
       v-on:TemplatePartitionPortFormatValueUpdated="$emit('TemplatePartitionPortFormatValueUpdated', $event)"
+      v-on:TemplatePartitionPortFormatTypeUpdated="$emit('TemplatePartitionPortFormatTypeUpdated', $event)"
+      v-on:TemplatePartitionPortFormatCountUpdated="$emit('TemplatePartitionPortFormatCountUpdated', $event)"
+      v-on:TemplatePartitionPortFormatOrderUpdated="$emit('TemplatePartitionPortFormatOrderUpdated', $event)"
+      v-on:TemplatePartitionPortFormatFieldMove="$emit('TemplatePartitionPortFormatFieldMove', $event)"
     />
 
   </b-row>
@@ -949,7 +956,6 @@ export default {
 
       // Store variables
       const vm = this
-      const Element = vm.$refs.ElementTemplateRUSize.$el
       const min = vm.GetRUSizeMin()
       const max = 25
 

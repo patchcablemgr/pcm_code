@@ -14,7 +14,7 @@
           <b-form @submit.prevent="(CategorySelected) ? categoryPUT() : categoryPOST()">
 
             <div
-             class="mb-3"
+             class="mb-3 pcm_template_port_format_field_container"
             >
               <div
                 v-for="(PortFormat, PortFormatIndex) in SelectedPortFormat"
@@ -24,26 +24,14 @@
                 <validation-provider
                   #default="{ errors }"
                   name="Value"
-                  :rules="ComputedPortFieldValidate(SelectedPortFormat[PortFormatIndex].type)"
+                  :rules="ComputedPortFieldValidate( SelectedPortFormat[PortFormatIndex].type )"
                 >
-                  <div
-                    class="pcm_top_actions"
-                  >
-                    <div class="first">
-                      <small
-                        v-show="SelectedPortFormat[PortFormatIndex].type == 'incremental' || SelectedPortFormat[PortFormatIndex].type == 'series'"
-                      >
-                        {{ SelectedPortFormat[PortFormatIndex].order }}{{ GetNumericalSuffix(SelectedPortFormat[PortFormatIndex].order) }}
-                      </small>
-                    </div>
-                    <div class="second"></div>
-                    <div class="third"></div>
-                    <div class="fourth"></div>
-                    <feather-icon
-                      class="fifth"
-                      icon="XCircleIcon"
-                      v-b-tooltip.hover.html="ToolTipDelete"
-                    />
+                  <div style="height: 20px;">
+                    <small
+                      v-show="SelectedPortFormat[PortFormatIndex].type == 'incremental' || SelectedPortFormat[PortFormatIndex].type == 'series'"
+                    >
+                      {{ SelectedPortFormat[PortFormatIndex].order }}{{ GetNumericalSuffix(SelectedPortFormat[PortFormatIndex].order) }}
+                    </small>
                   </div>
                   <div
                     :class="{
@@ -52,7 +40,7 @@
                   >
                     <b-form-input
                       v-model="SelectedPortFormat[PortFormatIndex].value"
-                      @click="SelectedPortFormatIndex = PortFormatIndex"
+                      @click="$emit('TemplatePartitionPortFormatFieldSelected', {'index': PortFormatIndex} )"
                       @change="$emit('TemplatePartitionPortFormatValueUpdated', {'index': PortFormatIndex, 'value': $event} )"
                       :formatter="ValueFormat"
                       :state="errors.length > 0 ? false:null"
@@ -62,6 +50,60 @@
                 </validation-provider>
               </div>
             </div>
+
+            <!-- Create/Delete-->
+            <dl
+              class="row"
+            >
+              <dt class="col-sm-4">
+                Create/Delete
+                <feather-icon
+                  icon="HelpCircleIcon"
+                  v-b-tooltip.hover.html="ToolTipCreateDelete"
+                />
+              </dt>
+              <dd class="col-sm-8">
+
+                <!-- Create Before -->
+                <b-button
+                  title="Create a new field before the one selected"
+                  v-ripple.400="'rgba(113, 102, 240, 0.15)'"
+                  variant="outline-primary"
+                  class="btn-icon"
+                  @click="$emit('TemplatePartitionPortFormatFieldCreate', {'direction': 'before'} )"
+                >
+                  <feather-icon icon="PlusIcon" />
+                  <feather-icon
+                    icon="MoreHorizontalIcon"
+                  />
+                </b-button>
+
+                <!-- Create After -->
+                <b-button
+                  title="Create a new field after the one selected"
+                  v-ripple.400="'rgba(113, 102, 240, 0.15)'"
+                  variant="outline-primary"
+                  class="btn-icon"
+                  @click="$emit('TemplatePartitionPortFormatFieldCreate', {'direction': 'after'} )"
+                >
+                  <feather-icon
+                    icon="MoreHorizontalIcon"
+                  />
+                  <feather-icon icon="PlusIcon" />
+                </b-button>
+
+                <!-- Delete -->
+                <b-button
+                  title="Delete selected field"
+                  v-ripple.400="'rgba(113, 102, 240, 0.15)'"
+                  variant="outline-primary"
+                  class="btn-icon"
+                  @click="$emit('TemplatePartitionPortFormatFieldDelete', {} )"
+                >
+                  <feather-icon icon="MinusIcon" />
+                </b-button>
+              </dd>
+            </dl>
 
             <!-- Move-->
             <dl
@@ -78,22 +120,22 @@
 
                 <!-- Move Left -->
                 <b-button
-                  title="Move field left"
+                  title="Move selected field left"
                   v-ripple.400="'rgba(113, 102, 240, 0.15)'"
                   variant="outline-primary"
                   class="btn-icon"
-                  @click="$emit('TemplatePartitionPortFormatFieldMove', 'left')"
+                  @click="$emit('TemplatePartitionPortFormatFieldMove', {'direction': 'left'} )"
                 >
                   <feather-icon icon="ChevronLeftIcon" />
                 </b-button>
 
                 <!-- Move Right -->
                 <b-button
-                  title="Move field right"
+                  title="Move selected field right"
                   v-ripple.400="'rgba(113, 102, 240, 0.15)'"
                   variant="outline-primary"
                   class="btn-icon"
-                  @click="$emit('TemplatePartitionPortFormatFieldMove', 'right')"
+                  @click="$emit('TemplatePartitionPortFormatFieldMove', {'direction': 'right'} )"
                 >
                   <feather-icon icon="ChevronRightIcon" />
                 </b-button>
@@ -115,7 +157,7 @@
                 <b-form-select
                   v-model="SelectedPortFormat[SelectedPortFormatIndex].type"
                   :options="TypeOptions"
-                  @change="$emit('TemplatePartitionPortFormatTypeUpdated', {'index': SelectedPortFormatIndex, 'value': $event} )"
+                  @change="$emit('TemplatePartitionPortFormatTypeUpdated', {'value': $event} )"
                 />
               </dd>
             </dl>
@@ -135,7 +177,7 @@
                 <b-form-input
                   v-model="SelectedPortFormat[SelectedPortFormatIndex].count"
                   :disabled=" SelectedPortFormat[SelectedPortFormatIndex].type == 'static' || SelectedPortFormat[SelectedPortFormatIndex].type == 'series' "
-                  @change="$emit('TemplatePartitionPortFormatCountUpdated', {'index': SelectedPortFormatIndex, 'value': $event} )"
+                  @change="$emit('TemplatePartitionPortFormatCountUpdated', {'value': $event} )"
                   type=number
                 />
               </dd>
@@ -206,10 +248,32 @@ const TypeOptions = [
   },
 ]
 const SelectedPortFormatIndex = 0
+ToolTipCreateDelete
+const ToolTipCreateDelete = {
+  title: `
+    <div class="text-left">
+    <div>Create new fields or delete existing fields.</div>
+    </div>
+  `
+}
+const ToolTipCreateBefore = {
+  title: `
+    <div class="text-left">
+    <div>Create a new field before the selected field.</div>
+    </div>
+  `
+}
+const ToolTipCreateAfter = {
+  title: `
+    <div class="text-left">
+    <div>Create a new field after the selected field.</div>
+    </div>
+  `
+}
 const ToolTipDelete = {
   title: `
     <div class="text-left">
-    <div>Delete field.</div>
+    <div>Delete the selected field.</div>
     </div>
   `
 }
@@ -268,14 +332,17 @@ export default {
     'b-tooltip': VBTooltip,
   },
   props: {
+    SelectedPortFormatIndex: {type: Number},
     SelectedPortFormat: {type: Array},
   },
   data() {
     return {
       TypeOptions,
-      SelectedPortFormatIndex,
       required,
       regex,
+      ToolTipCreateDelete,
+      ToolTipCreateBefore,
+      ToolTipCreateAfter,
       ToolTipDelete,
       ToolTipMove,
       ToolTipType,

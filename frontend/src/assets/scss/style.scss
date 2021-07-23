@@ -82,9 +82,12 @@ div.pcm_template_port_format_field_selected {
     box-shadow: 0 0 0 3px yellow;
 }
 
+div.pcm_template_port_format_field_container {
+    display: flex;
+}
+
 div.pcm_template_port_format_field {
-    display: inline-block;
-    width: 25%;
+    width: 100px;
 }
 
 div.pcm_template_enclosure_container {
@@ -114,14 +117,4 @@ div.pcm_template_partition_layered {
 
 hr.separator {
     border-top: 2px solid #bbb;
-}
-
-div.pcm_top_actions {
-        display: grid; 
-        grid-template-columns: 1fr 1fr 1fr 1fr 1fr; 
-        grid-template-rows: 1fr; 
-        gap: 0% 0px; 
-        grid-template-areas: 
-          "first second third fourth fifth"; 
-        justify-content: space-between;
 }

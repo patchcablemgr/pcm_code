@@ -440,13 +440,17 @@
       v-if="ComputedInputTemplatePartitionType == 'connectable'"
       :TemplateData="TemplateData"
       :CabinetFace="CabinetFace"
+      :SelectedPortFormatIndex="SelectedPortFormatIndex"
       :SelectedPartitionAddress="SelectedPartitionAddress"
       :SelectedPortFormat="SelectedPortFormat"
+      v-on:TemplatePartitionPortFormatFieldSelected="$emit('TemplatePartitionPortFormatFieldSelected', $event)"
       v-on:TemplatePartitionPortFormatValueUpdated="$emit('TemplatePartitionPortFormatValueUpdated', $event)"
       v-on:TemplatePartitionPortFormatTypeUpdated="$emit('TemplatePartitionPortFormatTypeUpdated', $event)"
       v-on:TemplatePartitionPortFormatCountUpdated="$emit('TemplatePartitionPortFormatCountUpdated', $event)"
       v-on:TemplatePartitionPortFormatOrderUpdated="$emit('TemplatePartitionPortFormatOrderUpdated', $event)"
       v-on:TemplatePartitionPortFormatFieldMove="$emit('TemplatePartitionPortFormatFieldMove', $event)"
+      v-on:TemplatePartitionPortFormatFieldCreate="$emit('TemplatePartitionPortFormatFieldCreate', $event)"
+      v-on:TemplatePartitionPortFormatFieldDelete="$emit('TemplatePartitionPortFormatFieldDelete', $event)"
     />
 
   </b-row>
@@ -485,6 +489,7 @@ export default {
     MediaData: {type: Array},
     TemplateData: {type: Array},
     CabinetFace: {type: String},
+    SelectedPortFormatIndex: {type: Number},
     SelectedPartitionAddress: {type: Object},
     AddChildPartitionDisabled: {type: Boolean},
     AddSiblingPartitionDisabled: {type: Boolean},

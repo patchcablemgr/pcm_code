@@ -443,6 +443,7 @@
       :SelectedPortFormatIndex="SelectedPortFormatIndex"
       :SelectedPartitionAddress="SelectedPartitionAddress"
       :SelectedPortFormat="SelectedPortFormat"
+      :PortIDPreview="PortIDPreview"
       v-on:TemplatePartitionPortFormatFieldSelected="$emit('TemplatePartitionPortFormatFieldSelected', $event)"
       v-on:TemplatePartitionPortFormatValueUpdated="$emit('TemplatePartitionPortFormatValueUpdated', $event)"
       v-on:TemplatePartitionPortFormatTypeUpdated="$emit('TemplatePartitionPortFormatTypeUpdated', $event)"
@@ -496,6 +497,7 @@ export default {
     RemovePartitionDisabled: {type: Boolean},
     PartitionTypeDisabled: {type: Boolean},
     SelectedPortFormat: {type: Array},
+    PortIDPreview: {type: String},
   },
   data() {
     return {

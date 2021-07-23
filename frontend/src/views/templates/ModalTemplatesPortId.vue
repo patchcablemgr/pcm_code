@@ -203,6 +203,22 @@
                 />
               </dd>
             </dl>
+
+            <!-- Preview-->
+            <dl
+              class="row"
+            >
+              <dt class="col-sm-4">
+                Preview
+                <feather-icon
+                  icon="HelpCircleIcon"
+                  v-b-tooltip.hover.html="ToolTipPreview"
+                />
+              </dt>
+              <dd class="col-sm-8">
+                {{ PortIDPreview }}
+              </dd>
+            </dl>
             
           </b-form>
         </validation-observer>
@@ -313,6 +329,13 @@ const ToolTipOrder = {
     </div>
   `
 }
+const ToolTipPreview = {
+  title: `
+    <div class="text-left">
+    <div>Preview Port IDs generated from Port Format settings above.</div>
+    </div>
+  `
+}
 
 export default {
   components: {
@@ -334,6 +357,7 @@ export default {
   props: {
     SelectedPortFormatIndex: {type: Number},
     SelectedPortFormat: {type: Array},
+    PortIDPreview: {type: String},
   },
   data() {
     return {
@@ -348,6 +372,7 @@ export default {
       ToolTipType,
       ToolTipCount,
       ToolTipOrder,
+      ToolTipPreview,
     }
   },
   computed: {

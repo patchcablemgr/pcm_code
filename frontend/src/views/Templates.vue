@@ -21,6 +21,7 @@
                 :RemovePartitionDisabled="RemovePartitionDisabled"
                 :PartitionTypeDisabled="PartitionTypeDisabled"
                 :SelectedPortFormat="SelectedPortFormat"
+                :PortIDPreview="PortIDPreview"
                 @TemplateNameUpdated="TemplateNameUpdated($event)"
                 @TemplateCategoriesUpdated="TemplateCategoriesUpdated($event)"
                 @TemplateCategoryUpdated="TemplateCategoryUpdated($event)"
@@ -187,12 +188,12 @@ const TemplateData = [
                 "type":"incremental",
                 "value":"1",
                 "count":0,
-                "order":1
+                "order":2
               },{
                 "type":"series",
                 "value":"a,b,c",
                 "count":0,
-                "order":2
+                "order":1
               }
             ],
             "port_layout":{
@@ -249,6 +250,21 @@ export default {
     }
   },
   computed: {
+    PortIDPreview: function(){
+      
+      const vm = this
+      const PortTotal = 6
+      let PortID = ''
+      let PortIDPreviewArray = []
+
+      for(let i=0; i<PortTotal; i++){
+        PortID = vm.GeneratePortID(i, PortTotal)
+        PortIDPreviewArray.push(PortID)
+      }
+
+      return PortIDPreviewArray.join(', ')
+
+    },
     CabinetFaceToggleIsDisabled: function() {
       return this.TemplateData[0].mount_config === '2-post'
     },
@@ -312,7 +328,6 @@ export default {
 
       vm.SelectedPartitionAddress[CabinetFace] = PartitionAddress
 
-      console.log('Debug (selectedPartition): '+JSON.stringify(vm.GetPartition()))
     },
     PartitionHovered: function(HoverData) {
 
@@ -506,9 +521,7 @@ export default {
         })
 
         // Sort incrementable field orders
-        console.log('OrderArray: '+JSON.stringify(WorkingOrderArray))
         WorkingOrderArray.sort(function(a, b){return a - b})
-        console.log('OrderArray sorted: '+JSON.stringify(WorkingOrderArray))
 
         // Find first available
         WorkingOrderArray.forEach(function(WorkingOrder){
@@ -595,8 +608,6 @@ export default {
       const vm = this
       const SelectedPortFormatIndexNew = EmitData.index
       vm.SelectedPortFormatIndex = SelectedPortFormatIndexNew
-
-      console.log('Selected: '+SelectedPortFormatIndexNew)
 
     },
     TemplatePartitionPortFormatFieldMove: function(EmitData) {
@@ -800,6 +811,98 @@ export default {
       this.$http.get('/api/port-orientation').then(function(response){
         vm.PortOrientationData = response.data;
       });
+    },
+    GeneratePortID: function(Index, PortTotal){
+
+      // Store variables
+      const vm = this
+      const SelectedPortFormat = JSON.parse(JSON.stringify(vm.SelectedPortFormat))
+      let PortIDPreview = ''
+      let IncrementalCount = 0
+
+      // Create character arrays
+      let LowercaseArray = []
+      let UppercaseArray = []
+      for(let x=97; x<=122; x++) {
+        LowercaseArray.push(String.fromCharCode(x))
+      }
+      for(let x=65; x<=90; x++) {
+        UppercaseArray.push(String.fromCharCode(x))
+      }
+
+      // Account for infinite count incrementables
+      SelectedPortFormat.forEach(function(Field, FieldIndex){
+        const FieldType = Field.type
+        let FieldCount = Field.count
+
+        // Increment IncrementalCount
+        if(FieldType == 'incremental' || FieldType == 'series') {
+          IncrementalCount++
+
+          // Adjust field count
+          if(FieldType == 'incremental' && FieldCount == 0) {
+            SelectedPortFormat[FieldIndex].count = PortTotal
+          } else if(FieldType == 'series') {
+            let CurrentFieldValue = Field.value
+            SelectedPortFormat[FieldIndex].count = CurrentFieldValue.split(',').length
+          }
+        }
+      })
+
+      SelectedPortFormat.forEach(function(Field){
+        const FieldType = Field.type
+        const FieldValue = Field.value
+        const FieldOrder = Field.order
+        const FieldCount = Field.count
+        let HowMuchToIncrement
+        let RollOver
+        let Numerator = 1
+
+        if(FieldType == 'static') {
+          PortIDPreview = PortIDPreview + FieldValue
+        } else {
+
+          if(FieldOrder >= IncrementalCount) {
+            SelectedPortFormat.forEach(function(LoopField){
+              const LoopFieldType = LoopField.type
+              const LoopFieldOrder = LoopField.order
+              const LoopFieldCount = LoopField.count
+
+              if(LoopFieldType == 'incremental' || LoopFieldType == 'series') {
+                if(LoopFieldOrder < FieldOrder) {
+                  Numerator *= LoopFieldCount
+                }
+              }
+            })
+          }
+
+          HowMuchToIncrement = Math.floor(Index / Numerator)
+
+          if(HowMuchToIncrement >= FieldCount) {
+            RollOver = Math.floor(HowMuchToIncrement / FieldCount)
+            HowMuchToIncrement = HowMuchToIncrement - (RollOver * FieldCount)
+            
+          }
+
+          if(FieldType == 'incremental') {
+
+            if(!isNaN(FieldValue)) {
+              PortIDPreview = PortIDPreview + (parseInt(FieldValue) + HowMuchToIncrement)
+            } else {
+              PortIDPreview = PortIDPreview + '-'
+            }
+
+          } else if(FieldType == 'series') {
+
+            //const FieldValueString = JSON.stringify(FieldValue)
+            const FieldValueArray = FieldValue.split(',')
+            PortIDPreview = PortIDPreview + FieldValueArray[HowMuchToIncrement]
+
+          }
+        }
+      })
+      
+      return PortIDPreview
     },
   },
   mounted() {

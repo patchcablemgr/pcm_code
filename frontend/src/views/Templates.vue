@@ -47,6 +47,7 @@
                 @TemplatePartitionPortOrientationUpdated="TemplatePartitionPortOrientationUpdated($event)"
                 @TemplatePartitionEncLayoutColsUpdated="TemplatePartitionEncLayoutColsUpdated($event)"
                 @TemplatePartitionEncLayoutRowsUpdated="TemplatePartitionEncLayoutRowsUpdated($event)"
+                @FormSubmit="FormSubmit($event)"
                 @FormReset="FormReset($event)"
               />
             </b-card-body>
@@ -253,13 +254,30 @@ export default {
     PortIDPreview: function(){
       
       const vm = this
-      const PortTotal = 6
+      const Partition = vm.GetPartition()
       let PortID = ''
       let PortIDPreviewArray = []
 
-      for(let i=0; i<PortTotal; i++){
-        PortID = vm.GeneratePortID(i, PortTotal)
-        PortIDPreviewArray.push(PortID)
+      if(Partition.type == 'connectable') {
+        let PortTotal = Partition.port_layout.cols * Partition.port_layout.rows
+        let Truncated = false
+
+        // Limit port preview to 5
+        if(PortTotal > 5) {
+          PortTotal = 5
+          Truncated = true
+        }
+
+        // Generate port IDs
+        for(let i=0; i<PortTotal; i++){
+          PortID = vm.GeneratePortID(i, PortTotal)
+          PortIDPreviewArray.push(PortID)
+        }
+
+        // Append ellipses if port preview is truncated
+        if(Truncated) {
+          PortIDPreviewArray.push('...')
+        }
       }
 
       return PortIDPreviewArray.join(', ')
@@ -365,48 +383,53 @@ export default {
       // Store variables
       const vm = this
       let SelectedPartition = vm.GetPartition()
+      const PartitionTypeOriginal = SelectedPartition.type
+
       SelectedPartition.type = newValue
 
-      // Define port_layout if it doesn't exist
-      if(newValue == 'connectable') {
+      if(PartitionTypeOriginal != newValue) {
 
-        // Port Format
-        const PortFormat = [
-          {'type': 'static', 'value': 'Port', 'count': 0, 'order': 0},
-          {'type': 'incremental', 'value': '1', 'count': 0, 'order': 2},
-          {'type': 'series', 'value': 'A,B,C', 'count': 0, 'order': 1},
-        ]
+        // Define port_layout if it doesn't exist
+        if(newValue == 'connectable') {
 
-        // Port layout
-        const PortLayout = {'cols': 1, 'rows': 1}
+          // Port Format
+          const PortFormat = [
+            {'type': 'static', 'value': 'Port', 'count': 0, 'order': 0},
+            {'type': 'incremental', 'value': '1', 'count': 0, 'order': 2},
+            {'type': 'series', 'value': 'A,B,C', 'count': 0, 'order': 1},
+          ]
 
-        // Port media type
-        const defaultMediaIndex = vm.MediaData.findIndex((media) => media.default);
-        const defaultMediaValue = vm.MediaData[defaultMediaIndex].value
-        const Media = defaultMediaValue
+          // Port layout
+          const PortLayout = {'cols': 1, 'rows': 1}
 
-        // Port connector
-        const defaultPortConnectorIndex = vm.PortConnectorData.findIndex((PortConnector) => PortConnector.default);
-        const defaultPortConnectorValue = vm.PortConnectorData[defaultPortConnectorIndex].value
-        const PortConnector = defaultPortConnectorValue
+          // Port media type
+          const defaultMediaIndex = vm.MediaData.findIndex((media) => media.default);
+          const defaultMediaValue = vm.MediaData[defaultMediaIndex].value
+          const Media = defaultMediaValue
 
-        // Port orientation
-        const defaultPortOrientationIndex = vm.PortOrientationData.findIndex((PortOrientation) => PortOrientation.default);
-        const defaultPortOrientationValue = vm.PortOrientationData[defaultPortOrientationIndex].value
-        const PortOrientation = defaultPortOrientationValue
+          // Port connector
+          const defaultPortConnectorIndex = vm.PortConnectorData.findIndex((PortConnector) => PortConnector.default);
+          const defaultPortConnectorValue = vm.PortConnectorData[defaultPortConnectorIndex].value
+          const PortConnector = defaultPortConnectorValue
 
-        // Set connectable properties
-        vm.$set(SelectedPartition, 'port_format', PortFormat)
-        vm.$set(SelectedPartition, 'port_layout', PortLayout)
-        vm.$set(SelectedPartition, 'media', Media)
-        vm.$set(SelectedPartition, 'port_connector', PortConnector)
-        vm.$set(SelectedPartition, 'port_orientation', PortOrientation)
+          // Port orientation
+          const defaultPortOrientationIndex = vm.PortOrientationData.findIndex((PortOrientation) => PortOrientation.default);
+          const defaultPortOrientationValue = vm.PortOrientationData[defaultPortOrientationIndex].value
+          const PortOrientation = defaultPortOrientationValue
 
-      } else if(newValue == 'enclosure') {
-        
-        const EncLayout = {'cols': 1, 'rows': 1}
-        vm.$set(SelectedPartition, 'enc_layout', EncLayout)
+          // Set connectable properties
+          vm.$set(SelectedPartition, 'port_format', PortFormat)
+          vm.$set(SelectedPartition, 'port_layout', PortLayout)
+          vm.$set(SelectedPartition, 'media', Media)
+          vm.$set(SelectedPartition, 'port_connector', PortConnector)
+          vm.$set(SelectedPartition, 'port_orientation', PortOrientation)
 
+        } else if(newValue == 'enclosure') {
+          
+          const EncLayout = {'cols': 1, 'rows': 1}
+          vm.$set(SelectedPartition, 'enc_layout', EncLayout)
+
+        }
       }
     },
     TemplatePartitionAdd: function(InsertPosition) {
@@ -725,12 +748,6 @@ export default {
       let SelectedPartition = this.GetPartition()
       SelectedPartition.enc_layout.rows = newValue
     },
-    FormReset: function() {
-      const vm = this
-      for (const [key] of Object.entries(vm.TemplateData[0])) {
-        vm.TemplateData[0][key] = vm.TemplateDataOriginal[0][key]
-      }
-    },
     GetPartitionDirection: function(PartAddr = false) {
       
       // Store variables
@@ -862,19 +879,17 @@ export default {
           PortIDPreview = PortIDPreview + FieldValue
         } else {
 
-          if(FieldOrder >= IncrementalCount) {
-            SelectedPortFormat.forEach(function(LoopField){
-              const LoopFieldType = LoopField.type
-              const LoopFieldOrder = LoopField.order
-              const LoopFieldCount = LoopField.count
+          SelectedPortFormat.forEach(function(LoopField){
+            const LoopFieldType = LoopField.type
+            const LoopFieldOrder = LoopField.order
+            const LoopFieldCount = LoopField.count
 
-              if(LoopFieldType == 'incremental' || LoopFieldType == 'series') {
-                if(LoopFieldOrder < FieldOrder) {
-                  Numerator *= LoopFieldCount
-                }
+            if(LoopFieldType == 'incremental' || LoopFieldType == 'series') {
+              if(LoopFieldOrder < FieldOrder) {
+                Numerator *= LoopFieldCount
               }
-            })
-          }
+            }
+          })
 
           HowMuchToIncrement = Math.floor(Index / Numerator)
 
@@ -894,7 +909,6 @@ export default {
 
           } else if(FieldType == 'series') {
 
-            //const FieldValueString = JSON.stringify(FieldValue)
             const FieldValueArray = FieldValue.split(',')
             PortIDPreview = PortIDPreview + FieldValueArray[HowMuchToIncrement]
 
@@ -903,6 +917,37 @@ export default {
       })
       
       return PortIDPreview
+    },
+    FormSubmit: function() {
+
+      // Store data
+      const vm = this;
+      const url = '/api/template'
+      const data = vm.TemplateData[0]
+
+      // POST category form data
+      this.$http.post(url, data).then(function(response){
+
+        // Update categories
+        console.log('Form submitted')
+
+      }).catch(error => {
+
+        // Display error to user via toast
+        vm.$bvToast.toast(JSON.stringify(error.response.data), {
+          title: 'Error',
+          variant: 'danger',
+        })
+
+      });
+    },
+    FormReset: function() {
+      const vm = this
+      for (const [key] of Object.entries(vm.TemplateData[0])) {
+        console.log('key: '+key)
+        console.log('original: '+vm.TemplateDataOriginal[0][key])
+        vm.TemplateData[0][key] = vm.TemplateDataOriginal[0][key]
+      }
     },
   },
   mounted() {

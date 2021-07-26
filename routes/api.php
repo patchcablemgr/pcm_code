@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Template;
 use App\Http\Controllers\TemplateCategory;
 use App\Http\Controllers\AttributesMedia;
 use App\Http\Controllers\AttributesPortOrientation;
@@ -33,6 +34,7 @@ Route::group(['middleware' => 'auth:sanctum'], function(){
     'category' => TemplateCategory::class,
     'medium' => AttributesMedia::class,
     'port-orientation' => AttributesPortOrientation::class,
+    'template' => Template::class,
   ]);
 });
 

@@ -23,9 +23,9 @@
         </dt>
         <dd class="col-sm-8">
           <b-form-input
+            name="name"
             v-model="TemplateData[0].name"
             @change="$emit('TemplateNameUpdated', $event)"
-            id="h-name"
             placeholder="New_Template"
           />
         </dd>
@@ -48,6 +48,7 @@
         </dd>
         <dd class="col-sm-8">
           <b-form-select
+            name="category"
             v-model="TemplateData[0].category_id"
             :options="GetCategoryOptions()"
             @change="$emit('TemplateCategoryUpdated', $event)"
@@ -62,10 +63,10 @@
         </dt>
         <dd class="col-sm-8">
           <b-form-radio-group
-            v-model="inputTemplateType"
+            name="type"
+            v-model="TemplateData[0].type"
             :options="optionsTemplateType"
             @change="$emit('TemplateTypeUpdated', $event)"
-            name="radios-template-type"
             stacked
           />
         </dd>
@@ -78,9 +79,9 @@
         </dt>
         <dd class="col-sm-8">
           <b-form-input
+            name="size"
             v-model.number="InputTemplateRUSize"
             @change="$emit('TemplateRUSizeUpdated', $event)"
-            id="h-ru-size"
             ref="ElementTemplateRUSize"
             type="number"
             :min="GetRUSizeMin()"
@@ -97,10 +98,10 @@
         </dt>
         <dd class="col-sm-8">
           <b-form-radio-group
-          v-model="inputTemplateFunction"
-          :options="optionsTemplateFunction"
-          name="radios-template-function"
-          stacked
+            name="function"
+            v-model="inputTemplateFunction"
+            :options="optionsTemplateFunction"
+            stacked
           />
         </dd>
       </dl>
@@ -112,10 +113,10 @@
         </dt>
         <dd class="col-sm-8">
           <b-form-radio-group
+              name="mountConfig"
               v-model="inputTemplateMountConfig"
               :options="optionsTemplateMountConfig"
               @change="$emit('TemplateMountConfigUpdated', $event)"
-              name="radios-mounting-configuration"
               stacked
             />
         </dd>
@@ -131,9 +132,9 @@
         </dt>
         <dd class="col-sm-8">
           <b-form-radio-group
+            name="partitionType"
             v-model="ComputedInputTemplatePartitionType"
             :options="optionsTemplatePartitionType"
-            name="radios-partition-type"
             stacked
             :disabled="PartitionTypeDisabled"
           />
@@ -218,12 +219,12 @@
         </dt>
         <dd class="col-sm-8">
           <b-form-input
-          id="h-partition-size"
-          v-model="ComputedInputTemplatePartitionSize"
-          type="number"
-          :min="GetSelectedPartitionSizeMin()"
-          :max="GetSelectedPartitionSizeMax()"
-          :formatter="CastPartitionSizeToInteger"
+            name="partitionSize"
+            v-model="ComputedInputTemplatePartitionSize"
+            type="number"
+            :min="GetSelectedPartitionSizeMin()"
+            :max="GetSelectedPartitionSizeMax()"
+            :formatter="CastPartitionSizeToInteger"
           />
         </dd>
       </dl>
@@ -261,7 +262,7 @@
           </b-button>
         </dd>
         <dd class="col-sm-8 my-auto">
-          Port1...
+          {{ PortIDPreview }}
         </dd>
       </dl>
 
@@ -281,7 +282,8 @@
               </b-col>
               <b-col>
                 <b-form-input
-                  id="h-port-layout-column"
+                  name="portLayoutCol"
+                  :disabled="ComputedInputTemplatePartitionType != 'connectable'"
                   v-model="ComputedInputTemplatePortLayoutCols"
                   type="number"
                   min=1
@@ -294,7 +296,8 @@
               </b-col>
               <b-col>
                 <b-form-input
-                  id="h-port-layout-row"
+                  name="portLayoutRow"
+                  :disabled="ComputedInputTemplatePartitionType != 'connectable'"
                   v-model="ComputedInputTemplatePortLayoutRows"
                   type="number"
                   min=1
@@ -315,6 +318,7 @@
         </dt>
         <dd class="col-sm-8">
           <b-form-select
+            name="media"
             v-model="ComputedInputTemplateMedia"
             :options="GetMediaOptions()"
           />
@@ -331,6 +335,7 @@
         </dt>
         <dd class="col-sm-8">
           <b-form-select
+            name="portType"
             v-model="ComputedInputTemplatePortConnector"
             :options="GetPortConnectorOptions()"
           />
@@ -347,6 +352,7 @@
         </dt>
         <dd class="col-sm-8">
           <b-form-select
+            name="portOrientation"
             v-model="ComputedInputTemplatePortOrientation"
             :options="GetPortOrientationOptions()"
           />
@@ -383,7 +389,8 @@
               </b-col>
               <b-col>
                 <b-form-input
-                  id="h-enc-layout-column"
+                  name="encLayoutCol"
+                  :disabled="ComputedInputTemplatePartitionType != 'enclosure'"
                   v-model="ComputedInputTemplateEncLayoutCols"
                   type="number"
                   min=1
@@ -396,7 +403,8 @@
               </b-col>
               <b-col>
                 <b-form-input
-                  id="h-enc-layout-row"
+                  name="encLayoutRow"
+                  :disabled="ComputedInputTemplatePartitionType != 'enclosure'"
                   v-model="ComputedInputTemplateEncLayoutRows"
                   type="number"
                   min=1
@@ -632,8 +640,6 @@ export default {
 
         const MediaValue = (SelectedPartition.media) ? SelectedPartition.media : DefaultMediaValue
         
-        console.log('Debug (ComputedInputTemplateMedia): '+MediaValue)
-        
         // Return selected partition type
         return MediaValue
       },
@@ -741,6 +747,7 @@ export default {
   methods: {
     onSubmit: function() {
       console.log("Debug (Submit): "+JSON.stringify(this.TemplateData[0]))
+      this.$emit('FormSubmit')
     },
     onReset: function() {
       console.log("Debug (Reset): ")

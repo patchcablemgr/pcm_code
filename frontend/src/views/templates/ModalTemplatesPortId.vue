@@ -425,13 +425,10 @@ export default {
     ComputedPortFieldValidate: function(PortFormatFieldType) {
 
       if(PortFormatFieldType == 'static') {
-        console.log('static')
         return { required: true, regex: '^[a-zA-Z0-9\\\/\-\_\=\+\|\*]+$' }
       } else if(PortFormatFieldType == 'incremental') {
-        console.log('incremental')
         return { required: true, regex: '^([1-9][0-9]*|[a-z]|[A-Z])$' }
       } else if(PortFormatFieldType == 'series') {
-        console.log('series')
         return { required: true, regex: '^(,?[a-zA-Z0-9\\\/\-\_\=\+\|\*])*$' }
       }
     },

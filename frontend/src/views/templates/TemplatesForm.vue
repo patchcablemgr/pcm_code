@@ -122,6 +122,9 @@
         </dd>
       </dl>
 
+<!--
+  ### Partition ###
+-->
       <div class="h5 font-weight-bolder m-0">Partition:</div>
       <hr class="separator mt-0">
 
@@ -504,6 +507,7 @@ export default {
     AddSiblingPartitionDisabled: {type: Boolean},
     RemovePartitionDisabled: {type: Boolean},
     PartitionTypeDisabled: {type: Boolean},
+    SelectedPartition: {type: Object},
     SelectedPortFormat: {type: Array},
     PortIDPreview: {type: String},
   },
@@ -552,7 +556,7 @@ export default {
 
         // Store variables
         const vm = this
-        const SelectedPartition = vm.GetSelectedPartition()
+        const SelectedPartition = vm.SelectedPartition
         
         // Return selected partition type
         return SelectedPartition.type
@@ -572,7 +576,7 @@ export default {
 
         // Store variables
         const vm = this
-        const SelectedPartition = vm.GetSelectedPartition()
+        const SelectedPartition = vm.SelectedPartition
         
         // Return selected partition type
         return SelectedPartition.units
@@ -592,7 +596,7 @@ export default {
 
         // Store variables
         const vm = this
-        const SelectedPartition = vm.GetSelectedPartition()
+        const SelectedPartition = vm.SelectedPartition
         const PortLayoutCols = (SelectedPartition.type == 'connectable') ? SelectedPartition.port_layout.cols : 0
         
         // Return selected partition type
@@ -613,7 +617,7 @@ export default {
 
         // Store variables
         const vm = this
-        const SelectedPartition = vm.GetSelectedPartition()
+        const SelectedPartition = vm.SelectedPartition
         const PortLayoutCols = (SelectedPartition.type == 'connectable') ? SelectedPartition.port_layout.rows : 0
         
         // Return selected partition type
@@ -634,7 +638,7 @@ export default {
 
         // Store variables
         const vm = this
-        const SelectedPartition = vm.GetSelectedPartition()
+        const SelectedPartition = vm.SelectedPartition
         const DefaultMediaIndex = vm.MediaData.findIndex((media) => media.default);
         const DefaultMediaValue = vm.MediaData[DefaultMediaIndex].value
 
@@ -658,7 +662,7 @@ export default {
 
         // Store variables
         const vm = this
-        const SelectedPartition = vm.GetSelectedPartition()
+        const SelectedPartition = vm.SelectedPartition
         const DefaultPortConnectorIndex = vm.PortConnectorData.findIndex((PortConnector) => PortConnector.default);
         const DefaultPortConnectorValue = vm.PortConnectorData[DefaultPortConnectorIndex].value
 
@@ -682,7 +686,7 @@ export default {
 
         // Store variables
         const vm = this
-        const SelectedPartition = vm.GetSelectedPartition()
+        const SelectedPartition = vm.SelectedPartition
         const DefaultPortOrientationIndex = vm.PortOrientationData.findIndex((PortOrientation) => PortOrientation.default);
         const DefaultPortOrientationValue = vm.PortOrientationData[DefaultPortOrientationIndex].value
 
@@ -706,7 +710,7 @@ export default {
 
         // Store variables
         const vm = this
-        const SelectedPartition = vm.GetSelectedPartition()
+        const SelectedPartition = vm.SelectedPartition
         const EncLayoutCols = (SelectedPartition.type == 'enclosure') ? SelectedPartition.enc_layout.cols : 0
         
         // Return selected partition type
@@ -727,7 +731,7 @@ export default {
 
         // Store variables
         const vm = this
-        const SelectedPartition = vm.GetSelectedPartition()
+        const SelectedPartition = vm.SelectedPartition
         const EncLayoutCols = (SelectedPartition.type == 'enclosure') ? SelectedPartition.enc_layout.rows : 0
         
         // Return selected partition type
@@ -760,12 +764,23 @@ export default {
       const CabinetFaceArray = ['front','rear']
       let RUSizeMin = 1
 
+      // Find the largest vertically growing partition
+
+      // Look at both front and rear of template
       CabinetFaceArray.forEach(function(CabinetFace){
-        TemplateData.blueprint[CabinetFace].children.forEach(function(FirstLayerColumn){
+        const Layer1Partitions = TemplateData.blueprint[CabinetFace]
+
+        // Look at each horizontally growing layer 1 partition
+        Layer1Partitions.forEach(function(Layer1Partition){
           let TotalPartitionUnits = 0
-          FirstLayerColumn.children.forEach(function(FirstLayerRow){
-            TotalPartitionUnits = TotalPartitionUnits + FirstLayerRow.units
+          const Layer2Partitions = Layer1Partition.children
+
+          // Look at each vertically growing layer 2 partition
+          Layer2Partitions.forEach(function(Layer2Partition){
+            TotalPartitionUnits = TotalPartitionUnits + Layer2Partition.units
           })
+
+          // Store largest partition size
           const WorkingRUSizeMin = Math.ceil(TotalPartitionUnits / 2)
           RUSizeMin = (WorkingRUSizeMin > RUSizeMin) ? WorkingRUSizeMin : RUSizeMin
         })
@@ -782,16 +797,16 @@ export default {
       const SelectedPartitionAddress = JSON.parse(JSON.stringify(vm.SelectedPartitionAddress[CabinetFace]))
       const SelectedPartitionDirection = vm.ComputedSelectedPartitionDirection
       let WorkingMax = (SelectedPartitionDirection == 'column') ? 24 : TemplateData.ru_size * 2
-      let WorkingPartition = JSON.parse(JSON.stringify(TemplateData.blueprint[CabinetFace]))
+      let WorkingPartitionChildren = JSON.parse(JSON.stringify(TemplateData.blueprint[CabinetFace]))
 
       
       SelectedPartitionAddress.pop()
       SelectedPartitionAddress.forEach(function(PartitionAddressIndex, Depth){
         let WorkingPartitionDirection = ((Depth + 1) % 2) ? 'column' : 'row'
         if(WorkingPartitionDirection == SelectedPartitionDirection) {
-          WorkingMax = WorkingPartition.children[PartitionAddressIndex].units
+          WorkingMax = WorkingPartitionChildren[PartitionAddressIndex].units
         }
-        WorkingPartition.children[PartitionAddressIndex]
+        WorkingPartitionChildren = WorkingPartitionChildren[PartitionAddressIndex].children
       })
       
       return WorkingMax
@@ -799,7 +814,7 @@ export default {
     GetSelectedPartitionSizeMin: function(){
 
       const vm = this
-      const SelectedPartition = vm.GetSelectedPartition()
+      const SelectedPartition = vm.SelectedPartition
       const PartitionSizeMin = vm.GetSelectedPartitionSizeMinRecursion(SelectedPartition.children)
 
       return (PartitionSizeMin > 0) ? PartitionSizeMin : 1
@@ -826,7 +841,7 @@ export default {
       const SelectedPartitionDepth = SelectedPartitionAddress.length
       const SelectedPartitionParentSize = vm.GetSelectedPartitionParentSize()
       let SelectedPartitionSizeMax = SelectedPartitionParentSize
-      let WorkingPartition = JSON.parse(JSON.stringify(TemplateData.blueprint[CabinetFace]))
+      let WorkingPartitionChildren = JSON.parse(JSON.stringify(TemplateData.blueprint[CabinetFace]))
       let WorkingPartitionAddress = []
       let WorkingSiblingPartitionAddress = []
 
@@ -836,7 +851,7 @@ export default {
 
         if(WorkingPartitionDepth == SelectedPartitionDepth) {
 
-          WorkingPartition.children.forEach(function(Sibling, SiblingIndex){
+          WorkingPartitionChildren.forEach(function(Sibling, SiblingIndex){
 
             // Set the partition address appropriate for the current partition
             WorkingSiblingPartitionAddress = WorkingPartitionAddress.concat([SiblingIndex])
@@ -848,29 +863,11 @@ export default {
           })
         }
 
-        WorkingPartition = WorkingPartition.children[PartitionAddressIndex]
+        WorkingPartitionChildren = WorkingPartitionChildren[PartitionAddressIndex].children
         WorkingPartitionAddress.push(PartitionAddressIndex)
       })
 
       return SelectedPartitionSizeMax;
-    },
-    GetSelectedPartition: function() {
-
-      // Store variables
-      const vm = this
-      const TemplateData = vm.TemplateData[0]
-      const CabinetFace = vm.CabinetFace
-      const SelectedPartitionAddress = vm.SelectedPartitionAddress[CabinetFace]
-
-      // Set to default ("0") first partition on currently selected face
-      let SelectedPartition = TemplateData.blueprint[CabinetFace]
-
-      SelectedPartitionAddress.forEach(function(AddressIndex, Index) {
-        SelectedPartition = SelectedPartition.children[AddressIndex]
-      })
-
-      // Return selected partition
-      return SelectedPartition
     },
     GetCategoryOptions: function() {
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use App\Rules\TemplateBlueprint;
 use App\Models\Category;
 use Illuminate\Support\Facades\Log;
 
@@ -29,7 +30,56 @@ class Template extends Controller
      */
     public function store(Request $request)
     {
-        //
+
+        // Prepare variables
+        $templateTypeArray = [
+            'standard',
+            'insert'
+        ];
+        $templateFunctionArray = [
+            'endpoint',
+            'passive'
+        ];
+        $templateMountConfigArray = [
+            '2-post',
+            '4-post'
+        ];
+
+        $request->validate([
+            'name' => [
+                'required',
+                'alpha_dash',
+                'unique:App\Models\Template,name',
+                'min:1',
+                'max:255'
+            ],
+            'category_id' => [
+                'required',
+                'exists:template_category,id'
+            ],
+            'type' => [
+                'required',
+                Rule::in($templateTypeArray)
+            ],
+            'ru_size' => [
+                'required',
+                'integer',
+                'min:1',
+                'max:25'
+            ],
+            'function' => [
+                'required',
+                Rule::in($templateFunctionArray)
+            ],
+            'mount_config' => [
+                'required',
+                Rule::in($templateMountConfigArray)
+            ],
+            'blueprint' => [
+                'required',
+                new TemplateBlueprint
+            ]
+        ]);
     }
 
     /**

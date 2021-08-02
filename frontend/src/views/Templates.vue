@@ -20,6 +20,7 @@
                 :AddSiblingPartitionDisabled="AddSiblingPartitionDisabled"
                 :RemovePartitionDisabled="RemovePartitionDisabled"
                 :PartitionTypeDisabled="PartitionTypeDisabled"
+                :SelectedPartition="SelectedPartition"
                 :SelectedPortFormat="SelectedPortFormat"
                 :PortIDPreview="PortIDPreview"
                 @TemplateNameUpdated="TemplateNameUpdated($event)"
@@ -81,6 +82,7 @@
                 :CabinetFace="CabinetFace"
                 :SelectedPartitionAddress="SelectedPartitionAddress"
                 :HoveredPartitionAddress="HoveredPartitionAddress"
+                @TemplateClicked=" TemplateClicked($event) "
                 @PartitionClicked=" PartitionClicked($event) "
                 @PartitionHovered=" PartitionHovered($event) "
               />
@@ -140,8 +142,8 @@ const MediaData = [
 const CabinetFace = "front"
 const SelectedPortFormatIndex = 0
 const SelectedPartitionAddress = {
-  "front": [],
-  "rear": []
+  "front": [0],
+  "rear": [0]
 }
 const HoveredPartitionAddress = {
   "front": false,
@@ -168,54 +170,20 @@ const TemplateData = [
     "name": "New_Template",
     "category_id": 0,
     "type": "standard",
-    "ru_size": 2,
+    "ru_size": 1,
     "function": "endpoint",
-    "mount_config": "4-post",
+    "mount_config": "2-post",
     "blueprint": {
-      "front": {
+      "front": [{
         "type": "generic",
-        "children": [
-          {
-            "type":"connectable",
-            "units":1,
-            "children":[],
-            "port_format":[
-              {
-                "type":"static",
-                "value":"Port",
-                "count":0,
-                "order":0
-              },{
-                "type":"incremental",
-                "value":"1",
-                "count":0,
-                "order":2
-              },{
-                "type":"series",
-                "value":"a,b,c",
-                "count":0,
-                "order":1
-              }
-            ],
-            "port_layout":{
-              "cols":1,
-              "rows":1
-            },
-            "media":1,
-            "port_connector":1,
-            "port_orientation":1
-          }
-        ],
-      },
-      "rear": {
-        "children": [
-          {
-            "type": "generic",
-            "units": 1,
-            "children": [],
-          },
-        ],
-      },
+        "units":24,
+        "children": [],
+      }],
+      "rear": [{
+        "type": "generic",
+        "units":24,
+        "children": [],
+      }],
     }
   }
 ]
@@ -304,17 +272,25 @@ export default {
       const PartitionAddress = vm.SelectedPartitionAddress[CabinetFace]
       const PartitionParentAddress = PartitionAddress.slice(0, PartitionAddress.length - 1)
 
-      return (!vm.GetPartitionUnitsAvailable(PartitionParentAddress) || PartitionAddress.length == 0)
+      return !vm.GetPartitionUnitsAvailable(PartitionParentAddress)
 
-      //return !vm.TemplateParentPartitionRoomAvailable()
     },
     RemovePartitionDisabled: function() {
+      
       // Store variables
       const vm = this
       const CabinetFace = vm.CabinetFace
       const SelectedPartitionAddress = vm.SelectedPartitionAddress[CabinetFace]
+      const Layer1Partitions = vm.TemplateData[0].blueprint[CabinetFace]
+      let RemovePartitionDisabled = false
 
-      return !SelectedPartitionAddress.length
+      if(SelectedPartitionAddress.length == 1) {
+        if(Layer1Partitions.length == 1) {
+          RemovePartitionDisabled = true
+        }
+      }
+
+      return RemovePartitionDisabled
     },
     PartitionTypeDisabled: function() {
       // Store variables
@@ -323,6 +299,13 @@ export default {
       const SelectedPartitionAddress = vm.SelectedPartitionAddress[CabinetFace]
 
       return !SelectedPartitionAddress.length
+    },
+    SelectedPartition: function(){
+      // Store variables
+      const vm = this
+      const Partition = vm.GetPartition()
+
+      return Partition
     },
     SelectedPortFormat: function() {
       // Store variables
@@ -338,6 +321,11 @@ export default {
     },
   },
   methods: {
+    TemplateClicked: function(TemplateID) {
+
+      console.log('TemplateID: '+TemplateID)
+
+    },
     PartitionClicked: function(PartitionAddress) {
 
       // Store variables
@@ -345,6 +333,8 @@ export default {
       const CabinetFace = vm.CabinetFace
 
       vm.SelectedPartitionAddress[CabinetFace] = PartitionAddress
+
+      console.log('PartitionAddress-1: '+PartitionAddress)
 
     },
     PartitionHovered: function(HoverData) {
@@ -438,7 +428,7 @@ export default {
       const vm = this
       const CabinetFace = vm.CabinetFace
       let PartitionAddress = vm.SelectedPartitionAddress[CabinetFace]
-      const PartitionParentAddress = (PartitionAddress.length > 0) ? PartitionAddress.slice(0, PartitionAddress.length - 1) : PartitionAddress
+      const PartitionParentAddress = PartitionAddress.slice(0, PartitionAddress.length - 1)
       const PartitionIndex = PartitionAddress[PartitionAddress.length - 1]
       let SelectedPartition = vm.GetPartition()
       let SelectedPartitionParent = vm.GetPartition(PartitionParentAddress)
@@ -452,14 +442,17 @@ export default {
 
         // Determine if partition has space available
         if(vm.GetPartitionUnitsAvailable(PartitionParentAddress)) {
+
+          const SelectedPartitionParentChildren = (PartitionParentAddress.length) ? SelectedPartitionParent.children : SelectedPartitionParent
+
           if(InsertPosition == 'after') {
 
             // Insert new partition after selected partition
-            SelectedPartitionParent.children.splice(PartitionIndex + 1, 0, PartitionBlank)
+            SelectedPartitionParentChildren.splice(PartitionIndex + 1, 0, PartitionBlank)
           } else if (InsertPosition == 'before') {
 
             // Insert new partition before selected partition
-            SelectedPartitionParent.children.splice(PartitionIndex, 0, PartitionBlank)
+            SelectedPartitionParentChildren.splice(PartitionIndex, 0, PartitionBlank)
 
             // Update SelectedPartitionAddress as it is shifted right
             PartitionAddress[PartitionAddress.length - 1] = PartitionIndex + 1
@@ -496,12 +489,12 @@ export default {
 
         // Identify selected partition parent
         SelectedPartitionAddressCopy.some(function(AddressIndex) {
-          SelectedPartitionParent = SelectedPartitionParent.children[AddressIndex]
+          SelectedPartitionParent = SelectedPartitionParent[AddressIndex].children
         })
       }
 
       // Remove selected partition from parent
-      vm.$delete(SelectedPartitionParent.children, SelectedPartitionIndex)
+      vm.$delete(SelectedPartitionParent, SelectedPartitionIndex)
     },
     TemplatePartitionSizeUpdated: function(newValue) {
 
@@ -764,10 +757,11 @@ export default {
       const vm = this
       const TemplateData = vm.TemplateData[0]
       const CabinetFace = vm.CabinetFace
-      const PartitionAddress = (PartAddr) ? PartAddr : vm.SelectedPartitionAddress[CabinetFace]
+      const PartitionAddress = (PartAddr !== false) ? PartAddr : vm.SelectedPartitionAddress[CabinetFace]
       const Partition = vm.GetPartition(PartitionAddress)
       const PartitionDirection = vm.GetPartitionDirection(PartitionAddress)
       let UnitsAvailable = (PartitionDirection == 'row') ? 24 : TemplateData.ru_size * 2
+      let PartitionChildren
 
       if(PartitionAddress.length > 1) {
         const PartitionParentAddress = PartitionAddress.slice(0, PartitionAddress.length - 1)
@@ -775,7 +769,13 @@ export default {
         UnitsAvailable = PartitionParent.units
       }
 
-      Partition.children.forEach(function(PartitionChild) {
+      if(PartitionAddress.length > 0) {
+        PartitionChildren = Partition.children
+      } else {
+        PartitionChildren = Partition
+      }
+
+      PartitionChildren.forEach(function(PartitionChild) {
         UnitsAvailable = UnitsAvailable - PartitionChild.units
       })
 
@@ -787,16 +787,18 @@ export default {
       const vm = this
       const TemplateData = vm.TemplateData[0]
       const CabinetFace = vm.CabinetFace
-      const PartitionAddress = (PartAddr) ? PartAddr : vm.SelectedPartitionAddress[CabinetFace]
-      let WorkingPartition = TemplateData.blueprint[CabinetFace]
+      const PartitionAddress = (PartAddr !== false) ? PartAddr : vm.SelectedPartitionAddress[CabinetFace]
+      let WorkingPartitionChildren = TemplateData.blueprint[CabinetFace]
+      let SelectedPartition = WorkingPartitionChildren
 
       // Traverse blueprint until selected partition is reached
       PartitionAddress.forEach(function(AddressIndex, Index) {
-        WorkingPartition = WorkingPartition.children[AddressIndex]
+        SelectedPartition = WorkingPartitionChildren[AddressIndex]
+        WorkingPartitionChildren = SelectedPartition.children
       })
 
       // Return selected partition
-      return WorkingPartition
+      return SelectedPartition
     },
     categoryGET: function(SetCategoryToDefault = false) {
 

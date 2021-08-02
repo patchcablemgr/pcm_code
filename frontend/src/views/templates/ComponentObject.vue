@@ -86,7 +86,7 @@ export default {
   },
   props: {
     TemplateBlueprint: {type: Array},
-    TemplateBlueprintOriginal: {type: Object},
+    TemplateBlueprintOriginal: {type: Array},
     TemplateRUSize: {type: Number},
     InitialDepthCounter: {type: Array},
     SelectedPartitionAddress: {type: Object},
@@ -156,15 +156,15 @@ export default {
       const vm = this
       const PartitionDirection = (PartitionAddress.length % 2) ? 'column' : 'row'
       let WorkingMax = (PartitionDirection == 'column') ? 24 : vm.TemplateRUSize * 2
-      let WorkingPartition = JSON.parse(JSON.stringify(vm.TemplateBlueprintOriginal))
+      let WorkingPartitionChildren = JSON.parse(JSON.stringify(vm.TemplateBlueprintOriginal))
       
       PartitionAddress.pop()
       PartitionAddress.forEach(function(PartitionAddressIndex, Depth){
           let WorkingPartitionDirection = ((Depth + 1) % 2) ? 'column' : 'row'
           if(WorkingPartitionDirection == PartitionDirection) {
-            WorkingMax = WorkingPartition.children[PartitionAddressIndex].units
+            WorkingMax = WorkingPartitionChildren[PartitionAddressIndex].units
           }
-          WorkingPartition = WorkingPartition.children[PartitionAddressIndex]
+          WorkingPartitionChildren = WorkingPartitionChildren[PartitionAddressIndex].children
       })
 
       return WorkingMax

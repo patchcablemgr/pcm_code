@@ -42,7 +42,6 @@
                       v-model="SelectedPortFormat[PortFormatIndex].value"
                       @click="$emit('TemplatePartitionPortFormatFieldSelected', {'index': PortFormatIndex} )"
                       @change="$emit('TemplatePartitionPortFormatValueUpdated', {'index': PortFormatIndex, 'value': $event} )"
-                      :formatter="ValueFormat"
                       :state="errors.length > 0 ? false:null"
                     />
                   </div>
@@ -410,18 +409,6 @@ export default {
     },
   },
   methods: {
-    ValueFormat: function(value) {
-
-      // Store variables
-      const vm = this
-      const PortFormat = vm.SelectedPortFormat
-      const PortFormatIndex = vm.SelectedPortFormatIndex
-      const PortFormatField = PortFormat[PortFormatIndex]
-      const PortFormatFieldType = PortFormatField.type
-
-      return value
-
-    },
     ComputedPortFieldValidate: function(PortFormatFieldType) {
 
       if(PortFormatFieldType == 'static') {

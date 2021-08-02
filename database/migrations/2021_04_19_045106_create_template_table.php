@@ -15,23 +15,23 @@ class CreateTemplateTable extends Migration
     {
         Schema::connection('mysql')->create('template', function (Blueprint $table) {
             $table->integer('id', true);
-            $table->string('templateName');
-            $table->integer('templateCategory_id')->nullable();
-            $table->string('templateType');
-            $table->integer('templateRUSize')->nullable();
-            $table->string('templateFunction');
-            $table->boolean('templateMountConfig')->nullable();
-            $table->integer('templateEncLayoutX')->nullable();
-            $table->integer('templateEncLayoutY')->nullable();
-            $table->integer('templateHUnits')->nullable();
-            $table->integer('templateVUnits')->nullable();
-            $table->integer('nestedParentEncLayoutX')->nullable();
-            $table->integer('nestedParentEncLayoutY')->nullable();
-            $table->integer('nestedParentHUnits')->nullable();
-            $table->integer('nestedParentVUnits')->nullable();
-            $table->text('templatePartitionData')->nullable();
-            $table->string('frontImage', 45)->nullable();
-            $table->string('rearImage', 45)->nullable();
+            $table->string('name');
+            $table->integer('category_id')->nullable();
+            $table->string('type');
+            $table->integer('ru_size')->nullable();
+            $table->string('function');
+            $table->boolean('mount_config')->nullable();
+            $table->integer('enclosure_layout_x')->nullable();
+            $table->integer('enclosure_layout_y')->nullable();
+            $table->integer('partition_layout_x')->nullable();
+            $table->integer('partition_layout_y')->nullable();
+            $table->integer('nested_enclosure_layout_x')->nullable();
+            $table->integer('nested_enclosure_layout_y')->nullable();
+            $table->integer('nested_partition_layout_x')->nullable();
+            $table->integer('nested_partition_layout_y')->nullable();
+            $table->text('blueprint')->nullable();
+            $table->string('image_front', 45)->nullable();
+            $table->string('image_rear', 45)->nullable();
         });
     }
 

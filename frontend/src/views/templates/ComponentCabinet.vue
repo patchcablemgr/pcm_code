@@ -23,12 +23,12 @@
             'background-color': ObjectCategoryData( RackObjectID(CabinetData.id, CabinetFace, CabinetRU) ).color,
             'height': '100%',
           }"
-          @click.stop=" $emit('PartitionClicked', InitialDepthCounter) "
+          @click.stop=" $emit('TemplateClicked', RackObjectID(CabinetData.id, CabinetFace, CabinetRU)) "
           @mouseover.stop=" $emit('PartitionHovered', {'PartitionAddress': InitialDepthCounter, 'HoverState': true}) "
           @mouseleave.stop=" $emit('PartitionHovered', {'PartitionAddress': InitialDepthCounter, 'HoverState': false}) "
         >
           <component-object
-            :TemplateBlueprint=" ObjectTemplateData( RackObjectID(CabinetData.id, CabinetFace, CabinetRU) ).blueprint[CabinetFace].children "
+            :TemplateBlueprint=" ObjectTemplateData( RackObjectID(CabinetData.id, CabinetFace, CabinetRU) ).blueprint[CabinetFace] "
             :TemplateBlueprintOriginal=" ObjectTemplateData( RackObjectID(CabinetData.id, CabinetFace, CabinetRU) ).blueprint[CabinetFace] "
             :TemplateRUSize=" RackObjectSize( RackObjectID(CabinetData.id, CabinetFace, CabinetRU) ) "
             :InitialDepthCounter=" InitialDepthCounter "

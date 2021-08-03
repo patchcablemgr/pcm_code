@@ -15,12 +15,14 @@ class CreateTemplateTable extends Migration
     {
         Schema::connection('mysql')->create('template', function (Blueprint $table) {
             $table->integer('id', true);
+            $table->dateTime('created_at');
+			$table->dateTime('updated_at');
             $table->string('name');
             $table->integer('category_id')->nullable();
             $table->string('type');
             $table->integer('ru_size')->nullable();
             $table->string('function');
-            $table->boolean('mount_config')->nullable();
+            $table->string('mount_config')->nullable();
             $table->integer('enclosure_layout_x')->nullable();
             $table->integer('enclosure_layout_y')->nullable();
             $table->integer('partition_layout_x')->nullable();

@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use App\Models\TemplateModel;
 use App\Rules\TemplateBlueprint;
-use App\Models\Category;
 use Illuminate\Support\Facades\Log;
 
 class Template extends Controller
@@ -18,7 +18,7 @@ class Template extends Controller
      */
     public function index()
     {
-        $templates = Template::all();
+        $templates = TemplateModel::all();
         return $templates->toArray();
     }
 
@@ -49,7 +49,7 @@ class Template extends Controller
             'name' => [
                 'required',
                 'alpha_dash',
-                'unique:App\Models\Template,name',
+                'unique:App\Models\TemplateModel,name',
                 'min:1',
                 'max:255'
             ],
@@ -80,6 +80,20 @@ class Template extends Controller
                 new TemplateBlueprint
             ]
         ]);
+
+        $template = new TemplateModel;
+
+        $template->name = $request->name;
+        $template->category_id = $request->category_id;
+        $template->type = $request->type;
+        $template->ru_size = $request->ru_size;
+        $template->function = $request->function;
+        $template->mount_config = $request->mount_config;
+        $template->blueprint = json_encode($request->blueprint);
+
+        $template->save();
+
+        return $template->toArray();
     }
 
     /**

@@ -53,8 +53,10 @@
               />
             </b-card-body>
           </b-card>
+
         </b-col>
         <b-col>
+
           <b-card
             title="Preview"
           >
@@ -88,13 +90,30 @@
               />
             </b-card-body>
           </b-card>
+
         </b-col>
         <b-col>
+
           <b-card
-            title="Details"
+            title="Template Details"
           >
-            <b-card-text>Bear claw sesame snaps gummies chocolate.</b-card-text>
+            <b-card-body>
+              <component-template-Object-details
+              />
+            </b-card-body>
           </b-card>
+
+          <b-card
+            title="Templates"
+          >
+            <b-card-body>
+              <component-templates
+                :TemplatesData="TemplatesData"
+                :CategoryData="CategoryData"
+              />
+            </b-card-body>
+          </b-card>
+
         </b-col>
       </b-row>
     </b-container>
@@ -107,7 +126,10 @@ import { BContainer, BRow, BCol, BCard, BCardBody, BCardText, BFormRadio, } from
 import TemplatesForm from './templates/TemplatesForm.vue'
 import ToastGeneral from './templates/ToastGeneral.vue'
 import ComponentCabinet from './templates/ComponentCabinet.vue'
+import ComponentTemplateObjectDetails from './templates/ComponentTemplateObjectDetails.vue'
+import ComponentTemplates from './templates/ComponentTemplates.vue'
 
+const TemplatesData = []
 const CategoryData = [
   {
     "id": 0,
@@ -201,9 +223,12 @@ export default {
     TemplatesForm,
     ToastGeneral,
     ComponentCabinet,
+    ComponentTemplateObjectDetails,
+    ComponentTemplates,
   },
   data() {
     return {
+      TemplatesData,
       CategoryData,
       MediaData,
       PortConnectorData,
@@ -333,8 +358,6 @@ export default {
       const CabinetFace = vm.CabinetFace
 
       vm.SelectedPartitionAddress[CabinetFace] = PartitionAddress
-
-      console.log('PartitionAddress-1: '+PartitionAddress)
 
     },
     PartitionHovered: function(HoverData) {
@@ -800,11 +823,22 @@ export default {
       // Return selected partition
       return SelectedPartition
     },
+    templatesGET: function() {
+
+      const vm = this;
+
+      this.$http.get('/api/template').then(function(response){
+
+        vm.TemplatesData = response.data;
+
+      });
+    },
     categoryGET: function(SetCategoryToDefault = false) {
 
       const vm = this;
 
       this.$http.get('/api/category').then(function(response){
+
         vm.CategoryData = response.data;
 
         // Apply default category to template preview
@@ -813,6 +847,7 @@ export default {
           const defaultCategoryID = vm.CategoryData[defaultCategoryIndex].id
           vm.TemplateData[0].category_id = defaultCategoryID
         }
+
       });
     },
     mediumGET: function() {
@@ -930,8 +965,11 @@ export default {
       // POST category form data
       this.$http.post(url, data).then(function(response){
 
-        // Update categories
-        console.log('Form submitted')
+        // convert JSON to object
+        response.data.blueprint = JSON.parse(response.data.blueprint)
+        
+        // Append new template to template array
+        vm.TemplatesData.push(response.data)
 
       }).catch(error => {
 
@@ -957,6 +995,7 @@ export default {
     const vm = this;
     const SetCategoryToDefault = true
 
+    vm.templatesGET()
     vm.categoryGET(SetCategoryToDefault)
     vm.mediumGET()
     vm.portOrientationGET()

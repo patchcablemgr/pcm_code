@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
-use App\Models\Category;
+use App\Models\CategoryModel;
 use Illuminate\Support\Facades\Log;
 
 class TemplateCategory extends Controller
@@ -17,7 +17,7 @@ class TemplateCategory extends Controller
      */
     public function index()
     {
-        $categories = Category::all();
+        $categories = CategoryModel::all();
         return $categories->toArray();
     }
 
@@ -35,7 +35,7 @@ class TemplateCategory extends Controller
             'default' => ['required', 'boolean'],
         ]);
 
-        $category = new Category;
+        $category = new CategoryModel;
 
         $category->name = $request->name;
         $category->color = $request->color;

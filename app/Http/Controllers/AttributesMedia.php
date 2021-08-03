@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Media;
+use App\Models\MediaModel;
 
 class AttributesMedia extends Controller
 {
@@ -14,7 +14,7 @@ class AttributesMedia extends Controller
      */
     public function index()
     {
-        $media = Media::all();
+        $media = MediaModel::all();
         return $media->toArray();
     }
 

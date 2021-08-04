@@ -19,7 +19,14 @@ class Template extends Controller
     public function index()
     {
         $templates = TemplateModel::all();
-        return $templates->toArray();
+
+        // Convert blueprint JSON to object
+        $templatesMapped = $templates->map(function($template){
+            $template['blueprint'] = json_decode($template['blueprint'], true);
+            return $template;
+        });
+
+        return $templatesMapped->toArray();
     }
 
     /**

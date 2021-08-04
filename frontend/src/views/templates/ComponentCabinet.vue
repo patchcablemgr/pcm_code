@@ -13,7 +13,11 @@
       :CabinetID="CabinetData.id"
     >
       <td class="pcm_cabinet">{{ CabinetRU }}</td>
-      <td class="pcm_cabinet_ru" v-if=" RackObjectID(CabinetData.id, CabinetFace, CabinetRU) !== false " :rowspan=" RackObjectSize( RackObjectID(CabinetData.id, CabinetFace, CabinetRU) ) ">
+      <td
+        class="pcm_cabinet_ru"
+        v-if=" RackObjectID(CabinetData.id, CabinetFace, CabinetRU) !== false "
+        :rowspan=" RackObjectSize( RackObjectID(CabinetData.id, CabinetFace, CabinetRU) ) "
+      >
         <div
           :class="{
             pcm_template_partition_selected: SelectedPartitionAddress[CabinetFace].length === 0,

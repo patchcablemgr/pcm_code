@@ -30,7 +30,7 @@ class TemplateCategory extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => ['required', 'alpha_dash', 'unique:App\Models\Category,name', 'min:1', 'max:255'],
+            'name' => ['required', 'alpha_dash', 'unique:App\Models\CategoryModel,name', 'min:1', 'max:255'],
             'color' => ['required', 'regex:/^\#[\dA-F]{8}$/'],
             'default' => ['required', 'boolean'],
         ]);
@@ -44,7 +44,7 @@ class TemplateCategory extends Controller
         if($request->default) {
 
             // Remove default status from existing default category
-            $defaultCategories = Category::all()->where('default', true);
+            $defaultCategories = CategoryModel::all()->where('default', true);
             foreach($defaultCategories as $defaultCategory) {
                 $defaultCategory->default = 0;
                 $defaultCategory->save();
@@ -80,7 +80,7 @@ class TemplateCategory extends Controller
     public function update(Request $request, $id)
     {
 
-        $defaultCategory = Category::where('default', '=', 1)->first();
+        $defaultCategory = CategoryModel::where('default', '=', 1)->first();
 
         $customValidator = Validator::make(array(
             'id' => $id,
@@ -106,7 +106,7 @@ class TemplateCategory extends Controller
         ]);
 
         // Store category
-        $category = Category::where('id', $id)->first();
+        $category = CategoryModel::where('id', $id)->first();
 
         // Update details
         foreach($request->all() as $field => $value) {
@@ -122,10 +122,10 @@ class TemplateCategory extends Controller
                 case 'default':
                     
                     if($value) {
-                        Category::where('default', '=', 1)->update(['default' => false]);
+                        CategoryModel::where('default', '=', 1)->update(['default' => false]);
                     } else {
-                        if(!Category::where('default', '=', 1)->where('id', '<>', $id)->count()) {
-                            Category::where('id', '<>', $id)->first()->update(['default' => true]);
+                        if(!CategoryModel::where('default', '=', 1)->where('id', '<>', $id)->count()) {
+                            CategoryModel::where('id', '<>', $id)->first()->update(['default' => true]);
                         }
                     }
                     $category->default = $value;
@@ -146,14 +146,22 @@ class TemplateCategory extends Controller
      */
     public function destroy($id)
     {
-        Validator::make(array('id' => $id), [
+        $validatorInput = [
+            'id' => $id
+        ];
+        $validatorRules = [
             'id' => [
                 'required',
                 'exists:template_category',
-            ],
-        ])->validate();
+                'unique:App\Models\TemplateModel,category_id'
+            ]
+        ];
+        $validatorMessages = [
+            'id.unique' => 'The category is in use and cannot be deleted.'
+        ];
+        Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
 
-        $category = Category::where('id', $id)->first();
+        $category = CategoryModel::where('id', $id)->first();
 
         $category->delete();
 

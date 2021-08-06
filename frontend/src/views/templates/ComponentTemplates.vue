@@ -31,7 +31,7 @@
       <app-collapse-item
         v-for="Category in CategoryData"
         :key="Category.id"
-        :title="Category.name"
+        :title="Category.name+' ('+CategoryTemplateCount(Category.id)+')'"
       >
         <div
           v-for="Template in FilteredCategoryTemplates(Category.id)"
@@ -109,6 +109,15 @@ export default {
   computed: {
   },
   methods: {
+    CategoryTemplateCount: function(CategoryID) {
+
+      // Store data
+      const vm = this;
+      const TemplatesDataFiltered = vm.TemplatesData.filter(template => template.category_id == CategoryID)
+
+      return TemplatesDataFiltered.length
+
+    },
     ObjectCategoryData: function(CategoryID) {
 
       // Initial variables

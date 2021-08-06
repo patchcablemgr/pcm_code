@@ -123,11 +123,8 @@ class TemplateCategory extends Controller
                     
                     if($value) {
                         CategoryModel::where('default', '=', 1)->update(['default' => false]);
-                    } else {
-                        if(!CategoryModel::where('default', '=', 1)->where('id', '<>', $id)->count()) {
-                            CategoryModel::where('id', '<>', $id)->first()->update(['default' => true]);
-                        }
                     }
+                    
                     $category->default = $value;
                     break;
             }

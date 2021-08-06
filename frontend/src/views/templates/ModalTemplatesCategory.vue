@@ -14,7 +14,7 @@
             title="Create/Edit"
             class="position-static"
           >
-            <b-form @submit.prevent="(CategorySelected) ? categoryPUT() : categoryPOST()">
+            <b-form @submit.prevent=" $emit('TemplateCategorySubmitted', LocalCategoryData) ">
 
               <!-- Name -->
               <dl class="row">
@@ -23,7 +23,7 @@
                 </dt>
                 <dd class="col-sm-8">
                   <b-form-input
-                    v-model="CategoryName"
+                    v-model="ComputedCategoryName"
                     placeholder="New_Category"
                   />
                 </dd>
@@ -36,7 +36,7 @@
                 </dt>
                 <dd class="col-sm-8">
                   <b-form-checkbox
-                    v-model="CategoryDefault"
+                    v-model="ComputedCategoryDefault"
                   />
                 </dd>
               </dl>
@@ -47,40 +47,40 @@
                   Color
                 </dt>
                 <dd class="col-sm-8">
-                  <sketch v-model="CategoryColor" />
+                  <sketch v-model="ComputedCategoryColor" />
                 </dd>
               </dl>
 
               <!-- Submit/Update -->
               <div offset-md="4">
                 <b-button
-                    v-ripple.400="'rgba(255, 255, 255, 0.15)'"
-                    type="submit"
-                    :variant="CategorySelected ? 'secondary' : 'primary'"
-                    class="mr-1"
+                  v-ripple.400="'rgba(255, 255, 255, 0.15)'"
+                  type="submit"
+                  :variant="SelectedCategoryID ? 'secondary' : 'primary'"
+                  class="mr-1"
                 >
-                  {{ (CategorySelected) ? "Update" : "Create" }}
+                  {{ (SelectedCategoryID) ? "Update" : "Create" }}
                 </b-button>
 
                 <!-- Reset -->
                 <b-button
-                    v-ripple.400="'rgba(255, 255, 255, 0.15)'"
-                    type="button"
-                    variant="warning"
-                    class="mr-1"
-                    @click="formReset"
+                  v-ripple.400="'rgba(255, 255, 255, 0.15)'"
+                  type="button"
+                  variant="warning"
+                  class="mr-1"
+                  @click="Reset()"
                 >
                   Reset
                 </b-button>
 
                 <!-- Delete -->
                 <b-button
-                    v-ripple.400="'rgba(255, 255, 255, 0.15)'"
-                    type="button"
-                    variant="danger"
-                    class="mr-1"
-                    @click="categoryDELETE"
-                    :disabled="!CategorySelected"
+                  v-ripple.400="'rgba(255, 255, 255, 0.15)'"
+                  type="button"
+                  variant="danger"
+                  class="mr-1"
+                  @click=" $emit('TemplateCategoryDeleted', {'CategoryID': SelectedCategoryID} ) "
+                  :disabled="!SelectedCategoryID"
                 >
                   Delete
                 </b-button>
@@ -96,19 +96,24 @@
           >
             <b-card-text>
               <div
-                v-for="(Category, CategoryIndex) in CategoryData"
+                v-for="(Category) in CategoryData"
                 v-bind:key="Category.id"
                 class="pcm_box"
-                :class="Category.id == CategorySelected ? 'pcm_selected' : ''"
+                :class="{
+                  pcm_template_partition_selected: Category.id == SelectedCategoryID,
+                  pcm_template_partition_hovered: Category.id == HoveredCategoryID,
+                }"
                 :style="{ background: Category.color}"
-                @click="categorySelected(CategoryIndex)"
+                @click="CategorySelected(Category.id)"
+                @mouseover.stop=" CategoryMouseOver(Category.id) "
+                @mouseleave.stop=" CategoryMouseOver(null) "
               >
                 <span
                   v-if="Category.default"
                 >
                 *
                 </span>
-                {{ Category.name }} ({{ CategoryIndex }})
+                {{ Category.name }} ({{ CategoryTemplateCount(Category.id) }})
               </div>
             </b-card-text>
           </b-card>
@@ -122,11 +127,11 @@ import { BContainer, BRow, BCol, BCard, BForm, BButton, BFormInput, BFormCheckbo
 import Ripple from 'vue-ripple-directive'
 import { Sketch } from 'vue-color'
 
-const CategorySelected = null
-const CategoryName = ""
-const CategoryColor = {"hex8": "#194D33FF"}
-const CategoryDefault = false
-const Categories = []
+const DefaultCategoryName = ''
+const DefaultCategoryDefault = false
+const DefaultCategoryColor = '#194D33FF'
+const HoveredCategoryID = null
+const LocalCategoryData = {"name": DefaultCategoryName, "default": DefaultCategoryDefault, "color": DefaultCategoryColor}
 
 export default {
   components: {
@@ -145,128 +150,137 @@ export default {
     Ripple,
   },
   props: {
+    TemplatesData: {type: Array},
     CategoryData: {type: Array},
+    SelectedCategoryID: {type: Number},
   },
   data () {
     return {
-      CategorySelected,
-      CategoryName,
-      CategoryColor,
-      CategoryDefault,
-      Categories,
+      DefaultCategoryName,
+      DefaultCategoryDefault,
+      DefaultCategoryColor,
+      HoveredCategoryID,
+      LocalCategoryData,
     }
   },
-  methods: {
-    categorySelected: function(CategoryIndex) {
+  computed: {
+    ComputedCategoryName: {
+      get() {
 
-      // Set Categories selected index
-      const selectedCategory = this.CategoryData[CategoryIndex]
+        // Store variables
+        const vm = this
+        const SelectedCategoryID = vm.SelectedCategoryID
 
-      // Set category form to selected category values
-      this.CategorySelected = selectedCategory.id
-      this.CategoryName = selectedCategory.name
-      this.CategoryColor = selectedCategory.color
-      this.CategoryDefault = (selectedCategory.default) ? true : false
-    },
-    categoryPUT: function() {
+        if(SelectedCategoryID) {
 
-      // Store data
-      const vm = this;
-      const categoryID = vm.CategorySelected
-      const url = '/api/category/'+categoryID
-      const data = {
-        name: vm.CategoryName,
-        color: vm.CategoryColor.hex8,
-        default: vm.CategoryDefault,
-      };
-
-      // PUT category form data
-      vm.$http.put(url, data).then(function(response){
-
-        // Update categories
-        vm.$emit('TemplateCategoriesUpdated')
-
-      }).catch(error => {
-
-        // Display error to user via toast
-        vm.$bvToast.toast(JSON.stringify(error.response.data), {
-          title: 'Error',
-          variant: 'danger',
-        })
-
-      });
-    },
-    categoryPOST: function() {
-
-      // Store data
-      const vm = this;
-      const url = '/api/category'
-      const data = {
-        name: vm.CategoryName,
-        color: vm.CategoryColor.hex8,
-        default: vm.CategoryDefault,
-      };
-
-      // POST category form data
-      this.$http.post(url, data).then(function(response){
-
-        // Update categories
-        vm.$emit('TemplateCategoriesUpdated')
-
-      }).catch(error => {
-
-        // Display error to user via toast
-        vm.$bvToast.toast(JSON.stringify(error.response.data), {
-          title: 'Error',
-          variant: 'danger',
-        })
-
-      });
-    },
-    formReset: function() {
-
-      // Reset category form
-      this.CategorySelected = CategorySelected
-      this.CategoryName = CategoryName
-      this.CategoryColor = CategoryColor
-      this.CategoryDefault = CategoryDefault
-
-    },
-    categoryDELETE: function() {
-
-      // Store data
-      const vm = this;
-      const categoryID = vm.CategorySelected
-      const url = '/api/category/'+categoryID
-
-      // DELETE category form data
-      vm.$http.delete(url).then(function(response){
-
-        // Update categories variable
-        const returnedCategoryID = response.data.id
-        const categoryIndex = vm.Categories.findIndex((category) => category.id == returnedCategoryID);
-        vm.Categories.splice(categoryIndex, 1)
-        vm.$emit('categoriesUpdated', vm.Categories)
-
-        // Reset form
-        vm.formReset()
+          const CategoryIndex = vm.CategoryData.findIndex((category) => category.id == SelectedCategoryID);
+          return vm.CategoryData[CategoryIndex].name
+        } else {
+          return vm.DefaultCategoryName
+        }
         
-      }).catch(error => {
+      },
+      set(newValue) {
 
-        // Display error to user via toast
-        vm.$bvToast.toast(JSON.stringify(error.response.data), {
-          title: 'Error',
-          variant: 'danger',
-        })
+        // Store variables
+        const vm = this
+        vm.LocalCategoryData.name = newValue
 
-      });
+        return
+      }
+    },
+    ComputedCategoryDefault: {
+      get() {
+
+        // Store variables
+        const vm = this
+        const SelectedCategoryID = vm.SelectedCategoryID
+
+        if(SelectedCategoryID) {
+
+          const CategoryIndex = vm.CategoryData.findIndex((category) => category.id == SelectedCategoryID);
+          return !!vm.CategoryData[CategoryIndex].default
+        } else {
+          return vm.DefaultCategoryDefault
+        }
+        
+      },
+      set(newValue) {
+
+        // Store variables
+        const vm = this
+        vm.LocalCategoryData.default = newValue
+        
+        return
+      }
+    },
+    ComputedCategoryColor: {
+      get() {
+
+        // Store variables
+        const vm = this
+        const SelectedCategoryID = vm.SelectedCategoryID
+
+        if(SelectedCategoryID) {
+
+          const CategoryIndex = vm.CategoryData.findIndex((category) => category.id == SelectedCategoryID);
+          return vm.CategoryData[CategoryIndex].color
+        } else {
+          return vm.DefaultCategoryColor
+        }
+        
+      },
+      set(newValue) {
+
+        // Store variables
+        const vm = this
+        vm.LocalCategoryData.color = newValue.hex8
+        
+        return
+      }
     },
   },
-  mounted(){
+  methods: {
+    CategoryTemplateCount: function(CategoryID) {
 
-    const vm = this;
+      // Store data
+      const vm = this;
+      const TemplatesDataFiltered = vm.TemplatesData.filter(template => template.category_id == CategoryID)
 
-    //vm.categoryGET();
+      return TemplatesDataFiltered.length
+
+    },
+    CategoryMouseOver: function(CategoryID) {
+
+      // Store data
+      const vm = this;
+
+      vm.HoveredCategoryID = CategoryID
+    },
+    CategorySelected: function(CategoryID) {
+
+      const vm = this
+      const SelectedCategoryIndex = vm.CategoryData.findIndex((category) => category.id == CategoryID);
+      const SelectedCategory = vm.CategoryData[SelectedCategoryIndex]
+
+      // Set local category data to currently selected category data
+      vm.LocalCategoryData.name = SelectedCategory.name
+      vm.LocalCategoryData.default = SelectedCategory.default
+      vm.LocalCategoryData.color = SelectedCategory.color
+
+      vm.$emit('TemplateCategorySelected', {'CategoryID': CategoryID} )
+
+    },
+    Reset: function() {
+
+      // Reset category form
+      const vm = this
+      vm.$emit('TemplateCategorySelected', {'CategoryID': null} )
+      vm.LocalCategoryData.name = vm.DefaultCategoryName
+      vm.LocalCategoryData.default = vm.DefaultCategoryDefault
+      vm.LocalCategoryData.color = vm.DefaultCategoryColor
+
+    },
   },
 }
 </script>

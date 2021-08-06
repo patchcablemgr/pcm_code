@@ -440,10 +440,15 @@
 
     <!-- Category Modal -->
     <modal-templates-category
+      :TemplatesData="TemplatesData"
       :CategoryData="CategoryData"
+      :SelectedCategoryID="SelectedCategoryID"
       @TemplateCategoriesUpdated="$emit('TemplateCategoriesUpdated')"
-      v-on:categoriesUpdatedOrig="updateCategories($event)"
-      v-on:categoriesSetDefault="setDefaultCategory($event)"
+      @categoriesUpdatedOrig="updateCategories($event)"
+      @TemplateCategoryDeleted="$emit('TemplateCategoryDeleted', $event)"
+      @TemplateCategorySubmitted="$emit('TemplateCategorySubmitted', $event)"
+      @TemplateCategorySelected="$emit('TemplateCategorySelected', $event)"
+      @categoriesSetDefault="setDefaultCategory($event)"
     />
 
     <!-- Port ID Modal -->
@@ -495,7 +500,9 @@ export default {
     'b-modal': VBModal,
   },
   props: {
+    TemplatesData: {type: Array},
     CategoryData: {type: Array},
+    SelectedCategoryID: {type: Number},
     PortConnectorData: {type: Array},
     PortOrientationData: {type: Array},
     MediaData: {type: Array},

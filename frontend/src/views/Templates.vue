@@ -8,7 +8,9 @@
           >
             <b-card-body>
               <templates-form
+                :TemplatesData="TemplatesData"
                 :CategoryData="CategoryData"
+                :SelectedCategoryID="SelectedCategoryID"
                 :PortConnectorData="PortConnectorData"
                 :PortOrientationData="PortOrientationData"
                 :MediaData="MediaData"
@@ -26,6 +28,9 @@
                 @TemplateNameUpdated="TemplateNameUpdated($event)"
                 @TemplateCategoriesUpdated="TemplateCategoriesUpdated($event)"
                 @TemplateCategoryUpdated="TemplateCategoryUpdated($event)"
+                @TemplateCategorySubmitted="TemplateCategorySubmitted($event)"
+                @TemplateCategoryDeleted="TemplateCategoryDeleted($event)"
+                @TemplateCategorySelected="TemplateCategorySelected($event)"
                 @TemplateTypeUpdated="TemplateTypeUpdated($event)"
                 @TemplateRUSizeUpdated="TemplateRUSizeUpdated($event)"
                 @TemplateMountConfigUpdated="TemplateMountConfigUpdated($event)"
@@ -136,6 +141,7 @@ const CategoryData = [
     "color": "#FFFFFFFF",
   }
 ]
+const SelectedCategoryID = null
 const PortConnectorData = [
   {
     "value": 1,
@@ -230,6 +236,7 @@ export default {
     return {
       TemplatesData,
       CategoryData,
+      SelectedCategoryID,
       MediaData,
       PortConnectorData,
       PortOrientationData,
@@ -380,6 +387,107 @@ export default {
     },
     TemplateCategoryUpdated: function(newValue) {
       this.TemplateData[0].category_id = newValue
+    },
+    TemplateCategoryDeleted: function(newValue) {
+
+      // Store data
+      const vm = this;
+      const CategoryID = newValue.CategoryID
+      const url = '/api/category/'+CategoryID
+
+      // DELETE category form data
+      vm.$http.delete(url).then(function(response){
+
+        // Clear SelectedCategoryID
+        vm.SelectedCategoryID = null
+
+        // Delete category from CategoryData variable
+        const returnedCategoryID = response.data.id
+        const categoryIndex = vm.CategoryData.findIndex((category) => category.id == returnedCategoryID);
+        vm.CategoryData.splice(categoryIndex, 1)
+        
+      }).catch(error => {
+
+        // Display error to user via toast
+        vm.$bvToast.toast(JSON.stringify(error.response.data), {
+          title: 'Error',
+          variant: 'danger',
+        })
+
+      });
+    },
+    TemplateCategorySubmitted: function(newValue) {
+
+      // Store data
+      const vm = this
+      const CategoryID = vm.SelectedCategoryID
+      const data = {
+        name: newValue.name,
+        color: newValue.color,
+        default: newValue.default,
+      };
+
+      if(CategoryID) {
+
+        const url = '/api/category/'+CategoryID
+
+        // PUT category form data
+        vm.$http.put(url, data).then(function(response){
+
+          // Update categories
+          const CategoryDataIndex = vm.CategoryData.findIndex((category) => category.id == CategoryID);
+
+          // If this category is default, clear any previously default category
+          if(response.data.default) {
+            const CategoryDataDefaultIndex = vm.CategoryData.findIndex((category) => category.default);
+            if(CategoryDataDefaultIndex !== -1) {
+              vm.CategoryData[CategoryDataDefaultIndex].default = false
+            }
+          }
+
+          vm.CategoryData[CategoryDataIndex].name = response.data.name
+          vm.CategoryData[CategoryDataIndex].default = response.data.default
+          vm.CategoryData[CategoryDataIndex].color = response.data.color
+
+        }).catch(error => {
+
+          // Display error to user via toast
+          vm.$bvToast.toast(JSON.stringify(error.response.data), {
+            title: 'Error',
+            variant: 'danger',
+          })
+
+        });
+
+      } else {
+
+        const url = '/api/category'
+
+        // POST category form data
+        this.$http.post(url, data).then(function(response){
+
+          // Update categories
+          vm.CategoryData.push(response.data)
+
+        }).catch(error => {
+
+          // Display error to user via toast
+          vm.$bvToast.toast(JSON.stringify(error.response.data), {
+            title: 'Error',
+            variant: 'danger',
+          })
+
+        });
+
+      }
+    },
+    TemplateCategorySelected: function(newValue) {
+
+      // Store data
+      const vm = this;
+      const CategoryID = newValue.CategoryID
+      vm.SelectedCategoryID = CategoryID
+      
     },
     TemplateTypeUpdated: function(newValue) {
       this.TemplateData[0].type = newValue
@@ -843,9 +951,16 @@ export default {
 
         // Apply default category to template preview
         if(SetCategoryToDefault) {
-          const defaultCategoryIndex = vm.CategoryData.findIndex((category) => category.default);
-          const defaultCategoryID = vm.CategoryData[defaultCategoryIndex].id
-          vm.TemplateData[0].category_id = defaultCategoryID
+          const DefaultCategoryIndex = vm.CategoryData.findIndex((category) => category.default);
+          let DefaultCategoryID
+
+          if(DefaultCategoryIndex !== -1) {
+            DefaultCategoryID = vm.CategoryData[DefaultCategoryIndex].id
+          } else {
+            DefaultCategoryID = vm.CategoryData[0].id
+          }
+
+          vm.TemplateData[0].category_id = DefaultCategoryID
         }
 
       });

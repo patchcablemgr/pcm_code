@@ -15,36 +15,37 @@
       <td class="pcm_cabinet">{{ CabinetRU }}</td>
       <td
         class="pcm_cabinet_ru"
-        v-if=" RackObjectID(CabinetData.id, CabinetFace, CabinetRU) !== false "
-        :rowspan=" RackObjectSize( RackObjectID(CabinetData.id, CabinetFace, CabinetRU) ) "
+        v-if=" RackObjectID(CabinetData.id, CabinetRU) !== false "
+        :rowspan=" RackObjectSize( RackObjectID(CabinetData.id, CabinetRU) ) "
       >
         <div
           :class="{
-            pcm_template_partition_selected: SelectedPartitionAddress[CabinetFace].length === 0,
-            pcm_template_partition_hovered: HoveredPartitionAddress[CabinetFace].length === 0,
+            pcm_template_partition_selected: PartitionAddressSelected[Context][TemplateFaceSelected[Context]].length === 0,
+            pcm_template_partition_hovered: PartitionAddressHovered[Context][TemplateFaceSelected[Context]].length === 0,
           }"
           :style="{
-            'background-color': ObjectCategoryData( RackObjectID(CabinetData.id, CabinetFace, CabinetRU) ).color,
+            'background-color': ObjectCategoryData( RackObjectID(CabinetData.id, CabinetRU) ).color,
             'height': '100%',
           }"
-          @click.stop=" $emit('TemplateClicked', RackObjectID(CabinetData.id, CabinetFace, CabinetRU)) "
-          @mouseover.stop=" $emit('PartitionHovered', {'PartitionAddress': InitialDepthCounter, 'HoverState': true}) "
-          @mouseleave.stop=" $emit('PartitionHovered', {'PartitionAddress': InitialDepthCounter, 'HoverState': false}) "
+          @mouseover.stop=" $emit('PartitionHovered', {'Context': Context, 'PartitionAddress': InitialDepthCounter, 'HoverState': true}) "
+          @mouseleave.stop=" $emit('PartitionHovered', {'Context': Context, 'PartitionAddress': InitialDepthCounter, 'HoverState': false}) "
         >
           <component-object
-            :TemplateBlueprint=" ObjectTemplateData( RackObjectID(CabinetData.id, CabinetFace, CabinetRU) ).blueprint[CabinetFace] "
-            :TemplateBlueprintOriginal=" ObjectTemplateData( RackObjectID(CabinetData.id, CabinetFace, CabinetRU) ).blueprint[CabinetFace] "
-            :TemplateRUSize=" RackObjectSize( RackObjectID(CabinetData.id, CabinetFace, CabinetRU) ) "
+            :TemplateBlueprint=" GetTemplateData( RackObjectID(CabinetData.id, CabinetRU) ).blueprint[TemplateFaceSelected[Context]] "
+            :TemplateBlueprintOriginal=" GetTemplateData( RackObjectID(CabinetData.id, CabinetRU) ).blueprint[TemplateFaceSelected[Context]] "
+            :TemplateRUSize=" RackObjectSize( RackObjectID(CabinetData.id, CabinetRU) ) "
             :InitialDepthCounter=" InitialDepthCounter "
-            :SelectedPartitionAddress=" SelectedPartitionAddress "
-            :HoveredPartitionAddress=" HoveredPartitionAddress "
-            :CabinetFace=" CabinetFace "
+            :Context="Context"
+            :TemplateID="parseInt(0)"
+            :TemplateFaceSelected="TemplateFaceSelected"
+            :PartitionAddressSelected="PartitionAddressSelected"
+            :PartitionAddressHovered="PartitionAddressHovered"
             @PartitionClicked=" $emit('PartitionClicked', $event) "
             @PartitionHovered=" $emit('PartitionHovered', $event) "
           />
         </div>
       </td>
-      <td class="pcm_cabinet_ru" v-else-if=" RUIsOccupied(CabinetData.id, CabinetFace, CabinetRU) === false "></td>
+      <td class="pcm_cabinet_ru" v-else-if=" RUIsOccupied(CabinetData.id, CabinetRU) === false "></td>
       <td class="pcm_cabinet">{{ CabinetRU }}</td>
     </tr>
     <tr>
@@ -74,9 +75,10 @@ export default {
     CategoryData: {type: Array},
     ObjectData: {type: Array},
     TemplateData: {type: Array},
-    CabinetFace: {type: String},
-    SelectedPartitionAddress: {type: Object},
-    HoveredPartitionAddress: {type: Object},
+    Context: {type: String},
+    TemplateFaceSelected: {type: Object},
+    PartitionAddressSelected: {type: Object},
+    PartitionAddressHovered: {type: Object},
   },
   data() {
     return {
@@ -84,6 +86,44 @@ export default {
     }
   },
   methods: {
+    GetObjectIndex: function(ObjectID) {
+
+      // Initial variables
+      const vm = this;
+
+      // Get object index
+      const ObjectIndex = vm.ObjectData.findIndex((object) => object.id == ObjectID);
+
+      return ObjectIndex
+    },
+    GetTemplateIndex: function(TemplateID) {
+
+      // Initial variables
+      const vm = this;
+
+      // Get object index
+      const TemplateIndex = vm.TemplateData.findIndex((template) => template.id == TemplateID);
+
+      return TemplateIndex
+    },
+    GetTemplateData: function(ObjectID) {
+
+      // Initial variables
+      const vm = this;
+
+      // Get object index
+      const ObjectIndex = vm.GetObjectIndex(ObjectID)
+
+      // Get template index
+      const TemplateID = vm.ObjectData[ObjectIndex].template_id
+      const TemplateIndex = vm.GetTemplateIndex(TemplateID)
+
+      // Get template
+      const ObjectTemplateData = vm.TemplateData[TemplateIndex]
+
+      // Return template
+      return ObjectTemplateData
+    },
     ObjectCategoryData: function(ObjectID) {
 
       // Initial variables
@@ -106,36 +146,20 @@ export default {
       // Return category
       return ObjectCategoryData
     },
-    ObjectTemplateData: function(ObjectID) {
-
-      // Initial variables
-      const vm = this;
-
-      // Get object index
-      const ObjectIndex = vm.ObjectData.findIndex((object) => object.id == ObjectID);
-
-      // Get template index
-      const TemplateID = vm.ObjectData[ObjectIndex].template_id
-      const TemplateIndex = vm.TemplateData.findIndex((template) => template.id == TemplateID);
-
-      // Get template
-      const ObjectTemplateData = vm.TemplateData[TemplateIndex]
-
-      // Return template
-      return ObjectTemplateData
-    },
-    RackObjectID: function(CabinetID, CabinetFace, CabinetRU) {
+    RackObjectID: function(CabinetID, CabinetRU) {
       
       // Initial variables
-      const vm = this;
+      const vm = this
+      const Context = vm.Context
+      const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
 
       const ObjectIndex = vm.ObjectData.findIndex(function(Object, ObjectIndex) {
         if(Object.location_id == CabinetID && Object.cabinet_ru == CabinetRU) {
           const ObjectCabinetFace = Object.cabinet_face
           const ObjectID = Object.id
-          const ObjectTemplateData = vm.ObjectTemplateData(ObjectID)
+          const ObjectTemplateData = vm.GetTemplateData(ObjectID)
           const TemplateMountConfig = ObjectTemplateData.mount_config
-          if(ObjectCabinetFace == CabinetFace || TemplateMountConfig == "4-post") {
+          if(ObjectCabinetFace == TemplateFaceSelected || TemplateMountConfig == "4-post") {
             return true
           }
         }
@@ -164,10 +188,12 @@ export default {
 
       return ObjectSize
     },
-    RUIsOccupied: function(CabinetID, CabinetFace, CabinetRU) {
+    RUIsOccupied: function(CabinetID, CabinetRU) {
       
       // Store variables
       const vm = this;
+      const Context = vm.Context
+      const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
       const CabinetObjects = vm.ObjectData.filter((object) => object.location_id == CabinetID);
       let ObjectIsPresent = false
 
@@ -178,7 +204,7 @@ export default {
         const ObjectCabinetRU = object.cabinet_ru
 
         // Get template data
-        const TemplateData = vm.ObjectTemplateData(ObjectID)
+        const TemplateData = vm.GetTemplateData(ObjectID)
 
         // Store template variables
         const TemplateSize = TemplateData.ru_size
@@ -188,7 +214,7 @@ export default {
         const ObjectLastRU = ObjectFirstRU + (TemplateSize - 1)
 
         // Determine if object is present at cabinet RU
-        if(ObjectCabinetFace == CabinetFace || TemplateMountConfig == "4-post") {
+        if(ObjectCabinetFace == TemplateFaceSelected || TemplateMountConfig == "4-post") {
           if(CabinetRU <= ObjectLastRU && CabinetRU >= ObjectFirstRU) {
             ObjectIsPresent = true
           }

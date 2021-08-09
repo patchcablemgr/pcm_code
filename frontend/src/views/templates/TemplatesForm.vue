@@ -454,10 +454,7 @@
     <!-- Port ID Modal -->
     <modal-templates-port-id
       v-if="ComputedInputTemplatePartitionType == 'connectable'"
-      :TemplateData="TemplateData"
-      :CabinetFace="CabinetFace"
       :SelectedPortFormatIndex="SelectedPortFormatIndex"
-      :SelectedPartitionAddress="SelectedPartitionAddress"
       :SelectedPortFormat="SelectedPortFormat"
       :PortIDPreview="PortIDPreview"
       v-on:TemplatePartitionPortFormatFieldSelected="$emit('TemplatePartitionPortFormatFieldSelected', $event)"
@@ -507,9 +504,10 @@ export default {
     PortOrientationData: {type: Array},
     MediaData: {type: Array},
     TemplateData: {type: Array},
-    CabinetFace: {type: String},
     SelectedPortFormatIndex: {type: Number},
-    SelectedPartitionAddress: {type: Object},
+    Context: {type: String},
+    TemplateFaceSelected: {type: Object},
+    PartitionAddressSelected: {type: Object},
     AddChildPartitionDisabled: {type: Boolean},
     AddSiblingPartitionDisabled: {type: Boolean},
     RemovePartitionDisabled: {type: Boolean},
@@ -550,9 +548,11 @@ export default {
       get() {
         // Store variables
         const vm = this
-        const CabinetFace = vm.CabinetFace
-        const SelectedPartitionAddress = vm.SelectedPartitionAddress[CabinetFace]
-        const SelectedPartitionDepth = SelectedPartitionAddress.length
+        const Context = vm.Context
+        console.log('Debug (vm.TemplateFaceSelected): '+vm.TemplateFaceSelected)
+        const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
+        const PartitionAddressSelected = vm.PartitionAddressSelected[Context][TemplateFaceSelected]
+        const SelectedPartitionDepth = PartitionAddressSelected.length
         const SelectedPartitionDirection = (SelectedPartitionDepth % 2) ? 'column' : 'row'
 
         return SelectedPartitionDirection
@@ -768,14 +768,14 @@ export default {
 
       const vm = this
       const TemplateData = vm.TemplateData[0]
-      const CabinetFaceArray = ['front','rear']
+      const TemplateFaceArray = ['front','rear']
       let RUSizeMin = 1
 
       // Find the largest vertically growing partition
 
       // Look at both front and rear of template
-      CabinetFaceArray.forEach(function(CabinetFace){
-        const Layer1Partitions = TemplateData.blueprint[CabinetFace]
+      TemplateFaceArray.forEach(function(TemplateFace){
+        const Layer1Partitions = TemplateData.blueprint[TemplateFace]
 
         // Look at each horizontally growing layer 1 partition
         Layer1Partitions.forEach(function(Layer1Partition){
@@ -800,15 +800,16 @@ export default {
       // Store variables
       const vm = this
       const TemplateData = vm.TemplateData[0]
-      const CabinetFace = vm.CabinetFace
-      const SelectedPartitionAddress = JSON.parse(JSON.stringify(vm.SelectedPartitionAddress[CabinetFace]))
+      const Context = vm.Context
+      const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
+      const PartitionAddressSelected = JSON.parse(JSON.stringify(vm.PartitionAddressSelected[Context][TemplateFaceSelected]))
       const SelectedPartitionDirection = vm.ComputedSelectedPartitionDirection
       let WorkingMax = (SelectedPartitionDirection == 'column') ? 24 : TemplateData.ru_size * 2
-      let WorkingPartitionChildren = JSON.parse(JSON.stringify(TemplateData.blueprint[CabinetFace]))
+      let WorkingPartitionChildren = JSON.parse(JSON.stringify(TemplateData.blueprint[TemplateFaceSelected]))
 
       
-      SelectedPartitionAddress.pop()
-      SelectedPartitionAddress.forEach(function(PartitionAddressIndex, Depth){
+      PartitionAddressSelected.pop()
+      PartitionAddressSelected.forEach(function(PartitionAddressIndex, Depth){
         let WorkingPartitionDirection = ((Depth + 1) % 2) ? 'column' : 'row'
         if(WorkingPartitionDirection == SelectedPartitionDirection) {
           WorkingMax = WorkingPartitionChildren[PartitionAddressIndex].units
@@ -843,16 +844,17 @@ export default {
       // Store variables
       const vm = this
       const TemplateData = vm.TemplateData[0]
-      const CabinetFace = vm.CabinetFace
-      const SelectedPartitionAddress = vm.SelectedPartitionAddress[CabinetFace]
-      const SelectedPartitionDepth = SelectedPartitionAddress.length
+      const Context = vm.Context
+      const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
+      const PartitionAddressSelected = vm.PartitionAddressSelected[Context][TemplateFaceSelected]
+      const SelectedPartitionDepth = PartitionAddressSelected.length
       const SelectedPartitionParentSize = vm.GetSelectedPartitionParentSize()
       let SelectedPartitionSizeMax = SelectedPartitionParentSize
-      let WorkingPartitionChildren = JSON.parse(JSON.stringify(TemplateData.blueprint[CabinetFace]))
+      let WorkingPartitionChildren = JSON.parse(JSON.stringify(TemplateData.blueprint[TemplateFaceSelected]))
       let WorkingPartitionAddress = []
       let WorkingSiblingPartitionAddress = []
 
-      SelectedPartitionAddress.forEach(function(PartitionAddressIndex, Depth) {
+      PartitionAddressSelected.forEach(function(PartitionAddressIndex, Depth) {
         
         const WorkingPartitionDepth = Depth + 1
 
@@ -864,7 +866,7 @@ export default {
             WorkingSiblingPartitionAddress = WorkingPartitionAddress.concat([SiblingIndex])
             
             // Subtract units if partition is not selected
-            if(WorkingSiblingPartitionAddress.length !== SelectedPartitionAddress.length || WorkingSiblingPartitionAddress.every(function(value, index) { return value === SelectedPartitionAddress[index]}) === false) {
+            if(WorkingSiblingPartitionAddress.length !== PartitionAddressSelected.length || WorkingSiblingPartitionAddress.every(function(value, index) { return value === PartitionAddressSelected[index]}) === false) {
               SelectedPartitionSizeMax = SelectedPartitionSizeMax - Sibling.units
             }
           })

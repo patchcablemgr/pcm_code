@@ -15,9 +15,9 @@
       }"
       :style="{ 'flex-grow': GetPartitionFlexGrow(Partition.units, PartitionIndex) }"
       :DepthCounter=" GetDepthCounter(PartitionIndex) "
-      @click.stop=" $emit('PartitionClicked', GetDepthCounter(PartitionIndex)) "
-      @mouseover.stop=" $emit('PartitionHovered', {'PartitionAddress': GetDepthCounter(PartitionIndex), 'HoverState': true}) "
-      @mouseleave.stop=" $emit('PartitionHovered', {'PartitionAddress': GetDepthCounter(PartitionIndex), 'HoverState': false}) "
+      @click.stop=" $emit('PartitionClicked', {'Context': Context, 'TemplateID': TemplateID, 'PartitionAddress': GetDepthCounter(PartitionIndex)}) "
+      @mouseover.stop=" $emit('PartitionHovered', {'Context': Context, 'TemplateID': TemplateID, 'PartitionAddress': GetDepthCounter(PartitionIndex), 'HoverState': true}) "
+      @mouseleave.stop=" $emit('PartitionHovered', {'Context': Context, 'TemplateID': TemplateID, 'PartitionAddress': GetDepthCounter(PartitionIndex), 'HoverState': false}) "
     >
       <!-- Generic partition -->
       <Object
@@ -26,9 +26,11 @@
         :TemplateBlueprintOriginal="TemplateBlueprintOriginal"
         :TemplateRUSize="TemplateRUSize"
         :InitialDepthCounter="GetDepthCounter(PartitionIndex)"
-        :SelectedPartitionAddress="SelectedPartitionAddress"
-        :HoveredPartitionAddress="HoveredPartitionAddress"
-        :CabinetFace="CabinetFace"
+        :Context="Context"
+        :TemplateFaceSelected="TemplateFaceSelected"
+        :PartitionAddressSelected="PartitionAddressSelected"
+        :PartitionAddressHovered="PartitionAddressHovered"
+        :TemplateID="TemplateID"
         @PartitionClicked=" $emit('PartitionClicked', $event) "
         @PartitionHovered=" $emit('PartitionHovered', $event) "
       />
@@ -89,30 +91,51 @@ export default {
     TemplateBlueprintOriginal: {type: Array},
     TemplateRUSize: {type: Number},
     InitialDepthCounter: {type: Array},
-    SelectedPartitionAddress: {type: Object},
-    HoveredPartitionAddress: {type: Object},
-    CabinetFace: {type: String},
+    Context: {type: String},
+    TemplateID: {type: Number},
+    TemplateFaceSelected: {type: Object},
+    PartitionAddressSelected: {type: Object},
+    PartitionAddressHovered: {type: Object},
   },
   methods: {
     PartitionIsSelected: function(PartitionIndex) {
       const vm = this
-      const SelectedPartitionAddress = vm.SelectedPartitionAddress[vm.CabinetFace]
+      const Context = vm.Context
+      const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
+      const PartitionAddressSelected = vm.PartitionAddressSelected[Context][TemplateFaceSelected]
       const PartitionAddress = vm.GetDepthCounter(PartitionIndex)
+      const TemplateIDSelected = vm.PartitionAddressSelected[Context].template_id
+      const TemplateID = vm.TemplateID
       let PartitionIsSelected = false
 
-      if(SelectedPartitionAddress.length === PartitionAddress.length && SelectedPartitionAddress.every(function(value, index) { return value === PartitionAddress[index]})) {
+      console.log('Debug (PartitionIsSelected - vm.PartitionAddressSelected): '+JSON.stringify(vm.PartitionAddressSelected))
+      console.log('Debug (PartitionIsSelected - Context): '+Context)
+      console.log('Debug (PartitionIsSelected - TemplateFaceSelected): '+TemplateFaceSelected)
+      console.log('Debug (PartitionIsSelected - PartitionAddressSelected): '+JSON.stringify(PartitionAddressSelected))
+
+      if(PartitionAddressSelected.length === PartitionAddress.length && PartitionAddressSelected.every(function(value, index) { return value === PartitionAddress[index]}) && TemplateIDSelected == TemplateID) {
         PartitionIsSelected = true
       }
       return PartitionIsSelected
     },
     PartitionIsHovered: function(PartitionIndex) {
       const vm = this
-      const HoveredPartitionAddress = vm.HoveredPartitionAddress[vm.CabinetFace]
+      const Context = vm.Context
+      const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
+      const PartitionAddressHovered = vm.PartitionAddressHovered[Context][TemplateFaceSelected]
       const PartitionAddress = vm.GetDepthCounter(PartitionIndex)
+      const TemplateIDSelected = vm.PartitionAddressHovered[Context].template_id
+      const TemplateID = vm.TemplateID
       let PartitionIsHovered = false
 
-      if(HoveredPartitionAddress.length === PartitionAddress.length && HoveredPartitionAddress.every(function(value, index) { return value === PartitionAddress[index]})) {
-        PartitionIsHovered = true
+      if(PartitionAddressHovered.length === PartitionAddress.length && PartitionAddressHovered.every(function(value, index) { return value === PartitionAddress[index]})) {
+        if(Context == 'template') {
+          //console.log('Debug (TemplateIDSelected): '+TemplateIDSelected)
+          //console.log('Debug (TemplateID): '+TemplateID)
+          PartitionIsHovered = (TemplateIDSelected == TemplateID) ? true : false
+        } else {
+          PartitionIsHovered = true
+        }
       }
       return PartitionIsHovered
     },

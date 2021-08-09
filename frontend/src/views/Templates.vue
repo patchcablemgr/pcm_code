@@ -15,9 +15,10 @@
                 :PortOrientationData="PortOrientationData"
                 :MediaData="MediaData"
                 :TemplateData="TemplateData"
-                :CabinetFace="CabinetFace"
                 :SelectedPortFormatIndex="SelectedPortFormatIndex"
-                :SelectedPartitionAddress="SelectedPartitionAddress"
+                Context="preview"
+                :TemplateFaceSelected="TemplateFaceSelected"
+                :PartitionAddressSelected="PartitionAddressSelected"
                 :AddChildPartitionDisabled="AddChildPartitionDisabled"
                 :AddSiblingPartitionDisabled="AddSiblingPartitionDisabled"
                 :RemovePartitionDisabled="RemovePartitionDisabled"
@@ -67,17 +68,17 @@
           >
             <b-card-body>
               <b-form-radio
-                v-model="CabinetFace"
+                v-model="TemplateFaceSelected.preview"
                 plain
                 value="front"
-                :disabled="CabinetFaceToggleIsDisabled"
+                :disabled="TemplateFaceToggleIsDisabled"
               >Front
               </b-form-radio>
               <b-form-radio
-                v-model="CabinetFace"
+                v-model="TemplateFaceSelected.preview"
                 plain
                 value="rear"
-                :disabled="CabinetFaceToggleIsDisabled"
+                :disabled="TemplateFaceToggleIsDisabled"
               >
                 Rear
               </b-form-radio>
@@ -86,10 +87,10 @@
                 :CategoryData="CategoryData"
                 :ObjectData="ObjectData"
                 :TemplateData="TemplateData"
-                :CabinetFace="CabinetFace"
-                :SelectedPartitionAddress="SelectedPartitionAddress"
-                :HoveredPartitionAddress="HoveredPartitionAddress"
-                @TemplateClicked=" TemplateClicked($event) "
+                Context="preview"
+                :TemplateFaceSelected="TemplateFaceSelected"
+                :PartitionAddressSelected="PartitionAddressSelected"
+                :PartitionAddressHovered="PartitionAddressHovered"
                 @PartitionClicked=" PartitionClicked($event) "
                 @PartitionHovered=" PartitionHovered($event) "
               />
@@ -115,6 +116,13 @@
               <component-templates
                 :TemplatesData="TemplatesData"
                 :CategoryData="CategoryData"
+                Context="template"
+                :TemplateFaceSelected="TemplateFaceSelected"
+                :PartitionAddressSelected="PartitionAddressSelected"
+                :PartitionAddressHovered="PartitionAddressHovered"
+                @PartitionClicked="PartitionClicked($event)"
+                @PartitionHovered="PartitionHovered($event)"
+                @TemplateFaceChanged="TemplateFaceChanged($event)"
               />
             </b-card-body>
           </b-card>
@@ -167,15 +175,34 @@ const MediaData = [
     "default": 1,
   }
 ]
-const CabinetFace = "front"
 const SelectedPortFormatIndex = 0
-const SelectedPartitionAddress = {
-  "front": [0],
-  "rear": [0]
+const TemplateFaceSelected = {
+  'preview': 'front',
+  'template': 'front',
 }
-const HoveredPartitionAddress = {
-  "front": false,
-  "rear": false
+const PartitionAddressSelected = {
+  'preview': {
+    'template_id': null,
+    'front': [0],
+    'rear': [0]
+  },
+  'template': {
+    'template_id': null,
+    'front': [0],
+    'rear': [0]
+  }
+}
+const PartitionAddressHovered = {
+  'preview': {
+    'template_id': null,
+    'front': false,
+    'rear': false
+  },
+  'template': {
+    'template_id': null,
+    'front': false,
+    'rear': false
+  }
 }
 const CabinetData = {
   "id": 1,
@@ -244,10 +271,10 @@ export default {
       ObjectData,
       TemplateData,
       TemplateDataOriginal: JSON.parse(JSON.stringify(TemplateData)),
-      CabinetFace,
       SelectedPortFormatIndex,
-      SelectedPartitionAddress,
-      HoveredPartitionAddress,
+      TemplateFaceSelected,
+      PartitionAddressSelected,
+      PartitionAddressHovered,
     }
   },
   computed: {
@@ -283,14 +310,14 @@ export default {
       return PortIDPreviewArray.join(', ')
 
     },
-    CabinetFaceToggleIsDisabled: function() {
+    TemplateFaceToggleIsDisabled: function() {
       return this.TemplateData[0].mount_config === '2-post'
     },
     AddChildPartitionDisabled: function() {
       // Store variables
       const vm = this
-      const CabinetFace = vm.CabinetFace
-      const PartitionAddress = vm.SelectedPartitionAddress[CabinetFace]
+      const TemplateFaceSelected = vm.TemplateFaceSelected.preview
+      const PartitionAddress = vm.PartitionAddressSelected.preview[TemplateFaceSelected]
       const Partition = vm.GetPartition(PartitionAddress)
 
       return (!vm.GetPartitionUnitsAvailable() || Partition.type != 'generic')
@@ -300,8 +327,8 @@ export default {
     AddSiblingPartitionDisabled: function() {
       // Store variables
       const vm = this
-      const CabinetFace = vm.CabinetFace
-      const PartitionAddress = vm.SelectedPartitionAddress[CabinetFace]
+      const TemplateFaceSelected = vm.TemplateFaceSelected.preview
+      const PartitionAddress = vm.PartitionAddressSelected.preview[TemplateFaceSelected]
       const PartitionParentAddress = PartitionAddress.slice(0, PartitionAddress.length - 1)
 
       return !vm.GetPartitionUnitsAvailable(PartitionParentAddress)
@@ -311,12 +338,12 @@ export default {
       
       // Store variables
       const vm = this
-      const CabinetFace = vm.CabinetFace
-      const SelectedPartitionAddress = vm.SelectedPartitionAddress[CabinetFace]
-      const Layer1Partitions = vm.TemplateData[0].blueprint[CabinetFace]
+      const TemplateFaceSelected = vm.TemplateFaceSelected.preview
+      const PartitionAddressSelected = vm.PartitionAddressSelected.preview[TemplateFaceSelected]
+      const Layer1Partitions = vm.TemplateData[0].blueprint[TemplateFaceSelected]
       let RemovePartitionDisabled = false
 
-      if(SelectedPartitionAddress.length == 1) {
+      if(PartitionAddressSelected.length == 1) {
         if(Layer1Partitions.length == 1) {
           RemovePartitionDisabled = true
         }
@@ -327,10 +354,10 @@ export default {
     PartitionTypeDisabled: function() {
       // Store variables
       const vm = this
-      const CabinetFace = vm.CabinetFace
-      const SelectedPartitionAddress = vm.SelectedPartitionAddress[CabinetFace]
+      const TemplateFaceSelected = vm.TemplateFaceSelected.preview
+      const PartitionAddressSelected = vm.PartitionAddressSelected.preview[TemplateFaceSelected]
 
-      return !SelectedPartitionAddress.length
+      return !PartitionAddressSelected.length
     },
     SelectedPartition: function(){
       // Store variables
@@ -353,29 +380,44 @@ export default {
     },
   },
   methods: {
-    TemplateClicked: function(TemplateID) {
-
-      console.log('TemplateID: '+TemplateID)
-
-    },
-    PartitionClicked: function(PartitionAddress) {
+    PartitionClicked: function(EmitData) {
 
       // Store variables
       const vm = this
-      const CabinetFace = vm.CabinetFace
+      const Context = EmitData.Context
+      const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
+      const PartitionAddress = EmitData.PartitionAddress
+      const TemplateID = EmitData.TemplateID
 
-      vm.SelectedPartitionAddress[CabinetFace] = PartitionAddress
+      vm.PartitionAddressSelected[Context][TemplateFaceSelected] = PartitionAddress
+      vm.PartitionAddressSelected[Context].template_id = TemplateID
+      console.log('Debug (TemplatePartitionClicked-Context): '+Context)
+      console.log('Debug (TemplatePartitionClicked-TemplateFaceSelected): '+TemplateFaceSelected)
 
     },
-    PartitionHovered: function(HoverData) {
+    PartitionHovered: function(EmitData) {
 
       // Store variables
       const vm = this
-      const CabinetFace = vm.CabinetFace
-      const PartitionAddress = HoverData.PartitionAddress
-      const HoverState = HoverData.HoverState
+      const Context = EmitData.Context
+      const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
+      const PartitionAddress = EmitData.PartitionAddress
+      const HoverState = EmitData.HoverState
+      const TemplateID = EmitData.TemplateID
 
-      vm.HoveredPartitionAddress[CabinetFace] = (HoverState) ? PartitionAddress : false
+      vm.PartitionAddressHovered[Context][TemplateFaceSelected] = (HoverState) ? PartitionAddress : false
+      vm.PartitionAddressHovered[Context].template_id = TemplateID
+      //console.log('Debug (TemplatePartitionHovered): '+JSON.stringify(EmitData))
+
+    },
+    TemplateFaceChanged: function(EmitData) {
+
+      // Store variables
+      const vm = this
+      const TemplateFace = EmitData.TemplateFace
+      const Context = EmitData.Context
+      vm.TemplateFaceSelected[Context] = TemplateFace
+
     },
     TemplateNameUpdated: function(newValue) {
       this.TemplateData[0].name = newValue
@@ -496,8 +538,10 @@ export default {
       this.TemplateData[0].ru_size = newValue
     },
     TemplateMountConfigUpdated: function(newValue) {
-      this.TemplateData[0].mount_config = newValue
-      this.CabinetFace = this.TemplateData[0].mount_config == '2-post' ? 'front' : this.CabinetFace
+
+      const vm = this
+      vm.TemplateData[0].mount_config = newValue
+      vm.TemplateFaceSelected.preview = newValue == '2-post' ? 'front' : vm.TemplateFaceSelected.preview
     },
     TemplatePartitionTypeUpdated: function(newValue) {
 
@@ -557,8 +601,8 @@ export default {
 
       // Store variables
       const vm = this
-      const CabinetFace = vm.CabinetFace
-      let PartitionAddress = vm.SelectedPartitionAddress[CabinetFace]
+      const TemplateFaceSelected = vm.TemplateFaceSelected.preview
+      let PartitionAddress = vm.PartitionAddressSelected.preview[TemplateFaceSelected]
       const PartitionParentAddress = PartitionAddress.slice(0, PartitionAddress.length - 1)
       const PartitionIndex = PartitionAddress[PartitionAddress.length - 1]
       let SelectedPartition = vm.GetPartition()
@@ -585,7 +629,7 @@ export default {
             // Insert new partition before selected partition
             SelectedPartitionParentChildren.splice(PartitionIndex, 0, PartitionBlank)
 
-            // Update SelectedPartitionAddress as it is shifted right
+            // Update PartitionAddressSelected as it is shifted right
             PartitionAddress[PartitionAddress.length - 1] = PartitionIndex + 1
           }
         }
@@ -602,24 +646,24 @@ export default {
       // Store variables
       const vm = this
       const TemplateData = vm.TemplateData[0]
-      const CabinetFace = vm.CabinetFace
-      const SelectedPartitionAddress = vm.SelectedPartitionAddress[CabinetFace]
-      const SelectedPartitionAddressCopy = JSON.parse(JSON.stringify(SelectedPartitionAddress))
-      let SelectedPartitionParent = TemplateData.blueprint[CabinetFace]
-      const SelectedPartitionIndex = SelectedPartitionAddressCopy.pop()
+      const TemplateFaceSelected = vm.TemplateFaceSelected.preview
+      const PartitionAddressSelected = vm.PartitionAddressSelected.preview[TemplateFaceSelected]
+      const PartitionAddressSelectedCopy = JSON.parse(JSON.stringify(PartitionAddressSelected))
+      let SelectedPartitionParent = TemplateData.blueprint[TemplateFaceSelected]
+      const SelectedPartitionIndex = PartitionAddressSelectedCopy.pop()
       
       // Traverse blueprint until selected partition is reached
       if(SelectedPartitionIndex !== 'undefined') {
 
         // Repoint selected partition address to next available
         if(SelectedPartitionIndex > 0) {
-          SelectedPartitionAddress[SelectedPartitionAddress.length - 1] = SelectedPartitionIndex - 1
+          PartitionAddressSelected[PartitionAddressSelected.length - 1] = SelectedPartitionIndex - 1
         } else {
-          SelectedPartitionAddress.pop()
+          PartitionAddressSelected.pop()
         }
 
         // Identify selected partition parent
-        SelectedPartitionAddressCopy.some(function(AddressIndex) {
+        PartitionAddressSelectedCopy.some(function(AddressIndex) {
           SelectedPartitionParent = SelectedPartitionParent[AddressIndex].children
         })
       }
@@ -876,8 +920,8 @@ export default {
       
       // Store variables
       const vm = this
-      const CabinetFace = vm.CabinetFace
-      const PartitionAddress = (PartAddr) ? PartAddr : vm.SelectedPartitionAddress[CabinetFace]
+      const TemplateFaceSelected = vm.TemplateFaceSelected.preview
+      const PartitionAddress = (PartAddr) ? PartAddr : vm.PartitionAddressSelected.preview[TemplateFaceSelected]
       const PartitionDirection = (PartitionAddress.length % 2) ? 'column' : 'row'
 
       return PartitionDirection
@@ -887,8 +931,8 @@ export default {
       // Store variables
       const vm = this
       const TemplateData = vm.TemplateData[0]
-      const CabinetFace = vm.CabinetFace
-      const PartitionAddress = (PartAddr !== false) ? PartAddr : vm.SelectedPartitionAddress[CabinetFace]
+      const TemplateFaceSelected = vm.TemplateFaceSelected.preview
+      const PartitionAddress = (PartAddr !== false) ? PartAddr : vm.PartitionAddressSelected.preview[TemplateFaceSelected]
       const Partition = vm.GetPartition(PartitionAddress)
       const PartitionDirection = vm.GetPartitionDirection(PartitionAddress)
       let UnitsAvailable = (PartitionDirection == 'row') ? 24 : TemplateData.ru_size * 2
@@ -917,9 +961,9 @@ export default {
       // Store variables
       const vm = this
       const TemplateData = vm.TemplateData[0]
-      const CabinetFace = vm.CabinetFace
-      const PartitionAddress = (PartAddr !== false) ? PartAddr : vm.SelectedPartitionAddress[CabinetFace]
-      let WorkingPartitionChildren = TemplateData.blueprint[CabinetFace]
+      const TemplateFaceSelected = vm.TemplateFaceSelected.preview
+      const PartitionAddress = (PartAddr !== false) ? PartAddr : vm.PartitionAddressSelected.preview[TemplateFaceSelected]
+      let WorkingPartitionChildren = TemplateData.blueprint[TemplateFaceSelected]
       let SelectedPartition = WorkingPartitionChildren
 
       // Traverse blueprint until selected partition is reached

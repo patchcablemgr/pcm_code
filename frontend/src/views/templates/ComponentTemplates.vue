@@ -5,13 +5,13 @@
 
     <!-- TemplateFace -->
     <b-form-radio
-      v-model="TemplateFace"
+      v-model="ComputedTemplateFace"
       plain
       value="front"
     >Front
     </b-form-radio>
     <b-form-radio
-      v-model="TemplateFace"
+      v-model="ComputedTemplateFace"
       plain
       value="rear"
     >
@@ -51,22 +51,30 @@
                 :rowspan=" (RU == 1) ? 0 : '' "
               >
                 <div
+                  :class="{
+                    pcm_template_partition_selected: PartitionAddressSelected[Context][TemplateFaceSelected[Context]].length === 0,
+                    pcm_template_partition_hovered: PartitionAddressHovered[Context][TemplateFaceSelected[Context]].length === 0,
+                  }"
                   :style="{
                     'background-color': ObjectCategoryData(Category.id).color,
                     'height': '100%',
                   }"
+                  @mouseover.stop=" $emit('PartitionHovered', {'Context': Context, 'PartitionAddress': InitialDepthCounter, 'HoverState': true}) "
+                  @mouseleave.stop=" $emit('PartitionHovered', {'Context': Context, 'PartitionAddress': InitialDepthCounter, 'HoverState': false}) "
                 >
                   <component-object
                     v-if=" RU == 1 "
-                    :TemplateBlueprint=" Template.blueprint[TemplateFace] "
-                    :TemplateBlueprintOriginal=" Template.blueprint[TemplateFace] "
+                    :TemplateBlueprint=" Template.blueprint[TemplateFaceSelected[Context]] "
+                    :TemplateBlueprintOriginal=" Template.blueprint[TemplateFaceSelected[Context]] "
                     :TemplateRUSize=" Template.ru_size "
                     :InitialDepthCounter=" [] "
-                    :SelectedPartitionAddress=" { 'front': false, 'rear': false } "
-                    :HoveredPartitionAddress=" { 'front': false, 'rear': false } "
-                    :CabinetFace=" TemplateFace "
-                    @PartitionClicked=" PartitionClicked($event) "
-                    @PartitionHovered=" PartitionHovered($event) "
+                    :Context="Context"
+                    :TemplateFaceSelected="TemplateFaceSelected"
+                    :PartitionAddressSelected="PartitionAddressSelected"
+                    :PartitionAddressHovered="PartitionAddressHovered"
+                    :TemplateID="Template.id"
+                    @PartitionClicked=" $emit('PartitionClicked', $event) "
+                    @PartitionHovered=" $emit('PartitionHovered', $event) "
                   />
                 </div>
               </td>
@@ -85,8 +93,8 @@ import AppCollapse from '@core/components/app-collapse/AppCollapse.vue'
 import AppCollapseItem from '@core/components/app-collapse/AppCollapseItem.vue'
 import ComponentObject from './ComponentObject.vue'
 
+const InitialDepthCounter = []
 const TemplateFilter = []
-const TemplateFace = 'front'
 
 export default {
   components: {
@@ -99,14 +107,35 @@ export default {
   props: {
     CategoryData: {type: Array},
     TemplatesData: {type: Array},
+    Context: {type: String},
+    TemplateFaceSelected: {type: Object},
+    PartitionAddressSelected: {type: Object},
+    PartitionAddressHovered: {type: Object},
   },
   data() {
     return {
+      InitialDepthCounter,
       TemplateFilter,
-      TemplateFace,
     }
   },
   computed: {
+    ComputedTemplateFace: {
+      get() {
+
+        const vm = this
+        const Context = vm.Context
+        const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
+        return vm.TemplateFaceSelected
+
+      },
+      set(newValue) {
+
+        const vm = this
+        const Context = vm.Context
+        vm.$emit('TemplateFaceChanged', {'Context': Context, 'TemplateFace': newValue})
+
+      }
+    }
   },
   methods: {
     CategoryTemplateCount: function(CategoryID) {
@@ -162,12 +191,6 @@ export default {
       })
 
       return FilteredCategoryTemplates
-    },
-    PartitionClicked: function(EmitData){
-      console.log(EmitData)
-    },
-    PartitionHovered: function(EmitData){
-      console.log(EmitData)
     },
   }
 }

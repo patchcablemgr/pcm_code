@@ -215,7 +215,7 @@
                 />
               </dt>
               <dd class="col-sm-8">
-                {{ PortIDPreview }}
+                {{ PreviewPortID }}
               </dd>
             </dl>
             
@@ -356,7 +356,7 @@ export default {
   props: {
     SelectedPortFormatIndex: {type: Number},
     SelectedPortFormat: {type: Array},
-    PortIDPreview: {type: String},
+    PreviewPortID: {type: String},
   },
   data() {
     return {

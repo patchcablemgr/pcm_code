@@ -31,8 +31,8 @@
           @mouseleave.stop=" $emit('PartitionHovered', {'Context': Context, 'PartitionAddress': InitialDepthCounter, 'HoverState': false}) "
         >
           <component-object
-            :TemplateBlueprint=" GetTemplateData( RackObjectID(CabinetData.id, CabinetRU) ).blueprint[TemplateFaceSelected[Context]] "
-            :TemplateBlueprintOriginal=" GetTemplateData( RackObjectID(CabinetData.id, CabinetRU) ).blueprint[TemplateFaceSelected[Context]] "
+            :TemplateBlueprint=" GetPreviewData( RackObjectID(CabinetData.id, CabinetRU) ).blueprint[TemplateFaceSelected[Context]] "
+            :TemplateBlueprintOriginal=" GetPreviewData( RackObjectID(CabinetData.id, CabinetRU) ).blueprint[TemplateFaceSelected[Context]] "
             :TemplateRUSize=" RackObjectSize( RackObjectID(CabinetData.id, CabinetRU) ) "
             :InitialDepthCounter=" InitialDepthCounter "
             :Context="Context"
@@ -74,7 +74,7 @@ export default {
     CabinetData: {type: Object},
     CategoryData: {type: Array},
     ObjectData: {type: Array},
-    TemplateData: {type: Array},
+    PreviewData: {type: Array},
     Context: {type: String},
     TemplateFaceSelected: {type: Object},
     PartitionAddressSelected: {type: Object},
@@ -102,11 +102,11 @@ export default {
       const vm = this;
 
       // Get object index
-      const TemplateIndex = vm.TemplateData.findIndex((template) => template.id == TemplateID);
+      const TemplateIndex = vm.PreviewData.findIndex((template) => template.id == TemplateID);
 
       return TemplateIndex
     },
-    GetTemplateData: function(ObjectID) {
+    GetPreviewData: function(ObjectID) {
 
       // Initial variables
       const vm = this;
@@ -119,10 +119,10 @@ export default {
       const TemplateIndex = vm.GetTemplateIndex(TemplateID)
 
       // Get template
-      const ObjectTemplateData = vm.TemplateData[TemplateIndex]
+      const ObjectPreviewData = vm.PreviewData[TemplateIndex]
 
       // Return template
-      return ObjectTemplateData
+      return ObjectPreviewData
     },
     ObjectCategoryData: function(ObjectID) {
 
@@ -134,10 +134,10 @@ export default {
 
       // Get template index
       const TemplateID = vm.ObjectData[ObjectIndex].template_id
-      const TemplateIndex = vm.TemplateData.findIndex((template) => template.id == TemplateID);
+      const TemplateIndex = vm.PreviewData.findIndex((template) => template.id == TemplateID);
 
       // Get category index
-      const ObjectCategoryID = vm.TemplateData[TemplateIndex].category_id
+      const ObjectCategoryID = vm.PreviewData[TemplateIndex].category_id
       const ObjectCategoryIndex = vm.CategoryData.findIndex((category) => category.id == ObjectCategoryID);
 
       // Get category
@@ -157,8 +157,8 @@ export default {
         if(Object.location_id == CabinetID && Object.cabinet_ru == CabinetRU) {
           const ObjectCabinetFace = Object.cabinet_face
           const ObjectID = Object.id
-          const ObjectTemplateData = vm.GetTemplateData(ObjectID)
-          const TemplateMountConfig = ObjectTemplateData.mount_config
+          const ObjectPreviewData = vm.GetPreviewData(ObjectID)
+          const TemplateMountConfig = ObjectPreviewData.mount_config
           if(ObjectCabinetFace == TemplateFaceSelected || TemplateMountConfig == "4-post") {
             return true
           }
@@ -179,12 +179,12 @@ export default {
 
       // Get template index
       const TemplateID = vm.ObjectData[ObjectIndex].template_id
-      const TemplateIndex = vm.TemplateData.findIndex((template) => template.id == TemplateID);
+      const TemplateIndex = vm.PreviewData.findIndex((template) => template.id == TemplateID);
 
       // Get template
-      const ObjectTemplateData = vm.TemplateData[TemplateIndex]
+      const ObjectPreviewData = vm.PreviewData[TemplateIndex]
 
-      const ObjectSize = ObjectTemplateData.ru_size
+      const ObjectSize = ObjectPreviewData.ru_size
 
       return ObjectSize
     },
@@ -204,11 +204,11 @@ export default {
         const ObjectCabinetRU = object.cabinet_ru
 
         // Get template data
-        const TemplateData = vm.GetTemplateData(ObjectID)
+        const PreviewData = vm.GetPreviewData(ObjectID)
 
         // Store template variables
-        const TemplateSize = TemplateData.ru_size
-        const TemplateMountConfig = TemplateData.mount_config
+        const TemplateSize = PreviewData.ru_size
+        const TemplateMountConfig = PreviewData.mount_config
 
         const ObjectFirstRU = ObjectCabinetRU
         const ObjectLastRU = ObjectFirstRU + (TemplateSize - 1)

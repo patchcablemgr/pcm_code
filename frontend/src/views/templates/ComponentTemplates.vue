@@ -52,15 +52,16 @@
               >
                 <div
                   :class="{
-                    pcm_template_partition_selected: PartitionAddressSelected[Context][TemplateFaceSelected[Context]].length === 0,
-                    pcm_template_partition_hovered: PartitionAddressHovered[Context][TemplateFaceSelected[Context]].length === 0,
+                    pcm_template_partition_selected: PartitionIsSelected(Template.id),
+                    pcm_template_partition_hovered: PartitionIsHovered(Template.id),
                   }"
                   :style="{
                     'background-color': ObjectCategoryData(Category.id).color,
                     'height': '100%',
                   }"
-                  @mouseover.stop=" $emit('PartitionHovered', {'Context': Context, 'PartitionAddress': InitialDepthCounter, 'HoverState': true}) "
-                  @mouseleave.stop=" $emit('PartitionHovered', {'Context': Context, 'PartitionAddress': InitialDepthCounter, 'HoverState': false}) "
+                  @click.stop=" $emit('PartitionClicked', {'Context': Context, 'TemplateID': Template.id, 'PartitionAddress': InitialDepthCounter}) "
+                  @mouseover.stop=" $emit('PartitionHovered', {'Context': Context, 'TemplateID': Template.id, 'PartitionAddress': InitialDepthCounter, 'HoverState': true}) "
+                  @mouseleave.stop=" $emit('PartitionHovered', {'Context': Context, 'TemplateID': Template.id, 'PartitionAddress': InitialDepthCounter, 'HoverState': false}) "
                 >
                   <component-object
                     v-if=" RU == 1 "
@@ -106,7 +107,7 @@ export default {
   },
   props: {
     CategoryData: {type: Array},
-    TemplatesData: {type: Array},
+    TemplateData: {type: Array},
     Context: {type: String},
     TemplateFaceSelected: {type: Object},
     PartitionAddressSelected: {type: Object},
@@ -138,13 +139,39 @@ export default {
     }
   },
   methods: {
+    PartitionIsSelected: function(TemplateID) {
+      const vm = this
+      const Context = vm.Context
+      const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
+      const PartitionAddressSelected = vm.PartitionAddressSelected[Context][TemplateFaceSelected]
+      const TemplateIDSelected = vm.PartitionAddressSelected[Context].template_id
+      let PartitionIsSelected = false
+
+      if(PartitionAddressSelected.length === 0 && TemplateIDSelected == TemplateID) {
+        PartitionIsSelected = true
+      }
+      return PartitionIsSelected
+    },
+    PartitionIsHovered: function(TemplateID) {
+      const vm = this
+      const Context = vm.Context
+      const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
+      const PartitionAddressHovered = vm.PartitionAddressHovered[Context][TemplateFaceSelected]
+      const TemplateIDSelected = vm.PartitionAddressHovered[Context].template_id
+      let PartitionIsHovered = false
+
+      if(PartitionAddressHovered.length === 0 && TemplateIDSelected == TemplateID) {
+        PartitionIsHovered = true
+      }
+      return PartitionIsHovered
+    },
     CategoryTemplateCount: function(CategoryID) {
 
       // Store data
       const vm = this;
-      const TemplatesDataFiltered = vm.TemplatesData.filter(template => template.category_id == CategoryID)
+      const TemplateDataFiltered = vm.TemplateData.filter(template => template.category_id == CategoryID)
 
-      return TemplatesDataFiltered.length
+      return TemplateDataFiltered.length
 
     },
     ObjectCategoryData: function(CategoryID) {
@@ -164,7 +191,7 @@ export default {
     FilteredCategoryTemplates: function(CategoryID){
 
       const vm = this
-      const FilteredCategoryTemplates = vm.TemplatesData.filter(function(template) {
+      const FilteredCategoryTemplates = vm.TemplateData.filter(function(template) {
 
         let match = false
 

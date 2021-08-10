@@ -24,7 +24,7 @@
         <dd class="col-sm-8">
           <b-form-input
             name="name"
-            v-model="TemplateData[0].name"
+            v-model="PreviewData[0].name"
             @change="$emit('TemplateNameUpdated', $event)"
             placeholder="New_Template"
           />
@@ -49,7 +49,7 @@
         <dd class="col-sm-8">
           <b-form-select
             name="category"
-            v-model="TemplateData[0].category_id"
+            v-model="PreviewData[0].category_id"
             :options="GetCategoryOptions()"
             @change="$emit('TemplateCategoryUpdated', $event)"
           />
@@ -64,7 +64,7 @@
         <dd class="col-sm-8">
           <b-form-radio-group
             name="type"
-            v-model="TemplateData[0].type"
+            v-model="PreviewData[0].type"
             :options="optionsTemplateType"
             @change="$emit('TemplateTypeUpdated', $event)"
             stacked
@@ -265,7 +265,7 @@
           </b-button>
         </dd>
         <dd class="col-sm-8 my-auto">
-          {{ PortIDPreview }}
+          {{ PreviewPortID }}
         </dd>
       </dl>
 
@@ -440,7 +440,7 @@
 
     <!-- Category Modal -->
     <modal-templates-category
-      :TemplatesData="TemplatesData"
+      :TemplateData="TemplateData"
       :CategoryData="CategoryData"
       :SelectedCategoryID="SelectedCategoryID"
       @TemplateCategoriesUpdated="$emit('TemplateCategoriesUpdated')"
@@ -456,7 +456,7 @@
       v-if="ComputedInputTemplatePartitionType == 'connectable'"
       :SelectedPortFormatIndex="SelectedPortFormatIndex"
       :SelectedPortFormat="SelectedPortFormat"
-      :PortIDPreview="PortIDPreview"
+      :PreviewPortID="PreviewPortID"
       v-on:TemplatePartitionPortFormatFieldSelected="$emit('TemplatePartitionPortFormatFieldSelected', $event)"
       v-on:TemplatePartitionPortFormatValueUpdated="$emit('TemplatePartitionPortFormatValueUpdated', $event)"
       v-on:TemplatePartitionPortFormatTypeUpdated="$emit('TemplatePartitionPortFormatTypeUpdated', $event)"
@@ -497,13 +497,13 @@ export default {
     'b-modal': VBModal,
   },
   props: {
-    TemplatesData: {type: Array},
+    TemplateData: {type: Array},
     CategoryData: {type: Array},
     SelectedCategoryID: {type: Number},
     PortConnectorData: {type: Array},
     PortOrientationData: {type: Array},
     MediaData: {type: Array},
-    TemplateData: {type: Array},
+    PreviewData: {type: Array},
     SelectedPortFormatIndex: {type: Number},
     Context: {type: String},
     TemplateFaceSelected: {type: Object},
@@ -514,14 +514,14 @@ export default {
     PartitionTypeDisabled: {type: Boolean},
     SelectedPartition: {type: Object},
     SelectedPortFormat: {type: Array},
-    PortIDPreview: {type: String},
+    PreviewPortID: {type: String},
   },
   data() {
     return {
-      inputTemplateType: this.TemplateData[0].type,
-      InputTemplateRUSize: this.TemplateData[0].ru_size,
-      inputTemplateFunction: this.TemplateData[0].function,
-      inputTemplateMountConfig: this.TemplateData[0].mount_config,
+      inputTemplateType: this.PreviewData[0].type,
+      InputTemplateRUSize: this.PreviewData[0].ru_size,
+      inputTemplateFunction: this.PreviewData[0].function,
+      inputTemplateMountConfig: this.PreviewData[0].mount_config,
       selected: null,
       optionsCategory: [],
       optionsTemplateType: [
@@ -549,7 +549,6 @@ export default {
         // Store variables
         const vm = this
         const Context = vm.Context
-        console.log('Debug (vm.TemplateFaceSelected): '+vm.TemplateFaceSelected)
         const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
         const PartitionAddressSelected = vm.PartitionAddressSelected[Context][TemplateFaceSelected]
         const SelectedPartitionDepth = PartitionAddressSelected.length
@@ -757,7 +756,7 @@ export default {
   },
   methods: {
     onSubmit: function() {
-      console.log("Debug (Submit): "+JSON.stringify(this.TemplateData[0]))
+      console.log("Debug (Submit): "+JSON.stringify(this.PreviewData[0]))
       this.$emit('FormSubmit')
     },
     onReset: function() {
@@ -767,7 +766,7 @@ export default {
     GetRUSizeMin() {
 
       const vm = this
-      const TemplateData = vm.TemplateData[0]
+      const PreviewData = vm.PreviewData[0]
       const TemplateFaceArray = ['front','rear']
       let RUSizeMin = 1
 
@@ -775,7 +774,7 @@ export default {
 
       // Look at both front and rear of template
       TemplateFaceArray.forEach(function(TemplateFace){
-        const Layer1Partitions = TemplateData.blueprint[TemplateFace]
+        const Layer1Partitions = PreviewData.blueprint[TemplateFace]
 
         // Look at each horizontally growing layer 1 partition
         Layer1Partitions.forEach(function(Layer1Partition){
@@ -799,13 +798,13 @@ export default {
 
       // Store variables
       const vm = this
-      const TemplateData = vm.TemplateData[0]
+      const PreviewData = vm.PreviewData[0]
       const Context = vm.Context
       const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
       const PartitionAddressSelected = JSON.parse(JSON.stringify(vm.PartitionAddressSelected[Context][TemplateFaceSelected]))
       const SelectedPartitionDirection = vm.ComputedSelectedPartitionDirection
-      let WorkingMax = (SelectedPartitionDirection == 'column') ? 24 : TemplateData.ru_size * 2
-      let WorkingPartitionChildren = JSON.parse(JSON.stringify(TemplateData.blueprint[TemplateFaceSelected]))
+      let WorkingMax = (SelectedPartitionDirection == 'column') ? 24 : PreviewData.ru_size * 2
+      let WorkingPartitionChildren = JSON.parse(JSON.stringify(PreviewData.blueprint[TemplateFaceSelected]))
 
       
       PartitionAddressSelected.pop()
@@ -843,14 +842,14 @@ export default {
 
       // Store variables
       const vm = this
-      const TemplateData = vm.TemplateData[0]
+      const PreviewData = vm.PreviewData[0]
       const Context = vm.Context
       const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
       const PartitionAddressSelected = vm.PartitionAddressSelected[Context][TemplateFaceSelected]
       const SelectedPartitionDepth = PartitionAddressSelected.length
       const SelectedPartitionParentSize = vm.GetSelectedPartitionParentSize()
       let SelectedPartitionSizeMax = SelectedPartitionParentSize
-      let WorkingPartitionChildren = JSON.parse(JSON.stringify(TemplateData.blueprint[TemplateFaceSelected]))
+      let WorkingPartitionChildren = JSON.parse(JSON.stringify(PreviewData.blueprint[TemplateFaceSelected]))
       let WorkingPartitionAddress = []
       let WorkingSiblingPartitionAddress = []
 

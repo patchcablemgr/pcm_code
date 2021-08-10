@@ -8,13 +8,13 @@
           >
             <b-card-body>
               <templates-form
-                :TemplatesData="TemplatesData"
+                :TemplateData="TemplateData"
                 :CategoryData="CategoryData"
                 :SelectedCategoryID="SelectedCategoryID"
                 :PortConnectorData="PortConnectorData"
                 :PortOrientationData="PortOrientationData"
                 :MediaData="MediaData"
-                :TemplateData="TemplateData"
+                :PreviewData="PreviewData"
                 :SelectedPortFormatIndex="SelectedPortFormatIndex"
                 Context="preview"
                 :TemplateFaceSelected="TemplateFaceSelected"
@@ -25,7 +25,7 @@
                 :PartitionTypeDisabled="PartitionTypeDisabled"
                 :SelectedPartition="SelectedPartition"
                 :SelectedPortFormat="SelectedPortFormat"
-                :PortIDPreview="PortIDPreview"
+                :PreviewPortID="PreviewPortID"
                 @TemplateNameUpdated="TemplateNameUpdated($event)"
                 @TemplateCategoriesUpdated="TemplateCategoriesUpdated($event)"
                 @TemplateCategoryUpdated="TemplateCategoryUpdated($event)"
@@ -86,7 +86,7 @@
                 :CabinetData="CabinetData"
                 :CategoryData="CategoryData"
                 :ObjectData="ObjectData"
-                :TemplateData="TemplateData"
+                :PreviewData="PreviewData"
                 Context="preview"
                 :TemplateFaceSelected="TemplateFaceSelected"
                 :PartitionAddressSelected="PartitionAddressSelected"
@@ -105,6 +105,11 @@
           >
             <b-card-body>
               <component-template-Object-details
+                :TemplateData="TemplateData"
+                :CategoryData="CategoryData"
+                Context="template"
+                :TemplateFaceSelected="TemplateFaceSelected"
+                :PartitionAddressSelected="PartitionAddressSelected"
               />
             </b-card-body>
           </b-card>
@@ -114,7 +119,7 @@
           >
             <b-card-body>
               <component-templates
-                :TemplatesData="TemplatesData"
+                :TemplateData="TemplateData"
                 :CategoryData="CategoryData"
                 Context="template"
                 :TemplateFaceSelected="TemplateFaceSelected"
@@ -142,7 +147,7 @@ import ComponentCabinet from './templates/ComponentCabinet.vue'
 import ComponentTemplateObjectDetails from './templates/ComponentTemplateObjectDetails.vue'
 import ComponentTemplates from './templates/ComponentTemplates.vue'
 
-const TemplatesData = []
+const TemplateData = []
 const CategoryData = [
   {
     "id": 0,
@@ -191,6 +196,12 @@ const PartitionAddressSelected = {
     'front': [0],
     'rear': [0]
   }
+  ,
+  'object': {
+    'object_id': null,
+    'front': [0],
+    'rear': [0]
+  }
 }
 const PartitionAddressHovered = {
   'preview': {
@@ -219,7 +230,7 @@ const ObjectData = [
     "name": "Object",
   }
 ]
-const TemplateData = [
+const PreviewData = [
   {
     "id": 0,
     "name": "New_Template",
@@ -261,7 +272,7 @@ export default {
   },
   data() {
     return {
-      TemplatesData,
+      TemplateData,
       CategoryData,
       SelectedCategoryID,
       MediaData,
@@ -269,8 +280,8 @@ export default {
       PortOrientationData,
       CabinetData,
       ObjectData,
-      TemplateData,
-      TemplateDataOriginal: JSON.parse(JSON.stringify(TemplateData)),
+      PreviewData,
+      PreviewDataOriginal: JSON.parse(JSON.stringify(PreviewData)),
       SelectedPortFormatIndex,
       TemplateFaceSelected,
       PartitionAddressSelected,
@@ -278,14 +289,22 @@ export default {
     }
   },
   computed: {
-    PortIDPreview: function(){
+    TemplatePortID: function(){
       
       const vm = this
+      const TemplateID = vm.PartitionAddressSelected.template.template_id
+      const TemplateFace = vm.TemplateFaceSelected.template
+      const TemplatePartition = vm.PartitionAddressSelected.template[TemplateFace]
+      const TemplateIndex = vm.GetTemplateIndex(TemplateID)
+      const Template = vm.TemplateData[TemplateIndex]
+      const TemplateBlueprint = Template.blueprint[TemplateFace]
+
       const Partition = vm.GetPartition()
       let PortID = ''
-      let PortIDPreviewArray = []
+      let TemplatePortIDArray = []
 
       if(Partition.type == 'connectable') {
+        const PortFormat = JSON.parse(JSON.stringify(vm.SelectedPortFormat))
         let PortTotal = Partition.port_layout.cols * Partition.port_layout.rows
         let Truncated = false
 
@@ -297,32 +316,66 @@ export default {
 
         // Generate port IDs
         for(let i=0; i<PortTotal; i++){
-          PortID = vm.GeneratePortID(i, PortTotal)
-          PortIDPreviewArray.push(PortID)
+          PortID = vm.GeneratePortID(i, PortTotal, PortFormat)
+          TemplatePortIDArray.push(PortID)
         }
 
         // Append ellipses if port preview is truncated
         if(Truncated) {
-          PortIDPreviewArray.push('...')
+          TemplatePortIDArray.push('...')
         }
       }
 
-      return PortIDPreviewArray.join(', ')
+      return TemplatePortIDArray.join(', ')
+
+    },
+    PreviewPortID: function(){
+      
+      const vm = this
+
+      // Get Partition
+      const Partition = vm.GetSelectedPreviewPartition()
+
+      let PortID = ''
+      let PreviewPortIDArray = []
+
+      if(Partition.type == 'connectable') {
+        const PortFormat = JSON.parse(JSON.stringify(vm.SelectedPortFormat))
+        let PortTotal = Partition.port_layout.cols * Partition.port_layout.rows
+        let Truncated = false
+
+        // Limit port preview to 5
+        if(PortTotal > 5) {
+          PortTotal = 5
+          Truncated = true
+        }
+
+        // Generate port IDs
+        for(let i=0; i<PortTotal; i++){
+          PortID = vm.GeneratePortID(i, PortTotal, PortFormat)
+          PreviewPortIDArray.push(PortID)
+        }
+
+        // Append ellipses if port preview is truncated
+        if(Truncated) {
+          PreviewPortIDArray.push('...')
+        }
+      }
+
+      return PreviewPortIDArray.join(', ')
 
     },
     TemplateFaceToggleIsDisabled: function() {
-      return this.TemplateData[0].mount_config === '2-post'
+      return this.PreviewData[0].mount_config === '2-post'
     },
     AddChildPartitionDisabled: function() {
       // Store variables
       const vm = this
-      const TemplateFaceSelected = vm.TemplateFaceSelected.preview
-      const PartitionAddress = vm.PartitionAddressSelected.preview[TemplateFaceSelected]
-      const Partition = vm.GetPartition(PartitionAddress)
+
+      // Get Partition
+      const Partition = vm.GetSelectedPreviewPartition()
 
       return (!vm.GetPartitionUnitsAvailable() || Partition.type != 'generic')
-
-      //return !vm.TemplateSelectedPartitionRoomAvailable()
     },
     AddSiblingPartitionDisabled: function() {
       // Store variables
@@ -340,7 +393,7 @@ export default {
       const vm = this
       const TemplateFaceSelected = vm.TemplateFaceSelected.preview
       const PartitionAddressSelected = vm.PartitionAddressSelected.preview[TemplateFaceSelected]
-      const Layer1Partitions = vm.TemplateData[0].blueprint[TemplateFaceSelected]
+      const Layer1Partitions = vm.PreviewData[0].blueprint[TemplateFaceSelected]
       let RemovePartitionDisabled = false
 
       if(PartitionAddressSelected.length == 1) {
@@ -362,14 +415,19 @@ export default {
     SelectedPartition: function(){
       // Store variables
       const vm = this
-      const Partition = vm.GetPartition()
+
+      // Get Partition
+      const Partition = vm.GetSelectedPreviewPartition()
 
       return Partition
     },
     SelectedPortFormat: function() {
       // Store variables
       const vm = this
-      const Partition = vm.GetPartition()
+
+      // Get Partition
+      const Partition = vm.GetSelectedPreviewPartition()
+
       let SelectedPortFormat = []
 
       if(Partition.type == 'connectable') {
@@ -380,6 +438,13 @@ export default {
     },
   },
   methods: {
+    GetTemplateIndex: function(TemplateID) {
+
+      const vm = this;
+      const TemplateIndex = vm.TemplateData.findIndex((template) => template.id == TemplateID);
+
+      return TemplateIndex
+    },
     PartitionClicked: function(EmitData) {
 
       // Store variables
@@ -420,7 +485,7 @@ export default {
 
     },
     TemplateNameUpdated: function(newValue) {
-      this.TemplateData[0].name = newValue
+      this.PreviewData[0].name = newValue
     },
     TemplateCategoriesUpdated: function() {
       const vm = this;
@@ -428,7 +493,7 @@ export default {
       vm.categoryGET();
     },
     TemplateCategoryUpdated: function(newValue) {
-      this.TemplateData[0].category_id = newValue
+      this.PreviewData[0].category_id = newValue
     },
     TemplateCategoryDeleted: function(newValue) {
 
@@ -532,22 +597,25 @@ export default {
       
     },
     TemplateTypeUpdated: function(newValue) {
-      this.TemplateData[0].type = newValue
+      this.PreviewData[0].type = newValue
     },
     TemplateRUSizeUpdated: function(newValue) {
-      this.TemplateData[0].ru_size = newValue
+      this.PreviewData[0].ru_size = newValue
     },
     TemplateMountConfigUpdated: function(newValue) {
 
       const vm = this
-      vm.TemplateData[0].mount_config = newValue
+      vm.PreviewData[0].mount_config = newValue
       vm.TemplateFaceSelected.preview = newValue == '2-post' ? 'front' : vm.TemplateFaceSelected.preview
     },
     TemplatePartitionTypeUpdated: function(newValue) {
 
       // Store variables
       const vm = this
-      let SelectedPartition = vm.GetPartition()
+
+      // Get Partition
+      const SelectedPartition = vm.GetSelectedPreviewPartition()
+
       const PartitionTypeOriginal = SelectedPartition.type
 
       SelectedPartition.type = newValue
@@ -601,12 +669,19 @@ export default {
 
       // Store variables
       const vm = this
+      
+      
+      // Get Partition
       const TemplateFaceSelected = vm.TemplateFaceSelected.preview
-      let PartitionAddress = vm.PartitionAddressSelected.preview[TemplateFaceSelected]
+      const PartitionAddress = vm.PartitionAddressSelected.preview[TemplateFaceSelected]
+      const Blueprint = vm.PreviewData[0].blueprint[TemplateFaceSelected]
+      let SelectedPartition = vm.GetPartition(Blueprint, PartitionAddress)
+
+      // Get Parent Partition
       const PartitionParentAddress = PartitionAddress.slice(0, PartitionAddress.length - 1)
+      let SelectedPartitionParent = vm.GetPartition(Blueprint, PartitionParentAddress)
+
       const PartitionIndex = PartitionAddress[PartitionAddress.length - 1]
-      let SelectedPartition = vm.GetPartition()
-      let SelectedPartitionParent = vm.GetPartition(PartitionParentAddress)
       let PartitionBlank = {
         "type": "generic",
         "units": 1,
@@ -645,11 +720,11 @@ export default {
       
       // Store variables
       const vm = this
-      const TemplateData = vm.TemplateData[0]
+      const PreviewData = vm.PreviewData[0]
       const TemplateFaceSelected = vm.TemplateFaceSelected.preview
       const PartitionAddressSelected = vm.PartitionAddressSelected.preview[TemplateFaceSelected]
       const PartitionAddressSelectedCopy = JSON.parse(JSON.stringify(PartitionAddressSelected))
-      let SelectedPartitionParent = TemplateData.blueprint[TemplateFaceSelected]
+      let SelectedPartitionParent = PreviewData.blueprint[TemplateFaceSelected]
       const SelectedPartitionIndex = PartitionAddressSelectedCopy.pop()
       
       // Traverse blueprint until selected partition is reached
@@ -673,8 +748,10 @@ export default {
     },
     TemplatePartitionSizeUpdated: function(newValue) {
 
-      // Store variables
-      let SelectedPartition = this.GetPartition()
+      // Get Partition
+      const vm = this
+      let SelectedPartition = vm.GetSelectedPreviewPartition()
+      
       SelectedPartition.units = newValue
     },
     TemplatePartitionPortFormatValueUpdated: function(newValue) {
@@ -876,44 +953,55 @@ export default {
     },
     TemplatePartitionPortLayoutColsUpdated: function(newValue) {
 
-      // Store variables
-      let SelectedPartition = this.GetPartition()
+      // Get Partition
+      const vm = this
+      let SelectedPartition = vm.GetSelectedPreviewPartition()
+
       SelectedPartition.port_layout.cols = newValue
     },
     TemplatePartitionPortLayoutRowsUpdated: function(newValue) {
 
-      // Store variables
-      let SelectedPartition = this.GetPartition()
+      // Get Partition
+      const vm = this
+      let SelectedPartition = vm.GetSelectedPreviewPartition()
+
       SelectedPartition.port_layout.rows = newValue
     },
     TemplatePartitionMediaUpdated: function(newValue) {
 
-      // Store variables
-      let SelectedPartition = this.GetPartition()
+      // Get Partition
+      const vm = this
+      let SelectedPartition = vm.GetSelectedPreviewPartition()
+
       SelectedPartition.media = newValue
     },
     TemplatePartitionPortConnectorUpdated: function(newValue) {
 
-      // Store variables
-      let SelectedPartition = this.GetPartition()
+      // Get Partition
+      const vm = this
+      let SelectedPartition = vm.GetSelectedPreviewPartition()
+
       SelectedPartition.port_connector = newValue
     },
     TemplatePartitionPortOrientationUpdated: function(newValue) {
 
       // Store variables
-      let SelectedPartition = this.GetPartition()
+      const vm = this
+      let SelectedPartition = vm.GetSelectedPreviewPartition()
       SelectedPartition.port_orientation = newValue
     },
     TemplatePartitionEncLayoutColsUpdated: function(newValue) {
 
       // Store variables
-      let SelectedPartition = this.GetPartition()
+      const vm = this
+      let SelectedPartition = vm.GetSelectedPreviewPartition()
       SelectedPartition.enc_layout.cols = newValue
     },
     TemplatePartitionEncLayoutRowsUpdated: function(newValue) {
 
       // Store variables
-      let SelectedPartition = this.GetPartition()
+      const vm = this
+      let SelectedPartition = vm.GetSelectedPreviewPartition()
       SelectedPartition.enc_layout.rows = newValue
     },
     GetPartitionDirection: function(PartAddr = false) {
@@ -930,17 +1018,21 @@ export default {
 
       // Store variables
       const vm = this
-      const TemplateData = vm.TemplateData[0]
+      const PreviewData = vm.PreviewData[0]
+
+      // Get Partition
       const TemplateFaceSelected = vm.TemplateFaceSelected.preview
       const PartitionAddress = (PartAddr !== false) ? PartAddr : vm.PartitionAddressSelected.preview[TemplateFaceSelected]
-      const Partition = vm.GetPartition(PartitionAddress)
+      const Blueprint = PreviewData.blueprint[TemplateFaceSelected]
+      const Partition = vm.GetPartition(Blueprint, PartitionAddress)
+
       const PartitionDirection = vm.GetPartitionDirection(PartitionAddress)
-      let UnitsAvailable = (PartitionDirection == 'row') ? 24 : TemplateData.ru_size * 2
+      let UnitsAvailable = (PartitionDirection == 'row') ? 24 : PreviewData.ru_size * 2
       let PartitionChildren
 
       if(PartitionAddress.length > 1) {
         const PartitionParentAddress = PartitionAddress.slice(0, PartitionAddress.length - 1)
-        const PartitionParent = vm.GetPartition(PartitionParentAddress)
+        const PartitionParent = vm.GetPartition(Blueprint, PartitionParentAddress)
         UnitsAvailable = PartitionParent.units
       }
 
@@ -956,14 +1048,24 @@ export default {
 
       return UnitsAvailable
     },
-    GetPartition: function(PartAddr = false) {
+    GetSelectedPreviewPartition: function(){
 
       // Store variables
       const vm = this
-      const TemplateData = vm.TemplateData[0]
+
+      // Get Partition
       const TemplateFaceSelected = vm.TemplateFaceSelected.preview
-      const PartitionAddress = (PartAddr !== false) ? PartAddr : vm.PartitionAddressSelected.preview[TemplateFaceSelected]
-      let WorkingPartitionChildren = TemplateData.blueprint[TemplateFaceSelected]
+      const PartAddr = vm.PartitionAddressSelected.preview[TemplateFaceSelected]
+      const Blueprint = vm.PreviewData[0].blueprint[TemplateFaceSelected]
+
+      let SelectedPartition = vm.GetPartition(Blueprint, PartAddr)
+      
+      return SelectedPartition
+    },
+    GetPartition: function(Blueprint, PartitionAddress) {
+
+      // Store variables
+      let WorkingPartitionChildren = Blueprint
       let SelectedPartition = WorkingPartitionChildren
 
       // Traverse blueprint until selected partition is reached
@@ -981,7 +1083,7 @@ export default {
 
       this.$http.get('/api/template').then(function(response){
 
-        vm.TemplatesData = response.data;
+        vm.TemplateData = response.data;
 
       });
     },
@@ -1004,7 +1106,7 @@ export default {
             DefaultCategoryID = vm.CategoryData[0].id
           }
 
-          vm.TemplateData[0].category_id = DefaultCategoryID
+          vm.PreviewData[0].category_id = DefaultCategoryID
         }
 
       });
@@ -1025,12 +1127,11 @@ export default {
         vm.PortOrientationData = response.data;
       });
     },
-    GeneratePortID: function(Index, PortTotal){
+    GeneratePortID: function(Index, PortTotal, PortFormat){
 
       // Store variables
       const vm = this
-      const SelectedPortFormat = JSON.parse(JSON.stringify(vm.SelectedPortFormat))
-      let PortIDPreview = ''
+      let PreviewPortID = ''
       let IncrementalCount = 0
 
       // Create character arrays
@@ -1044,7 +1145,7 @@ export default {
       }
 
       // Account for infinite count incrementables
-      SelectedPortFormat.forEach(function(Field, FieldIndex){
+      PortFormat.forEach(function(Field, FieldIndex){
         const FieldType = Field.type
         let FieldCount = Field.count
 
@@ -1054,15 +1155,15 @@ export default {
 
           // Adjust field count
           if(FieldType == 'incremental' && FieldCount == 0) {
-            SelectedPortFormat[FieldIndex].count = PortTotal
+            PortFormat[FieldIndex].count = PortTotal
           } else if(FieldType == 'series') {
             let CurrentFieldValue = Field.value
-            SelectedPortFormat[FieldIndex].count = CurrentFieldValue.split(',').length
+            PortFormat[FieldIndex].count = CurrentFieldValue.split(',').length
           }
         }
       })
 
-      SelectedPortFormat.forEach(function(Field){
+      PortFormat.forEach(function(Field){
         const FieldType = Field.type
         const FieldValue = Field.value
         const FieldOrder = Field.order
@@ -1072,10 +1173,10 @@ export default {
         let Numerator = 1
 
         if(FieldType == 'static') {
-          PortIDPreview = PortIDPreview + FieldValue
+          PreviewPortID = PreviewPortID + FieldValue
         } else {
 
-          SelectedPortFormat.forEach(function(LoopField){
+          PortFormat.forEach(function(LoopField){
             const LoopFieldType = LoopField.type
             const LoopFieldOrder = LoopField.order
             const LoopFieldCount = LoopField.count
@@ -1098,28 +1199,28 @@ export default {
           if(FieldType == 'incremental') {
 
             if(!isNaN(FieldValue)) {
-              PortIDPreview = PortIDPreview + (parseInt(FieldValue) + HowMuchToIncrement)
+              PreviewPortID = PreviewPortID + (parseInt(FieldValue) + HowMuchToIncrement)
             } else {
-              PortIDPreview = PortIDPreview + '-'
+              PreviewPortID = PreviewPortID + '-'
             }
 
           } else if(FieldType == 'series') {
 
             const FieldValueArray = FieldValue.split(',')
-            PortIDPreview = PortIDPreview + FieldValueArray[HowMuchToIncrement]
+            PreviewPortID = PreviewPortID + FieldValueArray[HowMuchToIncrement]
 
           }
         }
       })
       
-      return PortIDPreview
+      return PreviewPortID
     },
     FormSubmit: function() {
 
       // Store data
       const vm = this;
       const url = '/api/template'
-      const data = vm.TemplateData[0]
+      const data = vm.PreviewData[0]
 
       // POST category form data
       this.$http.post(url, data).then(function(response){
@@ -1128,7 +1229,7 @@ export default {
         response.data.blueprint = JSON.parse(response.data.blueprint)
         
         // Append new template to template array
-        vm.TemplatesData.push(response.data)
+        vm.TemplateData.push(response.data)
 
       }).catch(error => {
 
@@ -1142,10 +1243,10 @@ export default {
     },
     FormReset: function() {
       const vm = this
-      for (const [key] of Object.entries(vm.TemplateData[0])) {
+      for (const [key] of Object.entries(vm.PreviewData[0])) {
         console.log('key: '+key)
-        console.log('original: '+vm.TemplateDataOriginal[0][key])
-        vm.TemplateData[0][key] = vm.TemplateDataOriginal[0][key]
+        console.log('original: '+vm.PreviewDataOriginal[0][key])
+        vm.PreviewData[0][key] = vm.PreviewDataOriginal[0][key]
       }
     },
   },

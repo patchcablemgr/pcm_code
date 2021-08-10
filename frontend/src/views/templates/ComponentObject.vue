@@ -108,11 +108,6 @@ export default {
       const TemplateID = vm.TemplateID
       let PartitionIsSelected = false
 
-      console.log('Debug (PartitionIsSelected - vm.PartitionAddressSelected): '+JSON.stringify(vm.PartitionAddressSelected))
-      console.log('Debug (PartitionIsSelected - Context): '+Context)
-      console.log('Debug (PartitionIsSelected - TemplateFaceSelected): '+TemplateFaceSelected)
-      console.log('Debug (PartitionIsSelected - PartitionAddressSelected): '+JSON.stringify(PartitionAddressSelected))
-
       if(PartitionAddressSelected.length === PartitionAddress.length && PartitionAddressSelected.every(function(value, index) { return value === PartitionAddress[index]}) && TemplateIDSelected == TemplateID) {
         PartitionIsSelected = true
       }
@@ -128,14 +123,8 @@ export default {
       const TemplateID = vm.TemplateID
       let PartitionIsHovered = false
 
-      if(PartitionAddressHovered.length === PartitionAddress.length && PartitionAddressHovered.every(function(value, index) { return value === PartitionAddress[index]})) {
-        if(Context == 'template') {
-          //console.log('Debug (TemplateIDSelected): '+TemplateIDSelected)
-          //console.log('Debug (TemplateID): '+TemplateID)
-          PartitionIsHovered = (TemplateIDSelected == TemplateID) ? true : false
-        } else {
-          PartitionIsHovered = true
-        }
+      if(PartitionAddressHovered.length === PartitionAddress.length && PartitionAddressHovered.every(function(value, index) { return value === PartitionAddress[index]}) && TemplateIDSelected == TemplateID) {
+        PartitionIsHovered = true
       }
       return PartitionIsHovered
     },

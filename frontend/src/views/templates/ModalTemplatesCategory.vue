@@ -150,7 +150,7 @@ export default {
     Ripple,
   },
   props: {
-    TemplatesData: {type: Array},
+    TemplateData: {type: Array},
     CategoryData: {type: Array},
     SelectedCategoryID: {type: Number},
   },
@@ -245,9 +245,9 @@ export default {
 
       // Store data
       const vm = this;
-      const TemplatesDataFiltered = vm.TemplatesData.filter(template => template.category_id == CategoryID)
+      const TemplateDataFiltered = vm.TemplateData.filter(template => template.category_id == CategoryID)
 
-      return TemplatesDataFiltered.length
+      return TemplateDataFiltered.length
 
     },
     CategoryMouseOver: function(CategoryID) {

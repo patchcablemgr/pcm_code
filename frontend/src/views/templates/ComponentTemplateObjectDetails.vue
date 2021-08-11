@@ -46,7 +46,7 @@
   <!-- Type -->
   <dl class="row mb-0">
     <dt class="col-sm-4">
-      Type:
+      Template Type:
     </dt>
     <dd class="col-sm-8 mb-0">
       {{ComputedType}}
@@ -83,13 +83,23 @@
     </dd>
   </dl>
 
+  <!-- Partition Type -->
+  <dl class="row mb-0">
+    <dt class="col-sm-4">
+      Partition Type:
+    </dt>
+    <dd class="col-sm-8 mb-0">
+      {{ComputedPartitionType}}
+    </dd>
+  </dl>
+
   <!-- Port Range -->
   <dl class="row mb-0">
     <dt class="col-sm-4">
       Port Range:
     </dt>
     <dd class="col-sm-8 mb-0">
-      {{ComputedCategoryName}}
+      {{TemplatePartitionPortRange}}
     </dd>
   </dl>
 
@@ -99,7 +109,7 @@
       Port Orientation:
     </dt>
     <dd class="col-sm-8 mb-0">
-      {{ComputedCategoryName}}
+      {{ComputedPortOrientation}}
     </dd>
   </dl>
 
@@ -109,7 +119,7 @@
       Port Type:
     </dt>
     <dd class="col-sm-8 mb-0">
-      {{ComputedCategoryName}}
+      {{ComputedPortType}}
     </dd>
   </dl>
 
@@ -119,7 +129,7 @@
       Media Type:
     </dt>
     <dd class="col-sm-8 mb-0">
-      {{ComputedCategoryName}}
+      {{ComputedPortMediaType}}
     </dd>
   </dl>
 
@@ -158,6 +168,7 @@ export default {
     Context: {type: String},
     TemplateFaceSelected: {type: Object},
     PartitionAddressSelected: {type: Object},
+    TemplatePartitionPortRange: {type: String},
   },
   data() {
     return {
@@ -214,8 +225,6 @@ export default {
 
         if(ObjectID) {
           ReturnString = 'Trunked To'
-        } else {
-          ReturnString = 'N/A'
         }
 
         return ReturnString
@@ -285,6 +294,128 @@ export default {
         return ReturnString
       },
     },
+    ComputedPartitionType: {
+      get() {
+
+        const vm = this
+        const Context = vm.Context
+        const TemplateID = vm.PartitionAddressSelected[Context].template_id
+        const TemplateFace = vm.TemplateFaceSelected[Context]
+        let ReturnString = '-'
+
+        if(TemplateID) {
+
+          ReturnString = 'generic'
+
+          // Get template
+          const TemplateIndex = vm.GetTemplateIndex(TemplateID)
+          const Template = vm.TemplateData[TemplateIndex]
+
+          // Get partition
+          const Blueprint = Template.blueprint[TemplateFace]
+          const PartitionAddress = vm.PartitionAddressSelected[Context][TemplateFace]
+          const Partition = vm.GetPartition(Blueprint, PartitionAddress)
+
+          // Get partition type
+          ReturnString = (Partition.type) ? Partition.type : 'generic'
+        }
+
+        return ReturnString
+      },
+    },
+    ComputedPortOrientation: {
+      get() {
+
+        const vm = this
+        const Context = vm.Context
+        const TemplateID = vm.PartitionAddressSelected[Context].template_id
+        const TemplateFace = vm.TemplateFaceSelected[Context]
+        let ReturnString = '-'
+
+        if(TemplateID) {
+
+          // Get template
+          const TemplateIndex = vm.GetTemplateIndex(TemplateID)
+          const Template = vm.TemplateData[TemplateIndex]
+
+          // Get partition
+          const Blueprint = Template.blueprint[TemplateFace]
+          const PartitionAddress = vm.PartitionAddressSelected[Context][TemplateFace]
+          const Partition = vm.GetPartition(Blueprint, PartitionAddress)
+
+          // Get partition type
+          const PartitionType = Partition.type
+
+          if(PartitionType == 'connectable') {
+            ReturnString = Partition.port_orientation
+          }
+        }
+
+        return ReturnString
+      },
+    },
+    ComputedPortType: {
+      get() {
+
+        const vm = this
+        const Context = vm.Context
+        const TemplateID = vm.PartitionAddressSelected[Context].template_id
+        const TemplateFace = vm.TemplateFaceSelected[Context]
+        let ReturnString = '-'
+
+        if(TemplateID) {
+
+          // Get template
+          const TemplateIndex = vm.GetTemplateIndex(TemplateID)
+          const Template = vm.TemplateData[TemplateIndex]
+
+          // Get partition
+          const Blueprint = Template.blueprint[TemplateFace]
+          const PartitionAddress = vm.PartitionAddressSelected[Context][TemplateFace]
+          const Partition = vm.GetPartition(Blueprint, PartitionAddress)
+
+          // Get partition type
+          const PartitionType = Partition.type
+
+          if(PartitionType == 'connectable') {
+            ReturnString = Partition.port_connector
+          }
+        }
+
+        return ReturnString
+      },
+    },
+    ComputedPortMediaType: {
+      get() {
+
+        const vm = this
+        const Context = vm.Context
+        const TemplateID = vm.PartitionAddressSelected[Context].template_id
+        const TemplateFace = vm.TemplateFaceSelected[Context]
+        let ReturnString = '-'
+
+        if(TemplateID) {
+
+          // Get template
+          const TemplateIndex = vm.GetTemplateIndex(TemplateID)
+          const Template = vm.TemplateData[TemplateIndex]
+
+          // Get partition
+          const Blueprint = Template.blueprint[TemplateFace]
+          const PartitionAddress = vm.PartitionAddressSelected[Context][TemplateFace]
+          const Partition = vm.GetPartition(Blueprint, PartitionAddress)
+
+          // Get partition type
+          const PartitionType = Partition.type
+
+          if(PartitionType == 'connectable') {
+            ReturnString = Partition.media
+          }
+        }
+
+        return ReturnString
+      },
+    },
   },
   methods: {
     GetTemplateIndex: function(TemplateID) {
@@ -300,6 +431,21 @@ export default {
       const CategoryIndex = vm.CategoryData.findIndex((category) => category.id == CategoryID);
 
       return CategoryIndex
+    },
+    GetPartition: function(Blueprint, PartitionAddress) {
+
+      // Store variables
+      let WorkingPartitionChildren = Blueprint
+      let SelectedPartition = WorkingPartitionChildren
+
+      // Traverse blueprint until selected partition is reached
+      PartitionAddress.forEach(function(AddressIndex, Index) {
+        SelectedPartition = WorkingPartitionChildren[AddressIndex]
+        WorkingPartitionChildren = SelectedPartition.children
+      })
+
+      // Return selected partition
+      return SelectedPartition
     },
   }
 }

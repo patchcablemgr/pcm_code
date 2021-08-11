@@ -110,6 +110,7 @@
                 Context="template"
                 :TemplateFaceSelected="TemplateFaceSelected"
                 :PartitionAddressSelected="PartitionAddressSelected"
+                :TemplatePartitionPortRange="TemplatePartitionPortRange"
               />
             </b-card-body>
           </b-card>
@@ -289,44 +290,46 @@ export default {
     }
   },
   computed: {
-    TemplatePortID: function(){
+    TemplatePartitionPortRange: function(){
       
+      // Initialize some variables
       const vm = this
       const TemplateID = vm.PartitionAddressSelected.template.template_id
-      const TemplateFace = vm.TemplateFaceSelected.template
-      const TemplatePartition = vm.PartitionAddressSelected.template[TemplateFace]
-      const TemplateIndex = vm.GetTemplateIndex(TemplateID)
-      const Template = vm.TemplateData[TemplateIndex]
-      const TemplateBlueprint = Template.blueprint[TemplateFace]
+      let PortRangeString = '-'
 
-      const Partition = vm.GetPartition()
-      let PortID = ''
-      let TemplatePortIDArray = []
+      if(TemplateID) {
 
-      if(Partition.type == 'connectable') {
-        const PortFormat = JSON.parse(JSON.stringify(vm.SelectedPortFormat))
-        let PortTotal = Partition.port_layout.cols * Partition.port_layout.rows
-        let Truncated = false
+        // Get template partition address
+        const TemplateFace = vm.TemplateFaceSelected.template
+        const TemplatePartition = vm.PartitionAddressSelected.template[TemplateFace]
 
-        // Limit port preview to 5
-        if(PortTotal > 5) {
-          PortTotal = 5
-          Truncated = true
-        }
+        // Get template blueprint
+        const TemplateIndex = vm.GetTemplateIndex(TemplateID)
+        const Template = vm.TemplateData[TemplateIndex]
+        const TemplateBlueprint = Template.blueprint[TemplateFace]
 
-        // Generate port IDs
-        for(let i=0; i<PortTotal; i++){
-          PortID = vm.GeneratePortID(i, PortTotal, PortFormat)
-          TemplatePortIDArray.push(PortID)
-        }
+        // Get template partition
+        const Partition = vm.GetPartition(TemplateBlueprint, TemplatePartition)
+        const PartitionType = Partition.type
 
-        // Append ellipses if port preview is truncated
-        if(Truncated) {
-          TemplatePortIDArray.push('...')
+        if(PartitionType == 'connectable') {
+
+          // Calculate port numbers
+          const PortFormat = Partition.port_format
+          const PortLayoutCols = Partition.port_layout.cols
+          const PortLayoutRows = Partition.port_layout.rows
+          const PortTotal = PortLayoutCols * PortLayoutRows
+          const FirstPortID = 0
+          const LastPortID = PortTotal - 1
+
+          const FirstPortIDString = vm.GeneratePortID(FirstPortID, PortTotal, PortFormat)
+          const LastPortIDString = vm.GeneratePortID(LastPortID, PortTotal, PortFormat)
+
+          PortRangeString = FirstPortIDString+' - '+LastPortIDString
         }
       }
 
-      return TemplatePortIDArray.join(', ')
+      return PortRangeString
 
     },
     PreviewPortID: function(){

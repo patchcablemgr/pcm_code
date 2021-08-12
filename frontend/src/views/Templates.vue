@@ -155,7 +155,6 @@ const CategoryData = [
     "color": "#FFFFFFFF",
   }
 ]
-const SelectedCategoryID = null
 const PortConnectorData = [
   {
     "value": 1,
@@ -181,6 +180,7 @@ const MediaData = [
     "default": 1,
   }
 ]
+const SelectedCategoryID = null
 const SelectedPortFormatIndex = 0
 const TemplateFaceSelected = {
   'preview': 'front',
@@ -254,6 +254,7 @@ const PreviewData = [
     }
   }
 ]
+const PreviewDataIndex = 0
 
 export default {
   components: {
@@ -282,6 +283,7 @@ export default {
       CabinetData,
       ObjectData,
       PreviewData,
+      PreviewDataIndex,
       PreviewDataOriginal: JSON.parse(JSON.stringify(PreviewData)),
       SelectedPortFormatIndex,
       TemplateFaceSelected,
@@ -369,7 +371,10 @@ export default {
 
     },
     TemplateFaceToggleIsDisabled: function() {
-      return this.PreviewData[0].mount_config === '2-post'
+
+      const vm = this
+      const PreviewDataIndex = vm.PreviewDataIndex
+      return this.PreviewData[PreviewDataIndex].mount_config === '2-post'
     },
     AddChildPartitionDisabled: function() {
       // Store variables
@@ -394,9 +399,10 @@ export default {
       
       // Store variables
       const vm = this
+      const PreviewDataIndex = vm.PreviewDataIndex
       const TemplateFaceSelected = vm.TemplateFaceSelected.preview
       const PartitionAddressSelected = vm.PartitionAddressSelected.preview[TemplateFaceSelected]
-      const Layer1Partitions = vm.PreviewData[0].blueprint[TemplateFaceSelected]
+      const Layer1Partitions = vm.PreviewData[PreviewDataIndex].blueprint[TemplateFaceSelected]
       let RemovePartitionDisabled = false
 
       if(PartitionAddressSelected.length == 1) {
@@ -459,8 +465,104 @@ export default {
 
       vm.PartitionAddressSelected[Context][TemplateFaceSelected] = PartitionAddress
       vm.PartitionAddressSelected[Context].template_id = TemplateID
-      console.log('Debug (TemplatePartitionClicked-Context): '+Context)
-      console.log('Debug (TemplatePartitionClicked-TemplateFaceSelected): '+TemplateFaceSelected)
+
+      if(Context == 'template') {
+
+        // Initialize the ID to be used for insert parent template
+        const InsertParentTemplateID = 1
+        const InsertTemplateID = 2
+
+        // Get selected template data
+        const TemplateIndex = vm.TemplateData.findIndex((template) => template.id == TemplateID);
+        const Template = vm.TemplateData[TemplateIndex]
+        const TemplateRUSize = Template.ru_size
+        const TemplateFunction = Template.function
+        const TemplateCategoryID = Template.category_id
+
+        // Get selected partition data
+        const Blueprint = Template.blueprint[TemplateFaceSelected]
+        const Partition = JSON.parse(JSON.stringify(vm.GetPartition(Blueprint, PartitionAddress)))
+        const PartitionDirection = vm.GetPartitionDirection(PartitionAddress)
+        const PartitionType = Partition.type
+        const PartitionUnits = Partition.units
+
+        // Get parent partition data
+        let ParentPartition
+        if(PartitionAddress.length > 1) {
+          const ParentPartitionAddress = PartitionAddress.splice(PartitionAddress.length-1, 1)
+          ParentPartition = JSON.parse(JSON.stringify(vm.GetPartition(Blueprint, ParentPartitionAddress)))
+          const ParentPartitionUnits = ParentPartition.units
+        } else {
+          ParentPartition = false
+        }
+
+        // Prepare insert parent partition
+        let InsertParentTemplateRUSize
+        let InsertParentBlueprint
+        let InsertPartitionUnits
+        if(PartitionDirection == 'column') {
+
+          // Set insert parent template ru_size
+          InsertParentTemplateRUSize = (ParentPartition) ? Math.ceil(ParentPartitionUnits / 2) : TemplateRUSize
+          
+          // Set insert parent partition blueprint
+          InsertParentBlueprint = Partition
+
+          // Set insert partition units
+          InsertPartitionUnits = PartitionUnits
+
+        } else {
+
+          // Set insert parent template ru_size
+          InsertParentTemplateRUSize = Math.ceil(PartitionUnits / 2)
+
+          // Adjust insert parent partition blueprint
+          InsertParentBlueprint = ParentPartition
+
+          // Set insert partition units
+          InsertPartitionUnits = ParentPartitionUnits
+        }
+
+        const InsertParentTemplate = {
+          "id": InsertParentTemplateID,
+          "name": "New_Template",
+          "category_id": TemplateCategoryID,
+          "type": "standard",
+          "ru_size": InsertParentTemplateRUSize,
+          "function": "",
+          "blueprint": {
+            "front": [InsertParentBlueprint],
+            "rear": [],
+          }
+        }
+
+        const InsertTemplate = {
+          "id": InsertTemplateID,
+          "name": "New_Template",
+          "category_id": TemplateCategoryID,
+          "type": "insert",
+          "function": TemplateFunction,
+          "blueprint": {
+            "front": [{
+              "type": "generic",
+              "units":InsertPartitionUnits,
+              "children": [],
+            }],
+            "rear": [],
+          }
+        }
+
+        if(PartitionType == 'enclosure') {
+          vm.PreviewData[1] = InsertParentTemplate
+          vm.PreviewData[2] = InsertTemplate
+          vm.ObjectData[0].template_id = InsertParentTemplateID
+        } else {
+          vm.PreviewData.splice(1, 2)
+          vm.ObjectData[0].template_id = 0
+        }
+
+        console.log('Debug (PartitionClicked-template-PreviewData): '+JSON.stringify(vm.PreviewData))
+      }
 
     },
     PartitionHovered: function(EmitData) {
@@ -488,7 +590,10 @@ export default {
 
     },
     TemplateNameUpdated: function(newValue) {
-      this.PreviewData[0].name = newValue
+
+      const vm = this
+      const PreviewDataIndex = vm.PreviewDataIndex
+      this.PreviewData[PreviewDataIndex].name = newValue
     },
     TemplateCategoriesUpdated: function() {
       const vm = this;
@@ -496,7 +601,10 @@ export default {
       vm.categoryGET();
     },
     TemplateCategoryUpdated: function(newValue) {
-      this.PreviewData[0].category_id = newValue
+
+      const vm = this
+      const PreviewDataIndex = vm.PreviewDataIndex
+      this.PreviewData[PreviewDataIndex].category_id = newValue
     },
     TemplateCategoryDeleted: function(newValue) {
 
@@ -600,15 +708,22 @@ export default {
       
     },
     TemplateTypeUpdated: function(newValue) {
-      this.PreviewData[0].type = newValue
+
+      const vm = this
+      const PreviewDataIndex = vm.PreviewDataIndex
+      this.PreviewData[PreviewDataIndex].type = newValue
     },
     TemplateRUSizeUpdated: function(newValue) {
-      this.PreviewData[0].ru_size = newValue
+
+      const vm = this
+      const PreviewDataIndex = vm.PreviewDataIndex
+      this.PreviewData[PreviewDataIndex].ru_size = newValue
     },
     TemplateMountConfigUpdated: function(newValue) {
 
       const vm = this
-      vm.PreviewData[0].mount_config = newValue
+      const PreviewDataIndex = vm.PreviewDataIndex
+      vm.PreviewData[PreviewDataIndex].mount_config = newValue
       vm.TemplateFaceSelected.preview = newValue == '2-post' ? 'front' : vm.TemplateFaceSelected.preview
     },
     TemplatePartitionTypeUpdated: function(newValue) {
@@ -672,12 +787,12 @@ export default {
 
       // Store variables
       const vm = this
-      
+      const PreviewDataIndex = vm.PreviewDataIndex
       
       // Get Partition
       const TemplateFaceSelected = vm.TemplateFaceSelected.preview
       const PartitionAddress = vm.PartitionAddressSelected.preview[TemplateFaceSelected]
-      const Blueprint = vm.PreviewData[0].blueprint[TemplateFaceSelected]
+      const Blueprint = vm.PreviewData[PreviewDataIndex].blueprint[TemplateFaceSelected]
       let SelectedPartition = vm.GetPartition(Blueprint, PartitionAddress)
 
       // Get Parent Partition
@@ -723,7 +838,8 @@ export default {
       
       // Store variables
       const vm = this
-      const PreviewData = vm.PreviewData[0]
+      const PreviewDataIndex = vm.PreviewDataIndex
+      const PreviewData = vm.PreviewData[PreviewDataIndex]
       const TemplateFaceSelected = vm.TemplateFaceSelected.preview
       const PartitionAddressSelected = vm.PartitionAddressSelected.preview[TemplateFaceSelected]
       const PartitionAddressSelectedCopy = JSON.parse(JSON.stringify(PartitionAddressSelected))
@@ -1007,12 +1123,8 @@ export default {
       let SelectedPartition = vm.GetSelectedPreviewPartition()
       SelectedPartition.enc_layout.rows = newValue
     },
-    GetPartitionDirection: function(PartAddr = false) {
-      
-      // Store variables
-      const vm = this
-      const TemplateFaceSelected = vm.TemplateFaceSelected.preview
-      const PartitionAddress = (PartAddr) ? PartAddr : vm.PartitionAddressSelected.preview[TemplateFaceSelected]
+    GetPartitionDirection: function(PartitionAddress) {
+
       const PartitionDirection = (PartitionAddress.length % 2) ? 'column' : 'row'
 
       return PartitionDirection
@@ -1021,7 +1133,8 @@ export default {
 
       // Store variables
       const vm = this
-      const PreviewData = vm.PreviewData[0]
+      const PreviewDataIndex = vm.PreviewDataIndex
+      const PreviewData = vm.PreviewData[PreviewDataIndex]
 
       // Get Partition
       const TemplateFaceSelected = vm.TemplateFaceSelected.preview
@@ -1055,11 +1168,12 @@ export default {
 
       // Store variables
       const vm = this
+      const PreviewDataIndex = vm.PreviewDataIndex
 
       // Get Partition
       const TemplateFaceSelected = vm.TemplateFaceSelected.preview
       const PartAddr = vm.PartitionAddressSelected.preview[TemplateFaceSelected]
-      const Blueprint = vm.PreviewData[0].blueprint[TemplateFaceSelected]
+      const Blueprint = vm.PreviewData[PreviewDataIndex].blueprint[TemplateFaceSelected]
 
       let SelectedPartition = vm.GetPartition(Blueprint, PartAddr)
       
@@ -1093,6 +1207,7 @@ export default {
     categoryGET: function(SetCategoryToDefault = false) {
 
       const vm = this;
+      const PreviewDataIndex = vm.PreviewDataIndex
 
       this.$http.get('/api/category').then(function(response){
 
@@ -1109,7 +1224,7 @@ export default {
             DefaultCategoryID = vm.CategoryData[0].id
           }
 
-          vm.PreviewData[0].category_id = DefaultCategoryID
+          vm.PreviewData[PreviewDataIndex].category_id = DefaultCategoryID
         }
 
       });
@@ -1222,8 +1337,9 @@ export default {
 
       // Store data
       const vm = this;
+      const PreviewDataIndex = vm.PreviewDataIndex
       const url = '/api/template'
-      const data = vm.PreviewData[0]
+      const data = vm.PreviewData[PreviewDataIndex]
 
       // POST category form data
       this.$http.post(url, data).then(function(response){
@@ -1246,10 +1362,11 @@ export default {
     },
     FormReset: function() {
       const vm = this
-      for (const [key] of Object.entries(vm.PreviewData[0])) {
+      const PreviewDataIndex = vm.PreviewDataIndex
+      for (const [key] of Object.entries(vm.PreviewData[PreviewDataIndex])) {
         console.log('key: '+key)
         console.log('original: '+vm.PreviewDataOriginal[0][key])
-        vm.PreviewData[0][key] = vm.PreviewDataOriginal[0][key]
+        vm.PreviewData[PreviewDataIndex][key] = vm.PreviewDataOriginal[0][key]
       }
     },
   },

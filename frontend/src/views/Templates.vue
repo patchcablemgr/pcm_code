@@ -66,7 +66,9 @@
           <b-card
             title="Preview"
           >
-            <b-card-body>
+            <b-card-body
+              v-if=" PreviewDisplay == 'cabinet' "
+            >
               <b-form-radio
                 v-model="TemplateFaceSelected.preview"
                 plain
@@ -94,6 +96,11 @@
                 @PartitionClicked=" PartitionClicked($event) "
                 @PartitionHovered=" PartitionHovered($event) "
               />
+            </b-card-body>
+            <b-card-body
+              v-if=" PreviewDisplay == 'insertInstructions' "
+            >
+              Select enclosure
             </b-card-body>
           </b-card>
 
@@ -224,16 +231,32 @@ const CabinetData = {
 const ObjectData = [
   {
     "id": 0,
+    "name": "Standard",
+    "template_id": 0,
     "location_id": 1,
     "cabinet_ru": 1,
     "cabinet_face": "front",
-    "template_id": 0,
-    "name": "Object",
-  }
-]
-const PreviewData = [
+    
+  },
   {
     "id": 0,
+    "name": "Insert",
+    "template_id": 0,
+    "location_id": 1,
+    "cabinet_ru": 1,
+    "cabinet_face": "front",
+    "parent_id": null,
+    "parent_face": "front",
+    "parent_part_addr": null,
+    "parent_enc_addr": [0,0],
+  }
+]
+const StandardTemplateID = 0
+const InsertParentTemplateID = 1
+const InsertTemplateID = 2
+const PreviewData = [
+  {
+    "id": StandardTemplateID,
     "name": "New_Template",
     "category_id": 0,
     "type": "standard",
@@ -252,9 +275,37 @@ const PreviewData = [
         "children": [],
       }],
     }
+  },
+  {
+    "id": InsertParentTemplateID,
+    "name": "New_Template",
+    "category_id": 0,
+    "type": "standard",
+    "ru_size": 1,
+    "function": "endpoint",
+    "blueprint": {
+      "front": [],
+      "rear": [],
+    }
+  },
+  {
+    "id": InsertTemplateID,
+    "name": "New_Template",
+    "category_id": 0,
+    "type": "insert",
+    "function": "endpoint",
+    "blueprint": {
+      "front": [{
+        "type": "generic",
+        "units":24,
+        "children": [],
+      }],
+      "rear": [],
+    }
   }
 ]
 const PreviewDataIndex = 0
+const TemplateType = 'standard'
 
 export default {
   components: {
@@ -289,9 +340,48 @@ export default {
       TemplateFaceSelected,
       PartitionAddressSelected,
       PartitionAddressHovered,
+      TemplateType,
+      StandardTemplateID,
+      InsertParentTemplateID,
+      InsertTemplateID,
     }
   },
   computed: {
+    PreviewDisplay: function(){
+
+      const vm = this
+      const TemplateType = vm.TemplateType
+      let PreviewDisplay = 'cabinet'
+
+      console.log('Debug (PreviewDisplay-TemplateType): '+TemplateType)
+      if(TemplateType == 'insert') {
+        const PartitionAddressSelected = vm.PartitionAddressSelected.template
+        const TemplateID = PartitionAddressSelected.template_id
+
+        console.log('Debug (PreviewDisplay-TemplateID): '+TemplateID)
+        if(TemplateID) {
+          const TemplateIndex = vm.GetTemplateIndex(TemplateID)
+          const TemplateFaceSelected = vm.TemplateFaceSelected.template
+          const Blueprint = vm.TemplateData[TemplateIndex].blueprint[TemplateFaceSelected]
+          const PartitionAddress = PartitionAddressSelected[TemplateFaceSelected]
+          console.log('Debug (PreviewDisplay-Blueprint): '+JSON.stringify(Blueprint))
+          console.log('Debug (PreviewDisplay-PartitionAddress): '+PartitionAddress)
+          const Partition = vm.GetPartition(Blueprint, PartitionAddress)
+          const PartitionType = Partition.type
+
+          console.log('Debug (PreviewDisplay-PartitionType): '+PartitionType)
+          if(PartitionType != 'enclosure') {
+            PreviewDisplay = 'insertInstructions'
+          }
+        } else {
+          PreviewDisplay = 'insertInstructions'
+        }
+      }
+
+      console.log('Debug (PreviewDisplay): '+PreviewDisplay)
+
+      return PreviewDisplay
+    },
     TemplatePartitionPortRange: function(){
       
       // Initialize some variables
@@ -373,8 +463,8 @@ export default {
     TemplateFaceToggleIsDisabled: function() {
 
       const vm = this
-      const PreviewDataIndex = vm.PreviewDataIndex
-      return this.PreviewData[PreviewDataIndex].mount_config === '2-post'
+      const PreviewData = vm.GetPreviewData()
+      return PreviewData.mount_config === '2-post'
     },
     AddChildPartitionDisabled: function() {
       // Store variables
@@ -399,10 +489,10 @@ export default {
       
       // Store variables
       const vm = this
-      const PreviewDataIndex = vm.PreviewDataIndex
+      const PreviewData = vm.GetPreviewData()
       const TemplateFaceSelected = vm.TemplateFaceSelected.preview
       const PartitionAddressSelected = vm.PartitionAddressSelected.preview[TemplateFaceSelected]
-      const Layer1Partitions = vm.PreviewData[PreviewDataIndex].blueprint[TemplateFaceSelected]
+      const Layer1Partitions = PreviewData.blueprint[TemplateFaceSelected]
       let RemovePartitionDisabled = false
 
       if(PartitionAddressSelected.length == 1) {
@@ -468,10 +558,6 @@ export default {
 
       if(Context == 'template') {
 
-        // Initialize the ID to be used for insert parent template
-        const InsertParentTemplateID = 1
-        const InsertTemplateID = 2
-
         // Get selected template data
         const TemplateIndex = vm.TemplateData.findIndex((template) => template.id == TemplateID);
         const Template = vm.TemplateData[TemplateIndex]
@@ -491,77 +577,37 @@ export default {
         if(PartitionAddress.length > 1) {
           const ParentPartitionAddress = PartitionAddress.splice(PartitionAddress.length-1, 1)
           ParentPartition = JSON.parse(JSON.stringify(vm.GetPartition(Blueprint, ParentPartitionAddress)))
-          const ParentPartitionUnits = ParentPartition.units
+          ParentPartitionUnits = ParentPartition.units
         } else {
           ParentPartition = false
         }
 
         // Prepare insert parent partition
-        let InsertParentTemplateRUSize
-        let InsertParentBlueprint
         let InsertPartitionUnits
         if(PartitionDirection == 'column') {
-
-          // Set insert parent template ru_size
-          InsertParentTemplateRUSize = (ParentPartition) ? Math.ceil(ParentPartitionUnits / 2) : TemplateRUSize
-          
-          // Set insert parent partition blueprint
-          InsertParentBlueprint = Partition
 
           // Set insert partition units
           InsertPartitionUnits = PartitionUnits
 
         } else {
 
-          // Set insert parent template ru_size
-          InsertParentTemplateRUSize = Math.ceil(PartitionUnits / 2)
-
-          // Adjust insert parent partition blueprint
-          InsertParentBlueprint = ParentPartition
-
           // Set insert partition units
           InsertPartitionUnits = ParentPartitionUnits
         }
 
-        const InsertParentTemplate = {
-          "id": InsertParentTemplateID,
-          "name": "New_Template",
-          "category_id": TemplateCategoryID,
-          "type": "standard",
-          "ru_size": InsertParentTemplateRUSize,
-          "function": "",
-          "blueprint": {
-            "front": [InsertParentBlueprint],
-            "rear": [],
+        // Copy selected template to insert parent template and correct id
+        vm.PreviewData[vm.InsertParentTemplateID] = JSON.parse(JSON.stringify(Template), function(key, value) {
+          if(key == 'id') {
+            return vm.InsertParentTemplateID
+          } else {
+            return value
           }
-        }
+        })
 
-        const InsertTemplate = {
-          "id": InsertTemplateID,
-          "name": "New_Template",
-          "category_id": TemplateCategoryID,
-          "type": "insert",
-          "function": TemplateFunction,
-          "blueprint": {
-            "front": [{
-              "type": "generic",
-              "units":InsertPartitionUnits,
-              "children": [],
-            }],
-            "rear": [],
-          }
-        }
-
-        if(PartitionType == 'enclosure') {
-          vm.PreviewData[1] = InsertParentTemplate
-          vm.PreviewData[2] = InsertTemplate
-          vm.ObjectData[0].template_id = InsertParentTemplateID
-        } else {
-          vm.PreviewData.splice(1, 2)
-          vm.ObjectData[0].template_id = 0
-        }
-
-        console.log('Debug (PartitionClicked-template-PreviewData): '+JSON.stringify(vm.PreviewData))
+        // Adjust insert template properties
+        vm.PreviewData[vm.InsertTemplateID].category_id = TemplateCategoryID
+        vm.PreviewData[vm.InsertTemplateID].function = TemplateFunction
+        vm.PreviewData[vm.InsertTemplateID].blueprint.front[0].units = InsertPartitionUnits
       }
 
     },
@@ -592,8 +638,8 @@ export default {
     TemplateNameUpdated: function(newValue) {
 
       const vm = this
-      const PreviewDataIndex = vm.PreviewDataIndex
-      this.PreviewData[PreviewDataIndex].name = newValue
+      const PreviewData = vm.GetPreviewData()
+      PreviewData.name = newValue
     },
     TemplateCategoriesUpdated: function() {
       const vm = this;
@@ -603,8 +649,8 @@ export default {
     TemplateCategoryUpdated: function(newValue) {
 
       const vm = this
-      const PreviewDataIndex = vm.PreviewDataIndex
-      this.PreviewData[PreviewDataIndex].category_id = newValue
+      const PreviewData = vm.GetPreviewData()
+      PreviewData.category_id = newValue
     },
     TemplateCategoryDeleted: function(newValue) {
 
@@ -710,20 +756,25 @@ export default {
     TemplateTypeUpdated: function(newValue) {
 
       const vm = this
-      const PreviewDataIndex = vm.PreviewDataIndex
-      this.PreviewData[PreviewDataIndex].type = newValue
+      const PreviewData = vm.GetPreviewData()
+
+      PreviewData.type = newValue
+      vm.TemplateType = newValue
+
+      vm.PreviewDataIndex = (newValue == 'insert') ? vm.InsertTemplateID : vm.StandardTemplateID
+      vm.ObjectData[0].template_id = (newValue == 'insert') ? vm.InsertParentTemplateID : vm.StandardTemplateID
     },
     TemplateRUSizeUpdated: function(newValue) {
 
       const vm = this
-      const PreviewDataIndex = vm.PreviewDataIndex
-      this.PreviewData[PreviewDataIndex].ru_size = newValue
+      const PreviewData = vm.GetPreviewData()
+      PreviewData.ru_size = newValue
     },
     TemplateMountConfigUpdated: function(newValue) {
 
       const vm = this
-      const PreviewDataIndex = vm.PreviewDataIndex
-      vm.PreviewData[PreviewDataIndex].mount_config = newValue
+      const PreviewData = vm.GetPreviewData()
+      PreviewData.mount_config = newValue
       vm.TemplateFaceSelected.preview = newValue == '2-post' ? 'front' : vm.TemplateFaceSelected.preview
     },
     TemplatePartitionTypeUpdated: function(newValue) {
@@ -787,12 +838,12 @@ export default {
 
       // Store variables
       const vm = this
-      const PreviewDataIndex = vm.PreviewDataIndex
+      const PreviewData = vm.GetPreviewData()
       
       // Get Partition
       const TemplateFaceSelected = vm.TemplateFaceSelected.preview
       const PartitionAddress = vm.PartitionAddressSelected.preview[TemplateFaceSelected]
-      const Blueprint = vm.PreviewData[PreviewDataIndex].blueprint[TemplateFaceSelected]
+      const Blueprint = PreviewData.blueprint[TemplateFaceSelected]
       let SelectedPartition = vm.GetPartition(Blueprint, PartitionAddress)
 
       // Get Parent Partition
@@ -838,8 +889,7 @@ export default {
       
       // Store variables
       const vm = this
-      const PreviewDataIndex = vm.PreviewDataIndex
-      const PreviewData = vm.PreviewData[PreviewDataIndex]
+      const PreviewData = vm.GetPreviewData()
       const TemplateFaceSelected = vm.TemplateFaceSelected.preview
       const PartitionAddressSelected = vm.PartitionAddressSelected.preview[TemplateFaceSelected]
       const PartitionAddressSelectedCopy = JSON.parse(JSON.stringify(PartitionAddressSelected))
@@ -1133,8 +1183,7 @@ export default {
 
       // Store variables
       const vm = this
-      const PreviewDataIndex = vm.PreviewDataIndex
-      const PreviewData = vm.PreviewData[PreviewDataIndex]
+      const PreviewData = vm.GetPreviewData()
 
       // Get Partition
       const TemplateFaceSelected = vm.TemplateFaceSelected.preview
@@ -1168,12 +1217,12 @@ export default {
 
       // Store variables
       const vm = this
-      const PreviewDataIndex = vm.PreviewDataIndex
+      const PreviewData = vm.GetPreviewData()
 
       // Get Partition
       const TemplateFaceSelected = vm.TemplateFaceSelected.preview
       const PartAddr = vm.PartitionAddressSelected.preview[TemplateFaceSelected]
-      const Blueprint = vm.PreviewData[PreviewDataIndex].blueprint[TemplateFaceSelected]
+      const Blueprint = PreviewData.blueprint[TemplateFaceSelected]
 
       let SelectedPartition = vm.GetPartition(Blueprint, PartAddr)
       
@@ -1186,13 +1235,35 @@ export default {
       let SelectedPartition = WorkingPartitionChildren
 
       // Traverse blueprint until selected partition is reached
-      PartitionAddress.forEach(function(AddressIndex, Index) {
+      PartitionAddress.every(function(AddressIndex, Index) {
         SelectedPartition = WorkingPartitionChildren[AddressIndex]
-        WorkingPartitionChildren = SelectedPartition.children
+        if('children' in SelectedPartition) {
+          WorkingPartitionChildren = SelectedPartition.children
+        } else {
+          return false
+        }
       })
 
       // Return selected partition
       return SelectedPartition
+    },
+    GetPreviewData: function() {
+
+      // Initial variables
+      const vm = this;
+
+      // Get template index
+      /*
+      const TemplateID = vm.ObjectData[0].template_id
+      const TemplateIndex = vm.PreviewData.findIndex((template) => template.id == TemplateID);
+      */
+      const TemplateIndex = vm.PreviewDataIndex
+
+      // Get template
+      const ObjectPreviewData = vm.PreviewData[TemplateIndex]
+
+      // Return template
+      return ObjectPreviewData
     },
     templatesGET: function() {
 
@@ -1207,7 +1278,7 @@ export default {
     categoryGET: function(SetCategoryToDefault = false) {
 
       const vm = this;
-      const PreviewDataIndex = vm.PreviewDataIndex
+      const PreviewData = vm.GetPreviewData()
 
       this.$http.get('/api/category').then(function(response){
 
@@ -1224,7 +1295,10 @@ export default {
             DefaultCategoryID = vm.CategoryData[0].id
           }
 
-          vm.PreviewData[PreviewDataIndex].category_id = DefaultCategoryID
+          PreviewData.category_id = DefaultCategoryID
+          vm.PreviewData[0].category_id = DefaultCategoryID
+          vm.PreviewData[1].category_id = DefaultCategoryID
+          vm.PreviewData[2].category_id = DefaultCategoryID
         }
 
       });
@@ -1337,9 +1411,9 @@ export default {
 
       // Store data
       const vm = this;
-      const PreviewDataIndex = vm.PreviewDataIndex
+      const PreviewData = vm.GetPreviewData()
       const url = '/api/template'
-      const data = vm.PreviewData[PreviewDataIndex]
+      const data = PreviewData
 
       // POST category form data
       this.$http.post(url, data).then(function(response){
@@ -1362,11 +1436,11 @@ export default {
     },
     FormReset: function() {
       const vm = this
-      const PreviewDataIndex = vm.PreviewDataIndex
-      for (const [key] of Object.entries(vm.PreviewData[PreviewDataIndex])) {
+      const PreviewData = vm.GetPreviewData()
+      for (const [key] of Object.entries(PreviewData)) {
         console.log('key: '+key)
         console.log('original: '+vm.PreviewDataOriginal[0][key])
-        vm.PreviewData[PreviewDataIndex][key] = vm.PreviewDataOriginal[0][key]
+        PreviewData[key] = vm.PreviewDataOriginal[0][key]
       }
     },
   },

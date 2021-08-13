@@ -31,11 +31,13 @@
           @mouseleave.stop=" $emit('PartitionHovered', {'Context': Context, 'PartitionAddress': InitialDepthCounter, 'HoverState': false}) "
         >
           <component-object
+            :ObjectData="ObjectData"
             :TemplateBlueprint=" GetPreviewData( RackObjectID(CabinetData.id, CabinetRU) ).blueprint[TemplateFaceSelected[Context]] "
             :TemplateBlueprintOriginal=" GetPreviewData( RackObjectID(CabinetData.id, CabinetRU) ).blueprint[TemplateFaceSelected[Context]] "
             :TemplateRUSize=" RackObjectSize( RackObjectID(CabinetData.id, CabinetRU) ) "
             :InitialDepthCounter=" InitialDepthCounter "
             :Context="Context"
+            :ObjectID="RackObjectID(CabinetData.id, CabinetRU)"
             :TemplateID="parseInt(0)"
             :TemplateFaceSelected="TemplateFaceSelected"
             :PartitionAddressSelected="PartitionAddressSelected"
@@ -120,6 +122,10 @@ export default {
 
       // Get template
       const ObjectPreviewData = vm.PreviewData[TemplateIndex]
+
+      console.log('Debug (GetPreviewData-TemplateID): '+TemplateID)
+      console.log('Debug (GetPreviewData-TemplateIndex): '+TemplateIndex)
+      console.log('Debug (GetPreviewData-ObjectPreviewData): '+JSON.stringify(ObjectPreviewData))
 
       // Return template
       return ObjectPreviewData

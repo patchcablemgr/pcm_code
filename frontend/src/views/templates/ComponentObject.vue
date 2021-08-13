@@ -22,6 +22,7 @@
       <!-- Generic partition -->
       <Object
         v-if=" Partition.type == 'generic' "
+        :ObjectData="ObjectData"
         :TemplateBlueprint="Partition.children"
         :TemplateBlueprintOriginal="TemplateBlueprintOriginal"
         :TemplateRUSize="TemplateRUSize"
@@ -70,6 +71,12 @@
           class=" pcm_template_enclosure_area "
           :style="{ 'grid-area': 'area'+(encIndex-1) }"
         >
+          <div
+            v-if="GetEnclosureInsert()"
+          >
+            Insert
+          </div>
+          {{ GetEnclosureAddress(encIndex-1, Partition.enc_layout.rows, Partition.enc_layout.cols)[0] }}, {{ GetEnclosureAddress(encIndex-1, Partition.enc_layout.rows, Partition.enc_layout.cols)[1] }}
         </div>
       </div>
     </div>
@@ -87,17 +94,33 @@ export default {
     BCol,
   },
   props: {
+    ObjectData: {type: Array},
     TemplateBlueprint: {type: Array},
     TemplateBlueprintOriginal: {type: Array},
     TemplateRUSize: {type: Number},
     InitialDepthCounter: {type: Array},
     Context: {type: String},
+    ObjectID: {type: Number},
     TemplateID: {type: Number},
     TemplateFaceSelected: {type: Object},
     PartitionAddressSelected: {type: Object},
     PartitionAddressHovered: {type: Object},
   },
   methods: {
+    GetEnclosureInsert: function() {
+
+      const vm = this
+      const ObjectID = vm.ObjectID
+      const InsertIndex = vm.ObjectData.findIndex((object) => object.parent_id == ObjectID)
+
+      return (InsertIndex !== -1) ? true : false
+    },
+    GetEnclosureAddress: function(encIndex, encRows, encCols) {
+      const row = Math.floor(encIndex / encCols)
+      const col = encIndex - (row * encCols)
+
+      return [row, col]
+    },
     PartitionIsSelected: function(PartitionIndex) {
       const vm = this
       const Context = vm.Context

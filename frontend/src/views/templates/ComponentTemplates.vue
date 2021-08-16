@@ -50,34 +50,22 @@
                 class="pcm_cabinet_ru"
                 :rowspan=" (RU == 1) ? 0 : '' "
               >
-                <div
-                  :class="{
-                    pcm_template_partition_selected: PartitionIsSelected(Template.id),
-                    pcm_template_partition_hovered: PartitionIsHovered(Template.id),
-                  }"
-                  :style="{
-                    'background-color': ObjectCategoryData(Category.id).color,
-                    'height': '100%',
-                  }"
-                  @click.stop=" $emit('PartitionClicked', {'Context': Context, 'TemplateID': Template.id, 'PartitionAddress': InitialDepthCounter}) "
-                  @mouseover.stop=" $emit('PartitionHovered', {'Context': Context, 'TemplateID': Template.id, 'PartitionAddress': InitialDepthCounter, 'HoverState': true}) "
-                  @mouseleave.stop=" $emit('PartitionHovered', {'Context': Context, 'TemplateID': Template.id, 'PartitionAddress': InitialDepthCounter, 'HoverState': false}) "
-                >
-                  <component-object
-                    v-if=" RU == 1 "
-                    :TemplateBlueprint=" Template.blueprint[TemplateFaceSelected[Context]] "
-                    :TemplateBlueprintOriginal=" Template.blueprint[TemplateFaceSelected[Context]] "
-                    :TemplateRUSize=" Template.ru_size "
-                    :InitialDepthCounter=" [] "
-                    :Context="Context"
-                    :TemplateFaceSelected="TemplateFaceSelected"
-                    :PartitionAddressSelected="PartitionAddressSelected"
-                    :PartitionAddressHovered="PartitionAddressHovered"
-                    :TemplateID="Template.id"
-                    @PartitionClicked=" $emit('PartitionClicked', $event) "
-                    @PartitionHovered=" $emit('PartitionHovered', $event) "
-                  />
-                </div>
+                <component-object
+                  v-if=" RU == 1 && GetObjectID(Template.id)"
+                  :ObjectData="ObjectData"
+                  :PreviewData="PreviewData"
+                  :CategoryData="CategoryData"
+                  :TemplateRUSize=" Template.ru_size "
+                  :InitialDepthCounter=" [] "
+                  :Context="Context"
+                  :ObjectID="GetObjectID(Template.id)"
+                  :TemplateID="Template.id"
+                  :TemplateFaceSelected="TemplateFaceSelected"
+                  :PartitionAddressSelected="PartitionAddressSelected"
+                  :PartitionAddressHovered="PartitionAddressHovered"
+                  @PartitionClicked=" $emit('PartitionClicked', $event) "
+                  @PartitionHovered=" $emit('PartitionHovered', $event) "
+                />
               </td>
             </tr>
           </table>
@@ -106,8 +94,10 @@ export default {
     ComponentObject,
   },
   props: {
-    CategoryData: {type: Array},
     TemplateData: {type: Array},
+    CategoryData: {type: Array},
+    ObjectData: {type: Object},
+    PreviewData: {type: Array},
     Context: {type: String},
     TemplateFaceSelected: {type: Object},
     PartitionAddressSelected: {type: Object},
@@ -139,6 +129,30 @@ export default {
     }
   },
   methods: {
+    GetObjectIndex: function(TemplateID) {
+
+      const vm = this
+      const Context = vm.Context
+
+      const ObjectIndex = vm.ObjectData[Context].findIndex((object) => object.template_id == TemplateID)
+
+      return ObjectIndex
+
+    },
+    GetObjectID: function(TemplateID) {
+
+      const vm = this
+      const Context = vm.Context
+
+      const ObjectIndex = vm.GetObjectIndex(TemplateID)
+      console.log('Debug (Templates-GetObjectID-Context): '+Context)
+      console.log('Debug (Templates-GetObjectID-ObjectData): '+JSON.stringify(vm.ObjectData))
+      console.log('Debug (Templates-GetObjectID-TemplateID): '+TemplateID)
+      const ObjectID = vm.ObjectData[Context][ObjectIndex].id
+      console.log('Debug (Templates-GetObjectID-ObjectID): '+ObjectID)
+      return ObjectID
+
+    },
     PartitionIsSelected: function(TemplateID) {
       const vm = this
       const Context = vm.Context
@@ -180,7 +194,7 @@ export default {
       const vm = this;
 
       // Get category index
-      const ObjectCategoryIndex = vm.CategoryData.findIndex((category) => category.id == CategoryID);
+      const ObjectCategoryIndex = vm.CategoryData.findIndex((category) => category.id == CategoryID)
 
       // Get category
       const ObjectCategoryData = vm.CategoryData[ObjectCategoryIndex]

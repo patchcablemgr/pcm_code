@@ -24,7 +24,7 @@
         <dd class="col-sm-8">
           <b-form-input
             name="name"
-            v-model="PreviewData[0].name"
+            v-model="TemplateData[Context][PreviewDataIndex].name"
             @change="$emit('TemplateNameUpdated', $event)"
             placeholder="New_Template"
           />
@@ -49,7 +49,7 @@
         <dd class="col-sm-8">
           <b-form-select
             name="category"
-            v-model="PreviewData[0].category_id"
+            v-model="TemplateData[Context][PreviewDataIndex].category_id"
             :options="GetCategoryOptions()"
             @change="$emit('TemplateCategoryUpdated', $event)"
           />
@@ -64,7 +64,7 @@
         <dd class="col-sm-8">
           <b-form-radio-group
             name="type"
-            v-model="PreviewData[0].type"
+            v-model="TemplateData[Context][PreviewDataIndex].type"
             :options="optionsTemplateType"
             @change="$emit('TemplateTypeUpdated', $event)"
             stacked
@@ -504,6 +504,7 @@ export default {
     PortOrientationData: {type: Array},
     MediaData: {type: Array},
     PreviewData: {type: Array},
+    PreviewDataIndex: {type: Number},
     SelectedPortFormatIndex: {type: Number},
     Context: {type: String},
     TemplateFaceSelected: {type: Object},
@@ -518,10 +519,10 @@ export default {
   },
   data() {
     return {
-      inputTemplateType: this.PreviewData[0].type,
-      InputTemplateRUSize: this.PreviewData[0].ru_size,
-      inputTemplateFunction: this.PreviewData[0].function,
-      inputTemplateMountConfig: this.PreviewData[0].mount_config,
+      inputTemplateType: this.TemplateData[Context][PreviewDataIndex].type,
+      InputTemplateRUSize: this.TemplateData[Context][PreviewDataIndex].ru_size,
+      inputTemplateFunction: this.TemplateData[Context][PreviewDataIndex].function,
+      inputTemplateMountConfig: this.TemplateData[Context][PreviewDataIndex].mount_config,
       selected: null,
       optionsCategory: [],
       optionsTemplateType: [

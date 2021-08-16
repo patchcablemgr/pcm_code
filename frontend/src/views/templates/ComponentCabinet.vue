@@ -18,34 +18,23 @@
         v-if=" RackObjectID(CabinetData.id, CabinetRU) !== false "
         :rowspan=" RackObjectSize( RackObjectID(CabinetData.id, CabinetRU) ) "
       >
-        <div
-          :class="{
-            pcm_template_partition_selected: PartitionAddressSelected[Context][TemplateFaceSelected[Context]].length === 0,
-            pcm_template_partition_hovered: PartitionAddressHovered[Context][TemplateFaceSelected[Context]].length === 0,
-          }"
-          :style="{
-            'background-color': ObjectCategoryData( RackObjectID(CabinetData.id, CabinetRU) ).color,
-            'height': '100%',
-          }"
-          @mouseover.stop=" $emit('PartitionHovered', {'Context': Context, 'PartitionAddress': InitialDepthCounter, 'HoverState': true}) "
-          @mouseleave.stop=" $emit('PartitionHovered', {'Context': Context, 'PartitionAddress': InitialDepthCounter, 'HoverState': false}) "
-        >
-          <component-object
-            :ObjectData="ObjectData"
-            :TemplateBlueprint=" GetPreviewData( RackObjectID(CabinetData.id, CabinetRU) ).blueprint[TemplateFaceSelected[Context]] "
-            :TemplateBlueprintOriginal=" GetPreviewData( RackObjectID(CabinetData.id, CabinetRU) ).blueprint[TemplateFaceSelected[Context]] "
-            :TemplateRUSize=" RackObjectSize( RackObjectID(CabinetData.id, CabinetRU) ) "
-            :InitialDepthCounter=" InitialDepthCounter "
-            :Context="Context"
-            :ObjectID="RackObjectID(CabinetData.id, CabinetRU)"
-            :TemplateID="parseInt(0)"
-            :TemplateFaceSelected="TemplateFaceSelected"
-            :PartitionAddressSelected="PartitionAddressSelected"
-            :PartitionAddressHovered="PartitionAddressHovered"
-            @PartitionClicked=" $emit('PartitionClicked', $event) "
-            @PartitionHovered=" $emit('PartitionHovered', $event) "
-          />
-        </div>
+        <component-object
+          :CabinetID="CabinetData.id"
+          :CabinetRU="CabinetRU"
+          :ObjectData="ObjectData"
+          :PreviewData="PreviewData"
+          :CategoryData="CategoryData"
+          :TemplateRUSize=" RackObjectSize( RackObjectID(CabinetData.id, CabinetRU) ) "
+          :InitialDepthCounter=" InitialDepthCounter "
+          :Context="Context"
+          :ObjectID="RackObjectID(CabinetData.id, CabinetRU)"
+          :TemplateID="parseInt(0)"
+          :TemplateFaceSelected="TemplateFaceSelected"
+          :PartitionAddressSelected="PartitionAddressSelected"
+          :PartitionAddressHovered="PartitionAddressHovered"
+          @PartitionClicked=" $emit('PartitionClicked', $event) "
+          @PartitionHovered=" $emit('PartitionHovered', $event) "
+        />
       </td>
       <td class="pcm_cabinet_ru" v-else-if=" RUIsOccupied(CabinetData.id, CabinetRU) === false "></td>
       <td class="pcm_cabinet">{{ CabinetRU }}</td>
@@ -75,7 +64,7 @@ export default {
   props: {
     CabinetData: {type: Object},
     CategoryData: {type: Array},
-    ObjectData: {type: Array},
+    ObjectData: {type: Object},
     PreviewData: {type: Array},
     Context: {type: String},
     TemplateFaceSelected: {type: Object},
@@ -91,12 +80,32 @@ export default {
     GetObjectIndex: function(ObjectID) {
 
       // Initial variables
-      const vm = this;
+      const vm = this
+      const Context = vm.Context
 
       // Get object index
-      const ObjectIndex = vm.ObjectData.findIndex((object) => object.id == ObjectID);
+      const ObjectIndex = vm.ObjectData[Context].findIndex((object) => object.id == ObjectID);
 
       return ObjectIndex
+    },
+    GetPreviewData: function(ObjectID) {
+
+      // Initial variables
+      const vm = this
+      const Context = vm.Context
+
+      // Get object index
+      const ObjectIndex = vm.GetObjectIndex(ObjectID)
+
+      // Get template index
+      const TemplateID = vm.ObjectData[Context][ObjectIndex].template_id
+      const TemplateIndex = vm.GetTemplateIndex(TemplateID)
+
+      // Get template
+      const ObjectPreviewData = vm.PreviewData[TemplateIndex]
+
+      // Return template
+      return ObjectPreviewData
     },
     GetTemplateIndex: function(TemplateID) {
 
@@ -108,50 +117,6 @@ export default {
 
       return TemplateIndex
     },
-    GetPreviewData: function(ObjectID) {
-
-      // Initial variables
-      const vm = this;
-
-      // Get object index
-      const ObjectIndex = vm.GetObjectIndex(ObjectID)
-
-      // Get template index
-      const TemplateID = vm.ObjectData[ObjectIndex].template_id
-      const TemplateIndex = vm.GetTemplateIndex(TemplateID)
-
-      // Get template
-      const ObjectPreviewData = vm.PreviewData[TemplateIndex]
-
-      console.log('Debug (GetPreviewData-TemplateID): '+TemplateID)
-      console.log('Debug (GetPreviewData-TemplateIndex): '+TemplateIndex)
-      console.log('Debug (GetPreviewData-ObjectPreviewData): '+JSON.stringify(ObjectPreviewData))
-
-      // Return template
-      return ObjectPreviewData
-    },
-    ObjectCategoryData: function(ObjectID) {
-
-      // Initial variables
-      const vm = this;
-
-      // Get object index
-      const ObjectIndex = vm.ObjectData.findIndex((object) => object.id == ObjectID);
-
-      // Get template index
-      const TemplateID = vm.ObjectData[ObjectIndex].template_id
-      const TemplateIndex = vm.PreviewData.findIndex((template) => template.id == TemplateID);
-
-      // Get category index
-      const ObjectCategoryID = vm.PreviewData[TemplateIndex].category_id
-      const ObjectCategoryIndex = vm.CategoryData.findIndex((category) => category.id == ObjectCategoryID);
-
-      // Get category
-      const ObjectCategoryData = vm.CategoryData[ObjectCategoryIndex]
-
-      // Return category
-      return ObjectCategoryData
-    },
     RackObjectID: function(CabinetID, CabinetRU) {
       
       // Initial variables
@@ -159,7 +124,7 @@ export default {
       const Context = vm.Context
       const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
 
-      const ObjectIndex = vm.ObjectData.findIndex(function(Object, ObjectIndex) {
+      const ObjectIndex = vm.ObjectData[Context].findIndex(function(Object, ObjectIndex) {
         if(Object.location_id == CabinetID && Object.cabinet_ru == CabinetRU) {
           const ObjectCabinetFace = Object.cabinet_face
           const ObjectID = Object.id
@@ -171,7 +136,7 @@ export default {
         }
       })
 
-      const RackObjectID = (ObjectIndex !== -1) ? vm.ObjectData[ObjectIndex].id : false
+      const RackObjectID = (ObjectIndex !== -1) ? vm.ObjectData[Context][ObjectIndex].id : false
 
       return RackObjectID
     },
@@ -179,12 +144,13 @@ export default {
 
       // Store variables
       const vm = this
+      const Context = vm.Context
 
       // Get object index
-      const ObjectIndex = vm.ObjectData.findIndex((object) => object.id == ObjectID);
+      const ObjectIndex = vm.ObjectData[Context].findIndex((object) => object.id == ObjectID);
 
       // Get template index
-      const TemplateID = vm.ObjectData[ObjectIndex].template_id
+      const TemplateID = vm.ObjectData[Context][ObjectIndex].template_id
       const TemplateIndex = vm.PreviewData.findIndex((template) => template.id == TemplateID);
 
       // Get template
@@ -200,7 +166,7 @@ export default {
       const vm = this;
       const Context = vm.Context
       const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
-      const CabinetObjects = vm.ObjectData.filter((object) => object.location_id == CabinetID);
+      const CabinetObjects = vm.ObjectData[Context].filter((object) => object.location_id == CabinetID);
       let ObjectIsPresent = false
 
       CabinetObjects.forEach(function(object){

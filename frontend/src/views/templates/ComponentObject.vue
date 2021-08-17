@@ -43,6 +43,7 @@ export default {
     ComponentTemplate,
   },
   props: {
+    TemplateData: {type: Object},
     CabinetID: {type: Number},
     CabinetRU: {type: Number},
     ObjectData: {type: Object},
@@ -62,6 +63,7 @@ export default {
 
       // Store variables
       const vm = this
+      const TemplateData = vm.TemplateData
       const Context = vm.Context
 
       // Get object index
@@ -69,10 +71,10 @@ export default {
 
       // Get template index
       const TemplateID = vm.ObjectData[Context][ObjectIndex].template_id
-      const TemplateIndex = vm.PreviewData.findIndex((template) => template.id == TemplateID);
+      const TemplateIndex = TemplateData[Context].findIndex((template) => template.id == TemplateID);
 
       // Get template
-      const ObjectPreviewData = vm.PreviewData[TemplateIndex]
+      const ObjectPreviewData = TemplateData[Context][TemplateIndex]
 
       const ObjectSize = ObjectPreviewData.ru_size
 
@@ -81,10 +83,12 @@ export default {
     GetTemplateIndex: function(TemplateID) {
 
       // Initial variables
-      const vm = this;
+      const vm = this
+      const TemplateData = vm.TemplateData
+      const Context = vm.Context
 
       // Get object index
-      const TemplateIndex = vm.PreviewData.findIndex((template) => template.id == TemplateID);
+      const TemplateIndex = TemplateData[Context].findIndex((template) => template.id == TemplateID);
 
       return TemplateIndex
     },
@@ -103,6 +107,7 @@ export default {
 
       // Initial variables
       const vm = this
+      const TemplateData = vm.TemplateData
       const Context = vm.Context
 
       // Get object index
@@ -113,7 +118,7 @@ export default {
       const TemplateIndex = vm.GetTemplateIndex(TemplateID)
 
       // Get template
-      const ObjectPreviewData = vm.PreviewData[TemplateIndex]
+      const ObjectPreviewData = TemplateData[Context][TemplateIndex]
 
       // Return template
       return ObjectPreviewData
@@ -122,25 +127,18 @@ export default {
 
       // Initial variables
       const vm = this
+      const TemplateData = vm.TemplateData
       const Context = vm.Context
 
       // Get object index
       const ObjectIndex = vm.ObjectData[Context].findIndex((object) => object.id == ObjectID)
 
-      console.log('Debug (Object-ObjectCategoryData-Context): '+Context)
-      console.log('Debug (Object-ObjectCategoryData-ObjectIndex): '+ObjectIndex)
-      console.log('Debug (Object-ObjectCategoryData-ObjectData): '+JSON.stringify(vm.ObjectData))
-
       // Get template index
       const TemplateID = vm.ObjectData[Context][ObjectIndex].template_id
-      const TemplateIndex = vm.PreviewData.findIndex((template) => template.id == TemplateID)
-
-      console.log('Debug (Object-ObjectCategoryData-TemplateID): '+TemplateID)
-      console.log('Debug (Object-ObjectCategoryData-TemplateIndex): '+TemplateIndex)
-      console.log('Debug (Object-ObjectCategoryData-PreviewData): '+JSON.stringify(vm.PreviewData))
+      const TemplateIndex = TemplateData[Context].findIndex((template) => template.id == TemplateID)
 
       // Get category index
-      const ObjectCategoryID = vm.PreviewData[TemplateIndex].category_id
+      const ObjectCategoryID = TemplateData[Context][TemplateIndex].category_id
       const ObjectCategoryIndex = vm.CategoryData.findIndex((category) => category.id == ObjectCategoryID);
 
       // Get category

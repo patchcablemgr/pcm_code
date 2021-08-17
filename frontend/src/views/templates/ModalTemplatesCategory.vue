@@ -150,9 +150,10 @@ export default {
     Ripple,
   },
   props: {
-    TemplateData: {type: Array},
+    TemplateData: {type: Object},
     CategoryData: {type: Array},
     SelectedCategoryID: {type: Number},
+    Context: {type: String},
   },
   data () {
     return {
@@ -244,8 +245,10 @@ export default {
     CategoryTemplateCount: function(CategoryID) {
 
       // Store data
-      const vm = this;
-      const TemplateDataFiltered = vm.TemplateData.filter(template => template.category_id == CategoryID)
+      const vm = this
+      const Context = vm.Context
+      const TemplateData = vm.TemplateData[Context]
+      const TemplateDataFiltered = TemplateData.filter(template => template.category_id == CategoryID)
 
       return TemplateDataFiltered.length
 

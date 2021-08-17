@@ -443,6 +443,7 @@
       :TemplateData="TemplateData"
       :CategoryData="CategoryData"
       :SelectedCategoryID="SelectedCategoryID"
+      :Context="Context"
       @TemplateCategoriesUpdated="$emit('TemplateCategoriesUpdated')"
       @categoriesUpdatedOrig="updateCategories($event)"
       @TemplateCategoryDeleted="$emit('TemplateCategoryDeleted', $event)"
@@ -497,7 +498,7 @@ export default {
     'b-modal': VBModal,
   },
   props: {
-    TemplateData: {type: Array},
+    TemplateData: {type: Object},
     CategoryData: {type: Array},
     SelectedCategoryID: {type: Number},
     PortConnectorData: {type: Array},
@@ -519,10 +520,10 @@ export default {
   },
   data() {
     return {
-      inputTemplateType: this.TemplateData[Context][PreviewDataIndex].type,
-      InputTemplateRUSize: this.TemplateData[Context][PreviewDataIndex].ru_size,
-      inputTemplateFunction: this.TemplateData[Context][PreviewDataIndex].function,
-      inputTemplateMountConfig: this.TemplateData[Context][PreviewDataIndex].mount_config,
+      inputTemplateType: this.TemplateData[this.Context][this.PreviewDataIndex].type,
+      InputTemplateRUSize: this.TemplateData[this.Context][this.PreviewDataIndex].ru_size,
+      inputTemplateFunction: this.TemplateData[this.Context][this.PreviewDataIndex].function,
+      inputTemplateMountConfig: this.TemplateData[this.Context][this.PreviewDataIndex].mount_config,
       selected: null,
       optionsCategory: [],
       optionsTemplateType: [
@@ -757,7 +758,13 @@ export default {
   },
   methods: {
     onSubmit: function() {
-      console.log("Debug (Submit): "+JSON.stringify(this.PreviewData[0]))
+
+      const vm = this
+      const TemplateData = vm.TemplateData
+      const Context = vm.Context
+      const PreviewDataIndex = vm.PreviewDataIndex
+
+      console.log("Debug (Submit): "+JSON.stringify(TemplateData[Context][PreviewDataIndex]))
       this.$emit('FormSubmit')
     },
     onReset: function() {
@@ -767,7 +774,10 @@ export default {
     GetRUSizeMin() {
 
       const vm = this
-      const PreviewData = vm.PreviewData[0]
+      const TemplateData = vm.TemplateData
+      const Context = vm.Context
+      const PreviewDataIndex = vm.PreviewDataIndex
+      const PreviewData = TemplateData[Context][PreviewDataIndex]
       const TemplateFaceArray = ['front','rear']
       let RUSizeMin = 1
 
@@ -799,8 +809,10 @@ export default {
 
       // Store variables
       const vm = this
-      const PreviewData = vm.PreviewData[0]
+      const TemplateData = vm.TemplateData
       const Context = vm.Context
+      const PreviewDataIndex = vm.PreviewDataIndex
+      const PreviewData = TemplateData[Context][PreviewDataIndex]
       const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
       const PartitionAddressSelected = JSON.parse(JSON.stringify(vm.PartitionAddressSelected[Context][TemplateFaceSelected]))
       const SelectedPartitionDirection = vm.ComputedSelectedPartitionDirection
@@ -843,8 +855,10 @@ export default {
 
       // Store variables
       const vm = this
-      const PreviewData = vm.PreviewData[0]
+      const TemplateData = vm.TemplateData
       const Context = vm.Context
+      const PreviewDataIndex = vm.PreviewDataIndex
+      const PreviewData = TemplateData[Context][PreviewDataIndex]
       const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
       const PartitionAddressSelected = vm.PartitionAddressSelected[Context][TemplateFaceSelected]
       const SelectedPartitionDepth = PartitionAddressSelected.length

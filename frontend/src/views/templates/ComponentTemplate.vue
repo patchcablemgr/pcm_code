@@ -241,7 +241,7 @@ export default {
 
       const vm = this;
       const PartitionAddress = vm.InitialDepthCounter
-      console.log('Debug (Template-PartitionDirectionClass-TemplateBlueprint): '+JSON.stringify(vm.TemplateBlueprint))
+      
       return (PartitionAddress.length % 2) ? 'pcm_template_partition_horizontal' : 'pcm_template_partition_vertical'
     },
   },

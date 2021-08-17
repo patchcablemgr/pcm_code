@@ -159,6 +159,9 @@ import ComponentCabinet from './templates/ComponentCabinet.vue'
 import ComponentTemplateObjectDetails from './templates/ComponentTemplateObjectDetails.vue'
 import ComponentTemplates from './templates/ComponentTemplates.vue'
 
+const StandardTemplateID = 0
+const InsertParentTemplateID = 1
+const InsertTemplateID = 2
 const TemplateData = {
   'preview': [
     {
@@ -310,9 +313,6 @@ const ObjectData = {
   ],
   'template': []
 }
-const StandardTemplateID = 0
-const InsertParentTemplateID = 1
-const InsertTemplateID = 2
 const PreviewData = [
   {
     "id": StandardTemplateID,
@@ -419,7 +419,7 @@ export default {
         if(TemplateID) {
           const TemplateIndex = vm.GetTemplateIndex(TemplateID)
           const TemplateFaceSelected = vm.TemplateFaceSelected.template
-          const Blueprint = vm.TemplateData[TemplateIndex].blueprint[TemplateFaceSelected]
+          const Blueprint = vm.TemplateData.preview[TemplateIndex].blueprint[TemplateFaceSelected]
           const PartitionAddress = PartitionAddressSelected[TemplateFaceSelected]
           const Partition = vm.GetPartition(Blueprint, PartitionAddress)
           const PartitionType = Partition.type
@@ -449,7 +449,7 @@ export default {
 
         // Get template blueprint
         const TemplateIndex = vm.GetTemplateIndex(TemplateID)
-        const Template = vm.TemplateData[TemplateIndex]
+        const Template = vm.TemplateData.preview[TemplateIndex]
         const TemplateBlueprint = Template.blueprint[TemplateFace]
 
         // Get template partition
@@ -591,8 +591,8 @@ export default {
   methods: {
     GetTemplateIndex: function(TemplateID) {
 
-      const vm = this;
-      const TemplateIndex = vm.TemplateData.findIndex((template) => template.id == TemplateID);
+      const vm = this
+      const TemplateIndex = vm.TemplateData.preview.findIndex((template) => template.id == TemplateID);
 
       return TemplateIndex
     },
@@ -611,8 +611,8 @@ export default {
       if(Context == 'template') {
 
         // Get selected template data
-        const TemplateIndex = vm.TemplateData.findIndex((template) => template.id == TemplateID);
-        const Template = vm.TemplateData[TemplateIndex]
+        const TemplateIndex = vm.TemplateData.preview.findIndex((template) => template.id == TemplateID);
+        const Template = vm.TemplateData.preview[TemplateIndex]
         const TemplateRUSize = Template.ru_size
         const TemplateFunction = Template.function
         const TemplateCategoryID = Template.category_id
@@ -1302,7 +1302,7 @@ export default {
     GetPreviewData: function() {
 
       // Initial variables
-      const vm = this;
+      const vm = this
 
       // Get template index
       const TemplateIndex = vm.PreviewDataIndex
@@ -1331,12 +1331,10 @@ export default {
 
       this.$http.get('/api/template').then(function(response){
 
-        vm.TemplateData = response.data
+        vm.TemplateData.template = response.data
         let WorkingObjectData = []
 
         response.data.forEach(function(Template, TemplateIndex){
-          console.log('Debug (templatesGET-ObjectGeneric): '+JSON.stringify(ObjectGeneric))
-          console.log('Debug (templatesGET-TemplateIndex): '+TemplateIndex)
           WorkingObjectData.push(JSON.parse(JSON.stringify(ObjectGeneric), function(ObjectGenericKey, ObjectGenericValue){
             if(ObjectGenericKey == 'id') {
               return TemplateIndex + 1
@@ -1349,7 +1347,6 @@ export default {
         })
 
         vm.ObjectData.template = WorkingObjectData
-        console.log('Debug (templatesGET-ObjectData): '+JSON.stringify(vm.ObjectData))
 
       });
     },
@@ -1488,7 +1485,7 @@ export default {
     FormSubmit: function() {
 
       // Store data
-      const vm = this;
+      const vm = this
       const PreviewData = vm.GetPreviewData()
       const url = '/api/template'
       const data = PreviewData
@@ -1500,7 +1497,7 @@ export default {
         response.data.blueprint = JSON.parse(response.data.blueprint)
         
         // Append new template to template array
-        vm.TemplateData.push(response.data)
+        vm.TemplateData.template.push(response.data)
 
       }).catch(error => {
 

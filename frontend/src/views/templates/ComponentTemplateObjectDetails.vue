@@ -182,7 +182,7 @@ export default {
   },
   props: {
     CategoryData: {type: Array},
-    TemplateData: {type: Array},
+    TemplateData: {type: Object},
     Context: {type: String},
     TemplateFaceSelected: {type: Object},
     PartitionAddressSelected: {type: Object},
@@ -209,7 +209,7 @@ export default {
 
         if(TemplateID) {
           const TemplateIndex = vm.GetTemplateIndex(TemplateID)
-          ReturnString = vm.TemplateData[TemplateIndex].name
+          ReturnString = vm.TemplateData[Context][TemplateIndex].name
         }
 
         return ReturnString
@@ -225,7 +225,7 @@ export default {
 
         if(TemplateID) {
           const TemplateIndex = vm.GetTemplateIndex(TemplateID)
-          const CategoryID = vm.TemplateData[TemplateIndex].category_id
+          const CategoryID = vm.TemplateData[Context][TemplateIndex].category_id
           const CategoryIndex = vm.GetCategoryIndex(CategoryID)
           ReturnString = vm.CategoryData[CategoryIndex].name
         }
@@ -258,7 +258,7 @@ export default {
 
         if(TemplateID) {
           const TemplateIndex = vm.GetTemplateIndex(TemplateID)
-          ReturnString = vm.TemplateData[TemplateIndex].type
+          ReturnString = vm.TemplateData[Context][TemplateIndex].type
           ReturnString = ReturnString.charAt(0).toUpperCase() + ReturnString.slice(1)
         }
 
@@ -275,7 +275,7 @@ export default {
 
         if(TemplateID) {
           const TemplateIndex = vm.GetTemplateIndex(TemplateID)
-          ReturnString = vm.TemplateData[TemplateIndex].function
+          ReturnString = vm.TemplateData[Context][TemplateIndex].function
           ReturnString = ReturnString.charAt(0).toUpperCase() + ReturnString.slice(1)
         }
 
@@ -292,7 +292,7 @@ export default {
 
         if(TemplateID) {
           const TemplateIndex = vm.GetTemplateIndex(TemplateID)
-          ReturnString = vm.TemplateData[TemplateIndex].ru_size
+          ReturnString = vm.TemplateData[Context][TemplateIndex].ru_size
         }
 
         return ReturnString
@@ -308,7 +308,7 @@ export default {
 
         if(TemplateID) {
           const TemplateIndex = vm.GetTemplateIndex(TemplateID)
-          ReturnString = vm.TemplateData[TemplateIndex].mount_config
+          ReturnString = vm.TemplateData[Context][TemplateIndex].mount_config
         }
 
         return ReturnString
@@ -327,7 +327,7 @@ export default {
 
           // Get template
           const TemplateIndex = vm.GetTemplateIndex(TemplateID)
-          const Template = vm.TemplateData[TemplateIndex]
+          const Template = vm.TemplateData[Context][TemplateIndex]
 
           // Get partition
           const Blueprint = Template.blueprint[TemplateFace]
@@ -355,7 +355,7 @@ export default {
 
           // Get template
           const TemplateIndex = vm.GetTemplateIndex(TemplateID)
-          const Template = vm.TemplateData[TemplateIndex]
+          const Template = vm.TemplateData[Context][TemplateIndex]
 
           // Get partition
           const Blueprint = Template.blueprint[TemplateFace]
@@ -386,7 +386,7 @@ export default {
 
           // Get template
           const TemplateIndex = vm.GetTemplateIndex(TemplateID)
-          const Template = vm.TemplateData[TemplateIndex]
+          const Template = vm.TemplateData[Context][TemplateIndex]
 
           // Get partition
           const Blueprint = Template.blueprint[TemplateFace]
@@ -417,7 +417,7 @@ export default {
 
           // Get template
           const TemplateIndex = vm.GetTemplateIndex(TemplateID)
-          const Template = vm.TemplateData[TemplateIndex]
+          const Template = vm.TemplateData[Context][TemplateIndex]
 
           // Get partition
           const Blueprint = Template.blueprint[TemplateFace]
@@ -439,8 +439,9 @@ export default {
   methods: {
     GetTemplateIndex: function(TemplateID) {
 
-      const vm = this;
-      const TemplateIndex = vm.TemplateData.findIndex((template) => template.id == TemplateID);
+      const vm = this
+      const Context = vm.Context
+      const TemplateIndex = vm.TemplateData[Context].findIndex((template) => template.id == TemplateID);
 
       return TemplateIndex
     },

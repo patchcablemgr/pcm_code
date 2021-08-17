@@ -52,6 +52,7 @@
               >
                 <component-object
                   v-if=" RU == 1 && GetObjectID(Template.id)"
+                  :TemplateData="TemplateData"
                   :ObjectData="ObjectData"
                   :PreviewData="PreviewData"
                   :CategoryData="CategoryData"
@@ -94,7 +95,7 @@ export default {
     ComponentObject,
   },
   props: {
-    TemplateData: {type: Array},
+    TemplateData: {type: Object},
     CategoryData: {type: Array},
     ObjectData: {type: Object},
     PreviewData: {type: Array},
@@ -145,11 +146,8 @@ export default {
       const Context = vm.Context
 
       const ObjectIndex = vm.GetObjectIndex(TemplateID)
-      console.log('Debug (Templates-GetObjectID-Context): '+Context)
-      console.log('Debug (Templates-GetObjectID-ObjectData): '+JSON.stringify(vm.ObjectData))
-      console.log('Debug (Templates-GetObjectID-TemplateID): '+TemplateID)
       const ObjectID = vm.ObjectData[Context][ObjectIndex].id
-      console.log('Debug (Templates-GetObjectID-ObjectID): '+ObjectID)
+      
       return ObjectID
 
     },
@@ -182,8 +180,11 @@ export default {
     CategoryTemplateCount: function(CategoryID) {
 
       // Store data
-      const vm = this;
-      const TemplateDataFiltered = vm.TemplateData.filter(template => template.category_id == CategoryID)
+      const vm = this
+      const Context = vm.Context
+      const TemplateData = vm.TemplateData[Context]
+
+      const TemplateDataFiltered = TemplateData.filter(template => template.category_id == CategoryID)
 
       return TemplateDataFiltered.length
 
@@ -205,7 +206,8 @@ export default {
     FilteredCategoryTemplates: function(CategoryID){
 
       const vm = this
-      const FilteredCategoryTemplates = vm.TemplateData.filter(function(template) {
+      const Context = vm.Context
+      const FilteredCategoryTemplates = vm.TemplateData[Context].filter(function(template) {
 
         let match = false
 

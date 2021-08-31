@@ -14,7 +14,6 @@
                 :PortConnectorData="PortConnectorData"
                 :PortOrientationData="PortOrientationData"
                 :MediaData="MediaData"
-                :PreviewData="PreviewData"
                 :PreviewDataIndex="PreviewDataIndex"
                 :SelectedPortFormatIndex="SelectedPortFormatIndex"
                 Context="preview"
@@ -90,7 +89,6 @@
                 :CabinetData="CabinetData"
                 :CategoryData="CategoryData"
                 :ObjectData="ObjectData"
-                :PreviewData="PreviewData"
                 Context="preview"
                 :TemplateFaceSelected="TemplateFaceSelected"
                 :PartitionAddressSelected="PartitionAddressSelected"
@@ -132,7 +130,6 @@
                 :TemplateData="TemplateData"
                 :CategoryData="CategoryData"
                 :ObjectData="ObjectData"
-                :PreviewData="PreviewData"
                 Context="template"
                 :TemplateFaceSelected="TemplateFaceSelected"
                 :PartitionAddressSelected="PartitionAddressSelected"
@@ -254,7 +251,7 @@ const TemplateFaceSelected = {
 }
 const PartitionAddressSelected = {
   'preview': {
-    'template_id': null,
+    'template_id': StandardTemplateID,
     'front': [0],
     'rear': [0]
   },
@@ -292,7 +289,7 @@ const ObjectData = {
     {
       "id": 1,
       "name": "Standard",
-      "template_id": 0,
+      "template_id": StandardTemplateID,
       "location_id": 1,
       "cabinet_ru": 1,
       "cabinet_face": "front",
@@ -301,7 +298,7 @@ const ObjectData = {
     {
       "id": 2,
       "name": "Insert",
-      "template_id": 0,
+      "template_id": InsertTemplateID,
       "location_id": 1,
       "cabinet_ru": 1,
       "cabinet_face": "front",
@@ -313,56 +310,6 @@ const ObjectData = {
   ],
   'template': []
 }
-const PreviewData = [
-  {
-    "id": StandardTemplateID,
-    "name": "New_Template",
-    "category_id": 0,
-    "type": "standard",
-    "ru_size": 1,
-    "function": "endpoint",
-    "mount_config": "2-post",
-    "blueprint": {
-      "front": [{
-        "type": "generic",
-        "units":24,
-        "children": [],
-      }],
-      "rear": [{
-        "type": "generic",
-        "units":24,
-        "children": [],
-      }],
-    }
-  },
-  {
-    "id": InsertParentTemplateID,
-    "name": "New_Template",
-    "category_id": 0,
-    "type": "standard",
-    "ru_size": 1,
-    "function": "endpoint",
-    "blueprint": {
-      "front": [],
-      "rear": [],
-    }
-  },
-  {
-    "id": InsertTemplateID,
-    "name": "New_Template",
-    "category_id": 0,
-    "type": "insert",
-    "function": "endpoint",
-    "blueprint": {
-      "front": [{
-        "type": "generic",
-        "units":24,
-        "children": [],
-      }],
-      "rear": [],
-    }
-  }
-]
 const PreviewDataIndex = 0
 const TemplateType = 'standard'
 
@@ -392,9 +339,7 @@ export default {
       PortOrientationData,
       CabinetData,
       ObjectData,
-      PreviewData,
       PreviewDataIndex,
-      PreviewDataOriginal: JSON.parse(JSON.stringify(PreviewData)),
       SelectedPortFormatIndex,
       TemplateFaceSelected,
       PartitionAddressSelected,
@@ -409,17 +354,18 @@ export default {
     PreviewDisplay: function(){
 
       const vm = this
+      const Context = 'template'
       const TemplateType = vm.TemplateType
       let PreviewDisplay = 'cabinet'
 
       if(TemplateType == 'insert') {
-        const PartitionAddressSelected = vm.PartitionAddressSelected.template
+        const PartitionAddressSelected = vm.PartitionAddressSelected[Context]
         const TemplateID = PartitionAddressSelected.template_id
 
         if(TemplateID) {
-          const TemplateIndex = vm.GetTemplateIndex(TemplateID)
-          const TemplateFaceSelected = vm.TemplateFaceSelected.template
-          const Blueprint = vm.TemplateData.preview[TemplateIndex].blueprint[TemplateFaceSelected]
+          const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+          const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
+          const Blueprint = vm.TemplateData[Context][TemplateIndex].blueprint[TemplateFaceSelected]
           const PartitionAddress = PartitionAddressSelected[TemplateFaceSelected]
           const Partition = vm.GetPartition(Blueprint, PartitionAddress)
           const PartitionType = Partition.type
@@ -438,18 +384,19 @@ export default {
       
       // Initialize some variables
       const vm = this
-      const TemplateID = vm.PartitionAddressSelected.template.template_id
+      const Context = 'template'
+      const TemplateID = vm.PartitionAddressSelected[Context].template_id
       let PortRangeString = '-'
 
       if(TemplateID) {
 
         // Get template partition address
-        const TemplateFace = vm.TemplateFaceSelected.template
-        const TemplatePartition = vm.PartitionAddressSelected.template[TemplateFace]
+        const TemplateFace = vm.TemplateFaceSelected[Context]
+        const TemplatePartition = vm.PartitionAddressSelected[Context][TemplateFace]
 
         // Get template blueprint
-        const TemplateIndex = vm.GetTemplateIndex(TemplateID)
-        const Template = vm.TemplateData.preview[TemplateIndex]
+        const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+        const Template = vm.TemplateData[Context][TemplateIndex]
         const TemplateBlueprint = Template.blueprint[TemplateFace]
 
         // Get template partition
@@ -589,10 +536,10 @@ export default {
     },
   },
   methods: {
-    GetTemplateIndex: function(TemplateID) {
+    GetTemplateIndex: function(TemplateID, Context) {
 
       const vm = this
-      const TemplateIndex = vm.TemplateData.preview.findIndex((template) => template.id == TemplateID);
+      const TemplateIndex = vm.TemplateData[Context].findIndex((template) => template.id == TemplateID);
 
       return TemplateIndex
     },
@@ -611,9 +558,9 @@ export default {
       if(Context == 'template') {
 
         // Get selected template data
-        const TemplateIndex = vm.TemplateData.preview.findIndex((template) => template.id == TemplateID);
-        const Template = vm.TemplateData.preview[TemplateIndex]
-        const TemplateRUSize = Template.ru_size
+        const TemplateIndex = vm.TemplateData[Context].findIndex((template) => template.id == TemplateID)
+        const Template = vm.TemplateData[Context][TemplateIndex]
+        //const TemplateRUSize = Template.ru_size
         const TemplateFunction = Template.function
         const TemplateCategoryID = Template.category_id
 
@@ -621,7 +568,7 @@ export default {
         const Blueprint = Template.blueprint[TemplateFaceSelected]
         const Partition = JSON.parse(JSON.stringify(vm.GetPartition(Blueprint, PartitionAddress)))
         const PartitionDirection = vm.GetPartitionDirection(PartitionAddress)
-        const PartitionType = Partition.type
+        //const PartitionType = Partition.type
         const PartitionUnits = Partition.units
 
         // Get parent partition data
@@ -972,6 +919,7 @@ export default {
       // Get Partition
       const vm = this
       let SelectedPartition = vm.GetSelectedPreviewPartition()
+      console.log('Debug (Templates-TemplatePartitionSizeUpdated-SelectedPartition): '+JSON.stringify(SelectedPartition))
       
       SelectedPartition.units = newValue
     },
@@ -1371,9 +1319,6 @@ export default {
           }
 
           PreviewData.category_id = DefaultCategoryID
-          vm.PreviewData[0].category_id = DefaultCategoryID
-          vm.PreviewData[1].category_id = DefaultCategoryID
-          vm.PreviewData[2].category_id = DefaultCategoryID
         }
 
       });
@@ -1512,9 +1457,8 @@ export default {
     FormReset: function() {
       const vm = this
       const PreviewData = vm.GetPreviewData()
-      for (const [key] of Object.entries(PreviewData)) {
-        PreviewData[key] = vm.PreviewDataOriginal[0][key]
-      }
+
+      console.log('Form Reset')
     },
   },
   mounted() {

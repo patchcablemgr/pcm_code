@@ -54,13 +54,11 @@
                   v-if=" RU == 1 && GetObjectID(Template.id)"
                   :TemplateData="TemplateData"
                   :ObjectData="ObjectData"
-                  :PreviewData="PreviewData"
                   :CategoryData="CategoryData"
                   :TemplateRUSize=" Template.ru_size "
                   :InitialDepthCounter=" [] "
                   :Context="Context"
                   :ObjectID="GetObjectID(Template.id)"
-                  :TemplateID="Template.id"
                   :TemplateFaceSelected="TemplateFaceSelected"
                   :PartitionAddressSelected="PartitionAddressSelected"
                   :PartitionAddressHovered="PartitionAddressHovered"
@@ -98,7 +96,6 @@ export default {
     TemplateData: {type: Object},
     CategoryData: {type: Array},
     ObjectData: {type: Object},
-    PreviewData: {type: Array},
     Context: {type: String},
     TemplateFaceSelected: {type: Object},
     PartitionAddressSelected: {type: Object},

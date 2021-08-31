@@ -19,17 +19,13 @@
         :rowspan=" RackObjectSize( RackObjectID(CabinetData.id, CabinetRU) ) "
       >
         <component-object
-          :TemplateData="TemplateData"
-          :CabinetID="CabinetData.id"
-          :CabinetRU="CabinetRU"
           :ObjectData="ObjectData"
-          :PreviewData="PreviewData"
+          :TemplateData="TemplateData"
           :CategoryData="CategoryData"
           :TemplateRUSize=" RackObjectSize( RackObjectID(CabinetData.id, CabinetRU) ) "
           :InitialDepthCounter=" InitialDepthCounter "
           :Context="Context"
           :ObjectID="RackObjectID(CabinetData.id, CabinetRU)"
-          :TemplateID="parseInt(0)"
           :TemplateFaceSelected="TemplateFaceSelected"
           :PartitionAddressSelected="PartitionAddressSelected"
           :PartitionAddressHovered="PartitionAddressHovered"
@@ -67,7 +63,6 @@ export default {
     CabinetData: {type: Object},
     CategoryData: {type: Array},
     ObjectData: {type: Object},
-    PreviewData: {type: Array},
     Context: {type: String},
     TemplateFaceSelected: {type: Object},
     PartitionAddressSelected: {type: Object},

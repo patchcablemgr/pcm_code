@@ -504,7 +504,6 @@ export default {
     PortConnectorData: {type: Array},
     PortOrientationData: {type: Array},
     MediaData: {type: Array},
-    PreviewData: {type: Array},
     PreviewDataIndex: {type: Number},
     SelectedPortFormatIndex: {type: Number},
     Context: {type: String},
@@ -584,10 +583,14 @@ export default {
 
         // Store variables
         const vm = this
-        const SelectedPartition = vm.SelectedPartition
+        const Context = vm.Context
+        const TemplateFaceSelected = vm.TemplateFaceSelected
+        const PartitionAddressSelected = vm.PartitionAddressSelected
+        const PartitionAddress = PartitionAddressSelected[Context][TemplateFaceSelected[Context]]
+        const Partition = vm.GetPartition(PartitionAddress)
         
         // Return selected partition type
-        return SelectedPartition.units
+        return Partition.units
       },
       set(newValue) {
 
@@ -804,6 +807,24 @@ export default {
       })
 
       return RUSizeMin
+    },
+    GetPartition: function(PartitionAddress) {
+
+      // Store variables
+      const vm = this
+      const TemplateData = vm.TemplateData
+      const Context = vm.Context
+      const TemplateFaceSelected = vm.TemplateFaceSelected
+      const PreviewDataIndex = vm.PreviewDataIndex
+      let WorkingPartition = TemplateData[Context][PreviewDataIndex].blueprint[TemplateFaceSelected[Context]]
+      let Partition
+
+      PartitionAddress.forEach(function(PartitionAddressIndex, Depth){
+          Partition = WorkingPartition[PartitionAddressIndex]
+          WorkingPartition = WorkingPartition[PartitionAddressIndex].children
+      })
+
+      return Partition
     },
     GetSelectedPartitionParentSize: function() {
 

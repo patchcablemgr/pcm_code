@@ -6,7 +6,7 @@
   >
     
     <div
-      v-for="(Partition, PartitionIndex) in TemplateBlueprint"
+      v-for="(Partition, PartitionIndex) in GetPartitionCollection()"
       :key=" GetDepthCounter(PartitionIndex).join('-') "
       class=" pcm_template_partition_box "
       :class="{
@@ -15,21 +15,19 @@
       }"
       :style="{ 'flex-grow': GetPartitionFlexGrow(Partition.units, PartitionIndex) }"
       :DepthCounter=" GetDepthCounter(PartitionIndex) "
-      @click.stop=" $emit('PartitionClicked', {'Context': Context, 'TemplateID': TemplateID, 'PartitionAddress': GetDepthCounter(PartitionIndex)}) "
-      @mouseover.stop=" $emit('PartitionHovered', {'Context': Context, 'TemplateID': TemplateID, 'PartitionAddress': GetDepthCounter(PartitionIndex), 'HoverState': true}) "
-      @mouseleave.stop=" $emit('PartitionHovered', {'Context': Context, 'TemplateID': TemplateID, 'PartitionAddress': GetDepthCounter(PartitionIndex), 'HoverState': false}) "
+      @click.stop=" $emit('PartitionClicked', {'Context': Context, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': GetDepthCounter(PartitionIndex)}) "
+      @mouseover.stop=" $emit('PartitionHovered', {'Context': Context, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': GetDepthCounter(PartitionIndex), 'HoverState': true}) "
+      @mouseleave.stop=" $emit('PartitionHovered', {'Context': Context, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': GetDepthCounter(PartitionIndex), 'HoverState': false}) "
     >
       <!-- Generic partition -->
-      <ObjectTemplate
+      <ComponentTemplate
         v-if=" Partition.type == 'generic' "
         :ObjectData="ObjectData"
-        :TemplateBlueprint="Partition.children"
-        :TemplateBlueprintOriginal="TemplateBlueprintOriginal"
+        :TemplateData="TemplateData"
         :TemplateRUSize="TemplateRUSize"
         :InitialDepthCounter="GetDepthCounter(PartitionIndex)"
         :Context="Context"
         :ObjectID="ObjectID"
-        :TemplateID="TemplateID"
         :TemplateFaceSelected="TemplateFaceSelected"
         :PartitionAddressSelected="PartitionAddressSelected"
         :PartitionAddressHovered="PartitionAddressHovered"
@@ -75,7 +73,20 @@
           <div
             v-if="GetEnclosureInsert(encIndex-1, Partition.enc_layout.cols)"
           >
-            Insert
+            <ComponentObject
+              :ObjectData="ObjectData"
+              :TemplateData="TemplateData"
+              :CategoryData="CategoryData"
+              :TemplateRUSize="TemplateRUSize"
+              :InitialDepthCounter=" InitialDepthCounter "
+              :Context="Context"
+              :ObjectID=2
+              :TemplateFaceSelected="TemplateFaceSelected"
+              :PartitionAddressSelected="PartitionAddressSelected"
+              :PartitionAddressHovered="PartitionAddressHovered"
+              @PartitionClicked=" $emit('PartitionClicked', $event) "
+              @PartitionHovered=" $emit('PartitionHovered', $event) "
+            />
           </div>
           {{ GetEnclosureAddress(encIndex-1, Partition.enc_layout.cols)[0] }}, {{ GetEnclosureAddress(encIndex-1, Partition.enc_layout.cols)[1] }}
         </div>
@@ -88,7 +99,7 @@
 import { BContainer, BRow, BCol, } from 'bootstrap-vue'
 
 export default {
-  name: "ObjectTemplate",
+  name: "ComponentTemplate",
   components: {
     BContainer,
     BRow,
@@ -96,18 +107,81 @@ export default {
   },
   props: {
     ObjectData: {type: Object},
-    TemplateBlueprint: {type: Array},
-    TemplateBlueprintOriginal: {type: Array},
+    TemplateData: {type: Object},
+    CategoryData: {type: Array},
     TemplateRUSize: {type: Number},
     InitialDepthCounter: {type: Array},
     Context: {type: String},
     ObjectID: {type: Number},
-    TemplateID: {type: Number},
     TemplateFaceSelected: {type: Object},
     PartitionAddressSelected: {type: Object},
     PartitionAddressHovered: {type: Object},
   },
   methods: {
+    GetPartitionCollection: function() {
+
+      // Initial variables
+      const vm = this
+      const Template = vm.GetTemplate()
+      const TemplateFaceSelected = vm.TemplateFaceSelected
+      const Context = vm.Context
+      const PartitionAddress = vm.InitialDepthCounter
+      let PartitionCollection = Template.blueprint[TemplateFaceSelected[Context]]
+
+      PartitionAddress.forEach(function(PartitionAddressIndex, Depth){
+        PartitionCollection = PartitionCollection[PartitionAddressIndex].children
+      })
+
+      return PartitionCollection
+
+    },
+    GetTemplate: function() {
+
+      // Initial variables
+      const vm = this
+      const ObjectID = vm.ObjectID
+      const TemplateData = vm.TemplateData
+      const Context = vm.Context
+
+      // Get template index
+      const TemplateID = vm.GetTemplateID(ObjectID)
+      const TemplateIndex = vm.GetTemplateIndex(TemplateID)
+
+      // Get template
+      const Template = TemplateData[Context][TemplateIndex]
+
+      // Return template
+      return Template
+    },
+    GetTemplateID: function(ObjectID) {
+
+      const vm = this
+      const Context = vm.Context
+      const ObjectData = vm.ObjectData[Context]
+      let TemplateID = 0
+
+      const ObjectIndex = ObjectData.findIndex((object) => object.id == ObjectID )
+
+      if(ObjectIndex !== -1) {
+        const Object = ObjectData[ObjectIndex]
+        TemplateID = Object.template_id
+      }
+
+      return TemplateID
+
+    },
+    GetTemplateIndex: function(TemplateID) {
+
+      // Initial variables
+      const vm = this
+      const TemplateData = vm.TemplateData
+      const Context = vm.Context
+
+      // Get object index
+      const TemplateIndex = TemplateData[Context].findIndex((template) => template.id == TemplateID);
+
+      return TemplateIndex
+    },
     GetEnclosureInsert: function(encIndex, encCols) {
       
       const vm = this
@@ -140,7 +214,7 @@ export default {
       const PartitionAddressSelected = vm.PartitionAddressSelected[Context][TemplateFaceSelected]
       const PartitionAddress = vm.GetDepthCounter(PartitionIndex)
       const TemplateIDSelected = vm.PartitionAddressSelected[Context].template_id
-      const TemplateID = vm.TemplateID
+      const TemplateID = vm.GetTemplateID(vm.ObjectID)
       let PartitionIsSelected = false
 
       if(PartitionAddressSelected.length === PartitionAddress.length && PartitionAddressSelected.every(function(value, index) { return value === PartitionAddress[index]}) && TemplateIDSelected == TemplateID) {
@@ -155,7 +229,7 @@ export default {
       const PartitionAddressHovered = vm.PartitionAddressHovered[Context][TemplateFaceSelected]
       const PartitionAddress = vm.GetDepthCounter(PartitionIndex)
       const TemplateIDSelected = vm.PartitionAddressHovered[Context].template_id
-      const TemplateID = vm.TemplateID
+      const TemplateID = vm.GetTemplateID(vm.ObjectID)
       let PartitionIsHovered = false
 
       if(PartitionAddressHovered.length === PartitionAddress.length && PartitionAddressHovered.every(function(value, index) { return value === PartitionAddress[index]}) && TemplateIDSelected == TemplateID) {
@@ -201,17 +275,20 @@ export default {
 
       // Store variables
       const vm = this
+      const TemplateFaceSelected = vm.TemplateFaceSelected
+      const Context = vm.Context
       const PartitionDirection = (PartitionAddress.length % 2) ? 'column' : 'row'
       let WorkingMax = (PartitionDirection == 'column') ? 24 : vm.TemplateRUSize * 2
-      let WorkingPartitionChildren = JSON.parse(JSON.stringify(vm.TemplateBlueprintOriginal))
+
+      let WorkingPartition = JSON.parse(JSON.stringify(vm.GetTemplate().blueprint[TemplateFaceSelected[Context]]))
       
       PartitionAddress.pop()
       PartitionAddress.forEach(function(PartitionAddressIndex, Depth){
           let WorkingPartitionDirection = ((Depth + 1) % 2) ? 'column' : 'row'
           if(WorkingPartitionDirection == PartitionDirection) {
-            WorkingMax = WorkingPartitionChildren[PartitionAddressIndex].units
+            WorkingMax = WorkingPartition[PartitionAddressIndex].units
           }
-          WorkingPartitionChildren = WorkingPartitionChildren[PartitionAddressIndex].children
+          WorkingPartition = WorkingPartition[PartitionAddressIndex].children
       })
 
       return WorkingMax

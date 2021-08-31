@@ -2,25 +2,25 @@
 
   <div
     :class="{
-      pcm_template_partition_selected: PartitionAddressSelected[Context][TemplateFaceSelected[Context]].length === 0,
-      pcm_template_partition_hovered: PartitionAddressHovered[Context][TemplateFaceSelected[Context]].length === 0,
+      pcm_template_partition_selected: PartitionIsSelected(),
+      pcm_template_partition_hovered: PartitionIsHovered(),
     }"
     :style="{
       'background-color': ObjectCategoryData( ObjectID ).color,
       'height': '100%',
     }"
-    @mouseover.stop=" $emit('PartitionHovered', {'Context': Context, 'PartitionAddress': InitialDepthCounter, 'HoverState': true}) "
-    @mouseleave.stop=" $emit('PartitionHovered', {'Context': Context, 'PartitionAddress': InitialDepthCounter, 'HoverState': false}) "
+    @click.stop=" $emit('PartitionClicked', {'Context': Context, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': InitialDepthCounter}) "
+    @mouseover.stop=" $emit('PartitionHovered', {'Context': Context, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': InitialDepthCounter, 'HoverState': true}) "
+    @mouseleave.stop=" $emit('PartitionHovered', {'Context': Context, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': InitialDepthCounter, 'HoverState': false}) "
   >
     <component-template
       :ObjectData="ObjectData"
-      :TemplateBlueprint=" GetPreviewData( ObjectID ).blueprint[TemplateFaceSelected[Context]] "
-      :TemplateBlueprintOriginal=" GetPreviewData( ObjectID ).blueprint[TemplateFaceSelected[Context]] "
-      :TemplateRUSize=" RackObjectSize( ObjectID ) "
+      :TemplateData="TemplateData"
+      :CategoryData="CategoryData"
+      :TemplateRUSize="TemplateRUSize"
       :InitialDepthCounter=" InitialDepthCounter "
       :Context="Context"
       :ObjectID="ObjectID"
-      :TemplateID="parseInt(0)"
       :TemplateFaceSelected="TemplateFaceSelected"
       :PartitionAddressSelected="PartitionAddressSelected"
       :PartitionAddressHovered="PartitionAddressHovered"
@@ -35,6 +35,7 @@ import { BContainer, BRow, BCol, } from 'bootstrap-vue'
 import ComponentTemplate from './ComponentTemplate.vue'
 
 export default {
+  name: "ComponentObject",
   components: {
     BContainer,
     BRow,
@@ -43,22 +44,35 @@ export default {
     ComponentTemplate,
   },
   props: {
-    TemplateData: {type: Object},
-    CabinetID: {type: Number},
-    CabinetRU: {type: Number},
     ObjectData: {type: Object},
-    PreviewData: {type: Array},
+    TemplateData: {type: Object},
     CategoryData: {type: Array},
     TemplateRUSize: {type: Number},
     InitialDepthCounter: {type: Array},
     Context: {type: String},
     ObjectID: {type: Number},
-    TemplateID: {type: Number},
     TemplateFaceSelected: {type: Object},
     PartitionAddressSelected: {type: Object},
     PartitionAddressHovered: {type: Object},
   },
   methods: {
+    GetTemplateID: function(ObjectID) {
+
+      const vm = this
+      const Context = vm.Context
+      const ObjectData = vm.ObjectData[Context]
+      let TemplateID = 0
+
+      const ObjectIndex = ObjectData.findIndex((object) => object.id == ObjectID )
+
+      if(ObjectIndex !== -1) {
+        const Object = ObjectData[ObjectIndex]
+        TemplateID = Object.template_id
+      }
+
+      return TemplateID
+
+    },
     RackObjectSize: function(ObjectID) {
 
       // Store variables
@@ -147,14 +161,14 @@ export default {
       // Return category
       return ObjectCategoryData
     },
-    PartitionIsSelected: function(PartitionIndex) {
+    PartitionIsSelected: function() {
       const vm = this
       const Context = vm.Context
       const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
       const PartitionAddressSelected = vm.PartitionAddressSelected[Context][TemplateFaceSelected]
-      const PartitionAddress = vm.GetDepthCounter(PartitionIndex)
+      const PartitionAddress = vm.InitialDepthCounter
       const TemplateIDSelected = vm.PartitionAddressSelected[Context].template_id
-      const TemplateID = vm.TemplateID
+      const TemplateID = vm.GetTemplateID(vm.ObjectID)
       let PartitionIsSelected = false
 
       if(PartitionAddressSelected.length === PartitionAddress.length && PartitionAddressSelected.every(function(value, index) { return value === PartitionAddress[index]}) && TemplateIDSelected == TemplateID) {
@@ -162,14 +176,14 @@ export default {
       }
       return PartitionIsSelected
     },
-    PartitionIsHovered: function(PartitionIndex) {
+    PartitionIsHovered: function() {
       const vm = this
       const Context = vm.Context
       const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
       const PartitionAddressHovered = vm.PartitionAddressHovered[Context][TemplateFaceSelected]
-      const PartitionAddress = vm.GetDepthCounter(PartitionIndex)
+      const PartitionAddress = vm.InitialDepthCounter
       const TemplateIDSelected = vm.PartitionAddressHovered[Context].template_id
-      const TemplateID = vm.TemplateID
+      const TemplateID = vm.GetTemplateID(vm.ObjectID)
       let PartitionIsHovered = false
 
       if(PartitionAddressHovered.length === PartitionAddress.length && PartitionAddressHovered.every(function(value, index) { return value === PartitionAddress[index]}) && TemplateIDSelected == TemplateID) {
@@ -180,7 +194,7 @@ export default {
     GetDepthCounter: function(PartitionIndex) {
 
       // Store variables
-      const vm = this;
+      const vm = this
       return vm.InitialDepthCounter.concat([PartitionIndex])
     },
     GetPartitionGrid: function(units) {
@@ -229,5 +243,8 @@ export default {
       return (PartitionAddress.length % 2) ? 'pcm_template_partition_horizontal' : 'pcm_template_partition_vertical'
     },
   },
+  mounted() {
+    console.log('ComponentObject mounted')
+  }
 }
 </script>

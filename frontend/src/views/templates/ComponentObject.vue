@@ -35,7 +35,6 @@ import { BContainer, BRow, BCol, } from 'bootstrap-vue'
 import ComponentTemplate from './ComponentTemplate.vue'
 
 export default {
-  name: "ComponentObject",
   components: {
     BContainer,
     BRow,

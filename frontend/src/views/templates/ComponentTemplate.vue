@@ -70,25 +70,21 @@
           class=" pcm_template_enclosure_area "
           :style="{ 'grid-area': 'area'+(encIndex-1) }"
         >
-          <div
+          <component-object
             v-if="GetEnclosureInsert(encIndex-1, Partition.enc_layout.cols)"
-          >
-            <ComponentObject
-              :ObjectData="ObjectData"
-              :TemplateData="TemplateData"
-              :CategoryData="CategoryData"
-              :TemplateRUSize="TemplateRUSize"
-              :InitialDepthCounter=" InitialDepthCounter "
-              :Context="Context"
-              :ObjectID=2
-              :TemplateFaceSelected="TemplateFaceSelected"
-              :PartitionAddressSelected="PartitionAddressSelected"
-              :PartitionAddressHovered="PartitionAddressHovered"
-              @PartitionClicked=" $emit('PartitionClicked', $event) "
-              @PartitionHovered=" $emit('PartitionHovered', $event) "
-            />
-          </div>
-          {{ GetEnclosureAddress(encIndex-1, Partition.enc_layout.cols)[0] }}, {{ GetEnclosureAddress(encIndex-1, Partition.enc_layout.cols)[1] }}
+            :ObjectData="ObjectData"
+            :TemplateData="TemplateData"
+            :CategoryData="CategoryData"
+            :TemplateRUSize="TemplateRUSize"
+            :InitialDepthCounter=" InitialDepthCounter "
+            :Context="Context"
+            :ObjectID=2
+            :TemplateFaceSelected="TemplateFaceSelected"
+            :PartitionAddressSelected="PartitionAddressSelected"
+            :PartitionAddressHovered="PartitionAddressHovered"
+            @PartitionClicked=" $emit('PartitionClicked', $event) "
+            @PartitionHovered=" $emit('PartitionHovered', $event) "
+          />
         </div>
       </div>
     </div>
@@ -104,6 +100,7 @@ export default {
     BContainer,
     BRow,
     BCol,
+    ComponentObject: () => import('./ComponentObject.vue'),
   },
   props: {
     ObjectData: {type: Object},

@@ -14,7 +14,7 @@
                 :PortConnectorData="PortConnectorData"
                 :PortOrientationData="PortOrientationData"
                 :MediaData="MediaData"
-                :PreviewDataIndex="PreviewDataIndex"
+                :PreviewDataIndex="ActivePreviewTemplateIndex"
                 :SelectedPortFormatIndex="SelectedPortFormatIndex"
                 Context="preview"
                 :TemplateFaceSelected="TemplateFaceSelected"
@@ -199,7 +199,9 @@ const TemplateData = {
       "name": "New_Template",
       "category_id": 0,
       "type": "insert",
+			"ru_size": 1,
       "function": "endpoint",
+			"mount_config": "2-post",
       "blueprint": {
         "front": [{
           "type": "generic",
@@ -310,8 +312,7 @@ const ObjectData = {
   ],
   'template': []
 }
-const PreviewDataIndex = 0
-const TemplateType = 'standard'
+const ActivePreviewTemplateIndex = 0
 
 export default {
   components: {
@@ -339,12 +340,11 @@ export default {
       PortOrientationData,
       CabinetData,
       ObjectData,
-      PreviewDataIndex,
+      ActivePreviewTemplateIndex,
       SelectedPortFormatIndex,
       TemplateFaceSelected,
       PartitionAddressSelected,
       PartitionAddressHovered,
-      TemplateType,
       StandardTemplateID,
       InsertParentTemplateID,
       InsertTemplateID,
@@ -355,7 +355,8 @@ export default {
 
       const vm = this
       const Context = 'template'
-      const TemplateType = vm.TemplateType
+			const PreviewData = vm.GetPreviewData()
+      const TemplateType = PreviewData.type
       let PreviewDisplay = 'cabinet'
 
       if(TemplateType == 'insert') {
@@ -551,16 +552,25 @@ export default {
       const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
       const PartitionAddress = EmitData.PartitionAddress
       const TemplateID = EmitData.TemplateID
+			
+			// Clicked partition should not be highlighted if it is a preview insert parent
+			let HonorClick = true
+			const ActivePreviewTemplateIndex = vm.ActivePreviewTemplateIndex
+			const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+			if((Context == 'preview' && TemplateIndex != ActivePreviewTemplateIndex) || (Context == 'preview' && !PartitionAddress.length)) {
+				HonorClick = false
+			}
 
-      vm.PartitionAddressSelected[Context][TemplateFaceSelected] = PartitionAddress
-      vm.PartitionAddressSelected[Context].template_id = TemplateID
+			if(HonorClick) {
+				vm.PartitionAddressSelected[Context][TemplateFaceSelected] = PartitionAddress
+				vm.PartitionAddressSelected[Context].template_id = TemplateID
+			}
 
       if(Context == 'template') {
 
         // Get selected template data
         const TemplateIndex = vm.TemplateData[Context].findIndex((template) => template.id == TemplateID)
         const Template = vm.TemplateData[Context][TemplateIndex]
-        //const TemplateRUSize = Template.ru_size
         const TemplateFunction = Template.function
         const TemplateCategoryID = Template.category_id
 
@@ -568,7 +578,6 @@ export default {
         const Blueprint = Template.blueprint[TemplateFaceSelected]
         const Partition = JSON.parse(JSON.stringify(vm.GetPartition(Blueprint, PartitionAddress)))
         const PartitionDirection = vm.GetPartitionDirection(PartitionAddress)
-        //const PartitionType = Partition.type
         const PartitionUnits = Partition.units
 
         // Get parent partition data
@@ -606,7 +615,6 @@ export default {
         // Adjust insert template properties
         vm.TemplateData.preview[vm.InsertTemplateID].category_id = TemplateCategoryID
         vm.TemplateData.preview[vm.InsertTemplateID].function = TemplateFunction
-        vm.TemplateData.preview[vm.InsertTemplateID].blueprint.front[0].units = InsertPartitionUnits
       }
 
     },
@@ -619,9 +627,19 @@ export default {
       const PartitionAddress = EmitData.PartitionAddress
       const HoverState = EmitData.HoverState
       const TemplateID = EmitData.TemplateID
+			
+			// Hovered partition should not be highlighted if it is a preview insert parent
+			let HonorHover = true
+			const ActivePreviewTemplateIndex = vm.ActivePreviewTemplateIndex
+			const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+			if(Context == 'preview' && TemplateIndex != ActivePreviewTemplateIndex) {
+				HonorHover = false
+			}
 
-      vm.PartitionAddressHovered[Context][TemplateFaceSelected] = (HoverState) ? PartitionAddress : false
-      vm.PartitionAddressHovered[Context].template_id = TemplateID
+			if(HonorHover) {
+				vm.PartitionAddressHovered[Context][TemplateFaceSelected] = (HoverState) ? PartitionAddress : false
+				vm.PartitionAddressHovered[Context].template_id = TemplateID
+			}
 
     },
     TemplateFaceChanged: function(EmitData) {
@@ -754,14 +772,23 @@ export default {
     TemplateTypeUpdated: function(newValue) {
 
       const vm = this
+			
+			// Set active preview template index
+			const ActivePreviewTemplateIndex = (newValue == 'insert') ? vm.InsertTemplateID : vm.StandardTemplateID
+      vm.ActivePreviewTemplateIndex = ActivePreviewTemplateIndex
+			
+			// Update active preview template type
       const PreviewData = vm.GetPreviewData()
-
       PreviewData.type = newValue
-      vm.TemplateType = newValue
-
-      vm.PreviewDataIndex = (newValue == 'insert') ? vm.InsertTemplateID : vm.StandardTemplateID
+			
+			// Update preview objects
       vm.ObjectData.preview[0].template_id = (newValue == 'insert') ? vm.InsertParentTemplateID : vm.StandardTemplateID
       vm.ObjectData.preview[1].parent_id = 1
+			
+			// Reset PartitionAddressSelected
+			vm.PartitionAddressSelected.preview.template_id = ActivePreviewTemplateIndex
+			vm.PartitionAddressSelected.preview.front = [0]
+			vm.PartitionAddressSelected.preview.front = [0]
     },
     TemplateRUSizeUpdated: function(newValue) {
 
@@ -1253,7 +1280,7 @@ export default {
       const vm = this
 
       // Get template index
-      const TemplateIndex = vm.PreviewDataIndex
+      const TemplateIndex = vm.ActivePreviewTemplateIndex
 
       // Get template
       const ObjectPreviewData = vm.TemplateData.preview[TemplateIndex]
@@ -1441,6 +1468,23 @@ export default {
         // convert JSON to object
         response.data.blueprint = JSON.parse(response.data.blueprint)
         
+				// Add new psudo object to display template in 
+				const ObjectID = vm.ObjectData.template.length + 1
+				const TemplateID = response.data.id
+				const ObjectGeneric = {
+					"id": ObjectID,
+					"name": null,
+					"template_id": TemplateID,
+					"location_id": null,
+					"cabinet_ru": null,
+					"cabinet_face": null,
+					"parent_id": null,
+					"parent_face": null,
+					"parent_part_addr": null,
+					"parent_enc_addr": null,
+				}
+				vm.ObjectData.template.push(ObjectGeneric)
+				
         // Append new template to template array
         vm.TemplateData.template.push(response.data)
 

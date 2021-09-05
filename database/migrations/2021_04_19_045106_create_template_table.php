@@ -23,14 +23,7 @@ class CreateTemplateTable extends Migration
             $table->integer('ru_size')->nullable();
             $table->string('function');
             $table->string('mount_config')->nullable();
-            $table->integer('enclosure_layout_x')->nullable();
-            $table->integer('enclosure_layout_y')->nullable();
-            $table->integer('partition_layout_x')->nullable();
-            $table->integer('partition_layout_y')->nullable();
-            $table->integer('nested_enclosure_layout_x')->nullable();
-            $table->integer('nested_enclosure_layout_y')->nullable();
-            $table->integer('nested_partition_layout_x')->nullable();
-            $table->integer('nested_partition_layout_y')->nullable();
+						$table->text('insert_constraints')->nullable();
             $table->text('blueprint')->nullable();
             $table->string('image_front', 45)->nullable();
             $table->string('image_rear', 45)->nullable();

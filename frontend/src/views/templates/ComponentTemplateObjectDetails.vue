@@ -1,12 +1,40 @@
 <!-- Template/Object Details -->
 
 <template>
-  <div>
-    
+	
+  <b-card
+		title="Template Details"
+	>
+		
+			<div class="d-flex flex-wrap justify-content-between">
+				<div class="demo-inline-spacing">
+					<b-card-title/>
+				</div>
+				<div class="demo-inline-spacing">
+					<b-dropdown
+						v-ripple.400="'rgba(255, 255, 255, 0.15)'"
+						right
+						size="sm"
+						text="Actions"
+						variant="primary"
+					>
+						<b-dropdown-item>Edit</b-dropdown-item>
+						<b-dropdown-item>Clone</b-dropdown-item>
+						<b-dropdown-item>Where Used</b-dropdown-item>
+						<b-dropdown-divider />
+						<b-dropdown-item
+							variant="danger"
+							@click=" $emit('TemplateObjectDeleteClicked') "
+						>Delete</b-dropdown-item>
+					</b-dropdown>
+				</div>
+			</div>
+		<b-card-body>
+		
     <div
       class="h5 font-weight-bolder m-0"
     >
-      General:
+			General:
     </div>
     <hr
       class="separator mt-0"
@@ -171,15 +199,26 @@
       </dd>
     </dl>
 
-  </div>
+  </b-card-body>
+	</b-card>
 </template>
 
 <script>
-import { } from 'bootstrap-vue'
+import { BCard, BCardTitle, BCardBody, BDropdown, BDropdownItem, BDropdownDivider } from 'bootstrap-vue'
+import Ripple from 'vue-ripple-directive'
 
 export default {
   components: {
+		BCard,
+		BCardTitle,
+		BCardBody,
+		BDropdown,
+		BDropdownItem,
+		BDropdownDivider,
   },
+	directives: {
+		Ripple,
+	},
   props: {
     CategoryData: {type: Array},
     TemplateData: {type: Object},

@@ -9,4 +9,8 @@ class TemplateModel extends Model
 {
     use HasFactory;
     protected $table = 'template';
+		protected $casts = [
+			'insert_constraints' => 'array',
+			'blueprint' => 'array',
+		];
 }

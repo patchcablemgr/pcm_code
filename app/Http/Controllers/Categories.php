@@ -8,7 +8,7 @@ use Illuminate\Validation\Rule;
 use App\Models\CategoryModel;
 use Illuminate\Support\Facades\Log;
 
-class TemplateCategory extends Controller
+class Categories extends Controller
 {
     /**
      * Display a listing of the resource.

@@ -107,20 +107,15 @@
         </b-col>
         <b-col>
 
-          <b-card
-            title="Template Details"
-          >
-            <b-card-body>
-              <component-template-Object-details
-                :TemplateData="TemplateData"
-                :CategoryData="CategoryData"
-                Context="template"
-                :TemplateFaceSelected="TemplateFaceSelected"
-                :PartitionAddressSelected="PartitionAddressSelected"
-                :TemplatePartitionPortRange="TemplatePartitionPortRange"
-              />
-            </b-card-body>
-          </b-card>
+          <component-template-Object-details
+						:TemplateData="TemplateData"
+						:CategoryData="CategoryData"
+						Context="template"
+						:TemplateFaceSelected="TemplateFaceSelected"
+						:PartitionAddressSelected="PartitionAddressSelected"
+						:TemplatePartitionPortRange="TemplatePartitionPortRange"
+						@TemplateObjectDeleteClicked="TemplateObjectDeleteClicked()"
+					/>
 
           <b-card
             title="Templates"
@@ -202,6 +197,7 @@ const TemplateData = {
 			"ru_size": 1,
       "function": "endpoint",
 			"mount_config": "2-post",
+			"parent_template": null,
       "blueprint": {
         "front": [{
           "type": "generic",
@@ -615,6 +611,7 @@ export default {
         // Adjust insert template properties
         vm.TemplateData.preview[vm.InsertTemplateID].category_id = TemplateCategoryID
         vm.TemplateData.preview[vm.InsertTemplateID].function = TemplateFunction
+				vm.TemplateData.preview[vm.InsertTemplateID].parent_template = {'id': TemplateID, 'face': TemplateFaceSelected, 'partition_address': PartitionAddress}
       }
 
     },
@@ -673,7 +670,7 @@ export default {
       // Store data
       const vm = this;
       const CategoryID = newValue.CategoryID
-      const url = '/api/category/'+CategoryID
+      const url = '/api/categories/'+CategoryID
 
       // DELETE category form data
       vm.$http.delete(url).then(function(response){
@@ -709,7 +706,7 @@ export default {
 
       if(CategoryID) {
 
-        const url = '/api/category/'+CategoryID
+        const url = '/api/categories/'+CategoryID
 
         // PUT category form data
         vm.$http.put(url, data).then(function(response){
@@ -741,7 +738,7 @@ export default {
 
       } else {
 
-        const url = '/api/category'
+        const url = '/api/categories'
 
         // POST category form data
         this.$http.post(url, data).then(function(response){
@@ -1200,7 +1197,55 @@ export default {
       let SelectedPartition = vm.GetSelectedPreviewPartition()
       SelectedPartition.enc_layout.rows = newValue
     },
-    GetPartitionDirection: function(PartitionAddress) {
+    TemplateObjectDeleteClicked: function() {
+      
+			const vm = this
+			const TemplateID = vm.PartitionAddressSelected.template.template_id
+			const Context = 'template'
+			const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+			const TemplateName = vm.TemplateData[Context][TemplateIndex].name
+			
+      vm.$bvModal
+        .msgBoxConfirm('Delete '+TemplateName+'?', {
+          title: 'Confirm',
+          size: 'sm',
+          okVariant: 'primary',
+          okTitle: 'Yes',
+          cancelTitle: 'No',
+          cancelVariant: 'outline-secondary',
+          hideHeaderClose: false,
+          centered: true,
+        })
+        .then(value => {
+					
+					if(value) {
+						
+						// Store data
+						const TemplateID = vm.PartitionAddressSelected[Context].template_id
+						const url = '/api/templates/'+TemplateID
+
+						// DELETE template ID
+						this.$http.delete(url).then(function(response){
+
+							// Default selected template
+							vm.PartitionAddressSelected.template.template_id = null
+
+							// Remove template from TemplateData
+							vm.TemplateData[Context].splice(TemplateIndex,1)
+
+						}).catch(error => {
+
+							// Display error to user via toast
+							vm.$bvToast.toast(JSON.stringify(error.response.data), {
+								title: 'Error',
+								variant: 'danger',
+							})
+
+						});
+					}
+        })
+		},
+		GetPartitionDirection: function(PartitionAddress) {
 
       const PartitionDirection = (PartitionAddress.length % 2) ? 'column' : 'row'
 
@@ -1304,7 +1349,7 @@ export default {
         "parent_enc_addr": null,
       }
 
-      this.$http.get('/api/template').then(function(response){
+      this.$http.get('/api/templates').then(function(response){
 
         vm.TemplateData.template = response.data
         let WorkingObjectData = []
@@ -1330,7 +1375,7 @@ export default {
       const vm = this;
       const PreviewData = vm.GetPreviewData()
 
-      this.$http.get('/api/category').then(function(response){
+      this.$http.get('/api/categories').then(function(response){
 
         vm.CategoryData = response.data;
 
@@ -1459,7 +1504,7 @@ export default {
       // Store data
       const vm = this
       const PreviewData = vm.GetPreviewData()
-      const url = '/api/template'
+      const url = '/api/templates'
       const data = PreviewData
 
       // POST category form data

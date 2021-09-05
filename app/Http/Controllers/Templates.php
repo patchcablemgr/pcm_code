@@ -6,10 +6,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use App\Models\TemplateModel;
+use App\Http\Controllers\PCM;
 use App\Rules\TemplateBlueprint;
+use App\Rules\TemplateInsertParentData;
 use Illuminate\Support\Facades\Log;
 
-class Template extends Controller
+class Templates extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -20,13 +22,7 @@ class Template extends Controller
     {
         $templates = TemplateModel::all();
 
-        // Convert blueprint JSON to object
-        $templatesMapped = $templates->map(function($template){
-            $template['blueprint'] = json_decode($template['blueprint'], true);
-            return $template;
-        });
-
-        return $templatesMapped->toArray();
+        return $templates->toArray();
     }
 
     /**
@@ -38,6 +34,8 @@ class Template extends Controller
     public function store(Request $request)
     {
 
+				$PCM = new PCM;
+		
         // Prepare variables
         $templateTypeArray = [
             'standard',
@@ -82,11 +80,25 @@ class Template extends Controller
                 'required',
                 Rule::in($templateMountConfigArray)
             ],
+						'parent_template.id' => [
+								Rule::requiredIf($request->type == 'insert')
+						],
+						'parent_template.face' => [
+								Rule::requiredIf($request->type == 'insert')
+						],
+						'parent_template.partition_address' => [
+								Rule::requiredIf($request->type == 'insert')
+						],
+						'parent_template' => [
+								new TemplateInsertParentData
+						],
             'blueprint' => [
                 'required',
                 new TemplateBlueprint
             ]
         ]);
+				
+				
 
         $template = new TemplateModel;
 
@@ -97,6 +109,30 @@ class Template extends Controller
         $template->function = $request->function;
         $template->mount_config = $request->mount_config;
         $template->blueprint = json_encode($request->blueprint);
+				
+				if($request->type == 'insert') {
+					
+					$parentTemplateData = $request->parent_template;
+					$parentTemplateID = $parentTemplateData['id'];
+					$parentTemplateFace = $parentTemplateData['face'];
+					$parentTemplatePartitionAddress = $parentTemplateData['partition_address'];
+					
+					$parentTemplate = TemplateModel::where('id', '=', $parentTemplateID)->first();
+					$parentTemplateBlueprint = $parentTemplate['blueprint'];
+					$parentTemplatePartition = $PCM->getPartition($parentTemplateBlueprint, $parentTemplateFace, $parentTemplatePartitionAddress);
+					
+					$parentPartLayout = array(
+						'cols' => $parentTemplatePartition['units'],
+						'rows' => $parentTemplatePartition['units'],
+					);
+					$parentEncLayout = $parentTemplatePartition['enc_layout'];
+					$insertConstraints = array(
+						'part_layout' => $parentPartLayout,
+						'enc_layout' => $parentEncLayout
+					);
+					
+					$template->insert_constraints = json_encode([$insertConstraints]);
+				}
 
         $template->save();
 
@@ -134,6 +170,25 @@ class Template extends Controller
      */
     public function destroy($id)
     {
-        //
+				$validatorInput = [
+            'id' => $id
+        ];
+        $validatorRules = [
+            'id' => [
+                'required',
+                'exists:template',
+                'unique:App\Models\ObjectsModel,template_id'
+            ]
+        ];
+        $validatorMessages = [
+            'id.unique' => 'The template is in use and cannot be deleted.'
+        ];
+        Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
+				
+				$template = TemplateModel::where('id', $id)->first();
+
+        $template->delete();
+
+        return array('id' => $id);
     }
 }

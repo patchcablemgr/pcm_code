@@ -34,12 +34,6 @@ const router = new VueRouter({
     component: () => import('@/views/Templates.vue'),
     meta: {
       pageTitle: 'Templates',
-      breadcrumb: [
-        {
-          text: 'Templates',
-          active: true,
-        },
-      ],
       resource: 'Operator',
       action: 'read',
     },

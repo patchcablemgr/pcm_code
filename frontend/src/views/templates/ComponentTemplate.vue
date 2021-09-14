@@ -24,6 +24,7 @@
         v-if=" Partition.type == 'generic' "
         :ObjectData="ObjectData"
         :TemplateData="TemplateData"
+				:CategoryData="CategoryData"
         :TemplateRUSize="TemplateRUSize"
         :InitialDepthCounter="GetDepthCounter(PartitionIndex)"
         :Context="Context"
@@ -71,14 +72,14 @@
           :style="{ 'grid-area': 'area'+(encIndex-1) }"
         >
           <component-object
-            v-if="GetEnclosureInsert(encIndex-1, Partition.enc_layout.cols)"
+            v-if="GetEnclosureInsertID(encIndex-1, Partition.enc_layout.cols)"
             :ObjectData="ObjectData"
             :TemplateData="TemplateData"
             :CategoryData="CategoryData"
             :TemplateRUSize="TemplateRUSize"
-            :InitialDepthCounter=" InitialDepthCounter "
+            :InitialDepthCounter=[]
             :Context="Context"
-            :ObjectID=2
+            :ObjectID="GetEnclosureInsertID(encIndex-1, Partition.enc_layout.cols)"
             :TemplateFaceSelected="TemplateFaceSelected"
             :PartitionAddressSelected="PartitionAddressSelected"
             :PartitionAddressHovered="PartitionAddressHovered"
@@ -109,7 +110,7 @@ export default {
     TemplateRUSize: {type: Number},
     InitialDepthCounter: {type: Array},
     Context: {type: String},
-    ObjectID: {type: Number},
+    ObjectID: {},
     TemplateFaceSelected: {type: Object},
     PartitionAddressSelected: {type: Object},
     PartitionAddressHovered: {type: Object},
@@ -179,24 +180,25 @@ export default {
 
       return TemplateIndex
     },
-    GetEnclosureInsert: function(encIndex, encCols) {
+    GetEnclosureInsertID: function(encIndex, encCols) {
       
       const vm = this
       const Context = vm.Context
       const ObjectID = vm.ObjectID
       const InsertIndex = vm.ObjectData[Context].findIndex((object) => object.parent_id == ObjectID)
-      let InsertFound = false
+      let EnclosureInsertID = false
+			
       if(InsertIndex !== -1) {
         const Insert = vm.ObjectData[Context][InsertIndex]
         const InsertParentEnclosureAddress = Insert.parent_enc_addr
         const EnclosureAddress = vm.GetEnclosureAddress(encIndex, encCols)
 
         if(InsertParentEnclosureAddress[0] == EnclosureAddress[0] && InsertParentEnclosureAddress[1] == EnclosureAddress[1]) {
-          InsertFound = true
+          EnclosureInsertID = Insert.id
         }
       }
 
-      return InsertFound
+      return EnclosureInsertID
     },
     GetEnclosureAddress: function(encIndex, encCols) {
       const row = Math.floor(encIndex / encCols)
@@ -319,5 +321,8 @@ export default {
       return (PartitionAddress.length % 2) ? 'pcm_template_partition_horizontal' : 'pcm_template_partition_vertical'
     },
   },
+  mounted() {
+    console.log('ComponentTemplate')
+  }
 }
 </script>

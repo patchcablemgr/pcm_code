@@ -223,7 +223,7 @@
         <dd class="col-sm-8">
           <b-form-input
             name="partitionSize"
-            v-model="ComputedInputTemplatePartitionSize"
+            v-model.number="ComputedInputTemplatePartitionSize"
             type="number"
             :min="GetSelectedPartitionSizeMin()"
             :max="GetSelectedPartitionSizeMax()"
@@ -797,11 +797,13 @@ export default {
 
           // Look at each vertically growing layer 2 partition
           Layer2Partitions.forEach(function(Layer2Partition){
-            TotalPartitionUnits = TotalPartitionUnits + Layer2Partition.units
+            TotalPartitionUnits = TotalPartitionUnits + parseInt(Layer2Partition.units)
+						console.log('Debug (TemplatesForm-GetRUSizeMin-TotalPartitionUnits): '+TotalPartitionUnits)
           })
 
           // Store largest partition size
           const WorkingRUSizeMin = Math.ceil(TotalPartitionUnits / 2)
+					console.log('Debug (TemplatesForm-GetRUSizeMin-WorkingRUSizeMin): '+WorkingRUSizeMin)
           RUSizeMin = (WorkingRUSizeMin > RUSizeMin) ? WorkingRUSizeMin : RUSizeMin
         })
       })

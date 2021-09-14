@@ -22,7 +22,7 @@ class Templates extends Controller
     {
         $templates = TemplateModel::all();
 
-        return $templates->toArray();
+        return $templates;
     }
 
     /**
@@ -108,30 +108,57 @@ class Templates extends Controller
         $template->ru_size = $request->ru_size;
         $template->function = $request->function;
         $template->mount_config = $request->mount_config;
-        $template->blueprint = json_encode($request->blueprint);
+        $template->blueprint = $request->blueprint;
 				
 				if($request->type == 'insert') {
 					
+					// Prepare some variables
 					$parentTemplateData = $request->parent_template;
 					$parentTemplateID = $parentTemplateData['id'];
 					$parentTemplateFace = $parentTemplateData['face'];
 					$parentTemplatePartitionAddress = $parentTemplateData['partition_address'];
 					
+					// Prepare parent partition address
+					$parentTemplatePartitionParentAddress = $parentTemplatePartitionAddress;
+					array_pop($parentTemplatePartitionParentAddress);
+					
+					
+					
+					// Get parent template partition units
 					$parentTemplate = TemplateModel::where('id', '=', $parentTemplateID)->first();
 					$parentTemplateBlueprint = $parentTemplate['blueprint'];
 					$parentTemplatePartition = $PCM->getPartition($parentTemplateBlueprint, $parentTemplateFace, $parentTemplatePartitionAddress);
+					$parentTemplatePartitionUnits = $parentTemplatePartition['units'];
 					
-					$parentPartLayout = array(
-						'cols' => $parentTemplatePartition['units'],
-						'rows' => $parentTemplatePartition['units'],
-					);
+					// Get parent template partition RU size
+					$parentTemplatePartitionParentRUSize = $parentTemplate['ru_size'];
+					
+					// Get parent template partition ... parent partition units
+					
+					if(count($parentTemplatePartitionParentAddress)) {
+						$parentTemplatePartitionParentPartition = $PCM->getPartition($parentTemplateBlueprint, $parentTemplateFace, $parentTemplatePartitionParentAddress);
+						$parentTemplatePartitionParentUnits = $parentTemplatePartitionParentPartition['units'];
+					} else {
+						$parentTemplatePartitionParentUnits = $parentTemplatePartitionParentRUSize * 2;
+					}
+					
+					// Determine parent template partition direction
+					$parentTemplatePartitionDirection = (count($parentTemplatePartitionAddress) % 2) ? 'row' : 'col';
+					
+					//  Compile insert constraints data
+					if($parentTemplatePartitionDirection == 'row') {
+						$parentPortLayout = array('height' => $parentTemplatePartitionParentUnits, 'width' => $parentTemplatePartitionUnits);
+					} else {
+						$parentPortLayout = array('height' => $parentTemplatePartitionUnits, 'width' => $parentTemplatePartitionParentUnits);
+					}
 					$parentEncLayout = $parentTemplatePartition['enc_layout'];
 					$insertConstraints = array(
-						'part_layout' => $parentPartLayout,
+						'ru_size' => $parentTemplatePartitionParentRUSize,
+						'part_layout' => $parentPortLayout,
 						'enc_layout' => $parentEncLayout
 					);
 					
-					$template->insert_constraints = json_encode([$insertConstraints]);
+					$template->insert_constraints = [$insertConstraints];
 				}
 
         $template->save();

@@ -181,7 +181,7 @@ export default {
       const Context = vm.Context
       const TemplateData = vm.TemplateData[Context]
 
-      const TemplateDataFiltered = TemplateData.filter(template => template.category_id == CategoryID)
+      const TemplateDataFiltered = TemplateData.filter(template => template.category_id == CategoryID && template.type == 'standard')
 
       return TemplateDataFiltered.length
 
@@ -208,24 +208,28 @@ export default {
 
         let match = false
 
-        // Include if category ID matches
-        if(template.category_id == CategoryID) {
+				// Include 'standard' templates only.  'Insert' templates will be rendered by pseudo parent objects
+				if(template.type == 'standard') {
 
-          // Include if no filter tags
-          if(vm.TemplateFilter.length == 0) {
-            match = true
-          } else {
+					// Include if category ID matches
+					if(template.category_id == CategoryID) {
 
-            // Compare each filter tag
-            vm.TemplateFilter.forEach(function(tag){
+						// Include if no filter tags
+						if(vm.TemplateFilter.length == 0) {
+							match = true
+						} else {
 
-              // Include if template name contains filter tag
-              if(template.name.toLowerCase().includes(tag.toLowerCase())) {
-                match = true
-              }
-            })
-          }
-        }
+							// Compare each filter tag
+							vm.TemplateFilter.forEach(function(tag){
+
+								// Include if template name contains filter tag
+								if(template.name.toLowerCase().includes(tag.toLowerCase())) {
+									match = true
+								}
+							})
+						}
+					}
+				}
 
         return match
       })

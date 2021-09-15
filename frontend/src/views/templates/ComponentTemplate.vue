@@ -321,8 +321,5 @@ export default {
       return (PartitionAddress.length % 2) ? 'pcm_template_partition_horizontal' : 'pcm_template_partition_vertical'
     },
   },
-  mounted() {
-    console.log('ComponentTemplate')
-  }
 }
 </script>

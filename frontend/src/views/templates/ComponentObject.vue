@@ -56,7 +56,7 @@ export default {
   },
   methods: {
     GetTemplateID: function(ObjectID) {
-      console.log('Debug (ComponentObject): GetTemplateID')
+      
       const vm = this
       const Context = vm.Context
       const ObjectData = vm.ObjectData[Context]
@@ -73,7 +73,7 @@ export default {
 
     },
     RackObjectSize: function(ObjectID) {
-      console.log('Debug (ComponentObject): RackObjectSize')
+
       // Store variables
       const vm = this
       const TemplateData = vm.TemplateData
@@ -94,7 +94,7 @@ export default {
       return ObjectSize
     },
     GetTemplateIndex: function(TemplateID) {
-console.log('Debug (ComponentObject): GetTemplateIndex')
+
       // Initial variables
       const vm = this
       const TemplateData = vm.TemplateData
@@ -106,7 +106,7 @@ console.log('Debug (ComponentObject): GetTemplateIndex')
       return TemplateIndex
     },
     GetObjectIndex: function(ObjectID) {
-console.log('Debug (ComponentObject): GetObjectIndex')
+
       // Initial variables
       const vm = this
       const Context = vm.Context
@@ -117,7 +117,7 @@ console.log('Debug (ComponentObject): GetObjectIndex')
       return ObjectIndex
     },
     GetPreviewData: function(ObjectID) {
-console.log('Debug (ComponentObject): GetPreviewData')
+
       // Initial variables
       const vm = this
       const TemplateData = vm.TemplateData
@@ -137,8 +137,7 @@ console.log('Debug (ComponentObject): GetPreviewData')
       return ObjectPreviewData
     },
     ObjectCategoryData: function(ObjectID) {
-console.log('Debug (ComponentObject): ObjectCategoryData')
-console.log('Debug (ComponentObject-ObjectCategoryData): '+ObjectID)
+
       // Initial variables
       const vm = this
       const TemplateData = vm.TemplateData
@@ -162,7 +161,7 @@ console.log('Debug (ComponentObject-ObjectCategoryData): '+ObjectID)
       return ObjectCategoryData
     },
     PartitionIsSelected: function() {
-console.log('Debug (ComponentObject): PartitionIsSelected')
+
       const vm = this
       const Context = vm.Context
       const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
@@ -178,7 +177,7 @@ console.log('Debug (ComponentObject): PartitionIsSelected')
       return PartitionIsSelected
     },
     PartitionIsHovered: function() {
-console.log('Debug (ComponentObject): PartitionIsHovered')
+
       const vm = this
       const Context = vm.Context
       const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
@@ -194,13 +193,13 @@ console.log('Debug (ComponentObject): PartitionIsHovered')
       return PartitionIsHovered
     },
     GetDepthCounter: function(PartitionIndex) {
-console.log('Debug (ComponentObject): GetDepthCounter')
+
       // Store variables
       const vm = this
       return vm.InitialDepthCounter.concat([PartitionIndex])
     },
     GetPartitionGrid: function(units) {
-console.log('Debug (ComponentObject): GetPartitionGrid')
+
       let GridArray = []
       for(let i=0; i<units; i++) {
         GridArray.push('1fr')
@@ -209,7 +208,7 @@ console.log('Debug (ComponentObject): GetPartitionGrid')
       return GridArray.join(' ')
     },
     GetPartitionAreas: function(rows, cols) {
-console.log('Debug (ComponentObject): GetPartitionAreas')
+
       let AreasArray = []
       let AreaCounter = 0
       for(let r=0; r<rows; r++) {
@@ -228,7 +227,7 @@ console.log('Debug (ComponentObject): GetPartitionAreas')
       return AreasString
     },
     GetSelectedPartitionDirection: function() {
-console.log('Debug (ComponentObject): GetSelectedPartitionDirection')
+
       const vm = this;
       const PartitionAddress = vm.InitialDepthCounter
       let PartitionDirection
@@ -238,17 +237,12 @@ console.log('Debug (ComponentObject): GetSelectedPartitionDirection')
       return PartitionDirection
     },
     PartitionDirectionClass: function() {
-console.log('Debug (ComponentObject): PartitionDirectionClass')
+
       const vm = this
       const PartitionAddress = vm.InitialDepthCounter
 
       return (PartitionAddress.length % 2) ? 'pcm_template_partition_horizontal' : 'pcm_template_partition_vertical'
     },
   },
-  mounted() {
-
-    const vm = this
-    console.log('ComponentObject '+vm.Context)
-  }
 }
 </script>

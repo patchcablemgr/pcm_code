@@ -265,7 +265,7 @@ const PartitionAddressHovered = {
   }
 }
 const CabinetData = {
-  "id": 1,
+  "id": StandardTemplateID,
   "size": 25,
   "name": "Cabinet",
 }
@@ -297,6 +297,7 @@ const ObjectData = {
 const ActivePreviewTemplateID = StandardTemplateID
 const GenericObject = {
     "id": null,
+    "pseudo": true,
     "name": null,
     "template_id": null,
     "location_id": null,
@@ -309,6 +310,7 @@ const GenericObject = {
 }
 const GenericTemplate = {
     "id": null,
+    "pseudo": true,
     "name": "PseudoTemplate",
     "category_id": null,
     "type": null,
@@ -583,12 +585,8 @@ export default {
       const TemplateID = EmitData.TemplateID
 			
 			// Clicked partition should not be highlighted if it is a preview insert parent
-			let HonorClick = true
-			const ActivePreviewTemplateIndex = vm.GetTemplateIndex(vm.ActivePreviewTemplateID, 'preview')
 			const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-			if((Context == 'preview' && TemplateIndex != ActivePreviewTemplateIndex) || (Context == 'preview' && !PartitionAddress.length)) {
-				HonorClick = false
-			}
+      const HonorClick = (vm.TemplateData[Context][TemplateIndex].hasOwnProperty('pseudo')) ? false : true
 
 			if(HonorClick) {
 				vm.PartitionAddressSelected[Context][TemplateFaceSelected] = PartitionAddress
@@ -612,7 +610,11 @@ export default {
             return value
           }
         })
+        InsertParentTemplate.pseudo = true
         vm.TemplateData.preview.push(InsertParentTemplate)
+
+        // Remove preview pseudo objects/templates
+        vm.RemovePreviewPseudoData()
 				
 				// Generate pseudo object and constraining templates/objects if necessary
         const PseudoObjectID = vm.GeneratePseudoData(InsertParentTemplate, 'preview')
@@ -640,12 +642,8 @@ export default {
       const TemplateID = EmitData.TemplateID
 			
 			// Hovered partition should not be highlighted if it is a preview insert parent
-			let HonorHover = true
-			const ActivePreviewTemplateIndex = vm.GetTemplateIndex(vm.ActivePreviewTemplateID, 'preview')
 			const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-			if(Context == 'preview' && TemplateIndex != ActivePreviewTemplateIndex) {
-				HonorHover = false
-			}
+      const HonorHover = (vm.TemplateData[Context][TemplateIndex].hasOwnProperty('pseudo')) ? false : true
 
 			if(HonorHover) {
 				vm.PartitionAddressHovered[Context][TemplateFaceSelected] = (HoverState) ? PartitionAddress : false
@@ -793,8 +791,8 @@ export default {
       const PreviewData = vm.GetPreviewData()
       PreviewData.type = newValue
 
-      // Do not display standard object if insert
-      vm.ObjectData.preview[StandardPreviewObjectIndex].location_id = (newValue == 'insert') ? null : 1
+      // Update cabinet ID to display appropriate preview template
+      vm.CabinetData.id = (newValue == 'insert') ? vm.InsertTemplateID : vm.StandardTemplateID
 			
 			// Reset PartitionAddressSelected
 			vm.PartitionAddressSelected.preview.template_id = ActivePreviewTemplateID
@@ -1344,6 +1342,19 @@ export default {
       // Return template
       return ObjectPreviewData
     },
+    RemovePreviewPseudoData: function() {
+
+      const vm = this
+
+      vm.ObjectData.preview = vm.ObjectData.preview.filter(function(Object){
+        return typeof Object.id == 'number'
+      })
+
+      vm.TemplateData.preview = vm.TemplateData.preview.filter(function(Template){
+        return typeof Template.id == 'number'
+      })
+
+    },
 	  GeneratePseudoData: function (Template, Context) {
 
       const vm = this
@@ -1371,11 +1382,11 @@ export default {
             if (GenericObjectKey == 'id') {
               return PseudoObjectID
             } else if (GenericObjectKey == 'cabinet_face') {
-              return (InsertConstraintIndex == 0) ? 'front' : null
+              return 'front'
             } else if (GenericObjectKey == 'location_id') {
-              return (InsertConstraintIndex == 0) ? 1 : null
+              return (InsertConstraintIndex == 0 && Context == 'preview') ? vm.InsertTemplateID : null
             } else if (GenericObjectKey == 'cabinet_ru') {
-              return (InsertConstraintIndex == 0) ? 1 : null
+              return 1
             } else if (GenericObjectKey == 'template_id') {
               return PseudoTemplateID
             } else if (GenericObjectKey == 'parent_id') {

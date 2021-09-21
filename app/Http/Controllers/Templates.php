@@ -153,11 +153,11 @@ class Templates extends Controller
 					}
 					$parentEncLayout = $parentTemplatePartition['enc_layout'];
 					$insertConstraints = array(
-						'ru_size' => $parentTemplatePartitionParentRUSize,
 						'part_layout' => $parentPortLayout,
 						'enc_layout' => $parentEncLayout
 					);
 					
+                    $template->ru_size = $request->ru_size;
 					$template->insert_constraints = [$insertConstraints];
 				}
 

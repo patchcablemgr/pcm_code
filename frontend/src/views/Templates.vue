@@ -163,6 +163,7 @@ const TemplateData = {
       "ru_size": 1,
       "function": "endpoint",
       "mount_config": "2-post",
+      "insert_constraints": null,
       "blueprint": {
         "front": [{
           "type": "generic",
@@ -184,6 +185,7 @@ const TemplateData = {
 			"ru_size": 1,
       "function": "endpoint",
 			"mount_config": "2-post",
+      "insert_constraints": null,
 			"parent_template": null,
       "blueprint": {
         "front": [{
@@ -317,6 +319,7 @@ const GenericTemplate = {
     "ru_size": null,
     "function": null,
     "mount_config": "2-post",
+    "insert_constraints": null,
     "blueprint": {
         "front": [{
                 "type": "generic",
@@ -600,9 +603,16 @@ export default {
         const Template = vm.TemplateData[Context][TemplateIndex]
         const TemplateFunction = Template.function
         const TemplateCategoryID = Template.category_id
+        const TemplateRUSize = Template.ru_size
+
+        // Remove preview pseudo objects/templates
+        vm.RemovePreviewPseudoData()
+
+        // Get insert constraints
+        const InsertConstraints = vm.GetInsertConstraints(Template, TemplateFaceSelected, PartitionAddress)
 
         // Copy selected template to insert parent template and correct id
-        const InsertParentTemplateID = vm.TemplateData.preview.length + 1
+        const InsertParentTemplateID = 'pseudo-'+(vm.TemplateData.preview.length)
         const InsertParentTemplate = JSON.parse(JSON.stringify(Template), function(key, value) {
           if(key == 'id') {
             return InsertParentTemplateID
@@ -613,8 +623,7 @@ export default {
         InsertParentTemplate.pseudo = true
         vm.TemplateData.preview.push(InsertParentTemplate)
 
-        // Remove preview pseudo objects/templates
-        vm.RemovePreviewPseudoData()
+        
 				
 				// Generate pseudo object and constraining templates/objects if necessary
         const PseudoObjectID = vm.GeneratePseudoData(InsertParentTemplate, 'preview')
@@ -623,12 +632,92 @@ export default {
         const InsertTemplateIndex = vm.GetTemplateIndex(vm.InsertTemplateID, 'preview')
         vm.TemplateData.preview[InsertTemplateIndex].category_id = TemplateCategoryID
         vm.TemplateData.preview[InsertTemplateIndex].function = TemplateFunction
+        vm.TemplateData.preview[InsertTemplateIndex].ru_size = TemplateRUSize
+        vm.TemplateData.preview[InsertTemplateIndex].insert_constraints = InsertConstraints
 				vm.TemplateData.preview[InsertTemplateIndex].parent_template = {'id': TemplateID, 'face': TemplateFaceSelected, 'partition_address': PartitionAddress}
 
         // Adjust insert object properties
         const InsertObjectIndex = vm.GetObjectIndex(vm.InsertTemplateID, 'preview')
         vm.ObjectData.preview[InsertObjectIndex].parent_id = PseudoObjectID
       }
+
+    },
+    GetInsertConstraints: function(Template, TemplateFace, PartitionAddress) {
+
+      const vm = this
+      const Blueprint = Template.blueprint[TemplateFace]
+      console.log('Debug: here1')
+      console.log('Debug (Blueprint): '+JSON.stringify(Blueprint))
+      console.log('Debug (PartitionAddress): '+JSON.stringify(PartitionAddress))
+      const Partition = vm.GetPartition(Blueprint, PartitionAddress)
+      const PartitionDirection = vm.GetPartitionDirection(PartitionAddress)
+      let width
+      let height
+      let constraints = {
+        "height": null,
+        "width": null
+      }
+
+      if (PartitionDirection == 'row') {
+
+        // Store height
+        height = Partition.units
+
+        // Store width
+        if (PartitionAddress.length > 1) {
+          
+          // Partition is deeper than 1st level, take parent partition units
+          const ParentPartitionAddress = PartitionAddress.slice(0, PartitionAddress.length - 1)
+          console.log('Debug: here3')
+          let ParentPartition = vm.GetPartition(Blueprint, ParentPartitionAddress)
+          width = ParentPartition.units
+
+        } else {
+
+          // Partition is 1st level and has no parent partition
+          if (Template.insert_constraints !== null) {
+
+            // Get width from constraints if they exist
+            width = Template.insert_constraints[Template.insert_constraints.length - 1].width
+          } else {
+
+            // Get width from template RU size
+            width = 24
+          }
+        }
+      } else {
+
+        // Store width
+        width = Partition.units
+
+        // Store height
+        if (PartitionAddress.length > 1) {
+          
+          // Partition is deeper than 1st level, take parent partition units
+          const ParentPartitionAddress = PartitionAddress.slice(0, PartitionAddress.length - 1)
+          console.log('Debug: here2')
+          let ParentPartition = vm.GetPartition(Blueprint, ParentPartitionAddress)
+          height = ParentPartition.units
+
+        } else {
+
+          // Partition is 1st level and has no parent partition
+          if (Template.insert_constraints !== null) {
+
+            // Get height from constraints if they exist
+            height = Template.insert_constraints[Template.insert_constraints.length - 1].height
+          } else {
+
+            // Get height from template RU size
+            height = Template.ru_size * 2
+          }
+        }
+      }
+
+      constraints.height = height
+      constraints.width = width
+
+      return (Template.insert_constraints == null) ? [constraints] : JSON.parse(JSON.stringify(Template.insert_constraints)).push(constraints)
 
     },
     PartitionHovered: function(EmitData) {
@@ -786,10 +875,6 @@ export default {
 			// Set active preview template index
 			const ActivePreviewTemplateID = (newValue == 'insert') ? vm.InsertTemplateID : vm.StandardTemplateID
       vm.ActivePreviewTemplateID = ActivePreviewTemplateID
-			
-			// Update active preview template type
-      const PreviewData = vm.GetPreviewData()
-      PreviewData.type = newValue
 
       // Update cabinet ID to display appropriate preview template
       vm.CabinetData.id = (newValue == 'insert') ? vm.InsertTemplateID : vm.StandardTemplateID
@@ -1232,17 +1317,36 @@ export default {
 					if(value) {
 						
 						// Store data
-						const TemplateID = vm.PartitionAddressSelected[Context].template_id
 						const url = '/api/templates/'+TemplateID
 
 						// DELETE template ID
 						this.$http.delete(url).then(function(response){
 
 							// Default selected template
-							vm.PartitionAddressSelected.template.template_id = null
+							vm.PartitionAddressSelected[Context].template_id = null
 
-							// Remove template from TemplateData
-							vm.TemplateData[Context].splice(TemplateIndex,1)
+              // Get template object data
+              let TemplateObjectIndex = vm.ObjectData[Context].findIndex((object) => object.template_id == TemplateID)
+              let TemplateObject = vm.ObjectData[Context][TemplateObjectIndex]
+              let TemplateObjectParentID = TemplateObject.parent_id
+
+              // Delete template and object
+              vm.ObjectData[Context].splice(TemplateObjectIndex,1)
+              vm.TemplateData[Context].splice(TemplateIndex,1)
+
+              // Delete parent template(s) and object(s) if necessary
+              while (TemplateObjectParentID != null) {
+
+                TemplateObjectIndex = vm.ObjectData[Context].findIndex((object) => object.id == TemplateObjectParentID)
+                TemplateObject = vm.ObjectData[Context][TemplateObjectIndex]
+                TemplateObjectParentID = TemplateObject.parent_id
+
+                let TemplateObjectTemplateID = TemplateObject.template_id
+                let TemplateObjectTemplateIndex = vm.GetTemplateIndex(TemplateObjectTemplateID, Context)
+
+                vm.ObjectData[Context].splice(TemplateObjectIndex,1)
+                vm.TemplateData[Context].splice(TemplateObjectTemplateIndex,1)
+              }
 
 						}).catch(error => {
 
@@ -1347,11 +1451,11 @@ export default {
       const vm = this
 
       vm.ObjectData.preview = vm.ObjectData.preview.filter(function(Object){
-        return typeof Object.id == 'number'
+        return !Object.hasOwnProperty('pseudo')
       })
 
       vm.TemplateData.preview = vm.TemplateData.preview.filter(function(Template){
-        return typeof Template.id == 'number'
+        return !Template.hasOwnProperty('pseudo')
       })
 
     },
@@ -1365,8 +1469,9 @@ export default {
       let PseudoObjectParentPartitionAddress = null
       let PseudoObjectParentEnclosureAddress = null
       const TemplateID = Template.id
+      const TemplateType = Template.type
 
-      if (Template.type == 'insert') {
+      if (TemplateType == 'insert') {
         
         PseudoObjectParentFace = 'front'
         PseudoObjectParentPartitionAddress = [0, 0]
@@ -1452,6 +1557,12 @@ export default {
       WorkingObjectData.push(JSON.parse(JSON.stringify(vm.GenericObject), function (GenericObjectKey, GenericObjectValue) {
         if (GenericObjectKey == 'id') {
             return PseudoObjectID
+        } else if (GenericObjectKey == 'location_id') {
+            return (Context == 'preview' && TemplateType == 'standard') ? vm.InsertTemplateID : GenericObjectValue
+        } else if (GenericObjectKey == 'cabinet_face') {
+            return (Context == 'preview' && TemplateType == 'standard') ? 'front' : GenericObjectValue
+        } else if (GenericObjectKey == 'cabinet_ru') {
+            return (Context == 'preview' && TemplateType == 'standard') ? 1 : GenericObjectValue
         } else if (GenericObjectKey == 'parent_id') {
             return PseudoObjectParentID
         } else if (GenericObjectKey == 'parent_face') {
@@ -1627,25 +1738,12 @@ export default {
       // POST category form data
       this.$http.post(url, data).then(function(response){
         
-				// Add new psudo object to display template in 
-				const ObjectID = vm.ObjectData.template.length + 1
-				const TemplateID = response.data.id
-				const ObjectGeneric = {
-					"id": ObjectID,
-					"name": null,
-					"template_id": TemplateID,
-					"location_id": null,
-					"cabinet_ru": null,
-					"cabinet_face": null,
-					"parent_id": null,
-					"parent_face": null,
-					"parent_part_addr": null,
-					"parent_enc_addr": null,
-				}
-				vm.ObjectData.template.push(ObjectGeneric)
+        const Template = response.data
 				
-        // Append new template to template array
-        vm.TemplateData.template.push(response.data)
+        // Append new template to template array\
+        vm.TemplateData.template.push(Template)
+
+        vm.GeneratePseudoData(Template, 'template')
 
       }).catch(error => {
 

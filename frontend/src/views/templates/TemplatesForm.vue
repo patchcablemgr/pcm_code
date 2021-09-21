@@ -64,7 +64,7 @@
         <dd class="col-sm-8">
           <b-form-radio-group
             name="type"
-            v-model="TemplateData[Context][PreviewDataIndex].type"
+            v-model="ComputedInputTemplateType"
             :options="optionsTemplateType"
             @change="$emit('TemplateTypeUpdated', $event)"
             stacked
@@ -80,7 +80,7 @@
         <dd class="col-sm-8">
           <b-form-input
             name="size"
-            v-model.number="InputTemplateRUSize"
+            v-model.number="ComputedInputTemplateRUSize"
             @change="$emit('TemplateRUSizeUpdated', $event)"
             ref="ElementTemplateRUSize"
             type="number"
@@ -520,7 +520,6 @@ export default {
   data() {
     return {
       inputTemplateType: this.TemplateData[this.Context][this.PreviewDataIndex].type,
-      InputTemplateRUSize: this.TemplateData[this.Context][this.PreviewDataIndex].ru_size,
       inputTemplateFunction: this.TemplateData[this.Context][this.PreviewDataIndex].function,
       inputTemplateMountConfig: this.TemplateData[this.Context][this.PreviewDataIndex].mount_config,
       selected: null,
@@ -556,6 +555,31 @@ export default {
         const SelectedPartitionDirection = (SelectedPartitionDepth % 2) ? 'column' : 'row'
 
         return SelectedPartitionDirection
+      }
+    },
+    ComputedInputTemplateType: {
+      get() {
+        // Store variables
+        const vm = this
+        const Context = vm.Context
+        const PreviewDataIndex = vm.PreviewDataIndex
+        const TemplateType = vm.TemplateData[Context][PreviewDataIndex].type
+
+        return TemplateType
+      },
+      set() {
+        return false
+      }
+    },
+    ComputedInputTemplateRUSize: {
+      get() {
+        // Store variables
+        const vm = this
+        const Context = vm.Context
+        const PreviewDataIndex = vm.PreviewDataIndex
+        const TemplateRUSize = vm.TemplateData[Context][PreviewDataIndex].ru_size
+
+        return TemplateRUSize
       }
     },
     ComputedInputTemplatePartitionType: {
@@ -798,12 +822,10 @@ export default {
           // Look at each vertically growing layer 2 partition
           Layer2Partitions.forEach(function(Layer2Partition){
             TotalPartitionUnits = TotalPartitionUnits + parseInt(Layer2Partition.units)
-						console.log('Debug (TemplatesForm-GetRUSizeMin-TotalPartitionUnits): '+TotalPartitionUnits)
           })
 
           // Store largest partition size
           const WorkingRUSizeMin = Math.ceil(TotalPartitionUnits / 2)
-					console.log('Debug (TemplatesForm-GetRUSizeMin-WorkingRUSizeMin): '+WorkingRUSizeMin)
           RUSizeMin = (WorkingRUSizeMin > RUSizeMin) ? WorkingRUSizeMin : RUSizeMin
         })
       })
@@ -839,10 +861,35 @@ export default {
       const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
       const PartitionAddressSelected = JSON.parse(JSON.stringify(vm.PartitionAddressSelected[Context][TemplateFaceSelected]))
       const SelectedPartitionDirection = vm.ComputedSelectedPartitionDirection
-      let WorkingMax = (SelectedPartitionDirection == 'column') ? 24 : PreviewData.ru_size * 2
+      //let WorkingMax = (SelectedPartitionDirection == 'column') ? 24 : PreviewData.ru_size * 2
       let WorkingPartitionChildren = JSON.parse(JSON.stringify(PreviewData.blueprint[TemplateFaceSelected]))
 
-      
+      // Get working max
+      let WorkingMax
+      if (SelectedPartitionDirection == 'column') {
+
+        if (PreviewData.insert_constraints !== null) {
+
+          // Partition is an insert with constraints
+          WorkingMax = PreviewData.insert_constraints[PreviewData.insert_constraints.length - 1].width
+        } else {
+
+          // Partition is standard
+          WorkingMax = 24
+        }
+      } else {
+
+        if (PreviewData.insert_constraints !== null) {
+
+          // Partition is an insert with constraints
+          WorkingMax = PreviewData.insert_constraints[PreviewData.insert_constraints.length - 1].height
+        } else {
+
+          // Partition is standard
+          WorkingMax = PreviewData.ru_size * 2
+        }
+      }
+
       PartitionAddressSelected.pop()
       PartitionAddressSelected.forEach(function(PartitionAddressIndex, Depth){
         let WorkingPartitionDirection = ((Depth + 1) % 2) ? 'column' : 'row'
@@ -912,6 +959,8 @@ export default {
         WorkingPartitionChildren = WorkingPartitionChildren[PartitionAddressIndex].children
         WorkingPartitionAddress.push(PartitionAddressIndex)
       })
+
+      console.log('Debug (TemplatesForm-GetSelectedPartitionSizeMax-SelectedPartitionSizeMax): '+SelectedPartitionSizeMax)
 
       return SelectedPartitionSizeMax;
     },

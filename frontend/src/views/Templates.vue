@@ -153,6 +153,14 @@ import ComponentTemplates from './templates/ComponentTemplates.vue'
 
 const StandardTemplateID = 1
 const InsertTemplateID = 2
+const GenericInsertBlueprint = {
+  "front": [{
+    "type": "generic",
+    "units":24,
+    "children": [],
+  }],
+  "rear": [],
+}
 const TemplateData = {
   'preview': [
     {
@@ -182,19 +190,12 @@ const TemplateData = {
       "name": "New_Template",
       "category_id": 0,
       "type": "insert",
-			"ru_size": 1,
+			"ru_size": null,
       "function": "endpoint",
-			"mount_config": "2-post",
+			"mount_config": null,
       "insert_constraints": null,
 			"parent_template": null,
-      "blueprint": {
-        "front": [{
-          "type": "generic",
-          "units":24,
-          "children": [],
-        }],
-        "rear": [],
-      }
+      "blueprint": GenericInsertBlueprint
     }
   ],
   'template': []
@@ -375,6 +376,7 @@ export default {
       InsertTemplateID,
       GenericObject,
       GenericTemplate,
+      GenericInsertBlueprint,
     }
   },
   computed: {
@@ -603,13 +605,9 @@ export default {
         const Template = vm.TemplateData[Context][TemplateIndex]
         const TemplateFunction = Template.function
         const TemplateCategoryID = Template.category_id
-        const TemplateRUSize = Template.ru_size
 
         // Remove preview pseudo objects/templates
         vm.RemovePreviewPseudoData()
-
-        // Get insert constraints
-        const InsertConstraints = vm.GetInsertConstraints(Template, TemplateFaceSelected, PartitionAddress)
 
         // Copy selected template to insert parent template and correct id
         const InsertParentTemplateID = 'pseudo-'+(vm.TemplateData.preview.length)
@@ -623,16 +621,23 @@ export default {
         InsertParentTemplate.pseudo = true
         vm.TemplateData.preview.push(InsertParentTemplate)
 
-        
-				
 				// Generate pseudo object and constraining templates/objects if necessary
         const PseudoObjectID = vm.GeneratePseudoData(InsertParentTemplate, 'preview')
 
+        // Get insert constraints
+        const InsertConstraints = vm.GetInsertConstraints(Template, TemplateFaceSelected, PartitionAddress)
+
         // Adjust insert template properties
         const InsertTemplateIndex = vm.GetTemplateIndex(vm.InsertTemplateID, 'preview')
+        vm.TemplateData.preview[InsertTemplateIndex].blueprint = JSON.parse(JSON.stringify(vm.GenericInsertBlueprint), function(key, value) {
+          if(key == 'units') {
+            return InsertConstraints.part_layout.width
+          } else {
+            return value
+          }
+        })
         vm.TemplateData.preview[InsertTemplateIndex].category_id = TemplateCategoryID
         vm.TemplateData.preview[InsertTemplateIndex].function = TemplateFunction
-        vm.TemplateData.preview[InsertTemplateIndex].ru_size = TemplateRUSize
         vm.TemplateData.preview[InsertTemplateIndex].insert_constraints = InsertConstraints
 				vm.TemplateData.preview[InsertTemplateIndex].parent_template = {'id': TemplateID, 'face': TemplateFaceSelected, 'partition_address': PartitionAddress}
 
@@ -646,16 +651,15 @@ export default {
 
       const vm = this
       const Blueprint = Template.blueprint[TemplateFace]
-      console.log('Debug: here1')
-      console.log('Debug (Blueprint): '+JSON.stringify(Blueprint))
-      console.log('Debug (PartitionAddress): '+JSON.stringify(PartitionAddress))
       const Partition = vm.GetPartition(Blueprint, PartitionAddress)
       const PartitionDirection = vm.GetPartitionDirection(PartitionAddress)
       let width
       let height
       let constraints = {
-        "height": null,
-        "width": null
+        "part_layout": {
+          "height": null,
+          "width": null
+        }
       }
 
       if (PartitionDirection == 'row') {
@@ -668,7 +672,6 @@ export default {
           
           // Partition is deeper than 1st level, take parent partition units
           const ParentPartitionAddress = PartitionAddress.slice(0, PartitionAddress.length - 1)
-          console.log('Debug: here3')
           let ParentPartition = vm.GetPartition(Blueprint, ParentPartitionAddress)
           width = ParentPartition.units
 
@@ -678,7 +681,7 @@ export default {
           if (Template.insert_constraints !== null) {
 
             // Get width from constraints if they exist
-            width = Template.insert_constraints[Template.insert_constraints.length - 1].width
+            width = Template.insert_constraints[Template.insert_constraints.length - 1].part_layout.width
           } else {
 
             // Get width from template RU size
@@ -695,7 +698,6 @@ export default {
           
           // Partition is deeper than 1st level, take parent partition units
           const ParentPartitionAddress = PartitionAddress.slice(0, PartitionAddress.length - 1)
-          console.log('Debug: here2')
           let ParentPartition = vm.GetPartition(Blueprint, ParentPartitionAddress)
           height = ParentPartition.units
 
@@ -705,7 +707,7 @@ export default {
           if (Template.insert_constraints !== null) {
 
             // Get height from constraints if they exist
-            height = Template.insert_constraints[Template.insert_constraints.length - 1].height
+            height = Template.insert_constraints[Template.insert_constraints.length - 1].part_layout.height
           } else {
 
             // Get height from template RU size
@@ -714,10 +716,12 @@ export default {
         }
       }
 
-      constraints.height = height
-      constraints.width = width
+      constraints.part_layout.height = height
+      constraints.part_layout.width = width
+      const InsertConstraints = (Template.insert_constraints == null) ? [] : JSON.parse(JSON.stringify(Template.insert_constraints))
+      InsertConstraints.push(constraints)
 
-      return (Template.insert_constraints == null) ? [constraints] : JSON.parse(JSON.stringify(Template.insert_constraints)).push(constraints)
+      return InsertConstraints
 
     },
     PartitionHovered: function(EmitData) {

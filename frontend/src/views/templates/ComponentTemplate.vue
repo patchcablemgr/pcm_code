@@ -270,16 +270,50 @@ export default {
 
       return AreasString
     },
+    GetGlobalPartitionMax: function(Template, PartitionAddress) {
+
+      const vm = this
+      const PartitionDirection = vm.GetPartitionDirection(PartitionAddress)
+
+      // Get working max
+      let WorkingMax
+      if (PartitionDirection == 'column') {
+
+        if (Template.insert_constraints !== null) {
+
+          // Partition is an insert with constraints
+          WorkingMax = Template.insert_constraints[Template.insert_constraints.length - 1].part_layout.width
+        } else {
+
+          // Partition is standard
+          WorkingMax = 24
+        }
+      } else {
+
+        if (Template.insert_constraints !== null) {
+
+          // Partition is an insert with constraints
+          WorkingMax = Template.insert_constraints[Template.insert_constraints.length - 1].part_layout.height
+        } else {
+
+          // Partition is standard
+          WorkingMax = Template.ru_size * 2
+        }
+      }
+
+      return WorkingMax
+
+    },
     GetPartitionParentSize: function(PartitionAddress) {
 
       // Store variables
       const vm = this
       const TemplateFaceSelected = vm.TemplateFaceSelected
       const Context = vm.Context
-      const PartitionDirection = (PartitionAddress.length % 2) ? 'column' : 'row'
-      let WorkingMax = (PartitionDirection == 'column') ? 24 : vm.TemplateRUSize * 2
-
-      let WorkingPartition = JSON.parse(JSON.stringify(vm.GetTemplate().blueprint[TemplateFaceSelected[Context]]))
+      const Template = vm.GetTemplate()
+      const PartitionDirection = vm.GetPartitionDirection(PartitionAddress)
+      let WorkingMax = vm.GetGlobalPartitionMax(Template, PartitionAddress)
+      let WorkingPartition = JSON.parse(JSON.stringify(Template.blueprint[TemplateFaceSelected[Context]]))
       
       PartitionAddress.pop()
       PartitionAddress.forEach(function(PartitionAddressIndex, Depth){
@@ -303,13 +337,12 @@ export default {
 
       return PartitionFlexGrow
     },
-    GetSelectedPartitionDirection: function() {
+    GetPartitionDirection: function(PartitionAddress=false) {
 
-      const vm = this;
-      const PartitionAddress = vm.InitialDepthCounter
-      let PartitionDirection
+      const vm = this
+      PartitionAddress = (PartitionAddress) ? PartitionAddress : vm.InitialDepthCounter
 
-      PartitionDirection = (PartitionAddress.length % 2) ? 'column' : 'row'
+      const PartitionDirection = (PartitionAddress.length % 2) ? 'column' : 'row'
       
       return PartitionDirection
     },

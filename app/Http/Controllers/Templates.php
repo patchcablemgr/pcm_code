@@ -67,7 +67,7 @@ class Templates extends Controller
                 Rule::in($templateTypeArray)
             ],
             'ru_size' => [
-                'required',
+                Rule::requiredIf($request->type == 'standard'),
                 'integer',
                 'min:1',
                 'max:25'
@@ -77,21 +77,21 @@ class Templates extends Controller
                 Rule::in($templateFunctionArray)
             ],
             'mount_config' => [
-                'required',
+                Rule::requiredIf($request->type == 'standard'),
                 Rule::in($templateMountConfigArray)
             ],
-						'parent_template.id' => [
-								Rule::requiredIf($request->type == 'insert')
-						],
-						'parent_template.face' => [
-								Rule::requiredIf($request->type == 'insert')
-						],
-						'parent_template.partition_address' => [
-								Rule::requiredIf($request->type == 'insert')
-						],
-						'parent_template' => [
-								new TemplateInsertParentData
-						],
+            'parent_template.id' => [
+                Rule::requiredIf($request->type == 'insert')
+            ],
+            'parent_template.face' => [
+                Rule::requiredIf($request->type == 'insert')
+            ],
+            'parent_template.partition_address' => [
+                Rule::requiredIf($request->type == 'insert')
+            ],
+            'parent_template' => [
+                new TemplateInsertParentData
+            ],
             'blueprint' => [
                 'required',
                 new TemplateBlueprint
@@ -105,9 +105,7 @@ class Templates extends Controller
         $template->name = $request->name;
         $template->category_id = $request->category_id;
         $template->type = $request->type;
-        $template->ru_size = $request->ru_size;
         $template->function = $request->function;
-        $template->mount_config = $request->mount_config;
         $template->blueprint = $request->blueprint;
 				
 				if($request->type == 'insert') {
@@ -121,9 +119,7 @@ class Templates extends Controller
 					// Prepare parent partition address
 					$parentTemplatePartitionParentAddress = $parentTemplatePartitionAddress;
 					array_pop($parentTemplatePartitionParentAddress);
-					
-					
-					
+
 					// Get parent template partition units
 					$parentTemplate = TemplateModel::where('id', '=', $parentTemplateID)->first();
 					$parentTemplateBlueprint = $parentTemplate['blueprint'];
@@ -134,7 +130,6 @@ class Templates extends Controller
 					$parentTemplatePartitionParentRUSize = $parentTemplate['ru_size'];
 					
 					// Get parent template partition ... parent partition units
-					
 					if(count($parentTemplatePartitionParentAddress)) {
 						$parentTemplatePartitionParentPartition = $PCM->getPartition($parentTemplateBlueprint, $parentTemplateFace, $parentTemplatePartitionParentAddress);
 						$parentTemplatePartitionParentUnits = $parentTemplatePartitionParentPartition['units'];
@@ -157,9 +152,12 @@ class Templates extends Controller
 						'enc_layout' => $parentEncLayout
 					);
 					
-                    $template->ru_size = $request->ru_size;
 					$template->insert_constraints = [$insertConstraints];
-				}
+				} else {
+
+                    $template->ru_size = $request->ru_size;
+                    $template->mount_config = $request->mount_config;
+                }
 
         $template->save();
 

@@ -548,13 +548,8 @@ export default {
       get() {
         // Store variables
         const vm = this
-        const Context = vm.Context
-        const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
-        const PartitionAddressSelected = vm.PartitionAddressSelected[Context][TemplateFaceSelected]
-        const SelectedPartitionDepth = PartitionAddressSelected.length
-        const SelectedPartitionDirection = (SelectedPartitionDepth % 2) ? 'column' : 'row'
 
-        return SelectedPartitionDirection
+        return vm.GetPartitionDirection()
       }
     },
     ComputedInputTemplateType: {
@@ -850,6 +845,52 @@ export default {
 
       return Partition
     },
+    GetPartitionDirection: function(PartitionAddress=false) {
+
+      const vm = this
+      const Context = vm.Context
+      const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
+      const PartitionAddressSelected = vm.PartitionAddressSelected[Context][TemplateFaceSelected]
+      PartitionAddress = (PartitionAddress) ? PartitionAddress : PartitionAddressSelected
+
+      const PartitionDirection = (PartitionAddress.length % 2) ? 'column' : 'row'
+      
+      return PartitionDirection
+    },
+    GetGlobalPartitionMax: function(Template, PartitionAddress) {
+
+      const vm = this
+      const PartitionDirection = vm.GetPartitionDirection(PartitionAddress)
+
+      // Get working max
+      let WorkingMax
+      if (PartitionDirection == 'column') {
+
+        if (Template.insert_constraints !== null) {
+
+          // Partition is an insert with constraints
+          WorkingMax = Template.insert_constraints[Template.insert_constraints.length - 1].part_layout.width
+        } else {
+
+          // Partition is standard
+          WorkingMax = 24
+        }
+      } else {
+
+        if (Template.insert_constraints !== null) {
+
+          // Partition is an insert with constraints
+          WorkingMax = Template.insert_constraints[Template.insert_constraints.length - 1].part_layout.height
+        } else {
+
+          // Partition is standard
+          WorkingMax = Template.ru_size * 2
+        }
+      }
+
+      return WorkingMax
+
+    },
     GetSelectedPartitionParentSize: function() {
 
       // Store variables
@@ -861,34 +902,8 @@ export default {
       const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
       const PartitionAddressSelected = JSON.parse(JSON.stringify(vm.PartitionAddressSelected[Context][TemplateFaceSelected]))
       const SelectedPartitionDirection = vm.ComputedSelectedPartitionDirection
-      //let WorkingMax = (SelectedPartitionDirection == 'column') ? 24 : PreviewData.ru_size * 2
+      let WorkingMax = vm.GetGlobalPartitionMax(PreviewData, PartitionAddressSelected)
       let WorkingPartitionChildren = JSON.parse(JSON.stringify(PreviewData.blueprint[TemplateFaceSelected]))
-
-      // Get working max
-      let WorkingMax
-      if (SelectedPartitionDirection == 'column') {
-
-        if (PreviewData.insert_constraints !== null) {
-
-          // Partition is an insert with constraints
-          WorkingMax = PreviewData.insert_constraints[PreviewData.insert_constraints.length - 1].width
-        } else {
-
-          // Partition is standard
-          WorkingMax = 24
-        }
-      } else {
-
-        if (PreviewData.insert_constraints !== null) {
-
-          // Partition is an insert with constraints
-          WorkingMax = PreviewData.insert_constraints[PreviewData.insert_constraints.length - 1].height
-        } else {
-
-          // Partition is standard
-          WorkingMax = PreviewData.ru_size * 2
-        }
-      }
 
       PartitionAddressSelected.pop()
       PartitionAddressSelected.forEach(function(PartitionAddressIndex, Depth){

@@ -38,23 +38,25 @@ div.pcm_box {
 }
 
 div.pcm_cabinet_object_container {
-    box-shadow: 0 0 0 1px gray inset;
     height: 100%;
     display: flex;
 }
 
-div.pcm_template_partition_horizontal {
+div.pcm_template_partition_col {
     flex-direction: column;
 }
 
-div.pcm_template_partition_vertical {
+div.pcm_template_partition_row {
     flex-direction: row;
 }
 
 div.pcm_template_partition_box {
-    box-shadow: 0 0 0 1px darkslategray inset;
     flex-basis: 0;
     overflow: hidden;
+}
+
+div.pcm_template_partition_border {
+    box-shadow: 0 0 0 1px darkslategray inset;
 }
 
 div.pcm_template_partition_selected {
@@ -95,6 +97,9 @@ div.pcm_template_enclosure_container {
     justify-items: center;
     align-items: center;
     height: 100%;
+}
+
+div.pcm_template_enclosure_container_background {
     background: repeating-linear-gradient(
 		135deg,
 		transparent,
@@ -105,10 +110,13 @@ div.pcm_template_enclosure_container {
 }
 
 div.pcm_template_enclosure_area {
-    box-shadow: 0 0 0 1px black inset;
     height: 100%;
     width: 100%;
     overflow: hidden;
+}
+
+div.pcm_template_enclosure_area_border {
+    box-shadow: 0 0 0 1px black inset;
 }
 
 div.pcm_template_partition_layered {

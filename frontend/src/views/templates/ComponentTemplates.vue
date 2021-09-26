@@ -56,7 +56,7 @@
                   :ObjectData="ObjectData"
                   :CategoryData="CategoryData"
                   :TemplateRUSize=" Template.ru_size "
-                  :InitialDepthCounter=" [] "
+                  :InitialPartitionAddress=[]
                   :Context="Context"
                   :ObjectID="GetObjectID(Template.id)"
                   :TemplateFaceSelected="TemplateFaceSelected"
@@ -81,7 +81,6 @@ import AppCollapse from '@core/components/app-collapse/AppCollapse.vue'
 import AppCollapseItem from '@core/components/app-collapse/AppCollapseItem.vue'
 import ComponentObject from './ComponentObject.vue'
 
-const InitialDepthCounter = []
 const TemplateFilter = []
 
 export default {
@@ -103,7 +102,6 @@ export default {
   },
   data() {
     return {
-      InitialDepthCounter,
       TemplateFilter,
     }
   },
@@ -114,7 +112,7 @@ export default {
         const vm = this
         const Context = vm.Context
         const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
-        return vm.TemplateFaceSelected
+        return TemplateFaceSelected
 
       },
       set(newValue) {
@@ -204,6 +202,7 @@ export default {
 
       const vm = this
       const Context = vm.Context
+      const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
       const FilteredCategoryTemplates = vm.TemplateData[Context].filter(function(template) {
 
         let match = false
@@ -211,24 +210,27 @@ export default {
 				// Include 'standard' templates only.  'Insert' templates will be rendered by pseudo parent objects
 				if(template.type == 'standard') {
 
-					// Include if category ID matches
-					if(template.category_id == CategoryID) {
+          if(TemplateFaceSelected == 'front' || template.mount_config == '4-post') {
 
-						// Include if no filter tags
-						if(vm.TemplateFilter.length == 0) {
-							match = true
-						} else {
+            // Include if category ID matches
+            if(template.category_id == CategoryID) {
 
-							// Compare each filter tag
-							vm.TemplateFilter.forEach(function(tag){
+              // Include if no filter tags
+              if(vm.TemplateFilter.length == 0) {
+                match = true
+              } else {
 
-								// Include if template name contains filter tag
-								if(template.name.toLowerCase().includes(tag.toLowerCase())) {
-									match = true
-								}
-							})
-						}
-					}
+                // Compare each filter tag
+                vm.TemplateFilter.forEach(function(tag){
+
+                  // Include if template name contains filter tag
+                  if(template.name.toLowerCase().includes(tag.toLowerCase())) {
+                    match = true
+                  }
+                })
+              }
+            }
+          }
 				}
 
         return match

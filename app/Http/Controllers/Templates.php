@@ -34,7 +34,7 @@ class Templates extends Controller
     public function store(Request $request)
     {
 
-				$PCM = new PCM;
+		$PCM = new PCM;
 		
         // Prepare variables
         $templateTypeArray = [
@@ -98,66 +98,68 @@ class Templates extends Controller
             ]
         ]);
 				
-				
-
         $template = new TemplateModel;
 
         $template->name = $request->name;
         $template->category_id = $request->category_id;
         $template->type = $request->type;
+        $template->ru_size = null;
         $template->function = $request->function;
+        $template->mount_config = null;
+        $template->insert_constraints = null;
         $template->blueprint = $request->blueprint;
+        $template->ru_size = null;
 				
-				if($request->type == 'insert') {
-					
-					// Prepare some variables
-					$parentTemplateData = $request->parent_template;
-					$parentTemplateID = $parentTemplateData['id'];
-					$parentTemplateFace = $parentTemplateData['face'];
-					$parentTemplatePartitionAddress = $parentTemplateData['partition_address'];
-					
-					// Prepare parent partition address
-					$parentTemplatePartitionParentAddress = $parentTemplatePartitionAddress;
-					array_pop($parentTemplatePartitionParentAddress);
+        if($request->type == 'insert') {
+            
+            // Prepare some variables
+            $parentTemplateData = $request->parent_template;
+            $parentTemplateID = $parentTemplateData['id'];
+            $parentTemplateFace = $parentTemplateData['face'];
+            $parentTemplatePartitionAddress = $parentTemplateData['partition_address'];
+            
+            // Prepare parent partition address
+            $parentTemplatePartitionParentAddress = $parentTemplatePartitionAddress;
+            array_pop($parentTemplatePartitionParentAddress);
 
-					// Get parent template partition units
-					$parentTemplate = TemplateModel::where('id', '=', $parentTemplateID)->first();
-					$parentTemplateBlueprint = $parentTemplate['blueprint'];
-					$parentTemplatePartition = $PCM->getPartition($parentTemplateBlueprint, $parentTemplateFace, $parentTemplatePartitionAddress);
-					$parentTemplatePartitionUnits = $parentTemplatePartition['units'];
-					
-					// Get parent template partition RU size
-					$parentTemplatePartitionParentRUSize = $parentTemplate['ru_size'];
-					
-					// Get parent template partition ... parent partition units
-					if(count($parentTemplatePartitionParentAddress)) {
-						$parentTemplatePartitionParentPartition = $PCM->getPartition($parentTemplateBlueprint, $parentTemplateFace, $parentTemplatePartitionParentAddress);
-						$parentTemplatePartitionParentUnits = $parentTemplatePartitionParentPartition['units'];
-					} else {
-						$parentTemplatePartitionParentUnits = $parentTemplatePartitionParentRUSize * 2;
-					}
-					
-					// Determine parent template partition direction
-					$parentTemplatePartitionDirection = (count($parentTemplatePartitionAddress) % 2) ? 'row' : 'col';
-					
-					//  Compile insert constraints data
-					if($parentTemplatePartitionDirection == 'row') {
-						$parentPortLayout = array('height' => $parentTemplatePartitionParentUnits, 'width' => $parentTemplatePartitionUnits);
-					} else {
-						$parentPortLayout = array('height' => $parentTemplatePartitionUnits, 'width' => $parentTemplatePartitionParentUnits);
-					}
-					$parentEncLayout = $parentTemplatePartition['enc_layout'];
-					$insertConstraints = array(
-						'part_layout' => $parentPortLayout,
-						'enc_layout' => $parentEncLayout
-					);
-					
-					$template->insert_constraints = [$insertConstraints];
-				} else {
+            // Get parent template partition units
+            $parentTemplate = TemplateModel::where('id', '=', $parentTemplateID)->first();
+            $parentTemplateBlueprint = $parentTemplate['blueprint'];
+            $parentTemplatePartition = $PCM->getPartition($parentTemplateBlueprint, $parentTemplateFace, $parentTemplatePartitionAddress);
+            $parentTemplatePartitionUnits = $parentTemplatePartition['units'];
+            
+            // Get parent template partition RU size
+            $parentTemplatePartitionParentRUSize = $parentTemplate['ru_size'];
+            
+            // Get parent template partition ... parent partition units
+            if(count($parentTemplatePartitionParentAddress)) {
+                $parentTemplatePartitionParentPartition = $PCM->getPartition($parentTemplateBlueprint, $parentTemplateFace, $parentTemplatePartitionParentAddress);
+                $parentTemplatePartitionParentUnits = $parentTemplatePartitionParentPartition['units'];
+            } else {
+                $parentTemplatePartitionParentUnits = $parentTemplatePartitionParentRUSize * 2;
+            }
+            
+            // Determine parent template partition direction
+            $parentTemplatePartitionDirection = (count($parentTemplatePartitionAddress) % 2) ? 'row' : 'col';
+            
+            //  Compile insert constraints data
+            if($parentTemplatePartitionDirection == 'row') {
+                $parentPortLayout = array('height' => $parentTemplatePartitionParentUnits, 'width' => $parentTemplatePartitionUnits);
+            } else {
+                $parentPortLayout = array('height' => $parentTemplatePartitionUnits, 'width' => $parentTemplatePartitionParentUnits);
+            }
+            $parentEncLayout = $parentTemplatePartition['enc_layout'];
+            $insertConstraints = array(
+                'part_layout' => $parentPortLayout,
+                'enc_layout' => $parentEncLayout
+            );
+            
+            $template->insert_constraints = $insertConstraints;
+        } else {
 
-                    $template->ru_size = $request->ru_size;
-                    $template->mount_config = $request->mount_config;
-                }
+            $template->ru_size = $request->ru_size;
+            $template->mount_config = $request->mount_config;
+        }
 
         $template->save();
 
@@ -184,7 +186,54 @@ class Templates extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+
+        // Validate template ID
+        $validatorInput = [
+            'id' => $id
+        ];
+        $validatorRules = [
+            'id' => [
+                'required',
+                'exists:template'
+            ]
+        ];
+        $validatorMessages = [
+        ];
+        Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
+
+        // Validate request data
+        $request->validate([
+            'name' => [
+                'alpha_dash',
+                'unique:App\Models\TemplateModel,name',
+                'min:1',
+                'max:255'
+            ],
+            'category_id' => [
+                'exists:template_category,id'
+            ],
+        ]);
+
+        // Store request data
+        $data = $request->all();
+
+        // Retrieve template record
+        $template = TemplateModel::where('id', $id)->first();
+
+        // Update template record
+        foreach($data as $key => $value) {
+            if($key == 'name') {
+                $template->name = $value;
+            } else if($key == 'category_id') {
+                $template->category_id = $value;
+            }
+        }
+
+        // Save template record
+        $template->save();
+
+        // Return template record
+        return $template->toArray();
     }
 
     /**
@@ -195,7 +244,7 @@ class Templates extends Controller
      */
     public function destroy($id)
     {
-				$validatorInput = [
+		$validatorInput = [
             'id' => $id
         ];
         $validatorRules = [
@@ -210,7 +259,7 @@ class Templates extends Controller
         ];
         Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
 				
-				$template = TemplateModel::where('id', $id)->first();
+		$template = TemplateModel::where('id', $id)->first();
 
         $template->delete();
 

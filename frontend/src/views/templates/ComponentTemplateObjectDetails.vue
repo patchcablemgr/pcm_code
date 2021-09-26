@@ -18,13 +18,22 @@
 						text="Actions"
 						variant="primary"
 					>
-						<b-dropdown-item>Edit</b-dropdown-item>
-						<b-dropdown-item>Clone</b-dropdown-item>
-						<b-dropdown-item>Where Used</b-dropdown-item>
+						<b-dropdown-item
+              @click=" $emit('TemplateObjectEditClicked') "
+              :disabled="!TemplateSelected"
+            >Edit</b-dropdown-item>
+						<b-dropdown-item
+              @click=" $emit('TemplateObjectCloneClicked') "
+              :disabled="!TemplateSelected"
+            >Clone</b-dropdown-item>
+						<b-dropdown-item
+              :disabled="!TemplateSelected"
+            >Where Used</b-dropdown-item>
 						<b-dropdown-divider />
 						<b-dropdown-item
 							variant="danger"
 							@click=" $emit('TemplateObjectDeleteClicked') "
+              :disabled="!TemplateSelected"
 						>Delete</b-dropdown-item>
 					</b-dropdown>
 				</div>
@@ -200,7 +209,9 @@
     </dl>
 
   </b-card-body>
-	</b-card>
+  
+  </b-card>
+
 </template>
 
 <script>
@@ -232,6 +243,14 @@ export default {
     }
   },
   computed: {
+    TemplateSelected: function(){
+
+      const vm = this
+      const Context = vm.Context
+      const TemplateID = vm.PartitionAddressSelected[Context].template_id
+
+      return (TemplateID === null) ? false : true
+    },
     ComputedObjectName: {
       get() {
 

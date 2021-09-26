@@ -23,7 +23,7 @@
           :TemplateData="TemplateData"
           :CategoryData="CategoryData"
           :TemplateRUSize=" RackObjectSize( RackObjectID(CabinetData.id, CabinetRU) ) "
-          :InitialDepthCounter=" InitialDepthCounter "
+          :InitialPartitionAddress=[]
           :Context="Context"
           :ObjectID="RackObjectID(CabinetData.id, CabinetRU)"
           :TemplateFaceSelected="TemplateFaceSelected"
@@ -48,8 +48,6 @@
 import { BContainer, BRow, BCol, } from 'bootstrap-vue'
 import ComponentObject from './ComponentObject.vue'
 
-const InitialDepthCounter = []
-
 export default {
   components: {
     BContainer,
@@ -70,7 +68,6 @@ export default {
   },
   data() {
     return {
-      InitialDepthCounter
     }
   },
   methods: {

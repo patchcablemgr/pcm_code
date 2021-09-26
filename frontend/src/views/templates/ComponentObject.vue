@@ -6,19 +6,19 @@
       pcm_template_partition_hovered: PartitionIsHovered(),
     }"
     :style="{
-      'background-color': ObjectCategoryData( ObjectID ).color,
+      'background-color': TemplateColor(ObjectID),
       'height': '100%',
     }"
-    @click.stop=" $emit('PartitionClicked', {'Context': Context, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': InitialDepthCounter}) "
-    @mouseover.stop=" $emit('PartitionHovered', {'Context': Context, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': InitialDepthCounter, 'HoverState': true}) "
-    @mouseleave.stop=" $emit('PartitionHovered', {'Context': Context, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': InitialDepthCounter, 'HoverState': false}) "
+    @click.stop=" $emit('PartitionClicked', {'Context': Context, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': InitialPartitionAddress}) "
+    @mouseover.stop=" $emit('PartitionHovered', {'Context': Context, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': InitialPartitionAddress, 'HoverState': true}) "
+    @mouseleave.stop=" $emit('PartitionHovered', {'Context': Context, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': InitialPartitionAddress, 'HoverState': false}) "
   >
     <component-template
       :ObjectData="ObjectData"
       :TemplateData="TemplateData"
       :CategoryData="CategoryData"
       :TemplateRUSize="TemplateRUSize"
-      :InitialDepthCounter=" InitialDepthCounter "
+      :InitialPartitionAddress=" InitialPartitionAddress "
       :Context="Context"
       :ObjectID="ObjectID"
       :TemplateFaceSelected="TemplateFaceSelected"
@@ -47,7 +47,7 @@ export default {
     TemplateData: {type: Object},
     CategoryData: {type: Array},
     TemplateRUSize: {type: Number},
-    InitialDepthCounter: {type: Array},
+    InitialPartitionAddress: {type: Array},
     Context: {type: String},
     ObjectID: {},
     TemplateFaceSelected: {type: Object},
@@ -136,29 +136,35 @@ export default {
       // Return template
       return ObjectPreviewData
     },
-    ObjectCategoryData: function(ObjectID) {
+    TemplateColor: function(ObjectID) {
 
       // Initial variables
       const vm = this
       const TemplateData = vm.TemplateData
       const Context = vm.Context
+      let TemplateColor
 
-      // Get object index
-      const ObjectIndex = vm.ObjectData[Context].findIndex((object) => object.id == ObjectID)
+      // Get Template
+      const TemplateID = vm.GetTemplateID(ObjectID)
+      const TemplateIndex = vm.GetTemplateIndex(TemplateID)
+      const Template = TemplateData[Context][TemplateIndex]
 
-      // Get template index
-      const TemplateID = vm.ObjectData[Context][ObjectIndex].template_id
-      const TemplateIndex = TemplateData[Context].findIndex((template) => template.id == TemplateID)
+      if (Template.hasOwnProperty('pseudo') && !Template.hasOwnProperty('pseudoParentTemplate')) {
+        TemplateColor = '#FFFFFF00'
+      } else {
 
-      // Get category index
-      const ObjectCategoryID = TemplateData[Context][TemplateIndex].category_id
-      const ObjectCategoryIndex = vm.CategoryData.findIndex((category) => category.id == ObjectCategoryID);
+        // Get category index
+        const ObjectCategoryID = Template.category_id
+        const ObjectCategoryIndex = vm.CategoryData.findIndex((category) => category.id == ObjectCategoryID);
 
-      // Get category
-      const ObjectCategoryData = vm.CategoryData[ObjectCategoryIndex]
+        // Get category
+        const ObjectCategoryData = vm.CategoryData[ObjectCategoryIndex]
+
+        TemplateColor = ObjectCategoryData.color
+      }
 
       // Return category
-      return ObjectCategoryData
+      return TemplateColor
     },
     PartitionIsSelected: function() {
 
@@ -166,7 +172,7 @@ export default {
       const Context = vm.Context
       const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
       const PartitionAddressSelected = vm.PartitionAddressSelected[Context][TemplateFaceSelected]
-      const PartitionAddress = vm.InitialDepthCounter
+      const PartitionAddress = vm.InitialPartitionAddress
       const TemplateIDSelected = vm.PartitionAddressSelected[Context].template_id
       const TemplateID = vm.GetTemplateID(vm.ObjectID)
       let PartitionIsSelected = false
@@ -182,7 +188,7 @@ export default {
       const Context = vm.Context
       const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
       const PartitionAddressHovered = vm.PartitionAddressHovered[Context][TemplateFaceSelected]
-      const PartitionAddress = vm.InitialDepthCounter
+      const PartitionAddress = vm.InitialPartitionAddress
       const TemplateIDSelected = vm.PartitionAddressHovered[Context].template_id
       const TemplateID = vm.GetTemplateID(vm.ObjectID)
       let PartitionIsHovered = false
@@ -191,12 +197,6 @@ export default {
         PartitionIsHovered = true
       }
       return PartitionIsHovered
-    },
-    GetDepthCounter: function(PartitionIndex) {
-
-      // Store variables
-      const vm = this
-      return vm.InitialDepthCounter.concat([PartitionIndex])
     },
     GetPartitionGrid: function(units) {
 
@@ -225,23 +225,6 @@ export default {
       const AreasString = "'" + AreasArray.map(arr => arr.join(' ')).join("' '") + "'";
 
       return AreasString
-    },
-    GetSelectedPartitionDirection: function() {
-
-      const vm = this;
-      const PartitionAddress = vm.InitialDepthCounter
-      let PartitionDirection
-
-      PartitionDirection = (PartitionAddress.length % 2) ? 'column' : 'row'
-      
-      return PartitionDirection
-    },
-    PartitionDirectionClass: function() {
-
-      const vm = this
-      const PartitionAddress = vm.InitialDepthCounter
-
-      return (PartitionAddress.length % 2) ? 'pcm_template_partition_horizontal' : 'pcm_template_partition_vertical'
     },
   },
 }

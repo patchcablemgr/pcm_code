@@ -114,6 +114,8 @@
 						:TemplateFaceSelected="TemplateFaceSelected"
 						:PartitionAddressSelected="PartitionAddressSelected"
 						:TemplatePartitionPortRange="TemplatePartitionPortRange"
+            @TemplateObjectEditClicked="TemplateObjectEditClicked()"
+            @TemplateObjectCloneClicked="TemplateObjectCloneClicked()"
 						@TemplateObjectDeleteClicked="TemplateObjectDeleteClicked()"
 					/>
 
@@ -139,7 +141,21 @@
         </b-col>
       </b-row>
     </b-container>
+
+    <!-- Toast -->
     <toast-general/>
+
+    <!-- Template Edit Modal -->
+    <modal-templates-edit
+      :TemplateData="TemplateData"
+      :CategoryData="CategoryData"
+      :ObjectData="ObjectData"
+      Context="template"
+      :TemplateFaceSelected="TemplateFaceSelected"
+      :PartitionAddressSelected="PartitionAddressSelected"
+      :TemplatePartitionPortRange="TemplatePartitionPortRange"
+      @TemplateEdited="TemplateEdited($event)"
+    />
   </div>
 </template>
 
@@ -150,6 +166,7 @@ import ToastGeneral from './templates/ToastGeneral.vue'
 import ComponentCabinet from './templates/ComponentCabinet.vue'
 import ComponentTemplateObjectDetails from './templates/ComponentTemplateObjectDetails.vue'
 import ComponentTemplates from './templates/ComponentTemplates.vue'
+import ModalTemplatesEdit from './templates/ModalTemplatesEdit.vue'
 
 const StandardTemplateID = 1
 const InsertTemplateID = 2
@@ -190,9 +207,7 @@ const TemplateData = {
       "name": "New_Template",
       "category_id": 0,
       "type": "insert",
-			"ru_size": null,
       "function": "endpoint",
-			"mount_config": null,
       "insert_constraints": null,
 			"parent_template": null,
       "blueprint": GenericInsertBlueprint
@@ -356,6 +371,7 @@ export default {
     ComponentCabinet,
     ComponentTemplateObjectDetails,
     ComponentTemplates,
+    ModalTemplatesEdit,
   },
   data() {
     return {
@@ -408,7 +424,7 @@ export default {
         }
       }
 
-      return PreviewDisplay
+      return 'cabinet'
     },
     TemplatePartitionPortRange: function(){
       
@@ -501,6 +517,8 @@ export default {
 
       // Get Partition
       const Partition = vm.GetSelectedPreviewPartition()
+
+      console.log('Debug (Template-AddChildPartitionDisabled-GetPartitionUnitsAvailable): '+vm.GetPartitionUnitsAvailable())
 
       return (!vm.GetPartitionUnitsAvailable() || Partition.type != 'generic')
     },
@@ -619,6 +637,7 @@ export default {
           }
         })
         InsertParentTemplate.pseudo = true
+        InsertParentTemplate.pseudoParentTemplate = true
         vm.TemplateData.preview.push(InsertParentTemplate)
 
 				// Generate pseudo object and constraining templates/objects if necessary
@@ -653,19 +672,19 @@ export default {
       const Blueprint = Template.blueprint[TemplateFace]
       const Partition = vm.GetPartition(Blueprint, PartitionAddress)
       const PartitionDirection = vm.GetPartitionDirection(PartitionAddress)
-      let width
-      let height
-      let constraints = {
+      let Width
+      let Height
+      let InsertConstraints = {
         "part_layout": {
           "height": null,
           "width": null
         }
       }
 
-      if (PartitionDirection == 'row') {
+      if (PartitionDirection == 'col') {
 
         // Store height
-        height = Partition.units
+        Height = Partition.units
 
         // Store width
         if (PartitionAddress.length > 1) {
@@ -673,7 +692,7 @@ export default {
           // Partition is deeper than 1st level, take parent partition units
           const ParentPartitionAddress = PartitionAddress.slice(0, PartitionAddress.length - 1)
           let ParentPartition = vm.GetPartition(Blueprint, ParentPartitionAddress)
-          width = ParentPartition.units
+          Width = ParentPartition.units
 
         } else {
 
@@ -681,17 +700,17 @@ export default {
           if (Template.insert_constraints !== null) {
 
             // Get width from constraints if they exist
-            width = Template.insert_constraints[Template.insert_constraints.length - 1].part_layout.width
+            Width = Template.insert_constraints.part_layout.width
           } else {
 
             // Get width from template RU size
-            width = 24
+            Width = 24
           }
         }
       } else {
 
         // Store width
-        width = Partition.units
+        Width = Partition.units
 
         // Store height
         if (PartitionAddress.length > 1) {
@@ -699,7 +718,7 @@ export default {
           // Partition is deeper than 1st level, take parent partition units
           const ParentPartitionAddress = PartitionAddress.slice(0, PartitionAddress.length - 1)
           let ParentPartition = vm.GetPartition(Blueprint, ParentPartitionAddress)
-          height = ParentPartition.units
+          Height = ParentPartition.units
 
         } else {
 
@@ -707,19 +726,17 @@ export default {
           if (Template.insert_constraints !== null) {
 
             // Get height from constraints if they exist
-            height = Template.insert_constraints[Template.insert_constraints.length - 1].part_layout.height
+            Height = Template.insert_constraints.part_layout.height
           } else {
 
             // Get height from template RU size
-            height = Template.ru_size * 2
+            Height = Template.ru_size * 2
           }
         }
       }
 
-      constraints.part_layout.height = height
-      constraints.part_layout.width = width
-      const InsertConstraints = (Template.insert_constraints == null) ? [] : JSON.parse(JSON.stringify(Template.insert_constraints))
-      InsertConstraints.push(constraints)
+      InsertConstraints.part_layout.height = Height
+      InsertConstraints.part_layout.width = Width
 
       return InsertConstraints
 
@@ -752,6 +769,34 @@ export default {
       const Context = EmitData.Context
       vm.TemplateFaceSelected[Context] = TemplateFace
 
+    },
+    TemplateEdited: function(EmitData) {
+
+      // Store data
+      const vm = this
+      const Context = 'template'
+      const TemplateID = vm.PartitionAddressSelected[Context].template_id
+      const url = '/api/templates/'+TemplateID
+      const data = EmitData
+
+      // PATCH category form data
+      this.$http.patch(url, data).then(function(response){
+        
+        const Template = response.data
+        const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+				
+        // Append new template to template array
+        vm.$set(vm.TemplateData[Context], TemplateIndex, Template)
+
+      }).catch(error => {
+
+        // Display error to user via toast
+        vm.$bvToast.toast(JSON.stringify(error.response.data), {
+          title: 'Error',
+          variant: 'danger',
+        })
+
+      });
     },
     TemplateNameUpdated: function(newValue) {
 
@@ -1297,6 +1342,36 @@ export default {
       let SelectedPartition = vm.GetSelectedPreviewPartition()
       SelectedPartition.enc_layout.rows = newValue
     },
+    TemplateObjectEditClicked: function() {
+
+      const vm = this
+      vm.$bvModal.show('modal-templates-edit')
+
+    },
+    TemplateObjectCloneClicked: function() {
+
+      const vm = this
+      const TemplateContext = 'template'
+      const TemplateID = vm.PartitionAddressSelected[TemplateContext].template_id
+      const TemplateIndex = vm.GetTemplateIndex(TemplateID, TemplateContext)
+      const Template = vm.TemplateData[TemplateContext][TemplateIndex]
+
+      const PreviewTemplateID = (Template.type == 'standard') ? vm.StandardTemplateID : vm.InsertTemplateID
+
+      const TemplateClone = JSON.parse(JSON.stringify(vm.TemplateData[TemplateContext][TemplateIndex]), function(TemplateKey, TemplateValue){
+        if (TemplateKey == 'id') {
+          return PreviewTemplateID
+        } else {
+          return TemplateValue
+        }
+      })
+
+      const PreviewContext = 'preview'
+      const PreviewTemplateIndex = vm.GetTemplateIndex(PreviewTemplateID, PreviewContext)
+      vm.$set(vm.TemplateData[PreviewContext], PreviewTemplateIndex, TemplateClone)
+
+
+    },
     TemplateObjectDeleteClicked: function() {
       
 			const vm = this
@@ -1364,9 +1439,43 @@ export default {
 					}
         })
 		},
+    GetGlobalPartitionMax: function(Template, PartitionAddress) {
+
+      const vm = this
+      const PartitionDirection = vm.GetPartitionDirection(PartitionAddress)
+
+      // Get working max
+      let WorkingMax
+      if (PartitionDirection == 'col') {
+
+        if (Template.insert_constraints !== null) {
+
+          // Partition is an insert with constraints
+          WorkingMax = Template.insert_constraints.part_layout.width
+        } else {
+
+          // Partition is standard
+          WorkingMax = 24
+        }
+      } else {
+
+        if (Template.insert_constraints !== null) {
+
+          // Partition is an insert with constraints
+          WorkingMax = Template.insert_constraints.part_layout.height
+        } else {
+
+          // Partition is standard
+          WorkingMax = Template.ru_size * 2
+        }
+      }
+
+      return WorkingMax
+
+    },
 	  GetPartitionDirection: function(PartitionAddress) {
 
-      const PartitionDirection = (PartitionAddress.length % 2) ? 'column' : 'row'
+      const PartitionDirection = (PartitionAddress.length % 2) ? 'row' : 'col'
 
       return PartitionDirection
     },
@@ -1382,8 +1491,7 @@ export default {
       const Blueprint = PreviewData.blueprint[TemplateFaceSelected]
       const Partition = vm.GetPartition(Blueprint, PartitionAddress)
 
-      const PartitionDirection = vm.GetPartitionDirection(PartitionAddress)
-      let UnitsAvailable = (PartitionDirection == 'row') ? 24 : PreviewData.ru_size * 2
+      let UnitsAvailable = vm.GetGlobalPartitionMax(PreviewData, PartitionAddress)
       let PartitionChildren
 
       if(PartitionAddress.length > 1) {
@@ -1480,80 +1588,64 @@ export default {
         PseudoObjectParentFace = 'front'
         PseudoObjectParentPartitionAddress = [0, 0]
         PseudoObjectParentEnclosureAddress = [0, 0]
+        const InsertConstraints = Template.insert_constraints
 
-        Template.insert_constraints.forEach(function (InsertConstraint, InsertConstraintIndex) {
+        // Generate pseudo IDs
+        const PseudoTemplateID = "pseudo-" + (vm.TemplateData[Context].length + WorkingTemplateData.length)
+        const PseudoObjectID = "pseudo-" + (vm.ObjectData[Context].length + WorkingObjectData.length)
 
-          const PseudoTemplateID = "pseudo-" + (vm.TemplateData[Context].length + WorkingTemplateData.length)
-          const PseudoObjectID = "pseudo-" + (vm.ObjectData[Context].length + WorkingObjectData.length)
+        // Create pseudo object
+        WorkingObjectData.push(JSON.parse(JSON.stringify(vm.GenericObject), function (GenericObjectKey, GenericObjectValue) {
+          if (GenericObjectKey == 'id') {
+            return PseudoObjectID
+          } else if (GenericObjectKey == 'cabinet_face') {
+            return 'front'
+          } else if (GenericObjectKey == 'location_id') {
+            return (Context == 'preview') ? vm.InsertTemplateID : null
+          } else if (GenericObjectKey == 'cabinet_ru') {
+            return 1
+          } else if (GenericObjectKey == 'template_id') {
+            return PseudoTemplateID
+          } else if (GenericObjectKey == 'parent_id') {
+            return PseudoObjectParentID
+          } else {
+            return GenericObjectValue
+          }
+        }))
 
-          // Create pseudo object
-          WorkingObjectData.push(JSON.parse(JSON.stringify(vm.GenericObject), function (GenericObjectKey, GenericObjectValue) {
-            if (GenericObjectKey == 'id') {
-              return PseudoObjectID
-            } else if (GenericObjectKey == 'cabinet_face') {
-              return 'front'
-            } else if (GenericObjectKey == 'location_id') {
-              return (InsertConstraintIndex == 0 && Context == 'preview') ? vm.InsertTemplateID : null
-            } else if (GenericObjectKey == 'cabinet_ru') {
-              return 1
-            } else if (GenericObjectKey == 'template_id') {
-              return PseudoTemplateID
-            } else if (GenericObjectKey == 'parent_id') {
-              return PseudoObjectParentID
+        // Create pseudo template
+        WorkingTemplateData.push(JSON.parse(JSON.stringify(vm.GenericTemplate), function (GenericTemplateKey, GenericTemplateValue) {
+          if (GenericTemplateKey == 'id') {
+            return PseudoTemplateID
+          } else if (GenericTemplateKey == 'name') {
+            return Template.name
+          } else if (GenericTemplateKey == 'category_id') {
+            return Template.category_id
+          } else if (GenericTemplateKey == 'type') {
+            // Set pseudo template type, but avoid setting partition type
+            if (GenericTemplateValue === null) {
+                return 'standard'
             } else {
-              return GenericObjectValue
-            }
-          }))
-
-          // Create pseudo template
-          WorkingTemplateData.push(JSON.parse(JSON.stringify(vm.GenericTemplate), function (GenericTemplateKey, GenericTemplateValue) {
-            if (GenericTemplateKey == 'id') {
-
-              // Set pseudo template ID
-              return PseudoTemplateID
-
-            } else if (GenericTemplateKey == 'name') {
-
-              // Set pseudo template name
-              return (InsertConstraintIndex == 0) ? Template.name : GenericTemplateValue
-
-            } else if (GenericTemplateKey == 'category_id') {
-
-              // Set pseudo template category ID
-              return Template.category_id
-
-            } else if (GenericTemplateKey == 'type') {
-
-              // Set pseudo template type, but avoid setting partition type
-              if (GenericTemplateValue === null) {
-                  return (InsertConstraintIndex == 0) ? 'standard' : 'insert'
-              } else {
-                  return GenericTemplateValue
-              }
-
-            } else if (GenericTemplateKey == 'ru_size') {
-
-              // Set pseudo template RU size if this is the insert constraint origin ('standard' template type)
-              return (InsertConstraintIndex == 0) ? Math.ceil(InsertConstraint.part_layout.height / 2) : GenericTemplateValue
-
-            } else if (GenericTemplateKey == 'blueprint') {
-
-              // Set pseudo template partition attributes
-              GenericTemplateValue.front[0].units = InsertConstraint.part_layout.width
-              GenericTemplateValue.front[0].children[0].units = InsertConstraint.part_layout.height
-              GenericTemplateValue.front[0].children[0].enc_layout.cols = InsertConstraint.enc_layout.cols
-              GenericTemplateValue.front[0].children[0].enc_layout.rows = InsertConstraint.enc_layout.rows
-              return GenericTemplateValue
-
-            } else {
-
                 return GenericTemplateValue
             }
-          }))
+          } else if (GenericTemplateKey == 'ru_size') {
+            // Set pseudo template RU size if this is the insert constraint origin ('standard' template type)
+            return Math.ceil(InsertConstraints.part_layout.height / 2)
+          } else if (GenericTemplateKey == 'blueprint') {
+            // Set pseudo template partition attributes
+            GenericTemplateValue.front[0].units = InsertConstraints.part_layout.width
+            GenericTemplateValue.front[0].children[0].units = InsertConstraints.part_layout.height
+            GenericTemplateValue.front[0].children[0].enc_layout.cols = InsertConstraints.enc_layout.cols
+            GenericTemplateValue.front[0].children[0].enc_layout.rows = InsertConstraints.enc_layout.rows
+            return GenericTemplateValue
 
-          PseudoObjectParentID = PseudoObjectID
-        })
+          } else {
 
+              return GenericTemplateValue
+          }
+        }))
+
+        PseudoObjectParentID = PseudoObjectID
       }
 
       // Create pseudo object for template
@@ -1744,7 +1836,7 @@ export default {
         
         const Template = response.data
 				
-        // Append new template to template array\
+        // Append new template to template array
         vm.TemplateData.template.push(Template)
 
         vm.GeneratePseudoData(Template, 'template')

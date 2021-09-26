@@ -566,16 +566,15 @@ export default {
         return false
       }
     },
-    ComputedInputTemplateRUSize: {
-      get() {
-        // Store variables
-        const vm = this
-        const Context = vm.Context
-        const PreviewDataIndex = vm.PreviewDataIndex
-        const TemplateRUSize = vm.TemplateData[Context][PreviewDataIndex].ru_size
+    ComputedInputTemplateRUSize: function() {
 
-        return TemplateRUSize
-      }
+      // Store variables
+      const vm = this
+      const Context = vm.Context
+      const PreviewDataIndex = vm.PreviewDataIndex
+      const TemplateRUSize = vm.TemplateData[Context][PreviewDataIndex].ru_size
+
+      return TemplateRUSize
     },
     ComputedInputTemplatePartitionType: {
       get() {
@@ -833,12 +832,12 @@ export default {
       const vm = this
       const TemplateData = vm.TemplateData
       const Context = vm.Context
-      const TemplateFaceSelected = vm.TemplateFaceSelected
+      const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
       const PreviewDataIndex = vm.PreviewDataIndex
-      let WorkingPartition = TemplateData[Context][PreviewDataIndex].blueprint[TemplateFaceSelected[Context]]
+      let WorkingPartition = TemplateData[Context][PreviewDataIndex].blueprint[TemplateFaceSelected]
       let Partition
 
-      PartitionAddress.forEach(function(PartitionAddressIndex, Depth){
+      PartitionAddress.forEach(function(PartitionAddressIndex){
           Partition = WorkingPartition[PartitionAddressIndex]
           WorkingPartition = WorkingPartition[PartitionAddressIndex].children
       })
@@ -869,7 +868,7 @@ export default {
         if (Template.insert_constraints !== null) {
 
           // Partition is an insert with constraints
-          WorkingMax = Template.insert_constraints[Template.insert_constraints.length - 1].part_layout.width
+          WorkingMax = Template.insert_constraints.part_layout.width
         } else {
 
           // Partition is standard
@@ -880,7 +879,7 @@ export default {
         if (Template.insert_constraints !== null) {
 
           // Partition is an insert with constraints
-          WorkingMax = Template.insert_constraints[Template.insert_constraints.length - 1].part_layout.height
+          WorkingMax = Template.insert_constraints.part_layout.height
         } else {
 
           // Partition is standard
@@ -974,8 +973,6 @@ export default {
         WorkingPartitionChildren = WorkingPartitionChildren[PartitionAddressIndex].children
         WorkingPartitionAddress.push(PartitionAddressIndex)
       })
-
-      console.log('Debug (TemplatesForm-GetSelectedPartitionSizeMax-SelectedPartitionSizeMax): '+SelectedPartitionSizeMax)
 
       return SelectedPartitionSizeMax;
     },

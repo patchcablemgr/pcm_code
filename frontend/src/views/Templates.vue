@@ -415,16 +415,24 @@ export default {
           const PartitionAddress = PartitionAddressSelected[TemplateFaceSelected]
           const Partition = vm.GetPartition(Blueprint, PartitionAddress)
           const PartitionType = Partition.type
+          const PreviewTemplate = vm.GetPreviewData()
+          const PreviewTemplateClone = PreviewTemplate.hasOwnProperty('clone')
 
-          if(PartitionType != 'enclosure') {
+          if(PartitionType == 'enclosure') {
+            PreviewDisplay = 'cabinet'
+          } else if(PreviewTemplateClone) {
+            PreviewDisplay = 'cabinet'
+          } else {
             PreviewDisplay = 'insertInstructions'
           }
         } else {
           PreviewDisplay = 'insertInstructions'
         }
+      } else {
+        PreviewDisplay = 'cabinet'
       }
 
-      return 'cabinet'
+      return PreviewDisplay
     },
     TemplatePartitionPortRange: function(){
       
@@ -1352,25 +1360,74 @@ export default {
 
       const vm = this
       const TemplateContext = 'template'
+      const PreviewContext = 'preview'
+
+      // Get cloned template
       const TemplateID = vm.PartitionAddressSelected[TemplateContext].template_id
       const TemplateIndex = vm.GetTemplateIndex(TemplateID, TemplateContext)
       const Template = vm.TemplateData[TemplateContext][TemplateIndex]
 
+      // Set active preview template
       const PreviewTemplateID = (Template.type == 'standard') ? vm.StandardTemplateID : vm.InsertTemplateID
+      vm.ActivePreviewTemplateID = PreviewTemplateID
 
-      const TemplateClone = JSON.parse(JSON.stringify(vm.TemplateData[TemplateContext][TemplateIndex]), function(TemplateKey, TemplateValue){
+      // Create a copy of cloned template
+      const TemplateClone = JSON.parse(JSON.stringify(Template), function(TemplateKey, TemplateValue){
         if (TemplateKey == 'id') {
           return PreviewTemplateID
         } else {
           return TemplateValue
         }
       })
+      TemplateClone.clone = true
 
-      const PreviewContext = 'preview'
+      // Copy cloned template to active preview template
       const PreviewTemplateIndex = vm.GetTemplateIndex(PreviewTemplateID, PreviewContext)
       vm.$set(vm.TemplateData[PreviewContext], PreviewTemplateIndex, TemplateClone)
 
+      if(Template.type == 'insert') {
 
+        // Remove preview pseudo objects/templates
+        vm.RemovePreviewPseudoData()
+
+        // Create pseudo template clone parent
+        const PseudoTemplateID = "pseudo-" + (vm.TemplateData[PreviewContext].length)
+        const InsertConstraints = Template.insert_constraints
+        const TemplateCloneParent = JSON.parse(JSON.stringify(vm.GenericTemplate), function (GenericTemplateKey, GenericTemplateValue) {
+          if (GenericTemplateKey == 'id') {
+            return PseudoTemplateID
+          } else if (GenericTemplateKey == 'name') {
+            return Template.name
+          } else if (GenericTemplateKey == 'category_id') {
+            return Template.category_id
+          } else if (GenericTemplateKey == 'type') {
+            // Set pseudo template type, but avoid setting partition type
+            if (GenericTemplateValue === null) {
+                return 'standard'
+            } else {
+                return GenericTemplateValue
+            }
+          } else if (GenericTemplateKey == 'ru_size') {
+            // Set pseudo template RU size if this is the insert constraint origin ('standard' template type)
+            return Math.ceil(InsertConstraints.part_layout.height / 2)
+          } else if (GenericTemplateKey == 'blueprint') {
+            // Set pseudo template partition attributes
+            GenericTemplateValue.front[0].units = InsertConstraints.part_layout.width
+            GenericTemplateValue.front[0].children[0].units = InsertConstraints.part_layout.height
+            GenericTemplateValue.front[0].children[0].enc_layout.cols = InsertConstraints.enc_layout.cols
+            GenericTemplateValue.front[0].children[0].enc_layout.rows = InsertConstraints.enc_layout.rows
+            return GenericTemplateValue
+
+          } else {
+              return GenericTemplateValue
+          }
+        })
+        vm.TemplateData[PreviewContext].push(TemplateCloneParent)
+
+        // Generate pseudo object and constraining templates/objects if necessary
+        const PseudoObjectID = vm.GeneratePseudoData(TemplateCloneParent, 'preview')
+        vm.ObjectData.preview[PreviewTemplateIndex].parent_id = PseudoObjectID
+      }
     },
     TemplateObjectDeleteClicked: function() {
       

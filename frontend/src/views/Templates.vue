@@ -34,6 +34,7 @@
                 @TemplateCategorySelected="TemplateCategorySelected($event)"
                 @TemplateTypeUpdated="TemplateTypeUpdated($event)"
                 @TemplateRUSizeUpdated="TemplateRUSizeUpdated($event)"
+                @TemplateFunctionUpdated="TemplateFunctionUpdated($event)"
                 @TemplateMountConfigUpdated="TemplateMountConfigUpdated($event)"
                 @TemplatePartitionTypeUpdated="TemplatePartitionTypeUpdated($event)"
                 @TemplatePartitionAdd="TemplatePartitionAdd($event)"
@@ -282,7 +283,7 @@ const PartitionAddressHovered = {
     'rear': false
   }
 }
-const CabinetData = {
+const GenericCabinet = {
   "id": StandardTemplateID,
   "size": 25,
   "name": "Cabinet",
@@ -381,7 +382,7 @@ export default {
       MediaData,
       PortConnectorData,
       PortOrientationData,
-      CabinetData,
+      GenericCabinet,
       ObjectData,
       ActivePreviewTemplateID,
       SelectedPortFormatIndex,
@@ -396,6 +397,28 @@ export default {
     }
   },
   computed: {
+    CabinetData: function(){
+      
+      const vm = this
+      const Context = 'preview'
+      const StandardTemplateID = vm.StandardTemplateID
+      const InsertTemplateID = vm.InsertTemplateID
+      const GenericCabinet = vm.GenericCabinet
+      const ActivePreviewTemplateID = vm.ActivePreviewTemplateID
+      const ActivePreviewTemplateIndex = vm.GetTemplateIndex(ActivePreviewTemplateID, Context)
+      const ActivePreviewTemplate = vm.TemplateData[Context][ActivePreviewTemplateIndex]
+
+      const CabinetData =  JSON.parse(JSON.stringify(GenericCabinet), function(key, value) {
+        if(key == 'id') {
+          return (ActivePreviewTemplate.type == 'insert') ? InsertTemplateID : StandardTemplateID
+        } else {
+          return value
+        }
+      })
+
+      return CabinetData
+
+    },
     PreviewDisplay: function(){
 
       const vm = this
@@ -516,8 +539,11 @@ export default {
     TemplateFaceToggleIsDisabled: function() {
 
       const vm = this
-      const PreviewData = vm.GetPreviewData()
-      return PreviewData.mount_config === '2-post'
+      const Template = vm.GetPreviewData()
+      const MountConfig = Template.mount_config
+      const TemplateType = Template.type
+
+      return MountConfig === '2-post'  || TemplateType === 'insert'
     },
     AddChildPartitionDisabled: function() {
       // Store variables
@@ -614,9 +640,14 @@ export default {
       const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
       const PartitionAddress = EmitData.PartitionAddress
       const TemplateID = EmitData.TemplateID
+      const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+      const Template = vm.TemplateData[Context][TemplateIndex]
+      const Blueprint = Template.blueprint[TemplateFaceSelected]
+      const Partition = vm.GetPartition(Blueprint, PartitionAddress)
+      const PartitionType = Partition.type
 			
 			// Clicked partition should not be highlighted if it is a preview insert parent
-			const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+			
       const HonorClick = (vm.TemplateData[Context][TemplateIndex].hasOwnProperty('pseudo')) ? false : true
 
 			if(HonorClick) {
@@ -624,11 +655,9 @@ export default {
 				vm.PartitionAddressSelected[Context].template_id = TemplateID
 			}
 
-      if(Context == 'template') {
+      if(HonorClick && Context == 'template' && PartitionType == 'enclosure') {
 
         // Get selected template data
-        const TemplateIndex = vm.TemplateData[Context].findIndex((template) => template.id == TemplateID)
-        const Template = vm.TemplateData[Context][TemplateIndex]
         const TemplateFunction = Template.function
         const TemplateCategoryID = Template.category_id
 
@@ -666,7 +695,6 @@ export default {
         vm.TemplateData.preview[InsertTemplateIndex].category_id = TemplateCategoryID
         vm.TemplateData.preview[InsertTemplateIndex].function = TemplateFunction
         vm.TemplateData.preview[InsertTemplateIndex].insert_constraints = InsertConstraints
-				vm.TemplateData.preview[InsertTemplateIndex].parent_template = {'id': TemplateID, 'face': TemplateFaceSelected, 'partition_address': PartitionAddress}
 
         // Adjust insert object properties
         const InsertObjectIndex = vm.GetObjectIndex(vm.InsertTemplateID, 'preview')
@@ -686,6 +714,10 @@ export default {
         "part_layout": {
           "height": null,
           "width": null
+        },
+        "enc_layout": {
+          "cols": Partition.enc_layout.cols,
+          "rows": Partition.enc_layout.rows
         }
       }
 
@@ -946,6 +978,12 @@ export default {
       const vm = this
       const PreviewData = vm.GetPreviewData()
       PreviewData.ru_size = newValue
+    },
+    TemplateFunctionUpdated: function(newValue) {
+
+      const vm = this
+      const PreviewData = vm.GetPreviewData()
+      PreviewData.function = newValue
     },
     TemplateMountConfigUpdated: function(newValue) {
 
@@ -1371,6 +1409,8 @@ export default {
       const PreviewTemplateID = (Template.type == 'standard') ? vm.StandardTemplateID : vm.InsertTemplateID
       vm.ActivePreviewTemplateID = PreviewTemplateID
 
+      vm.TemplateFaceSelected[PreviewContext] = 'front'
+
       // Create a copy of cloned template
       const TemplateClone = JSON.parse(JSON.stringify(Template), function(TemplateKey, TemplateValue){
         if (TemplateKey == 'id') {
@@ -1403,9 +1443,9 @@ export default {
           } else if (GenericTemplateKey == 'type') {
             // Set pseudo template type, but avoid setting partition type
             if (GenericTemplateValue === null) {
-                return 'standard'
+              return 'standard'
             } else {
-                return GenericTemplateValue
+              return GenericTemplateValue
             }
           } else if (GenericTemplateKey == 'ru_size') {
             // Set pseudo template RU size if this is the insert constraint origin ('standard' template type)
@@ -1753,8 +1793,9 @@ export default {
     },
     categoryGET: function(SetCategoryToDefault = false) {
 
-      const vm = this;
-      const PreviewData = vm.GetPreviewData()
+      const vm = this
+      const StandardTemplateIndex = vm.GetTemplateIndex(vm.StandardTemplateID, 'preview')
+      const InsertTemplateIndex = vm.GetTemplateIndex(vm.InsertTemplateID, 'preview')
 
       this.$http.get('/api/categories').then(function(response){
 
@@ -1771,7 +1812,9 @@ export default {
             DefaultCategoryID = vm.CategoryData[0].id
           }
 
-          PreviewData.category_id = DefaultCategoryID
+
+          vm.TemplateData.preview[StandardTemplateIndex].category_id = DefaultCategoryID
+          vm.TemplateData.preview[InsertTemplateIndex].category_id = DefaultCategoryID
         }
 
       });

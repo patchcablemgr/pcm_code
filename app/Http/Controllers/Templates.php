@@ -67,7 +67,7 @@ class Templates extends Controller
                 Rule::in($templateTypeArray)
             ],
             'ru_size' => [
-                Rule::requiredIf($request->type == 'standard'),
+                'exclude_unless:type,standard',
                 'integer',
                 'min:1',
                 'max:25'
@@ -77,20 +77,24 @@ class Templates extends Controller
                 Rule::in($templateFunctionArray)
             ],
             'mount_config' => [
-                Rule::requiredIf($request->type == 'standard'),
+                'exclude_unless:type,standard',
                 Rule::in($templateMountConfigArray)
             ],
-            'parent_template.id' => [
-                Rule::requiredIf($request->type == 'insert')
+            'insert_constraints.part_layout.height' => [
+                'exclude_unless:type,insert',
+                'integer'
             ],
-            'parent_template.face' => [
-                Rule::requiredIf($request->type == 'insert')
+            'insert_constraints.part_layout.width' => [
+                'exclude_unless:type,insert',
+                'integer'
             ],
-            'parent_template.partition_address' => [
-                Rule::requiredIf($request->type == 'insert')
+            'insert_constraints.enc_layout.cols' => [
+                'exclude_unless:type,insert',
+                'integer'
             ],
-            'parent_template' => [
-                new TemplateInsertParentData
+            'insert_constraints.enc_layout.rows' => [
+                'exclude_unless:type,insert',
+                'integer'
             ],
             'blueprint' => [
                 'required',
@@ -108,53 +112,10 @@ class Templates extends Controller
         $template->mount_config = null;
         $template->insert_constraints = null;
         $template->blueprint = $request->blueprint;
-        $template->ru_size = null;
 				
         if($request->type == 'insert') {
             
-            // Prepare some variables
-            $parentTemplateData = $request->parent_template;
-            $parentTemplateID = $parentTemplateData['id'];
-            $parentTemplateFace = $parentTemplateData['face'];
-            $parentTemplatePartitionAddress = $parentTemplateData['partition_address'];
-            
-            // Prepare parent partition address
-            $parentTemplatePartitionParentAddress = $parentTemplatePartitionAddress;
-            array_pop($parentTemplatePartitionParentAddress);
-
-            // Get parent template partition units
-            $parentTemplate = TemplateModel::where('id', '=', $parentTemplateID)->first();
-            $parentTemplateBlueprint = $parentTemplate['blueprint'];
-            $parentTemplatePartition = $PCM->getPartition($parentTemplateBlueprint, $parentTemplateFace, $parentTemplatePartitionAddress);
-            $parentTemplatePartitionUnits = $parentTemplatePartition['units'];
-            
-            // Get parent template partition RU size
-            $parentTemplatePartitionParentRUSize = $parentTemplate['ru_size'];
-            
-            // Get parent template partition ... parent partition units
-            if(count($parentTemplatePartitionParentAddress)) {
-                $parentTemplatePartitionParentPartition = $PCM->getPartition($parentTemplateBlueprint, $parentTemplateFace, $parentTemplatePartitionParentAddress);
-                $parentTemplatePartitionParentUnits = $parentTemplatePartitionParentPartition['units'];
-            } else {
-                $parentTemplatePartitionParentUnits = $parentTemplatePartitionParentRUSize * 2;
-            }
-            
-            // Determine parent template partition direction
-            $parentTemplatePartitionDirection = (count($parentTemplatePartitionAddress) % 2) ? 'row' : 'col';
-            
-            //  Compile insert constraints data
-            if($parentTemplatePartitionDirection == 'row') {
-                $parentPortLayout = array('height' => $parentTemplatePartitionParentUnits, 'width' => $parentTemplatePartitionUnits);
-            } else {
-                $parentPortLayout = array('height' => $parentTemplatePartitionUnits, 'width' => $parentTemplatePartitionParentUnits);
-            }
-            $parentEncLayout = $parentTemplatePartition['enc_layout'];
-            $insertConstraints = array(
-                'part_layout' => $parentPortLayout,
-                'enc_layout' => $parentEncLayout
-            );
-            
-            $template->insert_constraints = $insertConstraints;
+            $template->insert_constraints = $request->insert_constraints;
         } else {
 
             $template->ru_size = $request->ru_size;

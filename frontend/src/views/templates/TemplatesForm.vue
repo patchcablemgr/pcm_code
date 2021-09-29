@@ -64,7 +64,7 @@
         <dd class="col-sm-8">
           <b-form-radio-group
             name="type"
-            v-model="ComputedInputTemplateType"
+            v-model="TemplateType"
             :options="optionsTemplateType"
             @change="$emit('TemplateTypeUpdated', $event)"
             stacked
@@ -87,6 +87,7 @@
             :min="GetRUSizeMin()"
             max=25
             :formatter="CastRUSizeToInteger"
+            :disabled="TemplateType=='insert'"
           />
         </dd>
       </dl>
@@ -99,9 +100,11 @@
         <dd class="col-sm-8">
           <b-form-radio-group
             name="function"
-            v-model="inputTemplateFunction"
+            v-model="TemplateFunction"
+            @change="$emit('TemplateFunctionUpdated', $event)"
             :options="optionsTemplateFunction"
             stacked
+            :disabled="TemplateType=='insert'"
           />
         </dd>
       </dl>
@@ -114,10 +117,11 @@
         <dd class="col-sm-8">
           <b-form-radio-group
               name="mountConfig"
-              v-model="inputTemplateMountConfig"
+              v-model="MountConfig"
               :options="optionsTemplateMountConfig"
               @change="$emit('TemplateMountConfigUpdated', $event)"
               stacked
+              :disabled="TemplateType=='insert'"
             />
         </dd>
       </dl>
@@ -513,15 +517,11 @@ export default {
     AddSiblingPartitionDisabled: {type: Boolean},
     RemovePartitionDisabled: {type: Boolean},
     PartitionTypeDisabled: {type: Boolean},
-    SelectedPartition: {type: Object},
     SelectedPortFormat: {type: Array},
     PreviewPortID: {type: String},
   },
   data() {
     return {
-      inputTemplateType: this.TemplateData[this.Context][this.PreviewDataIndex].type,
-      inputTemplateFunction: this.TemplateData[this.Context][this.PreviewDataIndex].function,
-      inputTemplateMountConfig: this.TemplateData[this.Context][this.PreviewDataIndex].mount_config,
       selected: null,
       optionsCategory: [],
       optionsTemplateType: [
@@ -544,6 +544,36 @@ export default {
     }
   },
   computed: {
+    TemplateFunction: {
+      get() {
+
+        const vm = this
+        const Context = vm.Context
+        const TemplateIndex = vm.PreviewDataIndex
+        const TemplateFunction = vm.TemplateData[Context][TemplateIndex].function
+
+        return TemplateFunction
+      },
+      set() {
+
+        return true
+      }
+    },
+    MountConfig: {
+      get() {
+
+        const vm = this
+        const Context = vm.Context
+        const TemplateIndex = vm.PreviewDataIndex
+        const MountConfig = vm.TemplateData[Context][TemplateIndex].mount_config
+
+        return MountConfig
+      },
+      set() {
+
+        return true
+      }
+    },
     ComputedSelectedPartitionDirection: {
       get() {
         // Store variables
@@ -552,7 +582,7 @@ export default {
         return vm.GetPartitionDirection()
       }
     },
-    ComputedInputTemplateType: {
+    TemplateType: {
       get() {
         // Store variables
         const vm = this
@@ -581,7 +611,7 @@ export default {
 
         // Store variables
         const vm = this
-        const SelectedPartition = vm.SelectedPartition
+        const SelectedPartition = vm.GetSelectedPartition()
         
         // Return selected partition type
         return SelectedPartition.type
@@ -625,7 +655,7 @@ export default {
 
         // Store variables
         const vm = this
-        const SelectedPartition = vm.SelectedPartition
+        const SelectedPartition = vm.GetSelectedPartition()
         const PortLayoutCols = (SelectedPartition.type == 'connectable') ? SelectedPartition.port_layout.cols : 0
         
         // Return selected partition type
@@ -646,7 +676,7 @@ export default {
 
         // Store variables
         const vm = this
-        const SelectedPartition = vm.SelectedPartition
+        const SelectedPartition = vm.GetSelectedPartition()
         const PortLayoutCols = (SelectedPartition.type == 'connectable') ? SelectedPartition.port_layout.rows : 0
         
         // Return selected partition type
@@ -667,7 +697,7 @@ export default {
 
         // Store variables
         const vm = this
-        const SelectedPartition = vm.SelectedPartition
+        const SelectedPartition = vm.GetSelectedPartition()
         const DefaultMediaIndex = vm.MediaData.findIndex((media) => media.default);
         const DefaultMediaValue = vm.MediaData[DefaultMediaIndex].value
 
@@ -691,7 +721,7 @@ export default {
 
         // Store variables
         const vm = this
-        const SelectedPartition = vm.SelectedPartition
+        const SelectedPartition = vm.GetSelectedPartition()
         const DefaultPortConnectorIndex = vm.PortConnectorData.findIndex((PortConnector) => PortConnector.default);
         const DefaultPortConnectorValue = vm.PortConnectorData[DefaultPortConnectorIndex].value
 
@@ -715,7 +745,7 @@ export default {
 
         // Store variables
         const vm = this
-        const SelectedPartition = vm.SelectedPartition
+        const SelectedPartition = vm.GetSelectedPartition()
         const DefaultPortOrientationIndex = vm.PortOrientationData.findIndex((PortOrientation) => PortOrientation.default);
         const DefaultPortOrientationValue = vm.PortOrientationData[DefaultPortOrientationIndex].value
 
@@ -739,7 +769,7 @@ export default {
 
         // Store variables
         const vm = this
-        const SelectedPartition = vm.SelectedPartition
+        const SelectedPartition = vm.GetSelectedPartition()
         const EncLayoutCols = (SelectedPartition.type == 'enclosure') ? SelectedPartition.enc_layout.cols : 0
         
         // Return selected partition type
@@ -760,7 +790,7 @@ export default {
 
         // Store variables
         const vm = this
-        const SelectedPartition = vm.SelectedPartition
+        const SelectedPartition = vm.GetSelectedPartition()
         const EncLayoutCols = (SelectedPartition.type == 'enclosure') ? SelectedPartition.enc_layout.rows : 0
         
         // Return selected partition type
@@ -825,6 +855,18 @@ export default {
       })
 
       return RUSizeMin
+    },
+    GetSelectedPartition: function() {
+
+      // Store variables
+      const vm = this
+      const TemplateData = vm.TemplateData
+      const Context = vm.Context
+      const TemplateFace = vm.TemplateFaceSelected[Context]
+      const PartitionAddress = vm.PartitionAddressSelected[Context][TemplateFace]
+      const SelectedPartition = vm.GetPartition(PartitionAddress)
+
+      return SelectedPartition
     },
     GetPartition: function(PartitionAddress) {
 
@@ -918,7 +960,7 @@ export default {
     GetSelectedPartitionSizeMin: function(){
 
       const vm = this
-      const SelectedPartition = vm.SelectedPartition
+      const SelectedPartition = vm.GetSelectedPartition()
       const PartitionSizeMin = vm.GetSelectedPartitionSizeMinRecursion(SelectedPartition.children)
 
       return (PartitionSizeMin > 0) ? PartitionSizeMin : 1

@@ -69,6 +69,7 @@
                     v-ripple.400="'rgba(40, 199, 111, 0.15)'"
                     variant="flat-success"
                     class="btn-icon"
+                    v-b-modal.modal-templates-port-id
                   >
                     <feather-icon icon="EditIcon" />
                   </b-button>
@@ -81,12 +82,30 @@
           </b-card>
         </b-col>
       </b-row>
+
+      <!-- Port ID Modal -->
+      <modal-templates-port-id
+        v-if="PartitionType == 'connectable'"
+        :SelectedPortFormatIndex="SelectedPortFormatIndex"
+        :SelectedPortFormat="SelectedPortFormat"
+        :PreviewPortID="PreviewPortID"
+        v-on:TemplatePartitionPortFormatFieldSelected="$emit('TemplatePartitionPortFormatFieldSelected', $event)"
+        v-on:TemplatePartitionPortFormatValueUpdated="$emit('TemplatePartitionPortFormatValueUpdated', $event)"
+        v-on:TemplatePartitionPortFormatTypeUpdated="$emit('TemplatePartitionPortFormatTypeUpdated', $event)"
+        v-on:TemplatePartitionPortFormatCountUpdated="$emit('TemplatePartitionPortFormatCountUpdated', $event)"
+        v-on:TemplatePartitionPortFormatOrderUpdated="$emit('TemplatePartitionPortFormatOrderUpdated', $event)"
+        v-on:TemplatePartitionPortFormatFieldMove="$emit('TemplatePartitionPortFormatFieldMove', $event)"
+        v-on:TemplatePartitionPortFormatFieldCreate="$emit('TemplatePartitionPortFormatFieldCreate', $event)"
+        v-on:TemplatePartitionPortFormatFieldDelete="$emit('TemplatePartitionPortFormatFieldDelete', $event)"
+      />
+
     </b-modal>
 </template>
 
 <script>
 import { BContainer, BRow, BCol, BCard, BForm, BButton, BFormInput, BFormSelect, BFormCheckbox, BCardText, } from 'bootstrap-vue'
 import Ripple from 'vue-ripple-directive'
+import ModalTemplatesPortId from './ModalTemplatesPortId.vue'
 
 export default {
   components: {
@@ -100,6 +119,8 @@ export default {
     BFormSelect,
     BFormCheckbox,
     BCardText,
+
+    ModalTemplatesPortId,
   },
   directives: {
     Ripple,

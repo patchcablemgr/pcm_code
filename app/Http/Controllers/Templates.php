@@ -148,6 +148,8 @@ class Templates extends Controller
     public function update(Request $request, $id)
     {
 
+        $PCM = new PCM;
+
         // Validate template ID
         $validatorInput = [
             'id' => $id
@@ -184,11 +186,75 @@ class Templates extends Controller
         // Update template record
         foreach($data as $key => $value) {
             if($key == 'name') {
+
+                // Update template name
                 $template->name = $value;
             } else if($key == 'category_id') {
+
+                // Update template category ID
                 $template->category_id = $value;
             } else if($key == 'port_format') {
-                //
+                
+                // Update connectable port format
+                $templateID = $value['template_id'];
+                $templateFace = $value['template_face'];
+                $templatePartitionAddress = $value['template_partition'];
+                $templateBlueprint = $template['blueprint'];
+                $templatePartition = $PCM->getPartition($templateBlueprint, $templateFace, $templatePartitionAddress);
+                $templatePortFormat = $templatePartition['port_format'];
+                $portFormatIndex = $value['port_format_index'];
+                $portFormatAttr = $value['port_format_attr'];
+                $portFormatValue = $value['port_format_value'];
+                
+                if($portFormatAttr == 'type') {
+
+                    $currentType = $templatePortFormat[$portFormatIndex]['type'];
+                    $currentOrder = $templatePortFormat[$portFormatIndex]['order'];
+                    $currentIsIncremental = ($currentType == 'series' || $currentType == 'incremental') ? true : false;
+                    $newIsIncremental = ($portFormatValue == 'series' || $portFormatValue == 'incremental') ? true : false;
+                    $newOrder = ($newIsIncremental) ? 1 : 0;
+
+                    // Collect all incremental fields
+                    forEach($templatePartition['port_format'] as $fieldIndex => &$fieldValue) {
+
+                        $fieldType = $fieldValue['type'];
+                        $fieldOrder = $fieldValue['order'];
+                        $fieldIsIncremental = ($fieldType == 'series' || $fieldType == 'incremental') ? true : false;
+
+                        // static -> incremental
+                        if(!$currentIsIncremental && $newIsIncremental) {
+                            if($fieldIsIncremental) {
+                                $newOrder++;
+                            }
+
+                        // incremental -> static
+                        } else if($currentIsIncremental && !$newIsIncremental) {
+                            if($fieldIsIncremental && $fieldOrder >= $currentOrder) {
+                                $fieldValue['order']--;
+                            }
+                        }
+                    }
+
+                    $templatePartition['port_format'][$portFormatIndex]['type'] = $portFormatValue;
+                    $templatePartition['port_format'][$portFormatIndex]['order'] = $newOrder;
+
+                    /*
+                    // Field is changed from non-incremental to incremental.  Order is last.
+                    if($currentType == 'static' && ($portFormatValue == 'series' || $portFormatValue == 'incremental')) {
+                        $orderNew = count($workingOrderArray) + 1;
+                    } else if(($portFormatValue == 'series' || $portFormatValue == 'incremental') && ($portFormatValue == 'series' || $portFormatValue == 'incremental')) {
+
+                    }
+
+                    sort($workingOrderArray);
+
+                    forEach($workingOrderArray as $workingOrder) {
+                        if($workingOrder == $orderNew) {
+                            $orderNew++;
+                        }
+                    }
+                    */
+                }
             }
         }
 

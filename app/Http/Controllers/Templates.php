@@ -187,6 +187,8 @@ class Templates extends Controller
                 $template->name = $value;
             } else if($key == 'category_id') {
                 $template->category_id = $value;
+            } else if($key == 'port_format') {
+                //
             }
         }
 

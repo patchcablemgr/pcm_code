@@ -459,8 +459,10 @@
     <!-- Port ID Modal -->
     <modal-templates-port-id
       v-if="ComputedInputTemplatePartitionType == 'connectable'"
-      :SelectedPortFormatIndex="SelectedPortFormatIndex"
-      :SelectedPortFormat="SelectedPortFormat"
+      Context="preview"
+      :TemplateData="TemplateData"
+      :TemplateFaceSelected="TemplateFaceSelected"
+      :PartitionAddressSelected="PartitionAddressSelected"
       :PreviewPortID="PreviewPortID"
       v-on:TemplatePartitionPortFormatFieldSelected="$emit('TemplatePartitionPortFormatFieldSelected', $event)"
       v-on:TemplatePartitionPortFormatValueUpdated="$emit('TemplatePartitionPortFormatValueUpdated', $event)"
@@ -502,17 +504,16 @@ export default {
     'b-modal': VBModal,
   },
   props: {
+    Context: {type: String},
     TemplateData: {type: Object},
+    TemplateFaceSelected: {type: Object},
+    PartitionAddressSelected: {type: Object},
     CategoryData: {type: Array},
     SelectedCategoryID: {type: Number},
     PortConnectorData: {type: Array},
     PortOrientationData: {type: Array},
     MediaData: {type: Array},
     PreviewDataIndex: {type: Number},
-    SelectedPortFormatIndex: {type: Number},
-    Context: {type: String},
-    TemplateFaceSelected: {type: Object},
-    PartitionAddressSelected: {type: Object},
     AddChildPartitionDisabled: {type: Boolean},
     AddSiblingPartitionDisabled: {type: Boolean},
     RemovePartitionDisabled: {type: Boolean},

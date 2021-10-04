@@ -86,8 +86,10 @@
       <!-- Port ID Modal -->
       <modal-templates-port-id
         v-if="PartitionType == 'connectable'"
-        :SelectedPortFormatIndex="SelectedPortFormatIndex"
-        :SelectedPortFormat="SelectedPortFormat"
+        Context="template"
+        :TemplateData="TemplateData"
+        :TemplateFaceSelected="TemplateFaceSelected"
+        :PartitionAddressSelected="PartitionAddressSelected"
         :PreviewPortID="PreviewPortID"
         v-on:TemplatePartitionPortFormatFieldSelected="$emit('TemplatePartitionPortFormatFieldSelected', $event)"
         v-on:TemplatePartitionPortFormatValueUpdated="$emit('TemplatePartitionPortFormatValueUpdated', $event)"
@@ -126,13 +128,15 @@ export default {
     Ripple,
   },
   props: {
-    TemplateData: {type: Object},
-    CategoryData: {type: Array},
-    ObjectData: {type: Object},
     Context: {type: String},
+    TemplateData: {type: Object},
     TemplateFaceSelected: {type: Object},
     PartitionAddressSelected: {type: Object},
+    CategoryData: {type: Array},
+    ObjectData: {type: Object},
     TemplatePartitionPortRange: {type: String},
+    SelectedPortFormat: {type: Array},
+    PreviewPortID: {type: String},
   },
   data () {
     return {
@@ -179,7 +183,7 @@ export default {
       const Partition = vm.GetPartition()
 
       if(Partition) {
-        console.log('Debug (TemplateType): '+Partition.type)
+        
         return Partition.type
       } else {
         return '-'

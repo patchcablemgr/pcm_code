@@ -11,7 +11,7 @@
         class="position-static"
       >
         <validation-observer ref="simpleRules">
-          <b-form @submit.prevent="(CategorySelected) ? categoryPUT() : categoryPOST()">
+          <b-form>
 
             <div
              class="mb-3 pcm_template_port_format_field_container"
@@ -24,13 +24,13 @@
                 <validation-provider
                   #default="{ errors }"
                   name="Value"
-                  :rules="ComputedPortFieldValidate( SelectedPortFormat[PortFormatIndex].type )"
+                  :rules="ComputedPortFieldValidate( PortFormat.type )"
                 >
                   <div style="height: 20px;">
                     <small
-                      v-show="SelectedPortFormat[PortFormatIndex].type == 'incremental' || SelectedPortFormat[PortFormatIndex].type == 'series'"
+                      v-show="PortFormat.type == 'incremental' || PortFormat.type == 'series'"
                     >
-                      {{ SelectedPortFormat[PortFormatIndex].order }}{{ GetNumericalSuffix(SelectedPortFormat[PortFormatIndex].order) }}
+                      {{ PortFormat.order }}{{ GetNumericalSuffix(PortFormat.order) }}
                     </small>
                   </div>
                   <div
@@ -39,9 +39,9 @@
                     }"
                   >
                     <b-form-input
-                      v-model="SelectedPortFormat[PortFormatIndex].value"
-                      @click="$emit('TemplatePartitionPortFormatFieldSelected', {'index': PortFormatIndex} )"
-                      @change="$emit('TemplatePartitionPortFormatValueUpdated', {'index': PortFormatIndex, 'value': $event} )"
+                      v-model="PortFormat.value"
+                      @click="PortFormatFieldSelected(PortFormatIndex)"
+                      @change="$emit('TemplatePartitionPortFormatValueUpdated', {'context': Context, 'index': PortFormatIndex, 'value': $event} )"
                       :state="errors.length > 0 ? false:null"
                     />
                   </div>
@@ -69,7 +69,7 @@
                   v-ripple.400="'rgba(113, 102, 240, 0.15)'"
                   variant="outline-primary"
                   class="btn-icon"
-                  @click="$emit('TemplatePartitionPortFormatFieldCreate', {'direction': 'before'} )"
+                  @click="PortFormatFieldCreated('before')"
                 >
                   <feather-icon icon="PlusIcon" />
                   <feather-icon
@@ -83,7 +83,7 @@
                   v-ripple.400="'rgba(113, 102, 240, 0.15)'"
                   variant="outline-primary"
                   class="btn-icon"
-                  @click="$emit('TemplatePartitionPortFormatFieldCreate', {'direction': 'after'} )"
+                  @click="PortFormatFieldCreated('after')"
                 >
                   <feather-icon
                     icon="MoreHorizontalIcon"
@@ -97,7 +97,7 @@
                   v-ripple.400="'rgba(113, 102, 240, 0.15)'"
                   variant="outline-primary"
                   class="btn-icon"
-                  @click="$emit('TemplatePartitionPortFormatFieldDelete', {} )"
+                  @click="PortFormatFieldDeleted()"
                 >
                   <feather-icon icon="MinusIcon" />
                 </b-button>
@@ -123,7 +123,7 @@
                   v-ripple.400="'rgba(113, 102, 240, 0.15)'"
                   variant="outline-primary"
                   class="btn-icon"
-                  @click="$emit('TemplatePartitionPortFormatFieldMove', {'direction': 'left'} )"
+                  @click="PortFormatFieldMoved('left')"
                 >
                   <feather-icon icon="ChevronLeftIcon" />
                 </b-button>
@@ -134,7 +134,7 @@
                   v-ripple.400="'rgba(113, 102, 240, 0.15)'"
                   variant="outline-primary"
                   class="btn-icon"
-                  @click="$emit('TemplatePartitionPortFormatFieldMove', {'direction': 'right'} )"
+                  @click="PortFormatFieldMoved('right')"
                 >
                   <feather-icon icon="ChevronRightIcon" />
                 </b-button>
@@ -156,7 +156,7 @@
                 <b-form-select
                   v-model="SelectedPortFormat[SelectedPortFormatIndex].type"
                   :options="TypeOptions"
-                  @change="$emit('TemplatePartitionPortFormatTypeUpdated', {'value': $event} )"
+                  @change="$emit('TemplatePartitionPortFormatTypeUpdated', {'context': Context, 'index': SelectedPortFormatIndex, 'value': $event} )"
                 />
               </dd>
             </dl>
@@ -176,7 +176,7 @@
                 <b-form-input
                   v-model="SelectedPortFormat[SelectedPortFormatIndex].count"
                   :disabled=" SelectedPortFormat[SelectedPortFormatIndex].type == 'static' || SelectedPortFormat[SelectedPortFormatIndex].type == 'series' "
-                  @change="$emit('TemplatePartitionPortFormatCountUpdated', {'value': $event} )"
+                  @change="$emit('TemplatePartitionPortFormatCountUpdated', {'context': Context, 'index': SelectedPortFormatIndex, 'value': $event} )"
                   type=number
                 />
               </dd>
@@ -198,7 +198,7 @@
                   :value=" SelectedPortFormat[SelectedPortFormatIndex].order "
                   :options=" ComputedOrderOptions "
                   :disabled=" SelectedPortFormat[SelectedPortFormatIndex].type == 'static' "
-                  @change=" $emit('TemplatePartitionPortFormatOrderUpdated', {'index': SelectedPortFormatIndex, 'value': $event} ) "
+                  @change=" $emit('TemplatePartitionPortFormatOrderUpdated', {'context': Context, 'index': SelectedPortFormatIndex, 'value': $event} ) "
                 />
               </dd>
             </dl>
@@ -241,6 +241,8 @@ import Ripple from 'vue-ripple-directive'
 import { configure, ValidationProvider, ValidationObserver } from 'vee-validate'
 import { required, regex } from '@validations'
 
+const SelectedPortFormatIndex = 0
+
 const config = {
   useConstraintAttrs: false,
   defaultMessage: "invalid input"
@@ -262,8 +264,6 @@ const TypeOptions = [
     "text": "Series"
   },
 ]
-const SelectedPortFormatIndex = 0
-ToolTipCreateDelete
 const ToolTipCreateDelete = {
   title: `
     <div class="text-left">
@@ -354,12 +354,15 @@ export default {
     'b-tooltip': VBTooltip,
   },
   props: {
-    SelectedPortFormatIndex: {type: Number},
-    SelectedPortFormat: {type: Array},
+    Context: {type: String},
+    TemplateData: {type: Object},
+    TemplateFaceSelected: {type: Object},
+    PartitionAddressSelected: {type: Object},
     PreviewPortID: {type: String},
   },
   data() {
     return {
+      SelectedPortFormatIndex,
       TypeOptions,
       required,
       regex,
@@ -375,6 +378,21 @@ export default {
     }
   },
   computed: {
+    SelectedPortFormat: function() {
+
+      const vm = this
+      const Context = vm.Context
+      const TemplateFace = vm.TemplateFaceSelected[Context]
+      const PartitionAddressSelected = vm.PartitionAddressSelected[Context]
+      const TemplateID = PartitionAddressSelected.template_id
+      const PartitionAddress = PartitionAddressSelected[TemplateFace]
+      const TemplateIndex = vm.GetTemplateIndex(TemplateID)
+      const Blueprint = vm.TemplateData[Context][TemplateIndex].blueprint[TemplateFace]
+      const Partition = vm.GetPartition(Blueprint, PartitionAddress)
+      const PortFormat = Partition.port_format
+
+      return PortFormat
+    },
     ComputedOrderOptions: {
       get() {
         const vm = this
@@ -409,6 +427,77 @@ export default {
     },
   },
   methods: {
+    PortFormatFieldSelected: function(PortFormatIndex) {
+
+      const vm = this
+
+      vm.SelectedPortFormatIndex = PortFormatIndex
+      return true
+
+    },
+    PortFormatFieldCreated: function(Position) {
+
+      const vm = this
+      const Context = vm.Context
+      const SelectedPortFormatIndex = vm.SelectedPortFormatIndex
+
+      vm.$emit('TemplatePartitionPortFormatFieldCreate', {'context': Context, 'index': SelectedPortFormatIndex, 'position': Position} )
+
+      vm.SelectedPortFormatIndex = (Position == 'before') ? SelectedPortFormatIndex + 1 : SelectedPortFormatIndex
+
+    },
+    PortFormatFieldDeleted: function(Position) {
+
+      const vm = this
+      const Context = vm.Context
+      const SelectedPortFormatIndex = vm.SelectedPortFormatIndex
+      const SelectedPortFormat = vm.SelectedPortFormat
+
+      const SelectedPortFormatLength = SelectedPortFormat.length
+
+      if(SelectedPortFormatIndex >= (SelectedPortFormatLength - 1)) {
+        vm.SelectedPortFormatIndex = SelectedPortFormatIndex - 1
+      }
+
+      vm.$emit('TemplatePartitionPortFormatFieldDelete', {'context': Context, 'index': SelectedPortFormatIndex} )
+
+    },
+    PortFormatFieldMoved: function(Direction) {
+
+      const vm = this
+      const Context = vm.Context
+      const SelectedPortFormatIndex = vm.SelectedPortFormatIndex
+
+      vm.$emit('TemplatePartitionPortFormatFieldMove', {'context': Context, 'index': SelectedPortFormatIndex, 'direction': Direction} )
+
+      vm.SelectedPortFormatIndex = (Direction == 'left') ? SelectedPortFormatIndex - 1 : SelectedPortFormatIndex + 1
+
+    },
+    GetTemplateIndex: function(TemplateID) {
+
+      const vm = this
+      const Context = vm.Context
+      const TemplateIndex = vm.TemplateData[Context].findIndex((template) => template.id == TemplateID);
+
+      return TemplateIndex
+    },
+    GetPartition: function(Blueprint, PartitionAddress) {
+			
+			// Locate template partition
+			let Partition = Blueprint
+			let PartitionCollection = Blueprint
+			PartitionAddress.forEach(function(PartitionIndex) {
+				if(typeof PartitionCollection[PartitionIndex] !== 'undefined') {
+					Partition = PartitionCollection[PartitionIndex]
+					PartitionCollection = PartitionCollection[PartitionIndex]['children']
+				} else {
+					return false
+				}
+			})
+			
+			return Partition
+      
+    },
     ComputedPortFieldValidate: function(PortFormatFieldType) {
 
       if(PortFormatFieldType == 'static') {

@@ -525,5 +525,8 @@ export default {
       return NumericalSuffix
     },
   },
+  mounted() {
+    console.log('Debug (mounted): ModalTemplatesPortID')
+  }
 }
 </script>

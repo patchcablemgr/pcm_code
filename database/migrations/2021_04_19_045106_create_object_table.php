@@ -15,7 +15,7 @@ class CreateObjectTable extends Migration
     {
         Schema::connection('mysql')->create('object', function (Blueprint $table) {
             $table->integer('id', true);
-            $table->integer('env_tree_id');
+            $table->integer('location_id');
             $table->string('name')->default('New_Object');
             $table->integer('template_id');
             $table->integer('RU')->nullable();

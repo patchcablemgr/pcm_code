@@ -15,10 +15,12 @@ class CreateLocationTable extends Migration
     {
         Schema::connection('mysql')->create('location', function (Blueprint $table) {
             $table->integer('id', true);
-            $table->string('name', 20)->default('New Node');
-            $table->string('parent');
+			$table->dateTime('created_at');
+			$table->dateTime('updated_at');
+            $table->string('name', 255)->default('New Node');
+            $table->integer('parent_id')->nullable();
             $table->string('type');
-            $table->integer('size')->default(42);
+            $table->integer('size')->nullable();
             $table->string('floorplan_img', 40)->nullable();
             $table->tinyInteger('ru_orientation')->nullable()->default(0);
             $table->integer('order')->default(0);

@@ -123,6 +123,10 @@ div.pcm_template_partition_layered {
     background-color: rgba(255,255,255,0.1);
 }
 
+div.context_menu_option > ul {
+    position: fixed;
+}
+
 hr.separator {
     border-top: 2px solid #bbb;
 }

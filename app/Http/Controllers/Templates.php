@@ -206,7 +206,20 @@ class Templates extends Controller
                 $portFormatAttr = $value['port_format_attr'];
                 $portFormatValue = $value['port_format_value'];
                 
-                if($portFormatAttr == 'type') {
+                if($portFormatAttr == 'value') {
+
+                    // Update port format field data
+                    $templatePartition['port_format'][$portFormatIndex]['value'] = $portFormatValue;
+
+                    // Patch partition with updated data
+                    $templateBlueprintNew = $PCM->patchPartition($templateBlueprint, $templateFace, $templatePartitionAddress, $templatePartition);
+
+                    // Update template blueprint
+                    if($templateBlueprintNew) {
+                        $template->blueprint = $templateBlueprintNew;
+                    }
+
+                } else if($portFormatAttr == 'type') {
 
                     $currentType = $templatePortFormat[$portFormatIndex]['type'];
                     $currentOrder = $templatePortFormat[$portFormatIndex]['order'];
@@ -214,7 +227,7 @@ class Templates extends Controller
                     $newIsIncremental = ($portFormatValue == 'series' || $portFormatValue == 'incremental') ? true : false;
                     $newOrder = ($newIsIncremental) ? 1 : 0;
 
-                    // Collect all incremental fields
+                    // Addjust incremental field order
                     forEach($templatePartition['port_format'] as $fieldIndex => &$fieldValue) {
 
                         $fieldType = $fieldValue['type'];
@@ -235,25 +248,72 @@ class Templates extends Controller
                         }
                     }
 
+                    // Update port format field data
                     $templatePartition['port_format'][$portFormatIndex]['type'] = $portFormatValue;
                     $templatePartition['port_format'][$portFormatIndex]['order'] = $newOrder;
 
-                    /*
-                    // Field is changed from non-incremental to incremental.  Order is last.
-                    if($currentType == 'static' && ($portFormatValue == 'series' || $portFormatValue == 'incremental')) {
-                        $orderNew = count($workingOrderArray) + 1;
-                    } else if(($portFormatValue == 'series' || $portFormatValue == 'incremental') && ($portFormatValue == 'series' || $portFormatValue == 'incremental')) {
+                    // Patch partition with updated data
+                    $templateBlueprintNew = $PCM->patchPartition($templateBlueprint, $templateFace, $templatePartitionAddress, $templatePartition);
 
+                    // Update template blueprint
+                    if($templateBlueprintNew) {
+                        $template->blueprint = $templateBlueprintNew;
                     }
+                } else if($portFormatAttr == 'count') {
 
-                    sort($workingOrderArray);
+                    // Update port format field data
+                    $templatePartition['port_format'][$portFormatIndex]['count'] = $portFormatValue;
 
-                    forEach($workingOrderArray as $workingOrder) {
-                        if($workingOrder == $orderNew) {
-                            $orderNew++;
+                    // Patch partition with updated data
+                    $templateBlueprintNew = $PCM->patchPartition($templateBlueprint, $templateFace, $templatePartitionAddress, $templatePartition);
+
+                    // Update template blueprint
+                    if($templateBlueprintNew) {
+                        $template->blueprint = $templateBlueprintNew;
+                    }
+                } else if($portFormatAttr == 'order') {
+
+                    $portFormatValueOrig = $templatePartition['port_format'][$portFormatIndex]['order'];
+
+                    // Update port format field data
+                    $templatePartition['port_format'][$portFormatIndex]['order'] = $portFormatValue;
+
+                    // Addjust incremental field order
+                    forEach($templatePartition['port_format'] as $fieldIndex => &$fieldValue) {
+
+                        $fieldType = $fieldValue['type'];
+                        $fieldOrder = $fieldValue['order'];
+                        $fieldIsIncremental = ($fieldType == 'series' || $fieldType == 'incremental') ? true : false;
+
+                        if($fieldIsIncremental && $fieldIndex != $portFormatIndex) {
+
+                            //if(PortFormatFieldOrder > PortFormatValue && PortFormatFieldOrder < PortFormatValueOrig) {
+                            if($fieldOrder > $portFormatValue && $fieldOrder < $portFormatValueOrig) {
+
+                                $fieldValue['order']++;
+                            }else if($fieldOrder < $portFormatValue && $fieldOrder > $portFormatValueOrig) {
+
+                                $fieldValue['order']--;
+                            }else if($fieldOrder == $portFormatValue) {
+
+                                if($portFormatValue > $portFormatValueOrig) {
+
+                                    $fieldValue['order']--;
+                                } else if($portFormatValue < $portFormatValueOrig) {
+
+                                    $fieldValue['order']++;
+                                }
+                            }
                         }
                     }
-                    */
+
+                    // Patch partition with updated data
+                    $templateBlueprintNew = $PCM->patchPartition($templateBlueprint, $templateFace, $templatePartitionAddress, $templatePartition);
+
+                    // Update template blueprint
+                    if($templateBlueprintNew) {
+                        $template->blueprint = $templateBlueprintNew;
+                    }
                 }
             }
         }

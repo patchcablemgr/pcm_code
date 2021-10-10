@@ -23,7 +23,7 @@ class CreateTemplateTable extends Migration
             $table->integer('ru_size')->nullable();
             $table->string('function');
             $table->string('mount_config')->nullable();
-						$table->text('insert_constraints')->nullable();
+			$table->text('insert_constraints')->nullable();
             $table->text('blueprint')->nullable();
             $table->string('image_front', 45)->nullable();
             $table->string('image_rear', 45)->nullable();

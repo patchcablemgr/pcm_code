@@ -39,6 +39,16 @@ const router = new VueRouter({
     },
   },
   {
+    path: '/environment',
+    name: 'environment',
+    component: () => import('@/views/Environment.vue'),
+    meta: {
+      pageTitle: 'Environment',
+      resource: 'Operator',
+      action: 'read',
+    },
+  },
+  {
     path: '/profile',
     name: 'profile',
     component: () => import('@/views/Profile.vue'),

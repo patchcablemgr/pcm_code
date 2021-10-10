@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Log;
 
 class PCM extends Controller
 {
@@ -36,7 +37,7 @@ class PCM extends Controller
     }
 
 	/**
-     * Return patched partition 
+     * Return patched blueprint
      *
      * @param  obj  $blueprint
 	 * @param  str  $face
@@ -46,22 +47,30 @@ class PCM extends Controller
      */
     public function patchPartition($blueprint, $face, $partitionAddress, $partitionPatched)
     {
-        // Locate template partition
-		$partition = false;
-		$partitionCollection = $blueprint[$face];
+        // Initialize partition collection for loop
+		$workingBlueprint = $blueprint;
+		$partitionCollection = &$workingBlueprint[$face];
 		
-		foreach($partitionAddress as $partitionIndex) {
+		// Loop over partition address until selected partition has been reached
+		foreach($partitionAddress as $index => $partitionIndex) {
 			
+			// Test if partition address is valid
 			if(isset($partitionCollection[$partitionIndex])) {
 				
-				$partition = $partitionCollection[$partitionIndex];
-				$partitionCollection = $partitionCollection[$partitionIndex]['children'];
+				// Test if selected partition has been reached
+				if($index == (count($partitionAddress) - 1)) {
+
+					// Patch partition
+					$partitionCollection[$partitionIndex] = $partitionPatched;
+				}
+				$partitionCollection = &$partitionCollection[$partitionIndex]['children'];
 				
 			} else {
 				return false;
 			}
 		}
 		
-		return $partition;
+		// Return entire blueprint with patched partition
+		return $workingBlueprint;
     }
 }

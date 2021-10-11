@@ -82,7 +82,41 @@ class Locations extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $validatorInput = [
+            'id' => $id
+        ];
+        $validatorRules = [
+            'id' => [
+                'required',
+                'exists:location',
+                'unique:App\Models\ObjectsModel,location_id'
+            ]
+        ];
+        $validatorMessages = [
+            'id.unique' => 'The location contains objects and cannot be deleted.'
+        ];
+        Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
+
+        // Store request data
+        $data = $request->all();
+
+        // Retrieve location record
+        $location = LocationsModel::where('id', $id)->first();
+
+        // Update template record
+        foreach($data as $key => $value) {
+            if($key == 'text') {
+
+                // Update location name
+                $location->name = $value;
+            } 
+        }
+
+        // Save template record
+        $location->save();
+
+        // Return template record
+        return $location->toArray();
     }
 
     /**
@@ -104,7 +138,7 @@ class Locations extends Controller
             ]
         ];
         $validatorMessages = [
-            'id.unique' => 'The location contains objects use and cannot be deleted.'
+            'id.unique' => 'The location contains objects and cannot be deleted.'
         ];
         Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
 

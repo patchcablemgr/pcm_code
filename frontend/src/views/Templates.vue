@@ -270,8 +270,7 @@ const PartitionAddressSelected = {
     'template_id': null,
     'front': [0],
     'rear': [0]
-  }
-  ,
+  },
   'object': {
     'object_id': null,
     'front': [0],

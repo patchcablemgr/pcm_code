@@ -12,10 +12,10 @@
                 :data="TreeData"
                 :options="TreeOptions"
               >
-                <span class="tree-text" slot-scope="{ node }">
+                <span class="tree-text" slot-scope="{ node }" style="width:100%;">
                   <template>
                     <div @contextmenu.prevent.stop="handleClick($event, {'node_id': node.id})">
-                      <i class="ion-android-star"></i>
+                      <feather-icon :icon="node.data.icon" />
                       {{ node.text }}
                     </div>
                   </template>
@@ -27,10 +27,38 @@
         </b-col>
         <b-col>
           <b-card
-            title="Card 2"
+            title="Cabinet"
           >
-            <b-card-body>
-              Card body
+            <b-card-body
+              v-if=" PreviewDisplay == 'cabinet' "
+            >
+              <b-form-radio
+                v-model="TemplateFaceSelected.preview"
+                plain
+                value="front"
+                :disabled="TemplateFaceToggleIsDisabled"
+              >Front
+              </b-form-radio>
+              <b-form-radio
+                v-model="TemplateFaceSelected.preview"
+                plain
+                value="rear"
+                :disabled="TemplateFaceToggleIsDisabled"
+              >
+                Rear
+              </b-form-radio>
+              <component-cabinet
+                :TemplateData="TemplateData"
+                :CabinetData="CabinetData"
+                :CategoryData="CategoryData"
+                :ObjectData="ObjectData"
+                Context="preview"
+                :TemplateFaceSelected="TemplateFaceSelected"
+                :PartitionAddressSelected="PartitionAddressSelected"
+                :PartitionAddressHovered="PartitionAddressHovered"
+                @PartitionClicked=" PartitionClicked($event) "
+                @PartitionHovered=" PartitionHovered($event) "
+              />
             </b-card-body>
           </b-card>
 
@@ -66,6 +94,7 @@
 <script>
 import { BContainer, BRow, BCol, BCard, BCardBody, BCardText, BFormRadio, } from 'bootstrap-vue'
 import ToastGeneral from './templates/ToastGeneral.vue'
+import ComponentCabinet from './templates/ComponentCabinet.vue'
 import LiquorTree from 'liquor-tree'
 import 'vue-simple-context-menu/dist/vue-simple-context-menu.css'
 import VueSimpleContextMenu from 'vue-simple-context-menu'
@@ -74,6 +103,7 @@ const TreeData = []
 
 const TreeOptions = {
   "dnd": true,
+  "multipls": false,
 }
 
 const MenuOptions = [
@@ -112,6 +142,59 @@ const MenuOptions = [
   }
 ]
 
+const CabinetData = {
+  "id": StandardTemplateID,
+  "size": 25,
+  "name": "Cabinet",
+}
+
+const ObjectData = {
+  'preview': [],
+  'template': [],
+}
+
+const CategoryData = [
+  {
+    "id": 0,
+    "color": "#FFFFFFFF",
+  }
+]
+
+const TemplateData = {
+  'preview': [],
+  'template': [],
+}
+
+const TemplateFaceSelected = {
+  'preview': 'front',
+  'template': 'front',
+}
+
+const PartitionAddressSelected = {
+  'preview': {
+    'template_id': null,
+    'front': [0],
+    'rear': [0]
+  },
+  'template': {
+    'template_id': null,
+    'front': [0],
+    'rear': [0]
+  }
+}
+const PartitionAddressHovered = {
+  'preview': {
+    'template_id': null,
+    'front': false,
+    'rear': false
+  },
+  'template': {
+    'template_id': null,
+    'front': false,
+    'rear': false
+  }
+}
+
 export default {
   components: {
     BContainer,
@@ -123,6 +206,7 @@ export default {
     BFormRadio,
 
     ToastGeneral,
+    ComponentCabinet,
     LiquorTree,
     VueSimpleContextMenu,
   },
@@ -131,11 +215,55 @@ export default {
       TreeData,
       TreeOptions,
       MenuOptions,
+      CabinetData,
+      CategoryData,
+      ObjectData,
+      TemplateData,
+      TemplateFaceSelected,
+      PartitionAddressSelected,
+      PartitionAddressHovered,
     }
   },
   computed: {
+    PreviewDisplay: function() {
+
+      const vm = this
+
+      const SelectedNode = vm.$refs.LiquorTree.selected()[0]
+      const NodeType = SelectedNode.data.type
+      let PreviewDisplay = "none"
+
+      if(NodeType == 'location') {
+        PreviewDisplay = "none"
+      } else if(NodeType == 'pod') {
+        PreviewDisplay = "none"
+      } else if(NodeType == 'cabinet') {
+        PreviewDisplay = "cabinet"
+      } else if(NodeType == 'floorplan') {
+        PreviewDisplay = "floorplan"
+      }
+
+      return PreviewDisplay
+    }
   },
   methods: {
+    GetNodeIcon: function(NodeType) {
+
+      let Icon = "HomeIcon"
+      if(NodeType == 'location') {
+        Icon = "HomeIcon"
+      } else if(NodeType == 'pod') {
+        Icon = "CircleIcon"
+      } else if(NodeType == 'cabinet') {
+        Icon = "ServerIcon"
+      } else if(NodeType == 'floorplan') {
+        Icon = "MapIcon"
+      }
+
+      console.log("Debug (Icon):"+Icon)
+
+      return Icon
+    },
     handleClick (event, node) {
       this.$refs.vueSimpleContextMenu.showMenu(event, node)
     },
@@ -196,12 +324,18 @@ export default {
 
       // POST to locations
       vm.$http.post(url, data).then(function(response){
+
+        const Node = response.data
         
         // Create child node object
         const Child = {
-          "id": response.id,
-          "text": response.name,
-          "parent_id": response.parent_id
+          "id": Node.id,
+          "text": Node.name,
+          "data": {
+            "type": Node.type,
+            "icon": vm.GetNodeIcon(Node.type),
+            "parent_id": Node.parent_id,
+          },
         }
 
         // Append child node object to parent
@@ -233,7 +367,11 @@ export default {
         const ChildData = {
           "id": child.id,
           "text": child.name,
-          "parent_id": child.parent_id
+          "data": {
+            "type": child.type,
+            "icon": vm.GetNodeIcon(child.type),
+            "parent_id": child.parent_id,
+          },
         }
         ChildrenData.push(ChildData)
       })
@@ -274,14 +412,30 @@ export default {
   mounted() {
 
     const vm = this
-
-    vm.LocationsGET()
-    this.$refs.LiquorTree.$on('node:editing:start', (node) => {
-      console.log('Start editing: ' + node.text)
-    })
     
-    this.$refs.LiquorTree.$on('node:editing:stop', (node, isTextChanged) => {
-      console.log('Stop editing: ' + node.text + ', ' + isTextChanged)
+    vm.$refs.LiquorTree.$on('node:editing:stop', (node, isTextChanged) => {
+
+      // Store data
+      const vm = this
+      const NodeID = node.id
+      const NodeText = node.text
+      const url = '/api/locations/'+NodeID
+      const data = {"text": NodeText}
+
+      // PATCH category form data
+      vm.$http.patch(url, data).then(function(response){
+        
+        //
+
+      }).catch(error => {
+
+        // Display error to user via toast
+        vm.$bvToast.toast(JSON.stringify(error.response.data), {
+          title: 'Error',
+          variant: 'danger',
+        })
+
+      });
     })
   },
 }

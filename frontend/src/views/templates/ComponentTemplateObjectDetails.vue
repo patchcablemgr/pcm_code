@@ -3,7 +3,7 @@
 <template>
 	
   <b-card
-		title="Template Details"
+		:title="CardTitle"
 	>
 		
 			<div class="d-flex flex-wrap justify-content-between">
@@ -231,6 +231,7 @@ export default {
 		Ripple,
 	},
   props: {
+    CardTitle: {type: String},
     CategoryData: {type: Array},
     TemplateData: {type: Object},
     Context: {type: String},

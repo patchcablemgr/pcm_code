@@ -27,6 +27,7 @@
         "postcss": "^7.0.35",
         "postcss-rtl": "^1.7.3",
         "tailwindcss": "npm:@tailwindcss/postcss7-compat@^2.1.4",
-        "vue-color": "^2.8.1"
+        "vue-color": "^2.8.1",
+        "vue-drag-drop": "^1.1.4"
     }
 }

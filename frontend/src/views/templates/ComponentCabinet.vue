@@ -14,6 +14,8 @@
     >
       <td class="pcm_cabinet">{{ CabinetRU }}</td>
       <td
+        :tag="'td'"
+        @drop="HandleDrop"
         class="pcm_cabinet_ru"
         v-if=" RackObjectID(CabinetData.id, CabinetRU) !== false "
         :rowspan=" RackObjectSize( RackObjectID(CabinetData.id, CabinetRU) ) "
@@ -33,7 +35,12 @@
           @PartitionHovered=" $emit('PartitionHovered', $event) "
         />
       </td>
-      <td class="pcm_cabinet_ru" v-else-if=" RUIsOccupied(CabinetData.id, CabinetRU) === false "></td>
+      <drop
+        :tag="'td'"
+        @drop="HandleDrop"
+        class="pcm_cabinet_ru"
+        v-else-if=" RUIsOccupied(CabinetData.id, CabinetRU) === false "
+      />
       <td class="pcm_cabinet">{{ CabinetRU }}</td>
     </tr>
     <tr>
@@ -47,6 +54,8 @@
 <script>
 import { BContainer, BRow, BCol, } from 'bootstrap-vue'
 import ComponentObject from './ComponentObject.vue'
+import CartDropdown from '../../@core/layouts/components/app-navbar/components/CartDropdown.vue'
+import { Drag, Drop } from 'vue-drag-drop'
 
 export default {
   components: {
@@ -55,6 +64,9 @@ export default {
     BCol,
 
     ComponentObject,
+    CartDropdown,
+    Drag,
+    Drop,
   },
   props: {
     TemplateData: {type: Object},
@@ -192,6 +204,9 @@ export default {
       });
 
       return ObjectIsPresent
+    },
+    HandleDrop: function(data) {
+      console.log(JSON.stringify(data))
     },
   }
 }

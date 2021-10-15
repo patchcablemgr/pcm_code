@@ -105,10 +105,19 @@ class Locations extends Controller
 
         // Update template record
         foreach($data as $key => $value) {
+
+            // Node text
             if($key == 'text') {
 
                 // Update location name
                 $location->name = $value;
+            }
+
+            // Node parent
+            if($key == 'parent') {
+
+                // Update location name
+                $location->parent_id = $value;
             } 
         }
 

@@ -108,6 +108,7 @@
         <b-col>
 
           <component-template-Object-details
+            CardTitle="Template Details"
 						:TemplateData="TemplateData"
 						:CategoryData="CategoryData"
 						Context="template"
@@ -119,24 +120,18 @@
 						@TemplateObjectDeleteClicked="TemplateObjectDeleteClicked()"
 					/>
 
-          <b-card
-            title="Templates"
-          >
-            <b-card-body>
-              <component-templates
-                :TemplateData="TemplateData"
-                :CategoryData="CategoryData"
-                :ObjectData="ObjectData"
-                Context="template"
-                :TemplateFaceSelected="TemplateFaceSelected"
-                :PartitionAddressSelected="PartitionAddressSelected"
-                :PartitionAddressHovered="PartitionAddressHovered"
-                @PartitionClicked="PartitionClicked($event)"
-                @PartitionHovered="PartitionHovered($event)"
-                @TemplateFaceChanged="TemplateFaceChanged($event)"
-              />
-            </b-card-body>
-          </b-card>
+          <component-templates
+            :TemplateData="TemplateData"
+            :CategoryData="CategoryData"
+            :ObjectData="ObjectData"
+            Context="template"
+            :TemplateFaceSelected="TemplateFaceSelected"
+            :PartitionAddressSelected="PartitionAddressSelected"
+            :PartitionAddressHovered="PartitionAddressHovered"
+            @PartitionClicked="PartitionClicked($event)"
+            @PartitionHovered="PartitionHovered($event)"
+            @TemplateFaceChanged="TemplateFaceChanged($event)"
+          />
 
         </b-col>
       </b-row>

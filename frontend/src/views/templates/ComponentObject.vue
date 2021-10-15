@@ -1,6 +1,7 @@
 <template>
 
-  <div
+  <drag
+    :transfer-data="{ object_id: ObjectID, constext: Context }"
     :class="{
       pcm_template_partition_selected: PartitionIsSelected(),
       pcm_template_partition_hovered: PartitionIsHovered(),
@@ -27,12 +28,13 @@
       @PartitionClicked=" $emit('PartitionClicked', $event) "
       @PartitionHovered=" $emit('PartitionHovered', $event) "
     />
-  </div>
+  </drag>
 </template>
 
 <script>
 import { BContainer, BRow, BCol, } from 'bootstrap-vue'
 import ComponentTemplate from './ComponentTemplate.vue'
+import { Drag, Drop } from 'vue-drag-drop'
 
 export default {
   components: {
@@ -41,6 +43,8 @@ export default {
     BCol,
 
     ComponentTemplate,
+    Drag,
+    Drop,
   },
   props: {
     ObjectData: {type: Object},

@@ -1,95 +1,105 @@
 <!-- Templates -->
 
 <template>
-  <div>
+  <b-card
+    title="Templates"
+  >
+    <b-card-body>
 
-    <!-- TemplateFace -->
-    <b-form-radio
-      v-model="ComputedTemplateFace"
-      plain
-      value="front"
-    >Front
-    </b-form-radio>
-    <b-form-radio
-      v-model="ComputedTemplateFace"
-      plain
-      value="rear"
-    >
-      Rear
-    </b-form-radio>
-
-    <!-- Filter -->
-    <label for="template-filter">Filter:</label>
-    <b-form-tags
-      v-model="TemplateFilter"
-      input-id="template-filter"
-      class="mb-2"
-    />
-
-    <!-- Templates -->
-    <app-collapse>
-      <app-collapse-item
-        v-for="Category in CategoryData"
-        :key="Category.id"
-        :title="Category.name+' ('+CategoryTemplateCount(Category.id)+')'"
+      <!-- TemplateFace -->
+      <b-form-radio
+        v-model="ComputedTemplateFace"
+        plain
+        value="front"
+      >Front
+      </b-form-radio>
+      <b-form-radio
+        v-model="ComputedTemplateFace"
+        plain
+        value="rear"
       >
-        <div
-          v-for="Template in FilteredCategoryTemplates(Category.id)"
-          :key="Template.id"
-        >
-          {{ Template.name }}
-          <table
-            style="width:100%;"
-          >
-            <tr
-              class="pcm_cabinet_row"
-              v-for="RU in Template.ru_size"
-              :key="RU"
-            >
-              <td
-                class="pcm_cabinet_ru"
-                :rowspan=" (RU == 1) ? 0 : '' "
-              >
-                <component-object
-                  v-if=" RU == 1 && GetObjectID(Template.id)"
-                  :TemplateData="TemplateData"
-                  :ObjectData="ObjectData"
-                  :CategoryData="CategoryData"
-                  :TemplateRUSize=" Template.ru_size "
-                  :InitialPartitionAddress=[]
-                  :Context="Context"
-                  :ObjectID="GetObjectID(Template.id)"
-                  :TemplateFaceSelected="TemplateFaceSelected"
-                  :PartitionAddressSelected="PartitionAddressSelected"
-                  :PartitionAddressHovered="PartitionAddressHovered"
-                  @PartitionClicked=" $emit('PartitionClicked', $event) "
-                  @PartitionHovered=" $emit('PartitionHovered', $event) "
-                />
-              </td>
-            </tr>
-          </table>
-        </div>
-      </app-collapse-item>
-    </app-collapse>
+        Rear
+      </b-form-radio>
 
-  </div>
+      <!-- Filter -->
+      <label for="template-filter">Filter:</label>
+      <b-form-tags
+        v-model="TemplateFilter"
+        input-id="template-filter"
+        class="mb-2"
+      />
+
+      <!-- Templates -->
+      <app-collapse>
+        <app-collapse-item
+          v-for="Category in CategoryData"
+          :key="Category.id"
+          :title="Category.name+' ('+CategoryTemplateCount(Category.id)+')'"
+        >
+          <div
+            v-for="Template in FilteredCategoryTemplates(Category.id)"
+            :key="Template.id"
+          >
+            {{ Template.name }}
+            <table
+              style="width:100%;"
+            >
+              <tr
+                class="pcm_cabinet_row"
+                v-for="RU in Template.ru_size"
+                :key="RU"
+              >
+                <td
+                  class="pcm_cabinet_ru"
+                  :rowspan=" (RU == 1) ? 0 : '' "
+                >
+                  <component-object
+                    v-if=" RU == 1 && GetObjectID(Template.id)"
+                    :TemplateData="TemplateData"
+                    :ObjectData="ObjectData"
+                    :CategoryData="CategoryData"
+                    :TemplateRUSize=" Template.ru_size "
+                    :InitialPartitionAddress=[]
+                    :Context="Context"
+                    :ObjectID="GetObjectID(Template.id)"
+                    :TemplateFaceSelected="TemplateFaceSelected"
+                    :PartitionAddressSelected="PartitionAddressSelected"
+                    :PartitionAddressHovered="PartitionAddressHovered"
+                    @PartitionClicked=" $emit('PartitionClicked', $event) "
+                    @PartitionHovered=" $emit('PartitionHovered', $event) "
+                  />
+                </td>
+              </tr>
+            </table>
+          </div>
+        </app-collapse-item>
+      </app-collapse>
+
+    </b-card-body>
+  </b-card>
 </template>
 
 <script>
-import { BFormTags, BFormRadio } from 'bootstrap-vue'
+import { BCard, BCardBody, BFormTags, BFormRadio } from 'bootstrap-vue'
 import AppCollapse from '@core/components/app-collapse/AppCollapse.vue'
 import AppCollapseItem from '@core/components/app-collapse/AppCollapseItem.vue'
 import ComponentObject from './ComponentObject.vue'
+import { Drag, Drop } from 'vue-drag-drop'
 
 const TemplateFilter = []
 
 export default {
   components: {
+    BCard,
+    BCardBody,
     BFormTags,
     BFormRadio,
     AppCollapse,
     AppCollapseItem,
     ComponentObject,
+
+    Drag,
+    Drop,
   },
   props: {
     TemplateData: {type: Object},

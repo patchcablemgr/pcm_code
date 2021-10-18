@@ -14,8 +14,6 @@
     >
       <td class="pcm_cabinet">{{ CabinetRU }}</td>
       <td
-        :tag="'td'"
-        @drop="HandleDrop"
         class="pcm_cabinet_ru"
         v-if=" RackObjectID(CabinetData.id, CabinetRU) !== false "
         :rowspan=" RackObjectSize( RackObjectID(CabinetData.id, CabinetRU) ) "
@@ -37,7 +35,7 @@
       </td>
       <drop
         :tag="'td'"
-        @drop="HandleDrop"
+        @drop="HandleDrop(CabinetData.id, TemplateFaceSelected.preview, CabinetRU, ...arguments)"
         class="pcm_cabinet_ru"
         v-else-if=" RUIsOccupied(CabinetData.id, CabinetRU) === false "
       />
@@ -205,8 +203,41 @@ export default {
 
       return ObjectIsPresent
     },
-    HandleDrop: function(data) {
-      console.log(JSON.stringify(data))
+    HandleDrop: function(CabinetID, CabinetFace, CabinetRU, TransferData, NativeEvent) {
+
+      console.log('Debug (CabinetID): '+CabinetID)
+      console.log('Debug (CabinetFace): '+CabinetFace)
+      console.log('Debug (CabinetRU): '+CabinetRU)
+      console.log('Debug (TransferData): '+JSON.stringify(TransferData))
+
+      // Store data
+      const vm = this
+      const url = '/api/objects'
+      const data = {
+        "cabinet_id": CabinetID,
+        "cabinet_face": CabinetFace,
+        "cabinet_ru": CabinetRU,
+        "template_id": TransferData.template_id,
+        "template_face": TransferData.template_face,
+      }
+
+      // POST to locations
+      vm.$http.post(url, data).then(function(response){
+
+        const Object = response
+        
+        // Create child node object
+        vm.ObjectData.preview.append(Object)
+
+      }).catch(error => {
+
+        // Display error to user via toast
+        vm.$bvToast.toast(JSON.stringify(error.response), {
+          title: 'Error',
+          variant: 'danger',
+        })
+
+      })
     },
   }
 }

@@ -536,10 +536,7 @@ export default {
             vm.$refs.LiquorTree.append(child)
           } else {
 
-            const Criteria = {
-              "id": ParentID.toString()
-            }
-            let ParentNode = vm.$refs.LiquorTree.find(Criteria)[0]
+            let ParentNode = vm.GetLocationNode(ParentID)
             ParentNode.append(child)
           }
         })
@@ -657,6 +654,32 @@ export default {
 
       return PseudoObjectID
     },
+    GetCookie(cname) {
+      let name = cname + "="
+      let decodedCookie = decodeURIComponent(document.cookie)
+      let ca = decodedCookie.split(';')
+      for(let i = 0; i <ca.length; i++) {
+        let c = ca[i]
+        while (c.charAt(0) == ' ') {
+          c = c.substring(1)
+        }
+        if (c.indexOf(name) == 0) {
+          return c.substring(name.length, c.length)
+        }
+      }
+      return ""
+    },
+    GetLocationNode(NodeID) {
+
+      const vm = this
+
+      const Criteria = {
+        "id": NodeID.toString()
+      }
+      let Node = vm.$refs.LiquorTree.find(Criteria)[0]
+
+      return Node
+    },
     LocationsGET: function () {
 
       const vm = this
@@ -664,6 +687,23 @@ export default {
       this.$http.get('/api/locations').then(function(response){
 
         vm.BuildLocationTree(response.data)
+        const SelectedNodeID = vm.GetCookie('environment_location_nodeID')
+
+        if(SelectedNodeID != "") {
+
+          // Select previously viewed node
+          let Node = vm.GetLocationNode(SelectedNodeID)
+          Node.select(true)
+
+          // Expand parent nodes
+          let NodeParentID = Node.data.parent_id
+          while(NodeParentID.toString() !== '0') {
+            let NodeParent = vm.GetLocationNode(NodeParentID)
+            NodeParent.expand()
+            NodeParentID = NodeParent.data.parent_id
+          }
+          
+        }
 
       })
     },
@@ -706,6 +746,23 @@ export default {
 
       const NodeID = node.id
       vm.NodeIDSelected = NodeID
+      document.cookie = "environment_location_nodeID="+NodeID
+
+      // Store data
+      const url = '/api/locations/'+NodeID
+
+      // PATCH category form data
+      vm.$http.get(url).then(function(response){
+        vm.CabinetData = response.data
+      }).catch(error => {
+
+        // Display error to user via toast
+        vm.$bvToast.toast(JSON.stringify(error.response.data), {
+          title: 'Error',
+          variant: 'danger',
+        })
+
+      });
     })
     
     // Update node text

@@ -1,7 +1,7 @@
 <template>
 
   <drag
-    :transfer-data="{ object_id: ObjectID, constext: Context }"
+    :transfer-data="{ object_id: ObjectID, template_id: GetTemplateID(ObjectID), template_face: TemplateFaceSelected[Context], context: Context }"
     :class="{
       pcm_template_partition_selected: PartitionIsSelected(),
       pcm_template_partition_hovered: PartitionIsHovered(),

@@ -70,7 +70,22 @@ class Locations extends Controller
      */
     public function show($id)
     {
-        //
+        $validatorInput = [
+            'id' => $id
+        ];
+        $validatorRules = [
+            'id' => [
+                'required',
+                'exists:location'
+            ]
+        ];
+        $validatorMessages = [];
+        Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
+
+        // Retrieve location record
+        $location = LocationsModel::where('id', $id)->first();
+
+        return $location;
     }
 
     /**

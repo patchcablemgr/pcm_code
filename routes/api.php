@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Locations;
 use App\Http\Controllers\Categories;
 use App\Http\Controllers\Templates;
+use App\Http\Controllers\Objects;
 use App\Http\Controllers\AttributesMedia;
 use App\Http\Controllers\AttributesPortOrientation;
 
@@ -35,6 +36,7 @@ Route::group(['middleware' => 'auth:sanctum'], function(){
     'locations' => Locations::class,
     'categories' => Categories::class,
     'templates' => Templates::class,
+    'objects' => Objects::class,
     'medium' => AttributesMedia::class,
     'port-orientation' => AttributesPortOrientation::class,
   ]);

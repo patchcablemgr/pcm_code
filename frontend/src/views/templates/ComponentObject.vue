@@ -10,9 +10,9 @@
       'background-color': TemplateColor(ObjectID),
       'height': '100%',
     }"
-    @click.stop=" $emit('PartitionClicked', {'Context': Context, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': InitialPartitionAddress}) "
-    @mouseover.stop=" $emit('PartitionHovered', {'Context': Context, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': InitialPartitionAddress, 'HoverState': true}) "
-    @mouseleave.stop=" $emit('PartitionHovered', {'Context': Context, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': InitialPartitionAddress, 'HoverState': false}) "
+    @click.stop=" $emit('PartitionClicked', {'Context': Context, 'ObjectID': ObjectID, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': InitialPartitionAddress}) "
+    @mouseover.stop=" $emit('PartitionHovered', {'Context': Context, 'ObjectID': ObjectID, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': InitialPartitionAddress, 'HoverState': true}) "
+    @mouseleave.stop=" $emit('PartitionHovered', {'Context': Context, 'ObjectID': ObjectID, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': InitialPartitionAddress, 'HoverState': false}) "
   >
     <component-template
       :ObjectData="ObjectData"
@@ -177,27 +177,27 @@ export default {
       const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
       const PartitionAddressSelected = vm.PartitionAddressSelected[Context][TemplateFaceSelected]
       const PartitionAddress = vm.InitialPartitionAddress
-      const TemplateIDSelected = vm.PartitionAddressSelected[Context].template_id
-      const TemplateID = vm.GetTemplateID(vm.ObjectID)
+      const IDSelected = (Context == 'template') ? vm.PartitionAddressSelected[Context].template_id : vm.PartitionAddressSelected[Context].object_id
+      const ID = vm.GetTemplateID(vm.ObjectID)
       let PartitionIsSelected = false
 
-      if(PartitionAddressSelected.length === PartitionAddress.length && PartitionAddressSelected.every(function(value, index) { return value === PartitionAddress[index]}) && TemplateIDSelected == TemplateID) {
+      if(PartitionAddressSelected.length === PartitionAddress.length && PartitionAddressSelected.every(function(value, index) { return value === PartitionAddress[index]}) && IDSelected == ID) {
         PartitionIsSelected = true
       }
       return PartitionIsSelected
     },
-    PartitionIsHovered: function() {
+    PartitionIsHovered: function(PartitionIndex) {
 
       const vm = this
       const Context = vm.Context
       const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
       const PartitionAddressHovered = vm.PartitionAddressHovered[Context][TemplateFaceSelected]
       const PartitionAddress = vm.InitialPartitionAddress
-      const TemplateIDSelected = vm.PartitionAddressHovered[Context].template_id
-      const TemplateID = vm.GetTemplateID(vm.ObjectID)
+      const IDSelected = (Context == 'template') ? vm.PartitionAddressHovered[Context].template_id : vm.PartitionAddressHovered[Context].object_id
+      const ID = (Context == 'template') ? vm.GetTemplateID(vm.ObjectID) : vm.ObjectID
       let PartitionIsHovered = false
 
-      if(PartitionAddressHovered.length === PartitionAddress.length && PartitionAddressHovered.every(function(value, index) { return value === PartitionAddress[index]}) && TemplateIDSelected == TemplateID) {
+      if(PartitionAddressHovered.length === PartitionAddress.length && PartitionAddressHovered.every(function(value, index) { return value === PartitionAddress[index]}) && IDSelected == ID) {
         PartitionIsHovered = true
       }
       return PartitionIsHovered
@@ -231,5 +231,6 @@ export default {
       return AreasString
     },
   },
+  mounted() {}
 }
 </script>

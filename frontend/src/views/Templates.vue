@@ -111,6 +111,7 @@
             CardTitle="Template Details"
 						:TemplateData="TemplateData"
 						:CategoryData="CategoryData"
+            :ObjectData="ObjectData"
 						Context="template"
 						:TemplateFaceSelected="TemplateFaceSelected"
 						:PartitionAddressSelected="PartitionAddressSelected"
@@ -295,7 +296,7 @@ const ObjectData = {
       "id": StandardTemplateID,
       "name": "Standard",
       "template_id": StandardTemplateID,
-      "location_id": 1,
+      "cabinet_id": 1,
       "cabinet_ru": 1,
       "cabinet_face": "front",
     },
@@ -303,7 +304,7 @@ const ObjectData = {
       "id": InsertTemplateID,
       "name": "Insert",
       "template_id": InsertTemplateID,
-      "location_id": null,
+      "cabinet_id": null,
       "cabinet_ru": null,
       "cabinet_face": null,
       "parent_id": null,
@@ -320,7 +321,7 @@ const GenericObject = {
     "pseudo": true,
     "name": null,
     "template_id": null,
-    "location_id": null,
+    "cabinet_id": null,
     "cabinet_ru": null,
     "cabinet_face": null,
     "parent_id": null,
@@ -788,6 +789,7 @@ export default {
       const PartitionAddress = EmitData.PartitionAddress
       const HoverState = EmitData.HoverState
       const TemplateID = EmitData.TemplateID
+      const ObjectID = EmitData.ObjectID
 			
 			// Hovered partition should not be highlighted if it is a preview insert parent
 			const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
@@ -795,7 +797,7 @@ export default {
 
 			if(HonorHover) {
 				vm.PartitionAddressHovered[Context][TemplateFaceSelected] = (HoverState) ? PartitionAddress : false
-				vm.PartitionAddressHovered[Context].template_id = TemplateID
+        vm.PartitionAddressHovered[Context].id = (Context == 'template') ? TemplateID : ObjectID
 			}
 
     },
@@ -1777,7 +1779,7 @@ export default {
             return PseudoObjectID
           } else if (GenericObjectKey == 'cabinet_face') {
             return 'front'
-          } else if (GenericObjectKey == 'location_id') {
+          } else if (GenericObjectKey == 'cabinet_id') {
             return (Context == 'preview') ? vm.InsertTemplateID : null
           } else if (GenericObjectKey == 'cabinet_ru') {
             return 1
@@ -1830,7 +1832,7 @@ export default {
       WorkingObjectData.push(JSON.parse(JSON.stringify(vm.GenericObject), function (GenericObjectKey, GenericObjectValue) {
         if (GenericObjectKey == 'id') {
             return PseudoObjectID
-        } else if (GenericObjectKey == 'location_id') {
+        } else if (GenericObjectKey == 'cabinet_id') {
             return (Context == 'preview' && TemplateType == 'standard') ? vm.InsertTemplateID : GenericObjectValue
         } else if (GenericObjectKey == 'cabinet_face') {
             return (Context == 'preview' && TemplateType == 'standard') ? 'front' : GenericObjectValue

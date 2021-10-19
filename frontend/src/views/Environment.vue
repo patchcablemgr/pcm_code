@@ -56,6 +56,7 @@
                 :PartitionAddressHovered="PartitionAddressHovered"
                 @PartitionClicked=" PartitionClicked($event) "
                 @PartitionHovered=" PartitionHovered($event) "
+                @CabinetObjectDropped="CabinetObjectDropped($event)"
               />
             </b-card-body>
           </b-card>
@@ -67,10 +68,12 @@
             CardTitle="Object Details"
 						:TemplateData="TemplateData"
 						:CategoryData="CategoryData"
-						Context="template"
+            :ObjectData="ObjectData"
+						Context="preview"
 						:TemplateFaceSelected="TemplateFaceSelected"
 						:PartitionAddressSelected="PartitionAddressSelected"
 						:TemplatePartitionPortRange="TemplatePartitionPortRange"
+            :PortOrientationData="PortOrientationData"
             @TemplateObjectEditClicked="TemplateObjectEditClicked()"
             @TemplateObjectCloneClicked="TemplateObjectCloneClicked()"
 						@TemplateObjectDeleteClicked="TemplateObjectDeleteClicked()"
@@ -191,39 +194,40 @@ const TemplateFaceSelected = {
 
 const PartitionAddressSelected = {
   'preview': {
+    'object_id': null,
     'template_id': null,
     'front': [0],
     'rear': [0]
   },
   'template': {
-    'template_id': null,
-    'front': [0],
-    'rear': [0]
-  },
-  'object': {
     'object_id': null,
+    'template_id': null,
     'front': [0],
     'rear': [0]
   }
 }
+
 const PartitionAddressHovered = {
   'preview': {
+    'id': null,
     'template_id': null,
     'front': false,
     'rear': false
   },
   'template': {
+    'id': null,
     'template_id': null,
     'front': false,
     'rear': false
   }
 }
+
 const GenericObject = {
     "id": null,
     "pseudo": true,
     "name": null,
     "template_id": null,
-    "location_id": null,
+    "cabinet_id": null,
     "cabinet_ru": null,
     "cabinet_face": null,
     "parent_id": null,
@@ -231,6 +235,7 @@ const GenericObject = {
     "parent_part_addr": null,
     "parent_enc_addr": null,
 }
+
 const GenericTemplate = {
     "id": null,
     "pseudo": true,
@@ -260,6 +265,14 @@ const GenericTemplate = {
         "rear": []
     },
 }
+
+const PortOrientationData = [
+  {
+    "value": 1,
+    "name": "Top-Left to Right",
+    "default": 1,
+  },
+]
 
 const NodeIDSelected = null
 
@@ -295,6 +308,7 @@ export default {
       GenericObject,
       GenericTemplate,
       NodeIDSelected,
+      PortOrientationData,
     }
   },
   computed: {
@@ -329,7 +343,7 @@ export default {
       
       // Initialize some variables
       const vm = this
-      const Context = 'template'
+      const Context = 'preview'
       const TemplateID = vm.PartitionAddressSelected[Context].template_id
       let PortRangeString = '-'
 
@@ -370,12 +384,49 @@ export default {
     },
   },
   methods: {
+    GetPartition: function(Blueprint, PartitionAddress) {
+			
+			// Locate template partition
+			let Partition = Blueprint;
+			let PartitionCollection = Blueprint
+			PartitionAddress.forEach(function(PartitionIndex) {
+				if(typeof PartitionCollection[PartitionIndex] !== 'undefined') {
+					Partition = PartitionCollection[PartitionIndex]
+					PartitionCollection = PartitionCollection[PartitionIndex]['children']
+				} else {
+					return false
+				}
+			})
+			
+			return Partition
+      
+    },
     GetTemplateIndex: function(TemplateID, Context) {
 
       const vm = this
       const TemplateIndex = vm.TemplateData[Context].findIndex((template) => template.id == TemplateID);
 
       return TemplateIndex
+    },
+    PartitionClicked: function(EmitData) {
+
+      // Store variables
+      const vm = this
+      const Context = EmitData.Context
+      const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
+      const PartitionAddress = EmitData.PartitionAddress
+      const TemplateID = EmitData.TemplateID
+      const ObjectID = EmitData.ObjectID
+      const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+			
+			// Clicked partition should not be highlighted if it is a preview insert parent
+      const HonorClick = (vm.TemplateData[Context][TemplateIndex].hasOwnProperty('pseudo')) ? false : true
+
+			if(HonorClick) {
+				vm.PartitionAddressSelected[Context][TemplateFaceSelected] = PartitionAddress
+        vm.PartitionAddressSelected[Context].template_id = TemplateID
+        vm.PartitionAddressSelected[Context].object_id = ObjectID
+			}
     },
     PartitionHovered: function(EmitData) {
 
@@ -386,6 +437,7 @@ export default {
       const PartitionAddress = EmitData.PartitionAddress
       const HoverState = EmitData.HoverState
       const TemplateID = EmitData.TemplateID
+      const ObjectID = EmitData.ObjectID
 			
 			// Hovered partition should not be highlighted if it is a preview insert parent
 			const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
@@ -393,9 +445,38 @@ export default {
 
 			if(HonorHover) {
 				vm.PartitionAddressHovered[Context][TemplateFaceSelected] = (HoverState) ? PartitionAddress : false
-				vm.PartitionAddressHovered[Context].template_id = TemplateID
+        vm.PartitionAddressHovered[Context].template_id = TemplateID
+        vm.PartitionAddressHovered[Context].object_id = ObjectID
 			}
 
+    },
+    CabinetObjectDropped: function(EmitData) {
+
+      console.log('here1')
+
+      const vm = this
+      const url = '/api/objects'
+      const data = EmitData
+
+      // POST to objects
+      vm.$http.post(url, data).then(function(response){
+
+        const Object = response.data
+        console.log('Debug (Object1): '+JSON.stringify(Object))
+        
+        // Create child node object
+        vm.ObjectData.preview.push(Object)
+        console.log('Debug (ObjectData): '+JSON.stringify(vm.ObjectData))
+
+      }).catch(error => {
+
+        // Display error to user via toast
+        vm.$bvToast.toast(JSON.stringify(error.response), {
+          title: 'Error',
+          variant: 'danger',
+        })
+
+      })
     },
     GetNodeIcon: function(NodeType) {
 
@@ -575,7 +656,7 @@ export default {
             return PseudoObjectID
           } else if (GenericObjectKey == 'cabinet_face') {
             return 'front'
-          } else if (GenericObjectKey == 'location_id') {
+          } else if (GenericObjectKey == 'cabinet_id') {
             return (Context == 'preview') ? vm.InsertTemplateID : null
           } else if (GenericObjectKey == 'cabinet_ru') {
             return 1
@@ -628,7 +709,7 @@ export default {
       WorkingObjectData.push(JSON.parse(JSON.stringify(vm.GenericObject), function (GenericObjectKey, GenericObjectValue) {
         if (GenericObjectKey == 'id') {
             return PseudoObjectID
-        } else if (GenericObjectKey == 'location_id') {
+        } else if (GenericObjectKey == 'cabinet_id') {
             return (Context == 'preview' && TemplateType == 'standard') ? vm.InsertTemplateID : GenericObjectValue
         } else if (GenericObjectKey == 'cabinet_face') {
             return (Context == 'preview' && TemplateType == 'standard') ? 'front' : GenericObjectValue
@@ -653,6 +734,94 @@ export default {
       vm.ObjectData[Context] = vm.ObjectData[Context].concat(WorkingObjectData)
 
       return PseudoObjectID
+    },
+    GeneratePortID: function(Index, PortTotal, PortFormat){
+
+      // Store variables
+      const vm = this
+      let PreviewPortID = ''
+      let IncrementalCount = 0
+
+      // Create character arrays
+      let LowercaseArray = []
+      let UppercaseArray = []
+      for(let x=97; x<=122; x++) {
+        LowercaseArray.push(String.fromCharCode(x))
+      }
+      for(let x=65; x<=90; x++) {
+        UppercaseArray.push(String.fromCharCode(x))
+      }
+
+      // Account for infinite count incrementables
+      PortFormat.forEach(function(Field, FieldIndex){
+        const FieldType = Field.type
+        let FieldCount = Field.count
+
+        // Increment IncrementalCount
+        if(FieldType == 'incremental' || FieldType == 'series') {
+          IncrementalCount++
+
+          // Adjust field count
+          if(FieldType == 'incremental' && FieldCount == 0) {
+            PortFormat[FieldIndex].count = PortTotal
+          } else if(FieldType == 'series') {
+            let CurrentFieldValue = Field.value
+            PortFormat[FieldIndex].count = CurrentFieldValue.split(',').length
+          }
+        }
+      })
+
+      PortFormat.forEach(function(Field){
+        const FieldType = Field.type
+        const FieldValue = Field.value
+        const FieldOrder = Field.order
+        const FieldCount = Field.count
+        let HowMuchToIncrement
+        let RollOver
+        let Numerator = 1
+
+        if(FieldType == 'static') {
+          PreviewPortID = PreviewPortID + FieldValue
+        } else {
+
+          PortFormat.forEach(function(LoopField){
+            const LoopFieldType = LoopField.type
+            const LoopFieldOrder = LoopField.order
+            const LoopFieldCount = LoopField.count
+
+            if(LoopFieldType == 'incremental' || LoopFieldType == 'series') {
+              if(LoopFieldOrder < FieldOrder) {
+                Numerator *= LoopFieldCount
+              }
+            }
+          })
+
+          HowMuchToIncrement = Math.floor(Index / Numerator)
+
+          if(HowMuchToIncrement >= FieldCount) {
+            RollOver = Math.floor(HowMuchToIncrement / FieldCount)
+            HowMuchToIncrement = HowMuchToIncrement - (RollOver * FieldCount)
+            
+          }
+
+          if(FieldType == 'incremental') {
+
+            if(!isNaN(FieldValue)) {
+              PreviewPortID = PreviewPortID + (parseInt(FieldValue) + HowMuchToIncrement)
+            } else {
+              PreviewPortID = PreviewPortID + '-'
+            }
+
+          } else if(FieldType == 'series') {
+
+            const FieldValueArray = FieldValue.split(',')
+            PreviewPortID = PreviewPortID + FieldValueArray[HowMuchToIncrement]
+
+          }
+        }
+      })
+      
+      return PreviewPortID
     },
     GetCookie(cname) {
       let name = cname + "="
@@ -680,7 +849,7 @@ export default {
 
       return Node
     },
-    LocationsGET: function () {
+    GETLocations: function () {
 
       const vm = this
       
@@ -707,7 +876,7 @@ export default {
 
       })
     },
-    categoryGET: function() {
+    GETCategories: function() {
 
       const vm = this
 
@@ -717,19 +886,38 @@ export default {
 
       });
     },
-    templatesGET: function () {
+    GETTemplates: function () {
 
       const vm = this
 			const Context = 'template'
       
       vm.$http.get('/api/templates').then(function(response){
 
-        vm.TemplateData.template = response.data
+        vm.TemplateData[Context] = response.data
+        vm.TemplateData.preview = response.data
 
         response.data.forEach(function(Template){
 					
 					vm.GeneratePseudoData(Template, Context)
         })
+      })
+    },
+    GETObjects: function () {
+
+      const vm = this
+			const Context = 'preview'
+      
+      vm.$http.get('/api/objects').then(function(response){
+
+        vm.ObjectData[Context] = response.data
+      })
+    },
+    GETPortOrientations: function() {
+
+      const vm = this;
+
+      this.$http.get('/api/port-orientation').then(function(response){
+        vm.PortOrientationData = response.data
       });
     },
   },
@@ -737,9 +925,11 @@ export default {
 
     const vm = this
 
-    vm.LocationsGET()
-    vm.categoryGET()
-    vm.templatesGET()
+    vm.GETLocations()
+    vm.GETCategories()
+    vm.GETTemplates()
+    vm.GETObjects()
+    vm.GETPortOrientations()
 
     // Update selected node
     vm.$refs.LiquorTree.$on('node:selected', (node) => {

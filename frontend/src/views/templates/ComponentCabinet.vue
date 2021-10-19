@@ -132,7 +132,7 @@ export default {
       const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
 
       const ObjectIndex = vm.ObjectData[Context].findIndex(function(Object, ObjectIndex) {
-        if(Object.location_id == CabinetID && Object.cabinet_ru == CabinetRU) {
+        if(Object.cabinet_id == CabinetID && Object.cabinet_ru == CabinetRU) {
           const ObjectCabinetFace = Object.cabinet_face
           const ObjectID = Object.id
           const ObjectPreviewData = vm.GetPreviewData(ObjectID)
@@ -174,7 +174,7 @@ export default {
       const vm = this;
       const Context = vm.Context
       const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
-      const CabinetObjects = vm.ObjectData[Context].filter((object) => object.location_id == CabinetID);
+      const CabinetObjects = vm.ObjectData[Context].filter((object) => object.cabinet_id == CabinetID);
       let ObjectIsPresent = false
 
       CabinetObjects.forEach(function(object){
@@ -205,14 +205,8 @@ export default {
     },
     HandleDrop: function(CabinetID, CabinetFace, CabinetRU, TransferData, NativeEvent) {
 
-      console.log('Debug (CabinetID): '+CabinetID)
-      console.log('Debug (CabinetFace): '+CabinetFace)
-      console.log('Debug (CabinetRU): '+CabinetRU)
-      console.log('Debug (TransferData): '+JSON.stringify(TransferData))
-
       // Store data
       const vm = this
-      const url = '/api/objects'
       const data = {
         "cabinet_id": CabinetID,
         "cabinet_face": CabinetFace,
@@ -221,23 +215,7 @@ export default {
         "template_face": TransferData.template_face,
       }
 
-      // POST to locations
-      vm.$http.post(url, data).then(function(response){
-
-        const Object = response
-        
-        // Create child node object
-        vm.ObjectData.preview.append(Object)
-
-      }).catch(error => {
-
-        // Display error to user via toast
-        vm.$bvToast.toast(JSON.stringify(error.response), {
-          title: 'Error',
-          variant: 'danger',
-        })
-
-      })
+      vm.$emit('CabinetObjectDropped', data )
     },
   }
 }

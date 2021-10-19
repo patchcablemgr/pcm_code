@@ -21,20 +21,29 @@
 						<b-dropdown-item
               @click=" $emit('TemplateObjectEditClicked') "
               :disabled="!TemplateSelected"
-            >Edit</b-dropdown-item>
+            >Edit
+            </b-dropdown-item>
+
 						<b-dropdown-item
+              v-if="Context == 'template'"
               @click=" $emit('TemplateObjectCloneClicked') "
               :disabled="!TemplateSelected"
-            >Clone</b-dropdown-item>
+            >Clone
+            </b-dropdown-item>
+
 						<b-dropdown-item
+              v-if="Context == 'template'"
               :disabled="!TemplateSelected"
             >Where Used</b-dropdown-item>
+
 						<b-dropdown-divider />
+
 						<b-dropdown-item
 							variant="danger"
 							@click=" $emit('TemplateObjectDeleteClicked') "
               :disabled="!TemplateSelected"
 						>Delete</b-dropdown-item>
+
 					</b-dropdown>
 				</div>
 			</div>
@@ -232,12 +241,14 @@ export default {
 	},
   props: {
     CardTitle: {type: String},
-    CategoryData: {type: Array},
     TemplateData: {type: Object},
+    CategoryData: {type: Array},
+    ObjectData: {type: Object},
     Context: {type: String},
     TemplateFaceSelected: {type: Object},
     PartitionAddressSelected: {type: Object},
     TemplatePartitionPortRange: {type: String},
+    PortOrientationData: {type: Array},
   },
   data() {
     return {
@@ -255,7 +266,23 @@ export default {
     ComputedObjectName: {
       get() {
 
-        return '-'
+        const vm = this
+        const Context = vm.Context
+        const ObjectID = vm.PartitionAddressSelected[Context].object_id
+        let ReturnString = '-'
+
+        console.log('Debug (ComputedObjectName-Context): '+Context)
+
+        if(Context == 'preview') {
+          if(ObjectID) {
+            const ObjectIndex = vm.GetObjectIndex(ObjectID)
+            ReturnString = vm.ObjectData[Context][ObjectIndex].name
+          }
+        } else {
+          ReturnString = 'N/A'
+        }
+
+        return ReturnString
       },
     },
     ComputedTemplateName: {
@@ -265,7 +292,7 @@ export default {
         const Context = vm.Context
         const TemplateID = vm.PartitionAddressSelected[Context].template_id
         let ReturnString = '-'
-
+        console.log('Debug (ComputedTemplateName-Context): '+Context)
         if(TemplateID) {
           const TemplateIndex = vm.GetTemplateIndex(TemplateID)
           ReturnString = vm.TemplateData[Context][TemplateIndex].name
@@ -297,7 +324,7 @@ export default {
 
         const vm = this
         const Context = vm.Context
-        const ObjectID = vm.PartitionAddressSelected.object.object_id
+        const ObjectID = vm.PartitionAddressSelected[Context].object_id
         let ReturnString = '-'
 
         if(ObjectID) {
@@ -425,7 +452,10 @@ export default {
           const PartitionType = Partition.type
 
           if(PartitionType == 'connectable') {
-            ReturnString = Partition.port_orientation
+            const PortOrientationID = Partition.port_orientation
+            const PortOrientationIndex = vm.GetPortOrientationIndex(PortOrientationID)
+            const PortOrientationName = vm.PortOrientationData[PortOrientationIndex].name
+            ReturnString = PortOrientationName
           }
         }
 
@@ -496,6 +526,21 @@ export default {
     },
   },
   methods: {
+    GetPortOrientationIndex: function(PortOrientationID) {
+
+      const vm = this
+      const PortOrientationIndex = vm.PortOrientationData.findIndex((PortOrientation) => PortOrientation.value == PortOrientationID);
+      
+      return PortOrientationIndex
+    },
+    GetObjectIndex: function(ObjectID) {
+
+      const vm = this
+      const Context = vm.Context
+      const ObjectIndex = vm.ObjectData[Context].findIndex((object) => object.id == ObjectID);
+      
+      return ObjectIndex
+    },
     GetTemplateIndex: function(TemplateID) {
 
       const vm = this

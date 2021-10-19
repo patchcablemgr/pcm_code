@@ -18,7 +18,9 @@ class Objects extends Controller
      */
     public function index()
     {
-        //
+        $objects = ObjectsModel::all();
+
+        return $objects;
     }
 
     /**

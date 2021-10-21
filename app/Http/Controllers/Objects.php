@@ -103,7 +103,49 @@ class Objects extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        // Validate template ID
+        $validatorInput = [
+            'id' => $id
+        ];
+        $validatorRules = [
+            'id' => [
+                'required',
+                'exists:object'
+            ]
+        ];
+        $validatorMessages = [
+        ];
+        Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
+
+        // Validate request data
+        $request->validate([
+            'cabinet_ru' => [
+                'numeric',
+                'unique:App\Models\TemplateModel,name',
+                'between:1,52'
+            ]
+        ]);
+
+        // Store request data
+        $data = $request->all();
+
+        // Retrieve object record
+        $object = ObjectsModel::where('id', $id)->first();
+
+        // Update object record
+        foreach($data as $key => $value) {
+            if($key == 'cabinet_ru') {
+
+                // Update template name
+                $object->cabinet_ru = $value;
+            }
+        }
+
+        // Save object record
+        $object->save();
+
+        // Return object record
+        return $object->toArray();
     }
 
     /**
@@ -114,6 +156,23 @@ class Objects extends Controller
      */
     public function destroy($id)
     {
-        //
+        $validatorInput = [
+            'id' => $id
+        ];
+        $validatorRules = [
+            'id' => [
+                'required',
+                'exists:object'
+            ]
+        ];
+        $validatorMessages = [
+        ];
+        Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
+				
+		$object = ObjectsModel::where('id', $id)->first();
+
+        $object->delete();
+
+        return array('id' => $id);
     }
 }

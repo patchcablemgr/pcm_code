@@ -2,51 +2,50 @@
 
 <template>
 	
-  <b-card
-		:title="CardTitle"
-	>
-		
-			<div class="d-flex flex-wrap justify-content-between">
+  <b-card>
+    <b-card-title>
+      <div class="d-flex flex-wrap justify-content-between">
 				<div class="demo-inline-spacing">
-					<b-card-title/>
-				</div>
-				<div class="demo-inline-spacing">
-					<b-dropdown
-						v-ripple.400="'rgba(255, 255, 255, 0.15)'"
-						right
-						size="sm"
-						text="Actions"
-						variant="primary"
-					>
-						<b-dropdown-item
+          {{CardTitle}}
+        </div>
+        <div class="demo-inline-spacing">
+          <b-dropdown
+            v-ripple.400="'rgba(255, 255, 255, 0.15)'"
+            right
+            size="sm"
+            text="Actions"
+            variant="primary"
+          >
+            <b-dropdown-item
               @click=" $emit('TemplateObjectEditClicked') "
               :disabled="!TemplateSelected"
             >Edit
             </b-dropdown-item>
 
-						<b-dropdown-item
+            <b-dropdown-item
               v-if="Context == 'template'"
               @click=" $emit('TemplateObjectCloneClicked') "
               :disabled="!TemplateSelected"
             >Clone
             </b-dropdown-item>
 
-						<b-dropdown-item
+            <b-dropdown-item
               v-if="Context == 'template'"
               :disabled="!TemplateSelected"
             >Where Used</b-dropdown-item>
 
-						<b-dropdown-divider />
+            <b-dropdown-divider />
 
-						<b-dropdown-item
-							variant="danger"
-							@click=" $emit('TemplateObjectDeleteClicked') "
+            <b-dropdown-item
+              variant="danger"
+              @click=" $emit('TemplateObjectDeleteClicked') "
               :disabled="!TemplateSelected"
-						>Delete</b-dropdown-item>
+            >Delete</b-dropdown-item>
 
-					</b-dropdown>
-				</div>
-			</div>
+          </b-dropdown>
+        </div>
+      </div>
+    </b-card-title>
 		<b-card-body>
 		
     <div

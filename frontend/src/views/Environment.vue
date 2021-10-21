@@ -401,6 +401,13 @@ export default {
 			return Partition
       
     },
+    GetObjectIndex: function(ObjectID, Context) {
+
+      const vm = this
+      const ObjectIndex = vm.ObjectData[Context].findIndex((object) => object.id == ObjectID);
+
+      return ObjectIndex
+    },
     GetTemplateIndex: function(TemplateID, Context) {
 
       const vm = this
@@ -452,32 +459,110 @@ export default {
     },
     CabinetObjectDropped: function(EmitData) {
 
-      console.log('here1')
-
       const vm = this
-      const url = '/api/objects'
+      const Context = EmitData.context
+      
       const data = EmitData
 
-      // POST to objects
-      vm.$http.post(url, data).then(function(response){
+      if(Context == 'template') {
 
-        const Object = response.data
-        console.log('Debug (Object1): '+JSON.stringify(Object))
-        
-        // Create child node object
-        vm.ObjectData.preview.push(Object)
-        console.log('Debug (ObjectData): '+JSON.stringify(vm.ObjectData))
+        const url = '/api/objects'
 
-      }).catch(error => {
+        // POST to objects
+        vm.$http.post(url, data).then(function(response){
 
-        // Display error to user via toast
-        vm.$bvToast.toast(JSON.stringify(error.response), {
-          title: 'Error',
-          variant: 'danger',
+          const Object = response.data
+          
+          // Create child node object
+          vm.ObjectData.preview.push(Object)
+
+        }).catch(error => {
+
+          // Display error to user via toast
+          vm.$bvToast.toast(JSON.stringify(error.response), {
+            title: 'Error',
+            variant: 'danger',
+          })
+
         })
+      } else if(Context == 'preview') {
 
-      })
+        const ObjectID = EmitData.object_id
+        const url = '/api/objects/'+ObjectID
+
+        // POST to objects
+        vm.$http.patch(url, data).then(function(response){
+
+          const Object = response.data
+          const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
+          
+          // Create child node object
+          vm.$set(vm.ObjectData.preview, ObjectIndex, Object)
+
+        }).catch(error => {
+
+          // Display error to user via toast
+          vm.$bvToast.toast(JSON.stringify(error.response), {
+            title: 'Error',
+            variant: 'danger',
+          })
+
+        })
+      }
     },
+    TemplateObjectDeleteClicked: function() {
+      
+			const vm = this
+      const Context = 'preview'
+			const ObjectID = vm.PartitionAddressSelected[Context].object_id
+			
+			const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
+			const ObjectName = vm.ObjectData[Context][ObjectIndex].name
+			
+      vm.$bvModal
+        .msgBoxConfirm('Delete '+ObjectName+'?', {
+          title: 'Confirm',
+          size: 'sm',
+          okVariant: 'primary',
+          okTitle: 'Yes',
+          cancelTitle: 'No',
+          cancelVariant: 'outline-secondary',
+          hideHeaderClose: false,
+          centered: true,
+        })
+        .then(value => {
+					
+					if(value) {
+						
+						// Store data
+						const url = '/api/objects/'+ObjectID
+
+						// DELETE object ID
+						this.$http.delete(url).then(function(response){
+
+							// Default selected
+							vm.PartitionAddressSelected[Context].object_id = null
+              vm.PartitionAddressSelected[Context].template_id = null
+
+              // Get template object data
+              const DeletedObjectID = response.data.id
+              const DeletedObjectIndex = vm.GetObjectIndex(DeletedObjectID, Context)
+
+              // Delete template and object
+              vm.ObjectData[Context].splice(DeletedObjectIndex,1)
+
+						}).catch(error => {
+
+							// Display error to user via toast
+							vm.$bvToast.toast(JSON.stringify(error.response.data), {
+								title: 'Error',
+								variant: 'danger',
+							})
+
+						});
+					}
+        })
+		},
     GetNodeIcon: function(NodeType) {
 
       let Icon = "HomeIcon"

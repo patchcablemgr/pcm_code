@@ -208,9 +208,11 @@ export default {
       // Store data
       const vm = this
       const data = {
+        "context": TransferData.context,
         "cabinet_id": CabinetID,
         "cabinet_face": CabinetFace,
         "cabinet_ru": CabinetRU,
+        "object_id": TransferData.object_id,
         "template_id": TransferData.template_id,
         "template_face": TransferData.template_face,
       }

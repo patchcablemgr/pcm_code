@@ -116,6 +116,7 @@
 						:TemplateFaceSelected="TemplateFaceSelected"
 						:PartitionAddressSelected="PartitionAddressSelected"
 						:TemplatePartitionPortRange="TemplatePartitionPortRange"
+            :PortOrientationData="PortOrientationData"
             @TemplateObjectEditClicked="TemplateObjectEditClicked()"
             @TemplateObjectCloneClicked="TemplateObjectCloneClicked()"
 						@TemplateObjectDeleteClicked="TemplateObjectDeleteClicked()"
@@ -258,28 +259,33 @@ const TemplateFaceSelected = {
 }
 const PartitionAddressSelected = {
   'preview': {
+    'object_id': StandardTemplateID,
     'template_id': StandardTemplateID,
     'front': [0],
     'rear': [0]
   },
   'template': {
+    'object_id': null,
     'template_id': null,
     'front': [0],
     'rear': [0]
   },
   'object': {
     'object_id': null,
+    'template_id': null,
     'front': [0],
     'rear': [0]
   }
 }
 const PartitionAddressHovered = {
   'preview': {
+    'object_id': null,
     'template_id': null,
     'front': false,
     'rear': false
   },
   'template': {
+    'object_id': null,
     'template_id': null,
     'front': false,
     'rear': false
@@ -609,7 +615,9 @@ export default {
 
       let SelectedPortFormat = []
 
+      console.log('Debug (Partition): '+JSON.stringify(Partition))
       if(Partition.type == 'connectable') {
+        console.log('Debug: here1')
         SelectedPortFormat = Partition.port_format
       }
 
@@ -639,6 +647,7 @@ export default {
       const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
       const PartitionAddress = EmitData.PartitionAddress
       const TemplateID = EmitData.TemplateID
+      const ObjectID = EmitData.ObjectID
       const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
       const Template = vm.TemplateData[Context][TemplateIndex]
       const Blueprint = Template.blueprint[TemplateFaceSelected]
@@ -652,6 +661,7 @@ export default {
 			if(HonorClick) {
 				vm.PartitionAddressSelected[Context][TemplateFaceSelected] = PartitionAddress
 				vm.PartitionAddressSelected[Context].template_id = TemplateID
+        vm.PartitionAddressSelected[Context].object_id = ObjectID
 			}
 
       if(HonorClick && Context == 'template' && PartitionType == 'enclosure') {
@@ -797,7 +807,8 @@ export default {
 
 			if(HonorHover) {
 				vm.PartitionAddressHovered[Context][TemplateFaceSelected] = (HoverState) ? PartitionAddress : false
-        vm.PartitionAddressHovered[Context].id = (Context == 'template') ? TemplateID : ObjectID
+        vm.PartitionAddressHovered[Context].object_id = ObjectID
+        vm.PartitionAddressHovered[Context].template_id = TemplateID
 			}
 
     },
@@ -1394,26 +1405,49 @@ export default {
       const vm = this
       const Context = EmitData.context
       const PortFormatIndex = EmitData.index
-      const SelectedPortFormat = vm.SelectedPortFormat
-      const FieldType = SelectedPortFormat[PortFormatIndex].type
-      const FieldOrder = SelectedPortFormat[PortFormatIndex].order
       
-      // Adjust incremental order
-      if(FieldType == 'series' || FieldType == 'incremental') {
-        SelectedPortFormat.forEach(function(PortFormatField){
-          const PortFormatFieldType = PortFormatField.type
-          if(PortFormatFieldType == 'series' || PortFormatFieldType == 'incremental') {
-            const PortFormatFieldOrder = PortFormatField.order
-            if(PortFormatFieldOrder > FieldOrder) {
-              PortFormatField.order = PortFormatFieldOrder - 1
-            }
-          }
-        })
-      }
+      if(Context == 'template') {
 
-      // Delete selected field
-      if(SelectedPortFormat.length > 1) {
-        SelectedPortFormat.splice(PortFormatIndex, 1)
+        const PartitionAddressSelected = vm.PartitionAddressSelected[Context]
+        const TemplateID = PartitionAddressSelected.template_id
+        const TemplateFace = vm.TemplateFaceSelected[Context]
+        const PartitionAddress = PartitionAddressSelected[TemplateFace]
+
+        const UpdateData = {
+          "port_format": {
+            "template_id": TemplateID,
+            "template_face": TemplateFace,
+            "template_partition": PartitionAddress,
+            "port_format_index": PortFormatIndex,
+            "port_format_attr": 'field',
+            "port_format_value": 'delete',
+          }
+        }
+
+        vm.TemplateEdited(UpdateData)
+      } else {
+
+        const SelectedPortFormat = vm.SelectedPortFormat
+        const FieldType = SelectedPortFormat[PortFormatIndex].type
+        const FieldOrder = SelectedPortFormat[PortFormatIndex].order
+
+        // Adjust incremental order
+        if(FieldType == 'series' || FieldType == 'incremental') {
+          SelectedPortFormat.forEach(function(PortFormatField){
+            const PortFormatFieldType = PortFormatField.type
+            if(PortFormatFieldType == 'series' || PortFormatFieldType == 'incremental') {
+              const PortFormatFieldOrder = PortFormatField.order
+              if(PortFormatFieldOrder > FieldOrder) {
+                PortFormatField.order = PortFormatFieldOrder - 1
+              }
+            }
+          })
+        }
+
+        // Delete selected field
+        if(SelectedPortFormat.length > 1) {
+          SelectedPortFormat.splice(PortFormatIndex, 1)
+        }
       }
 
     },

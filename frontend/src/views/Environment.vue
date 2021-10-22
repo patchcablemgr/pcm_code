@@ -209,13 +209,13 @@ const PartitionAddressSelected = {
 
 const PartitionAddressHovered = {
   'preview': {
-    'id': null,
+    'object_id': null,
     'template_id': null,
     'front': false,
     'rear': false
   },
   'template': {
-    'id': null,
+    'object_id': null,
     'template_id': null,
     'front': false,
     'rear': false

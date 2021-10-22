@@ -314,6 +314,39 @@ class Templates extends Controller
                     if($templateBlueprintNew) {
                         $template->blueprint = $templateBlueprintNew;
                     }
+                } else if($portFormatAttr == 'field') {
+
+                    if($portFormatValue == 'delete') {
+
+                        $portFormatDeletedOrder = $templatePartition['port_format'][$portFormatIndex]['order'];
+
+                        // Remove port format field
+                        array_splice($templatePartition['port_format'], $portFormatIndex, 1);
+                        
+                        // Addjust incremental field order
+                        forEach($templatePartition['port_format'] as $fieldIndex => &$fieldValue) {
+
+                            $fieldType = $fieldValue['type'];
+                            $fieldOrder = $fieldValue['order'];
+                            $fieldIsIncremental = ($fieldType == 'series' || $fieldType == 'incremental') ? true : false;
+
+                            if($fieldIsIncremental) {
+
+                                if($fieldOrder > $portFormatDeletedOrder) {
+                                    $fieldValue['order']--;
+                                }
+                            }
+                        }
+
+                        // Patch partition with updated data
+                        $templateBlueprintNew = $PCM->patchPartition($templateBlueprint, $templateFace, $templatePartitionAddress, $templatePartition);
+
+                        // Update template blueprint
+                        if($templateBlueprintNew) {
+                            $template->blueprint = $templateBlueprintNew;
+                        }
+
+                    }
                 }
             }
         }

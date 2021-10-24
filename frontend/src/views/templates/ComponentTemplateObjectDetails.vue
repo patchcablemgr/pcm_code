@@ -243,6 +243,8 @@ export default {
     TemplateData: {type: Object},
     CategoryData: {type: Array},
     ObjectData: {type: Object},
+    PortConnectorData: {type: Array},
+    MediaData: {type: Array},
     Context: {type: String},
     TemplateFaceSelected: {type: Object},
     PartitionAddressSelected: {type: Object},
@@ -270,8 +272,6 @@ export default {
         const ObjectID = vm.PartitionAddressSelected[Context].object_id
         let ReturnString = '-'
 
-        console.log('Debug (ComputedObjectName-Context): '+Context)
-
         if(Context == 'preview') {
           if(ObjectID) {
             const ObjectIndex = vm.GetObjectIndex(ObjectID)
@@ -291,7 +291,7 @@ export default {
         const Context = vm.Context
         const TemplateID = vm.PartitionAddressSelected[Context].template_id
         let ReturnString = '-'
-        console.log('Debug (ComputedTemplateName-Context): '+Context)
+        
         if(TemplateID) {
           const TemplateIndex = vm.GetTemplateIndex(TemplateID)
           ReturnString = vm.TemplateData[Context][TemplateIndex].name
@@ -455,6 +455,9 @@ export default {
             const PortOrientationIndex = vm.GetPortOrientationIndex(PortOrientationID)
             const PortOrientationName = vm.PortOrientationData[PortOrientationIndex].name
             ReturnString = PortOrientationName
+          } else {
+
+            ReturnString = 'N/A'
           }
         }
 
@@ -485,7 +488,12 @@ export default {
           const PartitionType = Partition.type
 
           if(PartitionType == 'connectable') {
-            ReturnString = Partition.port_connector
+            const PortConnectorID = Partition.port_connector
+            const PortConnectorIndex = vm.GetPortConnectorIndex(PortConnectorID)
+            ReturnString = vm.PortConnectorData[PortConnectorIndex].name
+          } else {
+
+            ReturnString = 'N/A'
           }
         }
 
@@ -506,17 +514,25 @@ export default {
           // Get template
           const TemplateIndex = vm.GetTemplateIndex(TemplateID)
           const Template = vm.TemplateData[Context][TemplateIndex]
+          const TemplateType = Template.type
 
-          // Get partition
-          const Blueprint = Template.blueprint[TemplateFace]
-          const PartitionAddress = vm.PartitionAddressSelected[Context][TemplateFace]
-          const Partition = vm.GetPartition(Blueprint, PartitionAddress)
+          if(TemplateType == 'passive') {
+            // Get partition
+            const Blueprint = Template.blueprint[TemplateFace]
+            const PartitionAddress = vm.PartitionAddressSelected[Context][TemplateFace]
+            const Partition = vm.GetPartition(Blueprint, PartitionAddress)
 
-          // Get partition type
-          const PartitionType = Partition.type
+            // Get partition type
+            const PartitionType = Partition.type
 
-          if(PartitionType == 'connectable') {
-            ReturnString = Partition.media
+            if(PartitionType == 'connectable') {
+              const MediaID = Partition.media
+              const MediaIndex = vm.GetMediaIndex(MediaID)
+              ReturnString = vm.MediaData[MediaIndex].name
+            }
+          } else {
+
+            ReturnString = 'N/A'
           }
         }
 
@@ -531,6 +547,20 @@ export default {
       const PortOrientationIndex = vm.PortOrientationData.findIndex((PortOrientation) => PortOrientation.value == PortOrientationID);
       
       return PortOrientationIndex
+    },
+    GetPortConnectorIndex: function(PortConnectorID) {
+
+      const vm = this
+      const PortConnectorIndex = vm.PortConnectorData.findIndex((PortConnector) => PortConnector.value == PortConnectorID);
+      
+      return PortConnectorIndex
+    },
+    GetMediaIndex: function(MediaID) {
+
+      const vm = this
+      const MediaIndex = vm.MediaData.findIndex((Media) => Media.value == MediaID);
+      
+      return MediaIndex
     },
     GetObjectIndex: function(ObjectID) {
 

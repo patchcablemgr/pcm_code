@@ -69,6 +69,8 @@
 						:TemplateData="TemplateData"
 						:CategoryData="CategoryData"
             :ObjectData="ObjectData"
+            :PortConnectorData="PortConnectorData"
+            :MediaData="MediaData"
 						Context="preview"
 						:TemplateFaceSelected="TemplateFaceSelected"
 						:PartitionAddressSelected="PartitionAddressSelected"
@@ -109,6 +111,7 @@
       :PartitionAddressSelected="PartitionAddressSelected"
       :TemplatePartitionPortRange="TemplatePartitionPortRange"
       PreviewPortID="test"
+      @ObjectEdited="ObjectEdited($event)"
       @TemplateEdited="TemplateEdited($event)"
       @TemplatePartitionPortFormatValueUpdated="TemplatePartitionPortFormatValueUpdated($event)"
       @TemplatePartitionPortFormatTypeUpdated="TemplatePartitionPortFormatTypeUpdated($event)"
@@ -203,6 +206,15 @@ const CategoryData = [
   }
 ]
 
+const PortConnectorData = [
+  {
+    "value": 1,
+    "name": "RJ45",
+    "category_type_id": 1,
+    "default": 1,
+  },
+]
+
 const TemplateData = {
   'preview': [],
   'template': [],
@@ -295,6 +307,17 @@ const PortOrientationData = [
   },
 ]
 
+const MediaData = [
+  {
+    "value": 1,
+    "name": "placeholder",
+    "category_id": 1,
+    "type_id": 1,
+    "display": 1,
+    "default": 1,
+  }
+]
+
 const NodeIDSelected = null
 
 export default {
@@ -331,6 +354,8 @@ export default {
       GenericTemplate,
       NodeIDSelected,
       PortOrientationData,
+      MediaData,
+      PortConnectorData,
     }
   },
   computed: {
@@ -493,6 +518,34 @@ export default {
       const Context = EmitData.Context
       vm.TemplateFaceSelected[Context] = TemplateFace
 
+    },
+    ObjectEdited: function(EmitData) {
+
+      // Store data
+      const vm = this
+      const Context = 'preview'
+      const ObjectID = vm.PartitionAddressSelected[Context].object_id
+      const url = '/api/objects/'+ObjectID
+      const data = EmitData
+
+      // PATCH object
+      this.$http.patch(url, data).then(function(response){
+        
+        const Object = response.data
+        const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
+				
+        // Append new object to object array
+        vm.$set(vm.ObjectData[Context], ObjectIndex, Object)
+
+      }).catch(error => {
+
+        // Display error to user via toast
+        vm.$bvToast.toast(JSON.stringify(error.response.data), {
+          title: 'Error',
+          variant: 'danger',
+        })
+
+      });
     },
     CabinetObjectDropped: function(EmitData) {
 
@@ -1008,6 +1061,14 @@ export default {
 
       });
     },
+    GETMedia: function() {
+
+      const vm = this;
+
+      vm.$http.get('/api/medium').then(function(response){
+        vm.MediaData = response.data;
+      });
+    },
     GETTemplates: function () {
 
       const vm = this
@@ -1042,6 +1103,14 @@ export default {
         vm.PortOrientationData = response.data
       });
     },
+    GETPortConnectors: function() {
+
+      const vm = this;
+
+      vm.$http.get('/api/port-connectors').then(function(response){
+        vm.PortConnectorData = response.data;
+      });
+    },
   },
   mounted() {
 
@@ -1050,8 +1119,10 @@ export default {
     vm.GETLocations()
     vm.GETCategories()
     vm.GETTemplates()
+    vm.GETMedia()
     vm.GETObjects()
     vm.GETPortOrientations()
+    vm.GETPortConnectors()
 
     // Update selected node
     vm.$refs.LiquorTree.$on('node:selected', (node) => {

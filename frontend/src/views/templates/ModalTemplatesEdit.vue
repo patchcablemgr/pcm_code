@@ -2,7 +2,7 @@
     <!-- Template edit modal -->
     <b-modal
       id="modal-templates-edit"
-      title="Edit Template"
+      title="Edit"
       size="lg"
       ok-only
       ok-title="OK"
@@ -31,8 +31,8 @@
                 </dt>
                 <dd class="col-sm-8">
                   <b-form-input
-                    v-model="TemplateName"
-                    @change=" $emit('TemplateEdited', {'name': $event}) "
+                    v-model="ObjectName"
+                    @change=" $emit('ObjectEdited', {'name': $event}) "
                   />
                 </dd>
               </dl>
@@ -109,7 +109,7 @@
       <!-- Port ID Modal -->
       <modal-templates-port-id
         v-if="PartitionType == 'connectable'"
-        Context="template"
+        :Context="Context"
         :TemplateData="TemplateData"
         :TemplateFaceSelected="TemplateFaceSelected"
         :PartitionAddressSelected="PartitionAddressSelected"
@@ -151,12 +151,12 @@ export default {
     Ripple,
   },
   props: {
-    Context: {type: String},
     TemplateData: {type: Object},
-    TemplateFaceSelected: {type: Object},
-    PartitionAddressSelected: {type: Object},
     CategoryData: {type: Array},
     ObjectData: {type: Object},
+    Context: {type: String},
+    TemplateFaceSelected: {type: Object},
+    PartitionAddressSelected: {type: Object},
     TemplatePartitionPortRange: {type: String},
     PreviewPortID: {type: String},
   },
@@ -165,6 +165,23 @@ export default {
     }
   },
   computed: {
+    ObjectName: {
+      get() {
+
+        const vm = this
+        const Object = vm.GetObject()
+
+        if(typeof Object !== 'undefined') {
+          return Object.name
+        } else {
+          return '-'
+        }
+      },
+      set(value) {
+
+        return true
+      }
+    },
     TemplateName: {
       get() {
 
@@ -213,6 +230,15 @@ export default {
     },
   },
   methods: {
+    GetObjectIndex: function() {
+
+      const vm = this
+      const Context = vm.Context
+      const ObjectID = vm.PartitionAddressSelected[Context].object_id
+      const ObjectIndex = vm.ObjectData[Context].findIndex((object) => object.id == ObjectID);
+
+      return ObjectIndex
+    },
     GetTemplateIndex: function() {
 
       const vm = this
@@ -221,6 +247,15 @@ export default {
       const TemplateIndex = vm.TemplateData[Context].findIndex((template) => template.id == TemplateID);
 
       return TemplateIndex
+    },
+    GetObject: function() {
+
+      const vm = this
+      const Context = vm.Context
+      const ObjectIndex = vm.GetObjectIndex()
+      const Object = vm.ObjectData[Context][ObjectIndex]
+
+      return Object
     },
     GetTemplate: function() {
 

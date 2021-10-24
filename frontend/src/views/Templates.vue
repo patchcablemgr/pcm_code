@@ -112,6 +112,8 @@
 						:TemplateData="TemplateData"
 						:CategoryData="CategoryData"
             :ObjectData="ObjectData"
+            :PortConnectorData="PortConnectorData"
+            :MediaData="MediaData"
 						Context="template"
 						:TemplateFaceSelected="TemplateFaceSelected"
 						:PartitionAddressSelected="PartitionAddressSelected"
@@ -1938,15 +1940,23 @@ export default {
 
       const vm = this;
 
-      this.$http.get('/api/medium').then(function(response){
+      vm.$http.get('/api/medium').then(function(response){
         vm.MediaData = response.data;
+      });
+    },
+    GETPortConnectors: function() {
+
+      const vm = this;
+
+      vm.$http.get('/api/port-connectors').then(function(response){
+        vm.PortConnectorData = response.data;
       });
     },
     portOrientationGET: function() {
 
       const vm = this;
 
-      this.$http.get('/api/port-orientation').then(function(response){
+      vm.$http.get('/api/port-orientation').then(function(response){
         vm.PortOrientationData = response.data;
       });
     },
@@ -2082,6 +2092,7 @@ export default {
     vm.templatesGET()
     vm.mediumGET()
     vm.portOrientationGET()
+    vm.GETPortConnectors()
   },
 }
 </script>

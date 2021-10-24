@@ -9,6 +9,7 @@ use App\Http\Controllers\Templates;
 use App\Http\Controllers\Objects;
 use App\Http\Controllers\AttributesMedia;
 use App\Http\Controllers\AttributesPortOrientation;
+use App\Http\Controllers\AttributesPortConnector;
 
 /*
 |--------------------------------------------------------------------------
@@ -39,5 +40,6 @@ Route::group(['middleware' => 'auth:sanctum'], function(){
     'objects' => Objects::class,
     'medium' => AttributesMedia::class,
     'port-orientation' => AttributesPortOrientation::class,
+    'port-connectors' => AttributesPortConnector::class,
   ]);
 });

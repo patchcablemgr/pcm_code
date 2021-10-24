@@ -123,7 +123,12 @@ class Objects extends Controller
                 'numeric',
                 'unique:App\Models\TemplateModel,name',
                 'between:1,52'
-            ]
+            ],
+            'name' => [
+                'alpha_dash',
+                'min:1',
+                'max:255'
+            ],
         ]);
 
         // Store request data
@@ -136,8 +141,12 @@ class Objects extends Controller
         foreach($data as $key => $value) {
             if($key == 'cabinet_ru') {
 
-                // Update template name
+                // Update object RU
                 $object->cabinet_ru = $value;
+            } else if($key == 'name') {
+
+                // Update object name
+                $object->name = $value;
             }
         }
 

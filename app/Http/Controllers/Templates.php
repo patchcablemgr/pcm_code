@@ -54,7 +54,6 @@ class Templates extends Controller
             'name' => [
                 'required',
                 'alpha_dash',
-                'unique:App\Models\TemplateModel,name',
                 'min:1',
                 'max:255'
             ],

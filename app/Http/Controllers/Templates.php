@@ -210,14 +210,6 @@ class Templates extends Controller
                     // Update port format field data
                     $templatePartition['port_format'][$portFormatIndex]['value'] = $portFormatValue;
 
-                    // Patch partition with updated data
-                    $templateBlueprintNew = $PCM->patchPartition($templateBlueprint, $templateFace, $templatePartitionAddress, $templatePartition);
-
-                    // Update template blueprint
-                    if($templateBlueprintNew) {
-                        $template->blueprint = $templateBlueprintNew;
-                    }
-
                 } else if($portFormatAttr == 'type') {
 
                     $currentType = $templatePortFormat[$portFormatIndex]['type'];
@@ -250,26 +242,10 @@ class Templates extends Controller
                     // Update port format field data
                     $templatePartition['port_format'][$portFormatIndex]['type'] = $portFormatValue;
                     $templatePartition['port_format'][$portFormatIndex]['order'] = $newOrder;
-
-                    // Patch partition with updated data
-                    $templateBlueprintNew = $PCM->patchPartition($templateBlueprint, $templateFace, $templatePartitionAddress, $templatePartition);
-
-                    // Update template blueprint
-                    if($templateBlueprintNew) {
-                        $template->blueprint = $templateBlueprintNew;
-                    }
                 } else if($portFormatAttr == 'count') {
 
                     // Update port format field data
                     $templatePartition['port_format'][$portFormatIndex]['count'] = $portFormatValue;
-
-                    // Patch partition with updated data
-                    $templateBlueprintNew = $PCM->patchPartition($templateBlueprint, $templateFace, $templatePartitionAddress, $templatePartition);
-
-                    // Update template blueprint
-                    if($templateBlueprintNew) {
-                        $template->blueprint = $templateBlueprintNew;
-                    }
                 } else if($portFormatAttr == 'order') {
 
                     $portFormatValueOrig = $templatePartition['port_format'][$portFormatIndex]['order'];
@@ -305,47 +281,47 @@ class Templates extends Controller
                             }
                         }
                     }
+                } else if($portFormatAttr == 'position') {
 
-                    // Patch partition with updated data
-                    $templateBlueprintNew = $PCM->patchPartition($templateBlueprint, $templateFace, $templatePartitionAddress, $templatePartition);
+                    $portFormatField = array_slice($templatePartition['port_format'], $portFormatIndex, 1);
 
-                    // Update template blueprint
-                    if($templateBlueprintNew) {
-                        $template->blueprint = $templateBlueprintNew;
-                    }
-                } else if($portFormatAttr == 'field') {
+                    array_splice($templatePartition['port_format'], $portFormatIndex, 1);
+                    array_splice($templatePartition['port_format'], $portFormatValue, 0, $portFormatField);
 
-                    if($portFormatValue == 'delete') {
+                } else if($portFormatAttr == 'create') {
 
-                        $portFormatDeletedOrder = $templatePartition['port_format'][$portFormatIndex]['order'];
+                    // Insert default port field format at insert location
+                    array_splice($templatePartition['port_format'], $portFormatValue, 0, [$PCM->defaultPortFormatField]);
 
-                        // Remove port format field
-                        array_splice($templatePartition['port_format'], $portFormatIndex, 1);
-                        
-                        // Addjust incremental field order
-                        forEach($templatePartition['port_format'] as $fieldIndex => &$fieldValue) {
+                } else if($portFormatAttr == 'delete') {
 
-                            $fieldType = $fieldValue['type'];
-                            $fieldOrder = $fieldValue['order'];
-                            $fieldIsIncremental = ($fieldType == 'series' || $fieldType == 'incremental') ? true : false;
+                    $portFormatDeletedOrder = $templatePartition['port_format'][$portFormatIndex]['order'];
 
-                            if($fieldIsIncremental) {
+                    // Remove port format field
+                    array_splice($templatePartition['port_format'], $portFormatIndex, 1);
+                    
+                    // Addjust incremental field order
+                    forEach($templatePartition['port_format'] as $fieldIndex => &$fieldValue) {
 
-                                if($fieldOrder > $portFormatDeletedOrder) {
-                                    $fieldValue['order']--;
-                                }
+                        $fieldType = $fieldValue['type'];
+                        $fieldOrder = $fieldValue['order'];
+                        $fieldIsIncremental = ($fieldType == 'series' || $fieldType == 'incremental') ? true : false;
+
+                        if($fieldIsIncremental) {
+
+                            if($fieldOrder > $portFormatDeletedOrder) {
+                                $fieldValue['order']--;
                             }
                         }
-
-                        // Patch partition with updated data
-                        $templateBlueprintNew = $PCM->patchPartition($templateBlueprint, $templateFace, $templatePartitionAddress, $templatePartition);
-
-                        // Update template blueprint
-                        if($templateBlueprintNew) {
-                            $template->blueprint = $templateBlueprintNew;
-                        }
-
                     }
+                }
+
+                // Patch partition with updated data
+                $templateBlueprintNew = $PCM->patchPartition($templateBlueprint, $templateFace, $templatePartitionAddress, $templatePartition);
+
+                // Update template blueprint
+                if($templateBlueprintNew) {
+                    $template->blueprint = $templateBlueprintNew;
                 }
             }
         }

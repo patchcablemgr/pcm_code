@@ -1338,22 +1338,45 @@ export default {
       const PortFormatIndex = EmitData.index
       const SelectedPortFormat = vm.SelectedPortFormat
       const MoveDirection = EmitData.direction
-      let PortFormatIndexTo
       
       // Determine new position
+      let PortFormatIndexTo
       if(MoveDirection == 'left') {
         PortFormatIndexTo = (PortFormatIndex == 0) ? 0 : PortFormatIndex - 1
       } else {
         PortFormatIndexTo = (PortFormatIndex == (SelectedPortFormat.length - 1)) ? PortFormatIndex : PortFormatIndex + 1
       }
+      
+      if(Context == 'template') {
 
-      // Move field to new position
-      SelectedPortFormat.splice(PortFormatIndexTo, 0, SelectedPortFormat.splice(PortFormatIndex, 1)[0])
+        const PartitionAddressSelected = vm.PartitionAddressSelected[Context]
+        const TemplateID = PartitionAddressSelected.template_id
+        const TemplateFace = vm.TemplateFaceSelected[Context]
+        const PartitionAddress = PartitionAddressSelected[TemplateFace]
+
+        const UpdateData = {
+          "port_format": {
+            "template_id": TemplateID,
+            "template_face": TemplateFace,
+            "template_partition": PartitionAddress,
+            "port_format_index": PortFormatIndex,
+            "port_format_attr": 'position',
+            "port_format_value": PortFormatIndexTo,
+          }
+        }
+
+        vm.TemplateEdited(UpdateData)
+      } else {
+
+        // Move field to new position
+        SelectedPortFormat.splice(PortFormatIndexTo, 0, SelectedPortFormat.splice(PortFormatIndex, 1)[0])
+      }
 
     },
     TemplatePartitionPortFormatFieldCreate: function(EmitData) {
       
       const vm = this
+      const Context = EmitData.context
       const PortFormatIndex = EmitData.index
       const SelectedPortFormat = vm.SelectedPortFormat
       const Position = EmitData.position
@@ -1363,8 +1386,30 @@ export default {
       // Limit number of fields to 5
       if(SelectedPortFormat.length < 5) {
 
-        // Insert new field
-        SelectedPortFormat.splice(InsertPosition, 0, DefaultPortFormatField)
+        if(Context == 'template') {
+
+          const PartitionAddressSelected = vm.PartitionAddressSelected[Context]
+          const TemplateID = PartitionAddressSelected.template_id
+          const TemplateFace = vm.TemplateFaceSelected[Context]
+          const PartitionAddress = PartitionAddressSelected[TemplateFace]
+
+          const UpdateData = {
+            "port_format": {
+              "template_id": TemplateID,
+              "template_face": TemplateFace,
+              "template_partition": PartitionAddress,
+              "port_format_index": PortFormatIndex,
+              "port_format_attr": 'create',
+              "port_format_value": InsertPosition,
+            }
+          }
+
+          vm.TemplateEdited(UpdateData)
+        } else {
+
+          // Insert new field
+          SelectedPortFormat.splice(InsertPosition, 0, DefaultPortFormatField)
+        }
       }
     },
     TemplatePartitionPortFormatFieldDelete: function(EmitData) {
@@ -1386,8 +1431,8 @@ export default {
             "template_face": TemplateFace,
             "template_partition": PartitionAddress,
             "port_format_index": PortFormatIndex,
-            "port_format_attr": 'field',
-            "port_format_value": 'delete',
+            "port_format_attr": 'delete',
+            "port_format_value": PortFormatIndex,
           }
         }
 
@@ -1652,12 +1697,6 @@ export default {
 
       return WorkingMax
 
-    },
-	  GetPartitionDirection: function(PartitionAddress) {
-
-      const PartitionDirection = (PartitionAddress.length % 2) ? 'row' : 'col'
-
-      return PartitionDirection
     },
     GetPartitionUnitsAvailable: function(PartAddr = false) {
 
@@ -1925,94 +1964,6 @@ export default {
       vm.$http.get('/api/port-orientation').then(function(response){
         vm.PortOrientationData = response.data;
       });
-    },
-    GeneratePortID: function(Index, PortTotal, PortFormat){
-
-      // Store variables
-      const vm = this
-      let PreviewPortID = ''
-      let IncrementalCount = 0
-
-      // Create character arrays
-      let LowercaseArray = []
-      let UppercaseArray = []
-      for(let x=97; x<=122; x++) {
-        LowercaseArray.push(String.fromCharCode(x))
-      }
-      for(let x=65; x<=90; x++) {
-        UppercaseArray.push(String.fromCharCode(x))
-      }
-
-      // Account for infinite count incrementables
-      PortFormat.forEach(function(Field, FieldIndex){
-        const FieldType = Field.type
-        let FieldCount = Field.count
-
-        // Increment IncrementalCount
-        if(FieldType == 'incremental' || FieldType == 'series') {
-          IncrementalCount++
-
-          // Adjust field count
-          if(FieldType == 'incremental' && FieldCount == 0) {
-            PortFormat[FieldIndex].count = PortTotal
-          } else if(FieldType == 'series') {
-            let CurrentFieldValue = Field.value
-            PortFormat[FieldIndex].count = CurrentFieldValue.split(',').length
-          }
-        }
-      })
-
-      PortFormat.forEach(function(Field){
-        const FieldType = Field.type
-        const FieldValue = Field.value
-        const FieldOrder = Field.order
-        const FieldCount = Field.count
-        let HowMuchToIncrement
-        let RollOver
-        let Numerator = 1
-
-        if(FieldType == 'static') {
-          PreviewPortID = PreviewPortID + FieldValue
-        } else {
-
-          PortFormat.forEach(function(LoopField){
-            const LoopFieldType = LoopField.type
-            const LoopFieldOrder = LoopField.order
-            const LoopFieldCount = LoopField.count
-
-            if(LoopFieldType == 'incremental' || LoopFieldType == 'series') {
-              if(LoopFieldOrder < FieldOrder) {
-                Numerator *= LoopFieldCount
-              }
-            }
-          })
-
-          HowMuchToIncrement = Math.floor(Index / Numerator)
-
-          if(HowMuchToIncrement >= FieldCount) {
-            RollOver = Math.floor(HowMuchToIncrement / FieldCount)
-            HowMuchToIncrement = HowMuchToIncrement - (RollOver * FieldCount)
-            
-          }
-
-          if(FieldType == 'incremental') {
-
-            if(!isNaN(FieldValue)) {
-              PreviewPortID = PreviewPortID + (parseInt(FieldValue) + HowMuchToIncrement)
-            } else {
-              PreviewPortID = PreviewPortID + '-'
-            }
-
-          } else if(FieldType == 'series') {
-
-            const FieldValueArray = FieldValue.split(',')
-            PreviewPortID = PreviewPortID + FieldValueArray[HowMuchToIncrement]
-
-          }
-        }
-      })
-      
-      return PreviewPortID
     },
     FormSubmit: function() {
 

@@ -66,7 +66,6 @@ export const PCM = {
             return TemplateIndex
         },
 
-
 // Partition
         PartitionHovered: function(EmitData) {
 
@@ -183,6 +182,86 @@ export const PCM = {
             const AreasString = "'" + AreasArray.map(arr => arr.join(' ')).join("' '") + "'";
         
             return AreasString
+        },
+
+// Misc
+        GeneratePortID: function(Index, PortTotal, PortFormat){
+
+            // Store variables
+            const vm = this
+            let PreviewPortID = ''
+            let IncrementalCount = 0
+
+            // Account for infinite count incrementables
+            PortFormat.forEach(function(Field, FieldIndex){
+            const FieldType = Field.type
+            let FieldCount = Field.count
+
+            // Increment IncrementalCount
+            if(FieldType == 'incremental' || FieldType == 'series') {
+                IncrementalCount++
+
+                // Adjust field count
+                if(FieldType == 'incremental' && FieldCount == 0) {
+                PortFormat[FieldIndex].count = PortTotal
+                } else if(FieldType == 'series') {
+                let CurrentFieldValue = Field.value
+                PortFormat[FieldIndex].count = CurrentFieldValue.split(',').length
+                }
+            }
+            })
+
+            PortFormat.forEach(function(Field){
+            const FieldType = Field.type
+            const FieldValue = Field.value
+            const FieldOrder = Field.order
+            const FieldCount = Field.count
+            let HowMuchToIncrement
+            let RollOver
+            let Numerator = 1
+
+            if(FieldType == 'static') {
+                PreviewPortID = PreviewPortID + FieldValue
+            } else {
+
+                PortFormat.forEach(function(LoopField){
+                const LoopFieldType = LoopField.type
+                const LoopFieldOrder = LoopField.order
+                const LoopFieldCount = LoopField.count
+
+                if(LoopFieldType == 'incremental' || LoopFieldType == 'series') {
+                    if(LoopFieldOrder < FieldOrder) {
+                    Numerator *= LoopFieldCount
+                    }
+                }
+                })
+
+                HowMuchToIncrement = Math.floor(Index / Numerator)
+
+                if(HowMuchToIncrement >= FieldCount) {
+                RollOver = Math.floor(HowMuchToIncrement / FieldCount)
+                HowMuchToIncrement = HowMuchToIncrement - (RollOver * FieldCount)
+                
+                }
+
+                if(FieldType == 'incremental') {
+
+                if(!isNaN(FieldValue)) {
+                    PreviewPortID = PreviewPortID + (parseInt(FieldValue) + HowMuchToIncrement)
+                } else {
+                    PreviewPortID = PreviewPortID + '-'
+                }
+
+                } else if(FieldType == 'series') {
+
+                const FieldValueArray = FieldValue.split(',')
+                PreviewPortID = PreviewPortID + FieldValueArray[HowMuchToIncrement]
+
+                }
+            }
+            })
+            
+            return PreviewPortID
         },
     }
 }

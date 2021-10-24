@@ -7,6 +7,15 @@ use Illuminate\Support\Facades\Log;
 
 class PCM extends Controller
 {
+	
+	// Properites
+	public $defaultPortFormatField = array(
+		"type" => "static",
+		"value" => "Port",
+		"count" => 0,
+		"order" => 0
+	);
+
     /**
      * Return partition 
      *

@@ -446,7 +446,7 @@ export default {
       vm.SelectedPortFormatIndex = (Position == 'before') ? SelectedPortFormatIndex + 1 : SelectedPortFormatIndex
 
     },
-    PortFormatFieldDeleted: function(Position) {
+    PortFormatFieldDeleted: function() {
 
       const vm = this
       const Context = vm.Context
@@ -472,6 +472,7 @@ export default {
 
       vm.SelectedPortFormatIndex = (Direction == 'left') ? SelectedPortFormatIndex - 1 : SelectedPortFormatIndex + 1
 
+      return true
     },
     GetTemplateIndex: function(TemplateID) {
 

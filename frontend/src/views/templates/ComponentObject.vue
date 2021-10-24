@@ -231,6 +231,13 @@ export default {
       return AreasString
     },
   },
-  mounted() {}
+  mounted() {
+
+    const vm = this
+    const Context = vm.Context
+    const ObjectID = vm.ObjectID
+    console.log('Debug (Context): '+Context)
+    console.log('Debug (ObjectID): '+ObjectID)
+  }
 }
 </script>

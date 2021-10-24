@@ -99,6 +99,26 @@
     <!-- Toast -->
     <toast-general/>
 
+    <!-- Template Edit Modal -->
+    <modal-templates-edit
+      :TemplateData="TemplateData"
+      :CategoryData="CategoryData"
+      :ObjectData="ObjectData"
+      Context="preview"
+      :TemplateFaceSelected="TemplateFaceSelected"
+      :PartitionAddressSelected="PartitionAddressSelected"
+      :TemplatePartitionPortRange="TemplatePartitionPortRange"
+      PreviewPortID="test"
+      @TemplateEdited="TemplateEdited($event)"
+      @TemplatePartitionPortFormatValueUpdated="TemplatePartitionPortFormatValueUpdated($event)"
+      @TemplatePartitionPortFormatTypeUpdated="TemplatePartitionPortFormatTypeUpdated($event)"
+      @TemplatePartitionPortFormatCountUpdated="TemplatePartitionPortFormatCountUpdated($event)"
+      @TemplatePartitionPortFormatOrderUpdated="TemplatePartitionPortFormatOrderUpdated($event)"
+      @TemplatePartitionPortFormatFieldMove="TemplatePartitionPortFormatFieldMove($event)"
+      @TemplatePartitionPortFormatFieldCreate="TemplatePartitionPortFormatFieldCreate($event)"
+      @TemplatePartitionPortFormatFieldDelete="TemplatePartitionPortFormatFieldDelete($event)"
+    />
+
     <!-- Context Menu -->
     <vue-simple-context-menu
       :elementId="'myUniqueId'"
@@ -117,6 +137,7 @@ import ToastGeneral from './templates/ToastGeneral.vue'
 import ComponentCabinet from './templates/ComponentCabinet.vue'
 import ComponentTemplateObjectDetails from './templates/ComponentTemplateObjectDetails.vue'
 import ComponentTemplates from './templates/ComponentTemplates.vue'
+import ModalTemplatesEdit from './templates/ModalTemplatesEdit.vue'
 import LiquorTree from 'liquor-tree'
 import 'vue-simple-context-menu/dist/vue-simple-context-menu.css'
 import VueSimpleContextMenu from 'vue-simple-context-menu'
@@ -229,7 +250,7 @@ const GenericObject = {
     "template_id": null,
     "cabinet_id": null,
     "cabinet_ru": null,
-    "cabinet_face": null,
+    "cabinet_front": null,
     "parent_id": null,
     "parent_face": null,
     "parent_part_addr": null,
@@ -292,6 +313,7 @@ export default {
     ComponentTemplates,
     LiquorTree,
     VueSimpleContextMenu,
+    ModalTemplatesEdit,
   },
   data() {
     return {
@@ -415,6 +437,12 @@ export default {
 
       return TemplateIndex
     },
+    TemplateObjectEditClicked: function() {
+
+      const vm = this
+      vm.$bvModal.show('modal-templates-edit')
+
+    },
     PartitionClicked: function(EmitData) {
 
       // Store variables
@@ -455,6 +483,15 @@ export default {
         vm.PartitionAddressHovered[Context].template_id = TemplateID
         vm.PartitionAddressHovered[Context].object_id = ObjectID
 			}
+
+    },
+    TemplateFaceChanged: function(EmitData) {
+
+      // Store variables
+      const vm = this
+      const TemplateFace = EmitData.TemplateFace
+      const Context = EmitData.Context
+      vm.TemplateFaceSelected[Context] = TemplateFace
 
     },
     CabinetObjectDropped: function(EmitData) {
@@ -739,7 +776,7 @@ export default {
         WorkingObjectData.push(JSON.parse(JSON.stringify(vm.GenericObject), function (GenericObjectKey, GenericObjectValue) {
           if (GenericObjectKey == 'id') {
             return PseudoObjectID
-          } else if (GenericObjectKey == 'cabinet_face') {
+          } else if (GenericObjectKey == 'cabinet_front') {
             return 'front'
           } else if (GenericObjectKey == 'cabinet_id') {
             return (Context == 'preview') ? vm.InsertTemplateID : null
@@ -796,7 +833,7 @@ export default {
             return PseudoObjectID
         } else if (GenericObjectKey == 'cabinet_id') {
             return (Context == 'preview' && TemplateType == 'standard') ? vm.InsertTemplateID : GenericObjectValue
-        } else if (GenericObjectKey == 'cabinet_face') {
+        } else if (GenericObjectKey == 'cabinet_front') {
             return (Context == 'preview' && TemplateType == 'standard') ? 'front' : GenericObjectValue
         } else if (GenericObjectKey == 'cabinet_ru') {
             return (Context == 'preview' && TemplateType == 'standard') ? 1 : GenericObjectValue

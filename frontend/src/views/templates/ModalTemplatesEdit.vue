@@ -21,8 +21,27 @@
                 class="separator mt-0"
               >
 
-              <!-- Name -->
-              <dl class="row">
+              <!-- Object Name -->
+              <dl
+                v-if="Context == 'preview'"
+                class="row"
+              >
+                <dt class="col-sm-4">
+                  Name
+                </dt>
+                <dd class="col-sm-8">
+                  <b-form-input
+                    v-model="TemplateName"
+                    @change=" $emit('TemplateEdited', {'name': $event}) "
+                  />
+                </dd>
+              </dl>
+
+              <!-- Template Name -->
+              <dl
+                v-if="Context == 'template'"
+                class="row"
+              >
                 <dt class="col-sm-4">
                   Name
                 </dt>
@@ -35,7 +54,10 @@
               </dl>
 
               <!-- Category -->
-              <dl class="row">
+              <dl
+                v-if="Context == 'template'"
+                class="row"
+              >
                 <dt class="col-sm-4">
                   Category
                 </dt>
@@ -58,6 +80,7 @@
 
               <!-- Port ID -->
               <dl
+                v-if="Context == 'template'"
                 class="row"
                 v-show="PartitionType == 'connectable'"
               >
@@ -135,7 +158,6 @@ export default {
     CategoryData: {type: Array},
     ObjectData: {type: Object},
     TemplatePartitionPortRange: {type: String},
-    SelectedPortFormat: {type: Array},
     PreviewPortID: {type: String},
   },
   data () {

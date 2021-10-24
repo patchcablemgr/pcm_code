@@ -131,12 +131,18 @@ export default {
       const Context = vm.Context
       const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
 
+      console.log('Debug (Context): '+Context)
+
       const ObjectIndex = vm.ObjectData[Context].findIndex(function(Object, ObjectIndex) {
         if(Object.cabinet_id == CabinetID && Object.cabinet_ru == CabinetRU) {
-          const ObjectCabinetFace = Object.cabinet_face
+          const ObjectCabinetFace = Object.cabinet_front
           const ObjectID = Object.id
           const ObjectPreviewData = vm.GetPreviewData(ObjectID)
           const TemplateMountConfig = ObjectPreviewData.mount_config
+
+          console.log('Debug (ObjectCabinetFace): '+ObjectCabinetFace)
+          console.log('Debug (TemplateFaceSelected): '+TemplateFaceSelected)
+          console.log('Debug (TemplateMountConfig): '+TemplateMountConfig)
           if(ObjectCabinetFace == TemplateFaceSelected || TemplateMountConfig == "4-post") {
             return true
           }

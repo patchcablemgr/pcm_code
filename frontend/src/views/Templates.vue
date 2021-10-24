@@ -151,7 +151,6 @@
       :TemplateFaceSelected="TemplateFaceSelected"
       :PartitionAddressSelected="PartitionAddressSelected"
       :TemplatePartitionPortRange="TemplatePartitionPortRange"
-      :SelectedPortFormat="SelectedPortFormat"
       PreviewPortID="test"
       @TemplateEdited="TemplateEdited($event)"
       @TemplatePartitionPortFormatValueUpdated="TemplatePartitionPortFormatValueUpdated($event)"
@@ -304,7 +303,7 @@ const ObjectData = {
       "template_id": StandardTemplateID,
       "cabinet_id": 1,
       "cabinet_ru": 1,
-      "cabinet_face": "front",
+      "cabinet_front": "front",
     },
     {
       "id": InsertTemplateID,
@@ -312,7 +311,7 @@ const ObjectData = {
       "template_id": InsertTemplateID,
       "cabinet_id": null,
       "cabinet_ru": null,
-      "cabinet_face": null,
+      "cabinet_front": null,
       "parent_id": null,
       "parent_face": "front",
       "parent_part_addr": null,
@@ -329,7 +328,7 @@ const GenericObject = {
     "template_id": null,
     "cabinet_id": null,
     "cabinet_ru": null,
-    "cabinet_face": null,
+    "cabinet_front": null,
     "parent_id": null,
     "parent_face": null,
     "parent_part_addr": null,
@@ -1811,7 +1810,7 @@ export default {
         WorkingObjectData.push(JSON.parse(JSON.stringify(vm.GenericObject), function (GenericObjectKey, GenericObjectValue) {
           if (GenericObjectKey == 'id') {
             return PseudoObjectID
-          } else if (GenericObjectKey == 'cabinet_face') {
+          } else if (GenericObjectKey == 'cabinet_front') {
             return 'front'
           } else if (GenericObjectKey == 'cabinet_id') {
             return (Context == 'preview') ? vm.InsertTemplateID : null
@@ -1868,7 +1867,7 @@ export default {
             return PseudoObjectID
         } else if (GenericObjectKey == 'cabinet_id') {
             return (Context == 'preview' && TemplateType == 'standard') ? vm.InsertTemplateID : GenericObjectValue
-        } else if (GenericObjectKey == 'cabinet_face') {
+        } else if (GenericObjectKey == 'cabinet_front') {
             return (Context == 'preview' && TemplateType == 'standard') ? 'front' : GenericObjectValue
         } else if (GenericObjectKey == 'cabinet_ru') {
             return (Context == 'preview' && TemplateType == 'standard') ? 1 : GenericObjectValue

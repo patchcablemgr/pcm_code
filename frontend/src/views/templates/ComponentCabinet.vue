@@ -14,15 +14,15 @@
     >
       <td class="pcm_cabinet">{{ CabinetRU }}</td>
       <td
-        class="pcm_cabinet_ru"
         v-if=" RackObjectID(CabinetData.id, CabinetRU) !== false "
-        :rowspan=" RackObjectSize( RackObjectID(CabinetData.id, CabinetRU) ) "
+        class="pcm_cabinet_ru"
+        :rowspan=" GetObjectSize( RackObjectID(CabinetData.id, CabinetRU) ) "
       >
         <component-object
           :ObjectData="ObjectData"
           :TemplateData="TemplateData"
           :CategoryData="CategoryData"
-          :TemplateRUSize=" RackObjectSize( RackObjectID(CabinetData.id, CabinetRU) ) "
+          :TemplateRUSize=" GetObjectSize( RackObjectID(CabinetData.id, CabinetRU) ) "
           :InitialPartitionAddress=[]
           :Context="Context"
           :ObjectID="RackObjectID(CabinetData.id, CabinetRU)"
@@ -34,10 +34,10 @@
         />
       </td>
       <drop
+        v-else
         :tag="'td'"
         @drop="HandleDrop(CabinetData.id, TemplateFaceSelected.preview, CabinetRU, ...arguments)"
         class="pcm_cabinet_ru"
-        v-else-if=" RUIsOccupied(CabinetData.id, CabinetRU) === false "
       />
       <td class="pcm_cabinet">{{ CabinetRU }}</td>
     </tr>
@@ -54,8 +54,10 @@ import { BContainer, BRow, BCol, } from 'bootstrap-vue'
 import ComponentObject from './ComponentObject.vue'
 import CartDropdown from '../../@core/layouts/components/app-navbar/components/CartDropdown.vue'
 import { Drag, Drop } from 'vue-drag-drop'
+import { PCM } from '../../mixins/PCM.js'
 
 export default {
+  mixins: [PCM],
   components: {
     BContainer,
     BRow,
@@ -81,17 +83,6 @@ export default {
     }
   },
   methods: {
-    GetObjectIndex: function(ObjectID) {
-
-      // Initial variables
-      const vm = this
-      const Context = vm.Context
-
-      // Get object index
-      const ObjectIndex = vm.ObjectData[Context].findIndex((object) => object.id == ObjectID);
-
-      return ObjectIndex
-    },
     GetPreviewData: function(ObjectID) {
 
       // Initial variables
@@ -112,26 +103,12 @@ export default {
       // Return template
       return ObjectPreviewData
     },
-    GetTemplateIndex: function(TemplateID) {
-
-      // Initial variables
-      const vm = this
-      const TemplateData = vm.TemplateData
-      const Context = vm.Context
-
-      // Get object index
-      const TemplateIndex = TemplateData[Context].findIndex((template) => template.id == TemplateID);
-
-      return TemplateIndex
-    },
     RackObjectID: function(CabinetID, CabinetRU) {
       
       // Initial variables
       const vm = this
       const Context = vm.Context
       const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
-
-      console.log('Debug (Context): '+Context)
 
       const ObjectIndex = vm.ObjectData[Context].findIndex(function(Object, ObjectIndex) {
         if(Object.cabinet_id == CabinetID && Object.cabinet_ru == CabinetRU) {
@@ -140,9 +117,6 @@ export default {
           const ObjectPreviewData = vm.GetPreviewData(ObjectID)
           const TemplateMountConfig = ObjectPreviewData.mount_config
 
-          console.log('Debug (ObjectCabinetFace): '+ObjectCabinetFace)
-          console.log('Debug (TemplateFaceSelected): '+TemplateFaceSelected)
-          console.log('Debug (TemplateMountConfig): '+TemplateMountConfig)
           if(ObjectCabinetFace == TemplateFaceSelected || TemplateMountConfig == "4-post") {
             return true
           }
@@ -152,27 +126,6 @@ export default {
       const RackObjectID = (ObjectIndex !== -1) ? vm.ObjectData[Context][ObjectIndex].id : false
 
       return RackObjectID
-    },
-    RackObjectSize: function(ObjectID) {
-
-      // Store variables
-      const vm = this
-      const Context = vm.Context
-      const TemplateData = vm.TemplateData
-
-      // Get object index
-      const ObjectIndex = vm.ObjectData[Context].findIndex((object) => object.id == ObjectID);
-
-      // Get template index
-      const TemplateID = vm.ObjectData[Context][ObjectIndex].template_id
-      const TemplateIndex = TemplateData[Context].findIndex((template) => template.id == TemplateID);
-
-      // Get template
-      const ObjectPreviewData = TemplateData[Context][TemplateIndex]
-
-      const ObjectSize = ObjectPreviewData.ru_size
-
-      return ObjectSize
     },
     RUIsOccupied: function(CabinetID, CabinetRU) {
       

@@ -144,6 +144,7 @@ import ModalTemplatesEdit from './templates/ModalTemplatesEdit.vue'
 import LiquorTree from 'liquor-tree'
 import 'vue-simple-context-menu/dist/vue-simple-context-menu.css'
 import VueSimpleContextMenu from 'vue-simple-context-menu'
+import { PCM } from '../mixins/PCM.js'
 
 const TreeData = []
 
@@ -321,6 +322,7 @@ const MediaData = [
 const NodeIDSelected = null
 
 export default {
+  mixins: [PCM],
   components: {
     BContainer,
     BRow,
@@ -448,66 +450,10 @@ export default {
 			return Partition
       
     },
-    GetObjectIndex: function(ObjectID, Context) {
-
-      const vm = this
-      const ObjectIndex = vm.ObjectData[Context].findIndex((object) => object.id == ObjectID);
-
-      return ObjectIndex
-    },
-    GetTemplateIndex: function(TemplateID, Context) {
-
-      const vm = this
-      const TemplateIndex = vm.TemplateData[Context].findIndex((template) => template.id == TemplateID);
-
-      return TemplateIndex
-    },
     TemplateObjectEditClicked: function() {
 
       const vm = this
       vm.$bvModal.show('modal-templates-edit')
-
-    },
-    PartitionClicked: function(EmitData) {
-
-      // Store variables
-      const vm = this
-      const Context = EmitData.Context
-      const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
-      const PartitionAddress = EmitData.PartitionAddress
-      const TemplateID = EmitData.TemplateID
-      const ObjectID = EmitData.ObjectID
-      const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-			
-			// Clicked partition should not be highlighted if it is a preview insert parent
-      const HonorClick = (vm.TemplateData[Context][TemplateIndex].hasOwnProperty('pseudo')) ? false : true
-
-			if(HonorClick) {
-				vm.PartitionAddressSelected[Context][TemplateFaceSelected] = PartitionAddress
-        vm.PartitionAddressSelected[Context].template_id = TemplateID
-        vm.PartitionAddressSelected[Context].object_id = ObjectID
-			}
-    },
-    PartitionHovered: function(EmitData) {
-
-      // Store variables
-      const vm = this
-      const Context = EmitData.Context
-      const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
-      const PartitionAddress = EmitData.PartitionAddress
-      const HoverState = EmitData.HoverState
-      const TemplateID = EmitData.TemplateID
-      const ObjectID = EmitData.ObjectID
-			
-			// Hovered partition should not be highlighted if it is a preview insert parent
-			const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-      const HonorHover = (vm.TemplateData[Context][TemplateIndex].hasOwnProperty('pseudo')) ? false : true
-
-			if(HonorHover) {
-				vm.PartitionAddressHovered[Context][TemplateFaceSelected] = (HoverState) ? PartitionAddress : false
-        vm.PartitionAddressHovered[Context].template_id = TemplateID
-        vm.PartitionAddressHovered[Context].object_id = ObjectID
-			}
 
     },
     TemplateFaceChanged: function(EmitData) {

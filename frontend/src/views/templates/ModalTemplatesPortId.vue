@@ -387,9 +387,6 @@ export default {
       const TemplateID = PartitionAddressSelected.template_id
       const PartitionAddress = PartitionAddressSelected[TemplateFace]
       const TemplateIndex = vm.GetTemplateIndex(TemplateID)
-      console.log('Debug (Context): '+Context)
-      console.log('Debug (TemplateID): '+TemplateID)
-      console.log('Debug (TemplateIndex): '+TemplateIndex)
       const Blueprint = vm.TemplateData[Context][TemplateIndex].blueprint[TemplateFace]
       const Partition = vm.GetPartition(Blueprint, PartitionAddress)
       const PortFormat = Partition.port_format
@@ -529,7 +526,6 @@ export default {
     },
   },
   mounted() {
-    console.log('Debug (mounted): ModalTemplatesPortID')
   }
 }
 </script>

@@ -35,8 +35,10 @@
 import { BContainer, BRow, BCol, } from 'bootstrap-vue'
 import ComponentTemplate from './ComponentTemplate.vue'
 import { Drag, Drop } from 'vue-drag-drop'
+import { PCM } from '../../mixins/PCM.js'
 
 export default {
+  mixins: [PCM],
   components: {
     BContainer,
     BRow,
@@ -59,67 +61,6 @@ export default {
     PartitionAddressHovered: {type: Object},
   },
   methods: {
-    GetTemplateID: function(ObjectID) {
-      
-      const vm = this
-      const Context = vm.Context
-      const ObjectData = vm.ObjectData[Context]
-      let TemplateID = 0
-
-      const ObjectIndex = ObjectData.findIndex((object) => object.id == ObjectID )
-
-      if(ObjectIndex !== -1) {
-        const Object = ObjectData[ObjectIndex]
-        TemplateID = Object.template_id
-      }
-
-      return TemplateID
-
-    },
-    RackObjectSize: function(ObjectID) {
-
-      // Store variables
-      const vm = this
-      const TemplateData = vm.TemplateData
-      const Context = vm.Context
-
-      // Get object index
-      const ObjectIndex = vm.ObjectData[Context].findIndex((object) => object.id == ObjectID);
-
-      // Get template index
-      const TemplateID = vm.ObjectData[Context][ObjectIndex].template_id
-      const TemplateIndex = TemplateData[Context].findIndex((template) => template.id == TemplateID);
-
-      // Get template
-      const ObjectPreviewData = TemplateData[Context][TemplateIndex]
-
-      const ObjectSize = ObjectPreviewData.ru_size
-
-      return ObjectSize
-    },
-    GetTemplateIndex: function(TemplateID) {
-
-      // Initial variables
-      const vm = this
-      const TemplateData = vm.TemplateData
-      const Context = vm.Context
-
-      // Get object index
-      const TemplateIndex = TemplateData[Context].findIndex((template) => template.id == TemplateID);
-
-      return TemplateIndex
-    },
-    GetObjectIndex: function(ObjectID) {
-
-      // Initial variables
-      const vm = this
-      const Context = vm.Context
-
-      // Get object index
-      const ObjectIndex = vm.ObjectData[Context].findIndex((object) => object.id == ObjectID);
-
-      return ObjectIndex
-    },
     GetPreviewData: function(ObjectID) {
 
       // Initial variables
@@ -170,74 +111,8 @@ export default {
       // Return category
       return TemplateColor
     },
-    PartitionIsSelected: function() {
-
-      const vm = this
-      const Context = vm.Context
-      const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
-      const PartitionAddressSelected = vm.PartitionAddressSelected[Context][TemplateFaceSelected]
-      const PartitionAddress = vm.InitialPartitionAddress
-      const IDSelected = (Context == 'template') ? vm.PartitionAddressSelected[Context].template_id : vm.PartitionAddressSelected[Context].object_id
-      const ID = vm.GetTemplateID(vm.ObjectID)
-      let PartitionIsSelected = false
-
-      if(PartitionAddressSelected.length === PartitionAddress.length && PartitionAddressSelected.every(function(value, index) { return value === PartitionAddress[index]}) && IDSelected == ID) {
-        PartitionIsSelected = true
-      }
-      return PartitionIsSelected
-    },
-    PartitionIsHovered: function(PartitionIndex) {
-
-      const vm = this
-      const Context = vm.Context
-      const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
-      const PartitionAddressHovered = vm.PartitionAddressHovered[Context][TemplateFaceSelected]
-      const PartitionAddress = vm.InitialPartitionAddress
-      const IDSelected = (Context == 'template') ? vm.PartitionAddressHovered[Context].template_id : vm.PartitionAddressHovered[Context].object_id
-      const ID = (Context == 'template') ? vm.GetTemplateID(vm.ObjectID) : vm.ObjectID
-      let PartitionIsHovered = false
-
-      if(PartitionAddressHovered.length === PartitionAddress.length && PartitionAddressHovered.every(function(value, index) { return value === PartitionAddress[index]}) && IDSelected == ID) {
-        PartitionIsHovered = true
-      }
-      return PartitionIsHovered
-    },
-    GetPartitionGrid: function(units) {
-
-      let GridArray = []
-      for(let i=0; i<units; i++) {
-        GridArray.push('1fr')
-      }
-
-      return GridArray.join(' ')
-    },
-    GetPartitionAreas: function(rows, cols) {
-
-      let AreasArray = []
-      let AreaCounter = 0
-      for(let r=0; r<rows; r++) {
-
-        AreasArray.push([])
-        for(let c=0; c<cols; c++) {
-          
-          AreasArray[r].push([])
-          AreasArray[r][c] = 'area'+AreaCounter
-          AreaCounter++
-        }
-      }
-      
-      const AreasString = "'" + AreasArray.map(arr => arr.join(' ')).join("' '") + "'";
-
-      return AreasString
-    },
   },
   mounted() {
-
-    const vm = this
-    const Context = vm.Context
-    const ObjectID = vm.ObjectID
-    console.log('Debug (Context): '+Context)
-    console.log('Debug (ObjectID): '+ObjectID)
   }
 }
 </script>

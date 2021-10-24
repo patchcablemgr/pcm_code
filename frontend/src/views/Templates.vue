@@ -174,6 +174,7 @@ import ComponentCabinet from './templates/ComponentCabinet.vue'
 import ComponentTemplateObjectDetails from './templates/ComponentTemplateObjectDetails.vue'
 import ComponentTemplates from './templates/ComponentTemplates.vue'
 import ModalTemplatesEdit from './templates/ModalTemplatesEdit.vue'
+import { PCM } from '../mixins/PCM.js'
 
 const StandardTemplateID = 1
 const InsertTemplateID = 2
@@ -367,6 +368,7 @@ const GenericTemplate = {
 }
 
 export default {
+  mixins: [PCM],
   components: {
     BContainer,
     BRow,
@@ -626,20 +628,6 @@ export default {
     },
   },
   methods: {
-    GetTemplateIndex: function(TemplateID, Context) {
-
-      const vm = this
-      const TemplateIndex = vm.TemplateData[Context].findIndex((template) => template.id == TemplateID);
-
-      return TemplateIndex
-    },
-		GetObjectIndex: function(ObjectID, Context) {
-
-      const vm = this
-      const ObjectIndex = vm.ObjectData[Context].findIndex((object) => object.id == ObjectID);
-
-      return ObjectIndex
-    },
     PartitionClicked: function(EmitData) {
 
       // Store variables
@@ -789,28 +777,6 @@ export default {
       InsertConstraints.part_layout.width = Width
 
       return InsertConstraints
-
-    },
-    PartitionHovered: function(EmitData) {
-
-      // Store variables
-      const vm = this
-      const Context = EmitData.Context
-      const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
-      const PartitionAddress = EmitData.PartitionAddress
-      const HoverState = EmitData.HoverState
-      const TemplateID = EmitData.TemplateID
-      const ObjectID = EmitData.ObjectID
-			
-			// Hovered partition should not be highlighted if it is a preview insert parent
-			const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-      const HonorHover = (vm.TemplateData[Context][TemplateIndex].hasOwnProperty('pseudo')) ? false : true
-
-			if(HonorHover) {
-				vm.PartitionAddressHovered[Context][TemplateFaceSelected] = (HoverState) ? PartitionAddress : false
-        vm.PartitionAddressHovered[Context].object_id = ObjectID
-        vm.PartitionAddressHovered[Context].template_id = TemplateID
-			}
 
     },
     TemplateFaceChanged: function(EmitData) {

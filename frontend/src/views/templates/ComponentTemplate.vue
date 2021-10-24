@@ -84,6 +84,10 @@
             @PartitionClicked=" $emit('PartitionClicked', $event) "
             @PartitionHovered=" $emit('PartitionHovered', $event) "
           />
+          <div
+            v-else
+            @drop="HandleDrop(ObjectID, TemplateFaceSelected.preview, CabinetRU, ...arguments)"
+          />
         </div>
       </div>
     </div>
@@ -92,14 +96,19 @@
 
 <script>
 import { BContainer, BRow, BCol, } from 'bootstrap-vue'
+import { Drag, Drop } from 'vue-drag-drop'
+import { PCM } from '../../mixins/PCM.js'
 
 export default {
   name: "ComponentTemplate",
+  mixins: [PCM],
   components: {
     BContainer,
     BRow,
     BCol,
     ComponentObject: () => import('./ComponentObject.vue'),
+    Drag,
+    Drop,
   },
   props: {
     ObjectData: {type: Object},
@@ -117,7 +126,7 @@ export default {
     TemplateClasses: function() {
 
       const vm = this
-      const PartitionAddress = vm.GetPartitionAddress()
+      const PartitionAddress = vm.GetPartitionAddress(0)
       const PartitionDirection = vm.GetPartitionDirection(PartitionAddress)
       const Template = vm.GetTemplate()
       const isPseudo = Template.hasOwnProperty("pseudo")
@@ -157,6 +166,20 @@ export default {
     },
   },
   methods: {
+    GetVisibleObjectFace: function() {
+
+      // Initial variables
+      const vm = this
+      const Context = vm.Context
+      const VisibleCabinetFace = vm.TemplateFaceSelected[Context]
+      const ObjectID = vm.ObjectID
+      const ObjectIndex = PCM.GetObjectIndex()
+
+      const VisibleObjectFace = ObjectID
+
+      return VisibleObjectFace
+
+    },
     GetPartitionCollection: function() {
 
       // Initial variables
@@ -192,35 +215,6 @@ export default {
       // Return template
       return Template
     },
-    GetTemplateID: function(ObjectID) {
-
-      const vm = this
-      const Context = vm.Context
-      const ObjectData = vm.ObjectData[Context]
-      let TemplateID = 0
-
-      const ObjectIndex = ObjectData.findIndex((object) => object.id == ObjectID )
-
-      if(ObjectIndex !== -1) {
-        const Object = ObjectData[ObjectIndex]
-        TemplateID = Object.template_id
-      }
-
-      return TemplateID
-
-    },
-    GetTemplateIndex: function(TemplateID) {
-
-      // Initial variables
-      const vm = this
-      const TemplateData = vm.TemplateData
-      const Context = vm.Context
-
-      // Get object index
-      const TemplateIndex = TemplateData[Context].findIndex((template) => template.id == TemplateID);
-
-      return TemplateIndex
-    },
     GetEnclosureInsertID: function(encIndex, encCols) {
       
       const vm = this
@@ -247,69 +241,21 @@ export default {
 
       return [row, col]
     },
-    PartitionIsSelected: function(PartitionIndex) {
+    HandleDrop: function(CabinetID, CabinetFace, CabinetRU, TransferData, NativeEvent) {
+
+      // Store data
       const vm = this
-      const Context = vm.Context
-      const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
-      const PartitionAddressSelected = vm.PartitionAddressSelected[Context][TemplateFaceSelected]
-      const PartitionAddress = vm.GetPartitionAddress(PartitionIndex)
-      const IDSelected = (Context == 'template') ? vm.PartitionAddressSelected[Context].template_id : vm.PartitionAddressSelected[Context].object_id
-      const ID = (Context == 'template') ? vm.GetTemplateID(vm.ObjectID) : vm.ObjectID
-      let PartitionIsSelected = false
-
-      if(PartitionAddressSelected.length === PartitionAddress.length && PartitionAddressSelected.every(function(value, index) { return value === PartitionAddress[index]}) && IDSelected == ID) {
-        PartitionIsSelected = true
-      }
-      return PartitionIsSelected
-    },
-    PartitionIsHovered: function(PartitionIndex) {
-      const vm = this
-      const Context = vm.Context
-      const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
-      const PartitionAddressHovered = vm.PartitionAddressHovered[Context][TemplateFaceSelected]
-      const PartitionAddress = vm.GetPartitionAddress(PartitionIndex)
-      const IDSelected = (Context == 'template') ? vm.PartitionAddressHovered[Context].template_id : vm.PartitionAddressHovered[Context].object_id
-      const ID = (Context == 'template') ? vm.GetTemplateID(vm.ObjectID) : vm.ObjectID
-      let PartitionIsHovered = false
-
-      if(PartitionAddressHovered.length === PartitionAddress.length && PartitionAddressHovered.every(function(value, index) { return value === PartitionAddress[index]}) && IDSelected == ID) {
-        PartitionIsHovered = true
-      }
-      return PartitionIsHovered
-    },
-    GetPartitionAddress: function(PartitionIndex) {
-
-      // Store variables
-      const vm = this
-      return vm.InitialPartitionAddress.concat([PartitionIndex])
-    },
-    GetPartitionGrid: function(units) {
-
-      let GridArray = []
-      for(let i=0; i<units; i++) {
-        GridArray.push('1fr')
+      const data = {
+        "context": TransferData.context,
+        "cabinet_id": CabinetID,
+        "cabinet_face": CabinetFace,
+        "cabinet_ru": CabinetRU,
+        "object_id": TransferData.object_id,
+        "template_id": TransferData.template_id,
+        "template_face": TransferData.template_face,
       }
 
-      return GridArray.join(' ')
-    },
-    GetPartitionAreas: function(rows, cols) {
-
-      let AreasArray = []
-      let AreaCounter = 0
-      for(let r=0; r<rows; r++) {
-
-        AreasArray.push([])
-        for(let c=0; c<cols; c++) {
-          
-          AreasArray[r].push([])
-          AreasArray[r][c] = 'area'+AreaCounter
-          AreaCounter++
-        }
-      }
-      
-      const AreasString = "'" + AreasArray.map(arr => arr.join(' ')).join("' '") + "'";
-
-      return AreasString
+      vm.$emit('CabinetObjectDropped', data )
     },
     GetGlobalPartitionMax: function(Template, PartitionAddress) {
 
@@ -377,12 +323,6 @@ export default {
       PartitionFlexGrow = PartitionUnits / PartitionParentSize
 
       return PartitionFlexGrow
-    },
-    GetPartitionDirection: function(PartitionAddress) {
-
-      const PartitionDirection = (PartitionAddress.length % 2) ? 'row' : 'col'
-      
-      return PartitionDirection
     },
   },
 }

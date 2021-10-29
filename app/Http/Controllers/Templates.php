@@ -301,16 +301,18 @@ class Templates extends Controller
                     array_splice($templatePartition['port_format'], $portFormatIndex, 1);
                     
                     // Addjust incremental field order
-                    forEach($templatePartition['port_format'] as $fieldIndex => &$fieldValue) {
+                    if($portFormatDeletedOrder > 0) {
+                        forEach($templatePartition['port_format'] as $fieldIndex => &$fieldValue) {
 
-                        $fieldType = $fieldValue['type'];
-                        $fieldOrder = $fieldValue['order'];
-                        $fieldIsIncremental = ($fieldType == 'series' || $fieldType == 'incremental') ? true : false;
+                            $fieldType = $fieldValue['type'];
+                            $fieldOrder = $fieldValue['order'];
+                            $fieldIsIncremental = ($fieldType == 'series' || $fieldType == 'incremental') ? true : false;
 
-                        if($fieldIsIncremental) {
+                            if($fieldIsIncremental) {
 
-                            if($fieldOrder > $portFormatDeletedOrder) {
-                                $fieldValue['order']--;
+                                if($fieldOrder > $portFormatDeletedOrder) {
+                                    $fieldValue['order']--;
+                                }
                             }
                         }
                     }

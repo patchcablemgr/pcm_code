@@ -9,9 +9,9 @@
       class="content-wrapper"
       :class="contentWidth === 'boxed' ? 'container p-0' : null"
     >
-      <slot name="breadcrumb">
+      <!--slot name="breadcrumb">
         <app-breadcrumb />
-      </slot>
+      </slot-->
       <div class="content-body">
         <transition
           :name="routerTransition"

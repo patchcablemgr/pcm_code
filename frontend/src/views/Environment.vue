@@ -56,7 +56,7 @@
                 :PartitionAddressHovered="PartitionAddressHovered"
                 @PartitionClicked=" PartitionClicked($event) "
                 @PartitionHovered=" PartitionHovered($event) "
-                @CabinetObjectDropped="CabinetObjectDropped($event)"
+                @ObjectDropped="ObjectDropped($event)"
               />
             </b-card-body>
           </b-card>
@@ -493,57 +493,86 @@ export default {
 
       });
     },
-    CabinetObjectDropped: function(EmitData) {
+    ObjectDropped: function(EmitData) {
 
       const vm = this
       const Context = EmitData.context
+      const DropType = EmitData.drop_type
+      const TemplateID = EmitData.template_id
+      const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+      const Template = vm.TemplateData[Context][TemplateIndex]
+      const TemplateType = Template.type
+
+      if((TemplateType == 'standard' && DropType == 'cabinet') || (TemplateType == 'insert' && DropType == 'enclosure')) {
       
-      const data = EmitData
+        let data
+        if(DropType == 'cabinet') {
 
-      if(Context == 'template') {
+          data = {
+            "cabinet_id": EmitData.cabinet_id,
+            "cabinet_face": EmitData.cabinet_face,
+            "cabinet_ru": EmitData.cabinet_ru,
+          }
+        } else if(DropType == 'enclosure') {
 
-        const url = '/api/objects'
+          data = {
+            "parent_id": EmitData.parent_id,
+            "parent_face": EmitData.parent_face,
+            "parent_partition": EmitData.parent_partition,
+            "parent_enclosure_address": EmitData.parent_enclosure_address,
+          }
+        }
 
-        // POST to objects
-        vm.$http.post(url, data).then(function(response){
+        if(Context == 'template') {
 
-          const Object = response.data
-          
-          // Create child node object
-          vm.ObjectData.preview.push(Object)
+          data.template_id = EmitData.template_id
+          data.template_face = EmitData.template_face
 
-        }).catch(error => {
+          const url = '/api/objects'
 
-          // Display error to user via toast
-          vm.$bvToast.toast(JSON.stringify(error.response), {
-            title: 'Error',
-            variant: 'danger',
+          // POST to objects
+          vm.$http.post(url, data).then(function(response){
+
+            const Object = response.data
+            
+            // Create child node object
+            vm.ObjectData.preview.push(Object)
+
+          }).catch(error => {
+
+            // Display error to user via toast
+            vm.$bvToast.toast(JSON.stringify(error.response), {
+              title: 'Error',
+              variant: 'danger',
+            })
+
           })
+        } else if(Context == 'preview') {
 
-        })
-      } else if(Context == 'preview') {
+          data.object_id = EmitData.object_id
 
-        const ObjectID = EmitData.object_id
-        const url = '/api/objects/'+ObjectID
+          const ObjectID = EmitData.object_id
+          const url = '/api/objects/'+ObjectID
 
-        // POST to objects
-        vm.$http.patch(url, data).then(function(response){
+          // POST to objects
+          vm.$http.patch(url, data).then(function(response){
 
-          const Object = response.data
-          const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
-          
-          // Create child node object
-          vm.$set(vm.ObjectData.preview, ObjectIndex, Object)
+            const Object = response.data
+            const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
+            
+            // Create child node object
+            vm.$set(vm.ObjectData.preview, ObjectIndex, Object)
 
-        }).catch(error => {
+          }).catch(error => {
 
-          // Display error to user via toast
-          vm.$bvToast.toast(JSON.stringify(error.response), {
-            title: 'Error',
-            variant: 'danger',
+            // Display error to user via toast
+            vm.$bvToast.toast(JSON.stringify(error.response), {
+              title: 'Error',
+              variant: 'danger',
+            })
+
           })
-
-        })
+        }
       }
     },
     TemplateObjectDeleteClicked: function() {

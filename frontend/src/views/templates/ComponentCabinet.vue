@@ -31,12 +31,14 @@
           :PartitionAddressHovered="PartitionAddressHovered"
           @PartitionClicked=" $emit('PartitionClicked', $event) "
           @PartitionHovered=" $emit('PartitionHovered', $event) "
+          @ObjectDropped=" $emit('ObjectDropped', $event) "
         />
       </td>
-      <drop
-        v-else
-        :tag="'td'"
-        @drop="HandleDrop(CabinetData.id, TemplateFaceSelected.preview, CabinetRU, ...arguments)"
+      <td
+        v-else-if="!RUIsOccupied(CabinetData.id, CabinetRU)"
+        @drop="HandleDrop(CabinetData.id, TemplateFaceSelected.preview, CabinetRU, $event)"
+        @dragover.prevent
+        @dragenter.prevent
         class="pcm_cabinet_ru"
       />
       <td class="pcm_cabinet">{{ CabinetRU }}</td>
@@ -53,7 +55,6 @@
 import { BContainer, BRow, BCol, } from 'bootstrap-vue'
 import ComponentObject from './ComponentObject.vue'
 import CartDropdown from '../../@core/layouts/components/app-navbar/components/CartDropdown.vue'
-import { Drag, Drop } from 'vue-drag-drop'
 import { PCM } from '../../mixins/PCM.js'
 
 export default {
@@ -65,8 +66,6 @@ export default {
 
     ComponentObject,
     CartDropdown,
-    Drag,
-    Drop,
   },
   props: {
     TemplateData: {type: Object},
@@ -130,7 +129,7 @@ export default {
     RUIsOccupied: function(CabinetID, CabinetRU) {
       
       // Store variables
-      const vm = this;
+      const vm = this
       const Context = vm.Context
       const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
       const CabinetObjects = vm.ObjectData[Context].filter((object) => object.cabinet_id == CabinetID);
@@ -139,15 +138,17 @@ export default {
       CabinetObjects.forEach(function(object){
         // Store object dependent variables
         const ObjectID = object.id
-        const ObjectCabinetFace = object.cabinet_face
+        const ObjectCabinetFace = object.cabinet_front
         const ObjectCabinetRU = object.cabinet_ru
 
         // Get template data
-        const PreviewData = vm.GetPreviewData(ObjectID)
+        const TemplateID = vm.GetTemplateID(ObjectID, Context)
+        const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+        const Template = vm.TemplateData[Context][TemplateIndex]
 
         // Store template variables
-        const TemplateSize = PreviewData.ru_size
-        const TemplateMountConfig = PreviewData.mount_config
+        const TemplateSize = Template.ru_size
+        const TemplateMountConfig = Template.mount_config
 
         const ObjectFirstRU = ObjectCabinetRU
         const ObjectLastRU = ObjectFirstRU + (TemplateSize - 1)
@@ -158,25 +159,26 @@ export default {
             ObjectIsPresent = true
           }
         }
-      });
+      })
 
       return ObjectIsPresent
     },
-    HandleDrop: function(CabinetID, CabinetFace, CabinetRU, TransferData, NativeEvent) {
+    HandleDrop: function(CabinetID, CabinetFace, CabinetRU, event) {
 
       // Store data
       const vm = this
       const data = {
-        "context": TransferData.context,
+        "drop_type": "cabinet",
+        "context": event.dataTransfer.getData('context'),
         "cabinet_id": CabinetID,
         "cabinet_face": CabinetFace,
         "cabinet_ru": CabinetRU,
-        "object_id": TransferData.object_id,
-        "template_id": TransferData.template_id,
-        "template_face": TransferData.template_face,
+        "object_id": event.dataTransfer.getData('object_id'),
+        "template_id": event.dataTransfer.getData('template_id'),
+        "template_face": event.dataTransfer.getData('template_face'),
       }
 
-      vm.$emit('CabinetObjectDropped', data )
+      vm.$emit('ObjectDropped', data )
     },
   }
 }

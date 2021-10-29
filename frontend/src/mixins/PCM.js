@@ -36,10 +36,10 @@ export const PCM = {
         },
 
 // Template
-        GetTemplateID: function(ObjectID) {
+        GetTemplateID: function(ObjectID, Context=false) {
 
             const vm = this
-            const Context = vm.Context
+            Context = (Context) ? Context : vm.Context
             const ObjectData = vm.ObjectData[Context]
             let TemplateID = 0
         
@@ -138,6 +138,23 @@ export const PCM = {
             PartitionIsSelected = true
             }
             return PartitionIsSelected
+        },
+        GetPartition: function(Blueprint, PartitionAddress) {
+			
+			// Locate template partition
+			let Partition = Blueprint
+			let PartitionCollection = Blueprint
+			PartitionAddress.forEach(function(PartitionIndex) {
+				if(typeof PartitionCollection[PartitionIndex] !== 'undefined') {
+					Partition = PartitionCollection[PartitionIndex]
+					PartitionCollection = PartitionCollection[PartitionIndex]['children']
+				} else {
+					return false
+				}
+			})
+			
+			return Partition
+      
         },
         GetPartitionAddress: function(PartitionIndex=false) {
 

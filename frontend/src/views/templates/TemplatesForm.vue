@@ -463,6 +463,7 @@
       :TemplateData="TemplateData"
       :TemplateFaceSelected="TemplateFaceSelected"
       :PartitionAddressSelected="PartitionAddressSelected"
+      :SelectedPortFormatIndex="SelectedPortFormatIndex"
       :PreviewPortID="PreviewPortID"
       v-on:TemplatePartitionPortFormatFieldSelected="$emit('TemplatePartitionPortFormatFieldSelected', $event)"
       v-on:TemplatePartitionPortFormatValueUpdated="$emit('TemplatePartitionPortFormatValueUpdated', $event)"
@@ -508,6 +509,7 @@ export default {
     TemplateData: {type: Object},
     TemplateFaceSelected: {type: Object},
     PartitionAddressSelected: {type: Object},
+    SelectedPortFormatIndex: {type: Object},
     CategoryData: {type: Array},
     SelectedCategoryID: {type: Number},
     PortConnectorData: {type: Array},

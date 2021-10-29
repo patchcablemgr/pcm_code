@@ -18,6 +18,7 @@
                 Context="preview"
                 :TemplateFaceSelected="TemplateFaceSelected"
                 :PartitionAddressSelected="PartitionAddressSelected"
+                :SelectedPortFormatIndex="SelectedPortFormatIndex"
                 :AddChildPartitionDisabled="AddChildPartitionDisabled"
                 :AddSiblingPartitionDisabled="AddSiblingPartitionDisabled"
                 :RemovePartitionDisabled="RemovePartitionDisabled"
@@ -255,6 +256,10 @@ const MediaData = [
   }
 ]
 const SelectedCategoryID = null
+const SelectedPortFormatIndex = {
+  'preview': 0,
+  'template': 0,
+}
 const TemplateFaceSelected = {
   'preview': 'front',
   'template': 'front',
@@ -390,6 +395,7 @@ export default {
       TemplateData,
       CategoryData,
       SelectedCategoryID,
+      SelectedPortFormatIndex,
       MediaData,
       PortConnectorData,
       PortOrientationData,
@@ -651,6 +657,7 @@ export default {
 				vm.PartitionAddressSelected[Context][TemplateFaceSelected] = PartitionAddress
 				vm.PartitionAddressSelected[Context].template_id = TemplateID
         vm.PartitionAddressSelected[Context].object_id = ObjectID
+        vm.SelectedPortFormatIndex[Context] = 0
 			}
 
       if(HonorClick && Context == 'template' && PartitionType == 'enclosure') {
@@ -1116,11 +1123,18 @@ export default {
       
       SelectedPartition.units = newValue
     },
-    TemplatePartitionPortFormatValueUpdated: function(EmitData) {
+    TemplatePartitionPortFormatFieldSelected: function(EmitData) {
 
       const vm = this
       const Context = EmitData.context
       const PortFormatIndex = EmitData.index
+      vm.SelectedPortFormatIndex[Context] = PortFormatIndex
+    },
+    TemplatePartitionPortFormatValueUpdated: function(EmitData) {
+
+      const vm = this
+      const Context = EmitData.context
+      const PortFormatIndex = vm.SelectedPortFormatIndex[Context]
       const PortFormatValue = EmitData.value
 
       if(Context == 'template') {
@@ -1153,7 +1167,7 @@ export default {
 
       const vm = this
       const Context = EmitData.context
-      const PortFormatIndex = EmitData.index
+      const PortFormatIndex = vm.SelectedPortFormatIndex[Context]
       const SelectedPortFormat = vm.SelectedPortFormat
       const TypeNew = EmitData.value
       let OrderNew = 0
@@ -1231,7 +1245,7 @@ export default {
 
       const vm = this
       const Context = EmitData.context
-      const PortFormatIndex = EmitData.index
+      const PortFormatIndex = vm.SelectedPortFormatIndex[Context]
       const SelectedPortFormat = vm.SelectedPortFormat
       const CountNew = EmitData.value
 
@@ -1266,8 +1280,15 @@ export default {
 
       const vm = this
       const Context = EmitData.context
-      const SelectedPortFormat = vm.SelectedPortFormat
-      const PortFormatIndex = EmitData.index
+      const SelectedTemplateID = vm.PartitionAddressSelected[Context].template_id
+      const SelectedTemplateFace = vm.TemplateFaceSelected[Context]
+      const SelectedTemplatePartitionAddress = vm.PartitionAddressSelected[Context][SelectedTemplateFace]
+      const SelectedTemplateIndex = vm.GetTemplateIndex(SelectedTemplateID, Context)
+      const SelectedTemplate = vm.TemplateData[Context][SelectedTemplateIndex]
+      const SelectedBlueprint = SelectedTemplate.blueprint[SelectedTemplateFace]
+      const SelectedPartition = vm.GetPartition(SelectedBlueprint, SelectedTemplatePartitionAddress)
+      const SelectedPortFormat = SelectedPartition.port_format
+      const PortFormatIndex = vm.SelectedPortFormatIndex[Context]
       const PortFormatValue = EmitData.value
       const PortFormatValueOrig = SelectedPortFormat[PortFormatIndex].order
 
@@ -1335,7 +1356,7 @@ export default {
 
       const vm = this
       const Context = EmitData.context
-      const PortFormatIndex = EmitData.index
+      const PortFormatIndex = vm.SelectedPortFormatIndex[Context]
       const SelectedPortFormat = vm.SelectedPortFormat
       const MoveDirection = EmitData.direction
       
@@ -1372,12 +1393,15 @@ export default {
         SelectedPortFormat.splice(PortFormatIndexTo, 0, SelectedPortFormat.splice(PortFormatIndex, 1)[0])
       }
 
+      // Adjust port format index
+      vm.SelectedPortFormatIndex[Context] = (MoveDirection == 'left') ? PortFormatIndex - 1 : PortFormatIndex + 1
+
     },
     TemplatePartitionPortFormatFieldCreate: function(EmitData) {
       
       const vm = this
       const Context = EmitData.context
-      const PortFormatIndex = EmitData.index
+      const PortFormatIndex = vm.SelectedPortFormatIndex[Context]
       const SelectedPortFormat = vm.SelectedPortFormat
       const Position = EmitData.position
       const InsertPosition = (Position == 'before') ? PortFormatIndex : PortFormatIndex + 1
@@ -1410,13 +1434,17 @@ export default {
           // Insert new field
           SelectedPortFormat.splice(InsertPosition, 0, DefaultPortFormatField)
         }
+
+        // Adjust port format index
+        vm.SelectedPortFormatIndex[Context] = (Position == 'before') ? PortFormatIndex + 1 : PortFormatIndex
       }
     },
     TemplatePartitionPortFormatFieldDelete: function(EmitData) {
       
       const vm = this
       const Context = EmitData.context
-      const PortFormatIndex = EmitData.index
+      const PortFormatIndex = vm.SelectedPortFormatIndex[Context]
+      const SelectedPortFormatLength = vm.SelectedPortFormat.length
       
       if(Context == 'template') {
 
@@ -1460,6 +1488,11 @@ export default {
         if(SelectedPortFormat.length > 1) {
           SelectedPortFormat.splice(PortFormatIndex, 1)
         }
+      }
+
+      // Adjust port format index
+      if(PortFormatIndex >= (SelectedPortFormatLength - 1)) {
+        vm.SelectedPortFormatIndex[Context] = PortFormatIndex - 1
       }
 
     },
@@ -1746,23 +1779,6 @@ export default {
       
       return SelectedPartition
     },
-    GetPartition: function(Blueprint, PartitionAddress) {
-			
-			// Locate template partition
-			let Partition = Blueprint;
-			let PartitionCollection = Blueprint
-			PartitionAddress.forEach(function(PartitionIndex) {
-				if(typeof PartitionCollection[PartitionIndex] !== 'undefined') {
-					Partition = PartitionCollection[PartitionIndex]
-					PartitionCollection = PartitionCollection[PartitionIndex]['children']
-				} else {
-					return false
-				}
-			})
-			
-			return Partition
-      
-    },
     GetPreviewData: function() {
 
       // Initial variables
@@ -1919,13 +1935,13 @@ export default {
       const StandardTemplateIndex = vm.GetTemplateIndex(vm.StandardTemplateID, 'preview')
       const InsertTemplateIndex = vm.GetTemplateIndex(vm.InsertTemplateID, 'preview')
 
-      this.$http.get('/api/categories').then(function(response){
+      vm.$http.get('/api/categories').then(function(response){
 
-        vm.CategoryData = response.data;
+        vm.CategoryData = response.data
 
         // Apply default category to template preview
         if(SetCategoryToDefault) {
-          const DefaultCategoryIndex = vm.CategoryData.findIndex((category) => category.default);
+          const DefaultCategoryIndex = vm.CategoryData.findIndex((category) => category.default)
           let DefaultCategoryID
 
           if(DefaultCategoryIndex !== -1) {
@@ -1934,12 +1950,11 @@ export default {
             DefaultCategoryID = vm.CategoryData[0].id
           }
 
-
           vm.TemplateData.preview[StandardTemplateIndex].category_id = DefaultCategoryID
           vm.TemplateData.preview[InsertTemplateIndex].category_id = DefaultCategoryID
         }
 
-      });
+      })
     },
     mediumGET: function() {
 

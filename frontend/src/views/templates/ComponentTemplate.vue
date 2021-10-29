@@ -83,10 +83,14 @@
             :PartitionAddressHovered="PartitionAddressHovered"
             @PartitionClicked=" $emit('PartitionClicked', $event) "
             @PartitionHovered=" $emit('PartitionHovered', $event) "
+            @ObjectDropped=" $emit('ObjectDropped', $event) "
           />
           <div
             v-else
-            @drop="HandleDrop(ObjectID, TemplateFaceSelected.preview, CabinetRU, ...arguments)"
+            @drop="HandleDrop(ObjectID, 'front', GetPartitionAddress(PartitionIndex), GetEnclosureAddress(encIndex-1, Partition.enc_layout.cols), $event)"
+            @dragover.prevent
+            @dragenter.prevent
+            style="height:100%"
           />
         </div>
       </div>
@@ -96,7 +100,6 @@
 
 <script>
 import { BContainer, BRow, BCol, } from 'bootstrap-vue'
-import { Drag, Drop } from 'vue-drag-drop'
 import { PCM } from '../../mixins/PCM.js'
 
 export default {
@@ -107,8 +110,6 @@ export default {
     BRow,
     BCol,
     ComponentObject: () => import('./ComponentObject.vue'),
-    Drag,
-    Drop,
   },
   props: {
     ObjectData: {type: Object},
@@ -241,21 +242,23 @@ export default {
 
       return [row, col]
     },
-    HandleDrop: function(CabinetID, CabinetFace, CabinetRU, TransferData, NativeEvent) {
-
+    HandleDrop: function(ObjectID, TemplateFace, TemplatePartition, EnclosureAddress, event) {
+      
       // Store data
       const vm = this
       const data = {
-        "context": TransferData.context,
-        "cabinet_id": CabinetID,
-        "cabinet_face": CabinetFace,
-        "cabinet_ru": CabinetRU,
-        "object_id": TransferData.object_id,
-        "template_id": TransferData.template_id,
-        "template_face": TransferData.template_face,
+        "drop_type": "enclosure",
+        "context": event.dataTransfer.getData('context'),
+        "parent_id": ObjectID,
+        "parent_face": TemplateFace,
+        "parent_partition": TemplatePartition,
+        "parent_enclosure_address": EnclosureAddress,
+        "object_id": event.dataTransfer.getData('object_id'),
+        "template_id": event.dataTransfer.getData('template_id'),
+        "template_face": event.dataTransfer.getData('template_face'),
       }
 
-      vm.$emit('CabinetObjectDropped', data )
+      vm.$emit('ObjectDropped', data )
     },
     GetGlobalPartitionMax: function(Template, PartitionAddress) {
 

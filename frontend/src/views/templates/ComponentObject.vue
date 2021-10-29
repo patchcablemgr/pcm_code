@@ -1,7 +1,9 @@
 <template>
 
-  <drag
-    :transfer-data="{ object_id: ObjectID, template_id: GetTemplateID(ObjectID), template_face: TemplateFaceSelected[Context], context: Context }"
+  <div
+    :draggable="!IsPseudoObject"
+    @dragstart.stop="StartDrag({ context: Context, object_id: ObjectID, template_id: GetTemplateID(ObjectID), template_face: TemplateFaceSelected[Context] }, $event)"
+    :templateID="GetTemplateID(ObjectID)"
     :class="{
       pcm_template_partition_selected: PartitionIsSelected(),
       pcm_template_partition_hovered: PartitionIsHovered(),
@@ -27,14 +29,14 @@
       :PartitionAddressHovered="PartitionAddressHovered"
       @PartitionClicked=" $emit('PartitionClicked', $event) "
       @PartitionHovered=" $emit('PartitionHovered', $event) "
+      @ObjectDropped=" $emit('ObjectDropped', $event) "
     />
-  </drag>
+  </div>
 </template>
 
 <script>
 import { BContainer, BRow, BCol, } from 'bootstrap-vue'
 import ComponentTemplate from './ComponentTemplate.vue'
-import { Drag, Drop } from 'vue-drag-drop'
 import { PCM } from '../../mixins/PCM.js'
 
 export default {
@@ -45,8 +47,6 @@ export default {
     BCol,
 
     ComponentTemplate,
-    Drag,
-    Drop,
   },
   props: {
     ObjectData: {type: Object},
@@ -60,7 +60,24 @@ export default {
     PartitionAddressSelected: {type: Object},
     PartitionAddressHovered: {type: Object},
   },
+  computed: {
+    IsPseudoObject: function() {
+
+      const vm = this
+      const ObjectID = vm.ObjectID
+      const TemplateID = String(vm.GetTemplateID(ObjectID))
+
+      return TemplateID.includes('pseudo')
+
+    },
+  },
   methods: {
+    StartDrag: function(TransferData, e) {
+      e.dataTransfer.setData('context', TransferData.context)
+      e.dataTransfer.setData('object_id', TransferData.object_id)
+      e.dataTransfer.setData('template_id', TransferData.template_id)
+      e.dataTransfer.setData('template_face', TransferData.template_face)
+    },
     GetPreviewData: function(ObjectID) {
 
       // Initial variables
@@ -104,7 +121,6 @@ export default {
 
         // Get category
         const ObjectCategoryData = vm.CategoryData[ObjectCategoryIndex]
-
         TemplateColor = ObjectCategoryData.color
       }
 

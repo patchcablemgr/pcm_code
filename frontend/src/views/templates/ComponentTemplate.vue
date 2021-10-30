@@ -251,7 +251,7 @@ export default {
         "context": event.dataTransfer.getData('context'),
         "parent_id": ObjectID,
         "parent_face": TemplateFace,
-        "parent_partition": TemplatePartition,
+        "parent_partition_address": TemplatePartition,
         "parent_enclosure_address": EnclosureAddress,
         "object_id": event.dataTransfer.getData('object_id'),
         "template_id": event.dataTransfer.getData('template_id'),

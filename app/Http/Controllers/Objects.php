@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use App\Models\TemplateModel;
 use App\Models\ObjectsModel;
 use App\Http\Controllers\PCM;
 use Illuminate\Support\Facades\Log;
@@ -38,45 +39,97 @@ class Objects extends Controller
             'rear'
         ];
 
+        // Validate Template ID
         $validatorInput = [
-            'cabinetID' => $request->cabinet_id,
-            'cabinetFace' => $request->cabinet_face,
-            'cabinetRU' => $request->cabinet_ru,
             'templateID' => $request->template_id,
-            'templateFace' => $request->template_face
         ];
         $validatorRules = [
-            'cabinetID' => [
-                'required',
-                'exists:location,id'
-            ],
-            'cabinetFace' => [
-                'required',
-                Rule::in($faceArray)
-            ],
-            'cabinetRU' => [
-                'required',
-                'integer'
-            ],
             'templateID' => [
                 'required',
                 'exists:template,id'
-            ],
-            'templateFace' => [
-                'required',
-                Rule::in($faceArray)
             ]
         ];
+        $validatorMessages = [];
+        Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
+
+        // Retrieve object record
+        $template = TemplateModel::where('id', $request->template_id)->first();
+        $templateType = $template->type;
+
+        if($templateType == 'standard') {
+
+            $validatorInput = [
+                'cabinetID' => $request->cabinet_id,
+                'cabinetFace' => $request->cabinet_face,
+                'cabinetRU' => $request->cabinet_ru,
+                'templateFace' => $request->template_face
+            ];
+            $validatorRules = [
+                'cabinetID' => [
+                    'required',
+                    'exists:location,id'
+                ],
+                'cabinetFace' => [
+                    'required',
+                    Rule::in($faceArray)
+                ],
+                'cabinetRU' => [
+                    'required',
+                    'integer'
+                ],
+                'templateFace' => [
+                    'required',
+                    Rule::in($faceArray)
+                ],
+            ];
+        } else {
+
+            $validatorInput = [
+                'parentID' => $request->parent_id,
+                'parentFace' => $request->parent_face,
+                'parentPartitionAddress' => $request->parent_partition_address,
+                'parentEnclosureAddress' => $request->parent_enclosure_address
+            ];
+            $validatorRules = [
+                'parentID' => [
+                    'required',
+                    'exists:object,id'
+                ],
+                'parentFace' => [
+                    'required',
+                    Rule::in($faceArray)
+                ],
+                'parentPartitionAddress' => [
+                    'required'
+                ],
+                'parentEnclosureAddress' => [
+                    'required'
+                ],
+            ];
+        }
         $validatorMessages = [];
         Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
 
         $object = new ObjectsModel;
 
         $object->name = "New_Object";
-        $object->cabinet_id = $request->cabinet_id;
         $object->template_id = $request->template_id;
-        $object->cabinet_ru = $request->cabinet_ru;
-        $object->cabinet_front = ($request->cabinet_face == $request->template_face) ? 'front' : 'rear';
+
+        if($templateType == 'standard') {
+            $object->cabinet_id = $request->cabinet_id;
+            $object->cabinet_ru = $request->cabinet_ru;
+            $object->cabinet_front = ($request->cabinet_face == $request->template_face) ? 'front' : 'rear';
+        } else {
+
+            $parentObject = ObjectsModel::where('id', $request->parent_id)->first();
+            $parentCabinetID = $parentObject->cabinet_id;
+
+            $object->cabinet_id = $parentCabinetID;
+            $object->parent_id = $request->parent_id;
+            $object->parent_face = $request->parent_face;
+            $object->parent_partition_address = $request->parent_partition_address;
+            $object->parent_enclosure_address = $request->parent_enclosure_address;
+        }
 
         $object->save();
 

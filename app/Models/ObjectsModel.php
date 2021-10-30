@@ -9,4 +9,8 @@ class ObjectsModel extends Model
 {
     use HasFactory;
 		protected $table = 'object';
+    protected $casts = [
+      'parent_partition_address' => 'array',
+      'parent_enclosure_address' => 'array',
+    ];
 }

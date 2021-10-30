@@ -518,7 +518,7 @@ export default {
           data = {
             "parent_id": EmitData.parent_id,
             "parent_face": EmitData.parent_face,
-            "parent_partition": EmitData.parent_partition,
+            "parent_partition_address": EmitData.parent_partition_address,
             "parent_enclosure_address": EmitData.parent_enclosure_address,
           }
         }

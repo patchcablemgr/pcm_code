@@ -84,7 +84,6 @@ import { BCard, BCardBody, BFormTags, BFormRadio } from 'bootstrap-vue'
 import AppCollapse from '@core/components/app-collapse/AppCollapse.vue'
 import AppCollapseItem from '@core/components/app-collapse/AppCollapseItem.vue'
 import ComponentObject from './ComponentObject.vue'
-import { Drag, Drop } from 'vue-drag-drop'
 
 const TemplateFilter = []
 
@@ -97,9 +96,6 @@ export default {
     AppCollapse,
     AppCollapseItem,
     ComponentObject,
-
-    Drag,
-    Drop,
   },
   props: {
     TemplateData: {type: Object},

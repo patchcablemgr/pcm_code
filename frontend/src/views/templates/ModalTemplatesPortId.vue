@@ -35,7 +35,7 @@
                   </div>
                   <div
                     :class="{
-                      pcm_template_port_format_field_selected: SelectedPortFormatIndex[Context] == PortFormatIndex,
+                      pcm_template_port_format_field_selected: SelectedPortFormatIndex == PortFormatIndex,
                     }"
                   >
                     <b-form-input
@@ -154,7 +154,7 @@
               </dt>
               <dd class="col-sm-8">
                 <b-form-select
-                  v-model="SelectedPortFormat[SelectedPortFormatIndex[Context]].type"
+                  v-model="SelectedPortFormat[SelectedPortFormatIndex].type"
                   :options="TypeOptions"
                   @change="$emit('TemplatePartitionPortFormatTypeUpdated', {'context': Context, 'value': $event} )"
                 />
@@ -174,8 +174,8 @@
               </dt>
               <dd class="col-sm-8">
                 <b-form-input
-                  v-model="SelectedPortFormat[SelectedPortFormatIndex[Context]].count"
-                  :disabled=" SelectedPortFormat[SelectedPortFormatIndex[Context]].type == 'static' || SelectedPortFormat[SelectedPortFormatIndex[Context]].type == 'series' "
+                  v-model="SelectedPortFormat[SelectedPortFormatIndex].count"
+                  :disabled=" SelectedPortFormat[SelectedPortFormatIndex].type == 'static' || SelectedPortFormat[SelectedPortFormatIndex].type == 'series' "
                   @change="$emit('TemplatePartitionPortFormatCountUpdated', {'context': Context, 'value': $event} )"
                   type=number
                 />
@@ -195,9 +195,9 @@
               </dt>
               <dd class="col-sm-8">
                 <b-form-select
-                  :value=" SelectedPortFormat[SelectedPortFormatIndex[Context]].order "
+                  :value=" SelectedPortFormat[SelectedPortFormatIndex].order "
                   :options=" ComputedOrderOptions "
-                  :disabled=" SelectedPortFormat[SelectedPortFormatIndex[Context]].type == 'static' "
+                  :disabled=" SelectedPortFormat[SelectedPortFormatIndex].type == 'static' "
                   @change=" $emit('TemplatePartitionPortFormatOrderUpdated', {'context': Context, 'value': $event} ) "
                 />
               </dd>
@@ -333,6 +333,7 @@ const ToolTipPreview = {
     </div>
   `
 }
+const SelectedPortFormatIndex = 0
 
 export default {
   components: {
@@ -356,7 +357,6 @@ export default {
     TemplateData: {type: Object},
     TemplateFaceSelected: {type: Object},
     PartitionAddressSelected: {type: Object},
-    SelectedPortFormatIndex: {type: Object},
     PreviewPortID: {type: String},
   },
   data() {
@@ -373,6 +373,7 @@ export default {
       ToolTipCount,
       ToolTipOrder,
       ToolTipPreview,
+      SelectedPortFormatIndex,
     }
   },
   computed: {

@@ -102,14 +102,12 @@ class Locations extends Controller
         ];
         $validatorRules = [
             'id' => [
+                'integer',
                 'required',
-                'exists:location',
-                'unique:App\Models\ObjectsModel,location_id'
+                'exists:location'
             ]
         ];
-        $validatorMessages = [
-            'id.unique' => 'The location contains objects and cannot be deleted.'
-        ];
+        $validatorMessages = [];
         Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
 
         // Store request data

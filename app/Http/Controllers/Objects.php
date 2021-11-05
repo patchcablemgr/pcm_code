@@ -156,7 +156,14 @@ class Objects extends Controller
      */
     public function update(Request $request, $id)
     {
-        // Validate template ID
+
+        // Prepare variables
+        $faceArray = [
+            'front',
+            'rear'
+        ];
+
+        // Validate object ID
         $validatorInput = [
             'id' => $id
         ];
@@ -182,7 +189,29 @@ class Objects extends Controller
                 'min:1',
                 'max:255'
             ],
+            'parent_id' => [
+                'required_with_all: parent_id, parent_face, parent_partition_address, parent_enclosure_address',
+                'numeric',
+                'exists:object,id'
+            ],'parent_face' => [
+                'required_with_all: parent_id, parent_face, parent_partition_address, parent_enclosure_address',
+                Rule::in($faceArray)
+            ],'parent_partition_address' => [
+                'required_with_all: parent_id, parent_face, parent_partition_address, parent_enclosure_address',
+                'array'
+            ],'parent_enclosure_address' => [
+                'required_with_all: parent_id, parent_face, parent_partition_address, parent_enclosure_address',
+                'array'
+            ],
         ]);
+
+        // ToDo
+        // Deep validation of:
+        //  cabinet_ru,
+        //  parent_id,
+        //  parent_face,
+        //  parent_partition_address,
+        //  parent_enclosure_address
 
         // Store request data
         $data = $request->all();
@@ -200,6 +229,22 @@ class Objects extends Controller
 
                 // Update object name
                 $object->name = $value;
+            } else if($key == 'parent_id') {
+
+                // Update parent ID
+                $object->parent_id = $value;
+            } else if($key == 'parent_face') {
+
+                // Update parent face
+                $object->parent_face = $value;
+            } else if($key == 'parent_partition_address') {
+
+                // Update parent partition address
+                $object->parent_partition_address = $value;
+            } else if($key == 'parent_enclosure_address') {
+
+                // Update parent enclosure address
+                $object->parent_enclosure_address = $value;
             }
         }
 

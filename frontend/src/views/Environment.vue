@@ -21,6 +21,11 @@
                   </template>
                 </span>
               </liquor-tree>
+              <!--
+              <panZoom>
+              <img src="https://www.w3schools.com/html/pic_trulli.jpg" alt="Italian Trulli">
+              </panZoom>
+              -->
             </b-card-body>
           </b-card>
 
@@ -267,7 +272,7 @@ const GenericObject = {
     "parent_id": null,
     "parent_face": null,
     "parent_part_addr": null,
-    "parent_enc_addr": null,
+    "parent_enclosure_address": null,
 }
 
 const GenericTemplate = {
@@ -871,7 +876,7 @@ export default {
             return PseudoObjectParentFace
         } else if (GenericObjectKey == 'parent_part_addr') {
             return PseudoObjectParentPartitionAddress
-        } else if (GenericObjectKey == 'parent_enc_addr') {
+        } else if (GenericObjectKey == 'parent_enclosure_address') {
             return PseudoObjectParentEnclosureAddress
         } else if (GenericObjectKey == 'template_id') {
             return TemplateID

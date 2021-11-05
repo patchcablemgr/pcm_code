@@ -226,7 +226,7 @@ export default {
 			
       if(InsertIndex !== -1) {
         const Insert = vm.ObjectData[Context][InsertIndex]
-        const InsertParentEnclosureAddress = Insert.parent_enc_addr
+        const InsertParentEnclosureAddress = Insert.parent_enclosure_address
         const EnclosureAddress = vm.GetEnclosureAddress(encIndex, encCols)
 
         if(InsertParentEnclosureAddress[0] == EnclosureAddress[0] && InsertParentEnclosureAddress[1] == EnclosureAddress[1]) {

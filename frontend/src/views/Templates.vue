@@ -323,7 +323,7 @@ const ObjectData = {
       "parent_id": null,
       "parent_face": "front",
       "parent_part_addr": null,
-      "parent_enc_addr": [0,0],
+      "parent_enclosure_address": [0,0],
     }
   ],
   'template': [],
@@ -340,7 +340,7 @@ const GenericObject = {
     "parent_id": null,
     "parent_face": null,
     "parent_part_addr": null,
-    "parent_enc_addr": null,
+    "parent_enclosure_address": null,
 }
 const GenericTemplate = {
     "id": null,
@@ -1900,7 +1900,7 @@ export default {
             return PseudoObjectParentFace
         } else if (GenericObjectKey == 'parent_part_addr') {
             return PseudoObjectParentPartitionAddress
-        } else if (GenericObjectKey == 'parent_enc_addr') {
+        } else if (GenericObjectKey == 'parent_enclosure_address') {
             return PseudoObjectParentEnclosureAddress
         } else if (GenericObjectKey == 'template_id') {
             return TemplateID

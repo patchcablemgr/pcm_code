@@ -21,7 +21,7 @@ class CreateLocationTable extends Migration
             $table->integer('parent_id')->nullable();
             $table->string('type');
             $table->integer('size')->nullable();
-            $table->string('floorplan_img', 40)->nullable();
+            $table->string('floorplan_img')->nullable();
             $table->tinyInteger('ru_orientation')->nullable()->default(0);
             $table->integer('order')->default(0);
         });

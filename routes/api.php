@@ -10,6 +10,7 @@ use App\Http\Controllers\Objects;
 use App\Http\Controllers\AttributesMedia;
 use App\Http\Controllers\AttributesPortOrientation;
 use App\Http\Controllers\AttributesPortConnector;
+use App\Http\Controllers\UploadImageController;
 
 /*
 |--------------------------------------------------------------------------
@@ -35,11 +36,13 @@ Route::group(['prefix' => 'auth'], function () {
 Route::group(['middleware' => 'auth:sanctum'], function(){
   Route::apiResources([
     'locations' => Locations::class,
+    'locations.image' => UploadImageController::class,
     'categories' => Categories::class,
     'templates' => Templates::class,
     'objects' => Objects::class,
     'medium' => AttributesMedia::class,
     'port-orientation' => AttributesPortOrientation::class,
     'port-connectors' => AttributesPortConnector::class,
+    'uploads' => UploadController::class,
   ]);
 });

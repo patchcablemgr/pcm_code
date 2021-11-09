@@ -21,16 +21,22 @@
                   </template>
                 </span>
               </liquor-tree>
-              <!--
-              <panZoom>
-              <img src="https://www.w3schools.com/html/pic_trulli.jpg" alt="Italian Trulli">
-              </panZoom>
-              -->
             </b-card-body>
           </b-card>
 
         </b-col>
-        <b-col>
+        <b-col
+          cols="8"
+          v-if=" PreviewDisplay == 'floorplan' "
+        >
+          <component-floorplan
+            :NodeIDSelected="NodeIDSelected"
+            @FloorplanObjectDropped="FloorplanObjectDropped($event)"
+          />
+        </b-col>
+        <b-col
+          v-if=" PreviewDisplay == 'cabinet' "
+        >
           <b-card
             title="Cabinet"
           >
@@ -67,7 +73,9 @@
           </b-card>
 
         </b-col>
-        <b-col>
+        <b-col
+          v-if=" PreviewDisplay == 'cabinet' "
+        >
 
           <component-template-Object-details
             CardTitle="Object Details"
@@ -140,7 +148,21 @@
 </template>
 
 <script>
-import { BContainer, BRow, BCol, BCard, BCardBody, BCardText, BFormRadio, } from 'bootstrap-vue'
+import {
+  BContainer,
+  BRow,
+  BCol,
+  BCard,
+  BCardTitle,
+  BCardBody,
+  BCardText,
+  BFormRadio,
+  BDropdown,
+  BDropdownItem,
+  BDropdownDivider,
+  BButton,
+  VBTooltip
+} from 'bootstrap-vue'
 import ToastGeneral from './templates/ToastGeneral.vue'
 import ComponentCabinet from './templates/ComponentCabinet.vue'
 import ComponentTemplateObjectDetails from './templates/ComponentTemplateObjectDetails.vue'
@@ -150,6 +172,8 @@ import LiquorTree from 'liquor-tree'
 import 'vue-simple-context-menu/dist/vue-simple-context-menu.css'
 import VueSimpleContextMenu from 'vue-simple-context-menu'
 import { PCM } from '../mixins/PCM.js'
+import Ripple from 'vue-ripple-directive'
+import ComponentFloorplan from './templates/ComponentFloorplan.vue'
 
 const TreeData = []
 
@@ -333,9 +357,14 @@ export default {
     BRow,
     BCol,
     BCard,
+    BCardTitle,
     BCardBody,
+    BDropdown,
+		BDropdownItem,
+		BDropdownDivider,
     BCardText,
     BFormRadio,
+    BButton,
 
     ToastGeneral,
     ComponentCabinet,
@@ -344,7 +373,12 @@ export default {
     LiquorTree,
     VueSimpleContextMenu,
     ModalTemplatesEdit,
+    ComponentFloorplan,
   },
+  directives: {
+		Ripple,
+    'b-tooltip': VBTooltip,
+	},
   data() {
     return {
       TreeData,
@@ -363,6 +397,7 @@ export default {
       PortOrientationData,
       MediaData,
       PortConnectorData,
+      File: null,
     }
   },
   computed: {
@@ -455,6 +490,45 @@ export default {
 			return Partition
       
     },
+    FileSelected: function(EmitData) {
+
+      const vm = this
+      const FileEvent = EmitData.FileEvent
+      console.log(FileEvent.target.files)
+      vm.File = FileEvent.target.files[0]
+    },
+    FileSubmitted: function() {
+
+      const vm = this
+      const LocationID = vm.NodeIDSelected
+      const url = '/api/locations/'+LocationID+'/image'
+      let data = new FormData()
+      const options = {
+        'headers': {
+          'Content-Type': 'multipart/form-data'
+        }
+      }
+      data.append('file', vm.File)
+
+      // POST floorplan image
+      vm.$http.post(url, data, options).then(function(response){
+        
+        const Criteria = {
+          "id": LocationID.toString()
+        }
+        const SelectedNode = vm.$refs.LiquorTree.find(Criteria)[0]
+        SelectedNode.data.img = response.data.img
+
+      }).catch(error => {
+
+        // Display error to user via toast
+        vm.$bvToast.toast(JSON.stringify(error.response.data), {
+          title: 'Error',
+          variant: 'danger',
+        })
+
+      });
+    },
     TemplateObjectEditClicked: function() {
 
       const vm = this
@@ -497,6 +571,11 @@ export default {
         })
 
       });
+    },
+    FloorplanObjectDropped: function(EmitData) {
+
+      const vm = this
+      console.log(EmitData)
     },
     ObjectDropped: function(EmitData) {
 
@@ -646,8 +725,6 @@ export default {
         Icon = "MapIcon"
       }
 
-      console.log("Debug (Icon):"+Icon)
-
       return Icon
     },
     handleClick (event, node) {
@@ -722,6 +799,7 @@ export default {
             "type": Node.type,
             "icon": vm.GetNodeIcon(Node.type),
             "parent_id": Node.parent_id,
+            "img": Node.img,
           },
         }
 
@@ -758,6 +836,7 @@ export default {
             "type": child.type,
             "icon": vm.GetNodeIcon(child.type),
             "parent_id": child.parent_id,
+            "img": child.img,
           },
         }
         ChildrenData.push(ChildData)

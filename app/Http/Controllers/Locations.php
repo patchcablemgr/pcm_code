@@ -131,7 +131,7 @@ class Locations extends Controller
 
                 // Update location name
                 $location->parent_id = $value;
-            } 
+            }
         }
 
         // Save template record

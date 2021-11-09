@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class CategoryModel extends Model
 {
     use HasFactory;
-    protected $table = 'template_category';
+    protected $table = 'category';
 
     /**
      * The attributes that are mass assignable.

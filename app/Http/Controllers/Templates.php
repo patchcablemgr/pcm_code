@@ -59,7 +59,7 @@ class Templates extends Controller
             ],
             'category_id' => [
                 'required',
-                'exists:template_category,id'
+                'exists:category,id'
             ],
             'type' => [
                 'required',
@@ -172,7 +172,7 @@ class Templates extends Controller
                 'max:255'
             ],
             'category_id' => [
-                'exists:template_category,id'
+                'exists:category,id'
             ],
         ]);
 

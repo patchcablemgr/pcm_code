@@ -93,8 +93,8 @@
     <!-- File Upload Modal -->
     <modal-file-upload
       :File="File"
-      @FileSelected="FileSelected($event)"
-      @FileSubmitted="FileSubmitted()"
+      @FileSelected="$emit('FileSelected', $event)"
+      @FileSubmitted="$emit('FileSubmitted')"
     />
   </div>
 </template>
@@ -111,6 +111,7 @@ import {
 import PinchZoom from 'vue-pinch-zoom'
 import ModalFileUpload from './ModalFileUpload.vue'
 import { PCM } from '../../mixins/PCM.js'
+import Ripple from 'vue-ripple-directive'
 
 export default {
   mixins: [PCM],
@@ -126,31 +127,17 @@ export default {
     ModalFileUpload,
   },
   props: {
-    NodeIDSelected: {type: Number},
+    FloorplanImage: {type: String},
+    File: {type: File},
   },
+  directives: {
+		Ripple,
+	},
   data() {
     return {
     }
   },
   computed: {
-    FloorplanImage: function() {
-      
-      const vm = this
-      const NodeID = vm.NodeIDSelected
-      let NodeFloorplanImage = null
-
-      if(NodeID) {
-
-        const Criteria = {
-          "id": NodeID.toString()
-        }
-        const SelectedNode = vm.$refs.LiquorTree.find(Criteria)[0]
-        const NodeType = SelectedNode.data.type
-        NodeFloorplanImage = SelectedNode.data.img
-      }
-
-      return NodeFloorplanImage
-    },
   },
   methods: {
     UploadFloorplanImageClicked: function() {

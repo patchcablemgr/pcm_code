@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateTemplateCategoryTable extends Migration
+class CreateCategoryTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,7 +13,7 @@ class CreateTemplateCategoryTable extends Migration
      */
     public function up()
     {
-        Schema::connection('mysql')->create('template_category', function (Blueprint $table) {
+        Schema::connection('mysql')->create('category', function (Blueprint $table) {
             $table->integer('id', true);
 			$table->dateTime('created_at');
 			$table->dateTime('updated_at');
@@ -30,7 +30,7 @@ class CreateTemplateCategoryTable extends Migration
      */
     public function down()
     {
-        Schema::connection('mysql')->drop('template_category', function (Blueprint $table) {
+        Schema::connection('mysql')->drop('category', function (Blueprint $table) {
             
             
             

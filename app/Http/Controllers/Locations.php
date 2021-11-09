@@ -54,8 +54,9 @@ class Locations extends Controller
         $location = new LocationsModel;
 
         $location->name = "New_".ucfirst($request->type);
-        $location->type = $request->type;
         $location->parent_id = $request->parent_id;
+        $location->type = $request->type;
+        $location->size = ($request->type == 'cabinet') ? 42 : null;
 
         $location->save();
 
@@ -156,7 +157,7 @@ class Locations extends Controller
             'id' => [
                 'required',
                 'exists:location',
-                'unique:App\Models\ObjectsModel,location_id'
+                'unique:object,location_id'
             ]
         ];
         $validatorMessages = [

@@ -110,7 +110,7 @@ export default {
       const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
 
       const ObjectIndex = vm.ObjectData[Context].findIndex(function(Object, ObjectIndex) {
-        if(Object.cabinet_id == CabinetID && Object.cabinet_ru == CabinetRU) {
+        if(Object.location_id == CabinetID && Object.cabinet_ru == CabinetRU) {
           const ObjectCabinetFace = Object.cabinet_front
           const ObjectID = Object.id
           const ObjectPreviewData = vm.GetPreviewData(ObjectID)
@@ -132,7 +132,7 @@ export default {
       const vm = this
       const Context = vm.Context
       const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
-      const CabinetObjects = vm.ObjectData[Context].filter((object) => object.cabinet_id == CabinetID);
+      const CabinetObjects = vm.ObjectData[Context].filter((object) => object.location_id == CabinetID);
       let ObjectIsPresent = false
 
       CabinetObjects.forEach(function(object){
@@ -170,7 +170,7 @@ export default {
       const data = {
         "drop_type": "cabinet",
         "context": event.dataTransfer.getData('context'),
-        "cabinet_id": CabinetID,
+        "location_id": CabinetID,
         "cabinet_face": CabinetFace,
         "cabinet_ru": CabinetRU,
         "object_id": event.dataTransfer.getData('object_id'),

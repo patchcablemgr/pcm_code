@@ -309,7 +309,7 @@ const ObjectData = {
       "id": StandardTemplateID,
       "name": "Standard",
       "template_id": StandardTemplateID,
-      "cabinet_id": 1,
+      "location_id": 1,
       "cabinet_ru": 1,
       "cabinet_front": "front",
     },
@@ -317,7 +317,7 @@ const ObjectData = {
       "id": InsertTemplateID,
       "name": "Insert",
       "template_id": InsertTemplateID,
-      "cabinet_id": null,
+      "location_id": null,
       "cabinet_ru": null,
       "cabinet_front": null,
       "parent_id": null,
@@ -334,7 +334,7 @@ const GenericObject = {
     "pseudo": true,
     "name": null,
     "template_id": null,
-    "cabinet_id": null,
+    "location_id": null,
     "cabinet_ru": null,
     "cabinet_front": null,
     "parent_id": null,
@@ -1835,7 +1835,7 @@ export default {
             return PseudoObjectID
           } else if (GenericObjectKey == 'cabinet_front') {
             return 'front'
-          } else if (GenericObjectKey == 'cabinet_id') {
+          } else if (GenericObjectKey == 'location_id') {
             return (Context == 'preview') ? vm.InsertTemplateID : null
           } else if (GenericObjectKey == 'cabinet_ru') {
             return 1
@@ -1888,7 +1888,7 @@ export default {
       WorkingObjectData.push(JSON.parse(JSON.stringify(vm.GenericObject), function (GenericObjectKey, GenericObjectValue) {
         if (GenericObjectKey == 'id') {
             return PseudoObjectID
-        } else if (GenericObjectKey == 'cabinet_id') {
+        } else if (GenericObjectKey == 'location_id') {
             return (Context == 'preview' && TemplateType == 'standard') ? vm.InsertTemplateID : GenericObjectValue
         } else if (GenericObjectKey == 'cabinet_front') {
             return (Context == 'preview' && TemplateType == 'standard') ? 'front' : GenericObjectValue

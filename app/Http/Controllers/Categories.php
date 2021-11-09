@@ -90,10 +90,10 @@ class Categories extends Controller
             'id' => [
                 'required',
                 'numeric',
-                'exists:template_category',
+                'exists:category',
             ],
             'name' => [
-                Rule::unique('template_category')->ignore($id),
+                Rule::unique('category')->ignore($id),
             ],
         ]);
         $customValidator->stopOnFirstFailure();
@@ -149,7 +149,7 @@ class Categories extends Controller
         $validatorRules = [
             'id' => [
                 'required',
-                'exists:template_category',
+                'exists:category',
                 'unique:App\Models\TemplateModel,category_id'
             ]
         ];

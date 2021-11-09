@@ -59,13 +59,13 @@ class Objects extends Controller
         if($templateType == 'standard') {
 
             $validatorInput = [
-                'cabinetID' => $request->cabinet_id,
+                'locationID' => $request->location_id,
                 'cabinetFace' => $request->cabinet_face,
                 'cabinetRU' => $request->cabinet_ru,
                 'templateFace' => $request->template_face
             ];
             $validatorRules = [
-                'cabinetID' => [
+                'locationID' => [
                     'required',
                     'exists:location,id'
                 ],
@@ -116,15 +116,15 @@ class Objects extends Controller
         $object->template_id = $request->template_id;
 
         if($templateType == 'standard') {
-            $object->cabinet_id = $request->cabinet_id;
+            $object->location_id = $request->location_id;
             $object->cabinet_ru = $request->cabinet_ru;
             $object->cabinet_front = ($request->cabinet_face == $request->template_face) ? 'front' : 'rear';
         } else {
 
             $parentObject = ObjectsModel::where('id', $request->parent_id)->first();
-            $parentCabinetID = $parentObject->cabinet_id;
+            $parentCabinetID = $parentObject->location_id;
 
-            $object->cabinet_id = $parentCabinetID;
+            $object->location_id = $parentCabinetID;
             $object->parent_id = $request->parent_id;
             $object->parent_face = $request->parent_face;
             $object->parent_partition_address = $request->parent_partition_address;

@@ -30,8 +30,11 @@
           v-if=" PreviewDisplay == 'floorplan' "
         >
           <component-floorplan
-            :NodeIDSelected="NodeIDSelected"
+            :FloorplanImage="FloorplanImage"
+            :File="File"
             @FloorplanObjectDropped="FloorplanObjectDropped($event)"
+            @FileSelected="FileSelected($event)"
+            @FileSubmitted="FileSubmitted()"
           />
         </b-col>
         <b-col
@@ -172,7 +175,6 @@ import LiquorTree from 'liquor-tree'
 import 'vue-simple-context-menu/dist/vue-simple-context-menu.css'
 import VueSimpleContextMenu from 'vue-simple-context-menu'
 import { PCM } from '../mixins/PCM.js'
-import Ripple from 'vue-ripple-directive'
 import ComponentFloorplan from './templates/ComponentFloorplan.vue'
 
 const TreeData = []
@@ -290,7 +292,7 @@ const GenericObject = {
     "pseudo": true,
     "name": null,
     "template_id": null,
-    "cabinet_id": null,
+    "location_id": null,
     "cabinet_ru": null,
     "cabinet_front": null,
     "parent_id": null,
@@ -376,7 +378,6 @@ export default {
     ComponentFloorplan,
   },
   directives: {
-		Ripple,
     'b-tooltip': VBTooltip,
 	},
   data() {
@@ -401,6 +402,24 @@ export default {
     }
   },
   computed: {
+    FloorplanImage: function() {
+      
+      const vm = this
+      const NodeID = vm.NodeIDSelected
+      let NodeFloorplanImage = null
+
+      if(NodeID) {
+
+        const Criteria = {
+          "id": NodeID.toString()
+        }
+        const SelectedNode = vm.$refs.LiquorTree.find(Criteria)[0]
+        const NodeType = SelectedNode.data.type
+        NodeFloorplanImage = SelectedNode.data.img
+      }
+
+      return NodeFloorplanImage
+    },
     PreviewDisplay: function() {
 
       const vm = this
@@ -494,7 +513,7 @@ export default {
 
       const vm = this
       const FileEvent = EmitData.FileEvent
-      console.log(FileEvent.target.files)
+      
       vm.File = FileEvent.target.files[0]
     },
     FileSubmitted: function() {
@@ -575,7 +594,31 @@ export default {
     FloorplanObjectDropped: function(EmitData) {
 
       const vm = this
-      console.log(EmitData)
+      const NodeID = vm.NodeIDSelected
+      const OffsetX = EmitData.event.offsetX
+      const OffsetY = EmitData.event.offsetY
+      const FloorplanAddress = [OffsetX, OffsetY]
+      const data = {
+        'floorplan_id': NodeID,
+        'floorplan_address': FloorplanAddress,
+        'floorplan_object_type': 'device',
+      }
+      console.log('Debug (x, y): '+OffsetX+', '+OffsetY)
+
+      const url = '/api/objects'
+
+      // POST to objects
+      vm.$http.post(url, data).then(function(response){
+
+      }).catch(error => {
+
+        // Display error to user via toast
+        vm.$bvToast.toast(JSON.stringify(error.response), {
+          title: 'Error',
+          variant: 'danger',
+        })
+
+      })
     },
     ObjectDropped: function(EmitData) {
 
@@ -593,7 +636,7 @@ export default {
         if(DropType == 'cabinet') {
 
           data = {
-            "cabinet_id": EmitData.cabinet_id,
+            "location_id": EmitData.location_id,
             "cabinet_face": EmitData.cabinet_face,
             "cabinet_ru": EmitData.cabinet_ru,
           }
@@ -752,9 +795,12 @@ export default {
         // DELETE category form data
         vm.$http.delete(url).then(function(response){
 
+          // Clear node selection
+          vm.NodeIDSelected = null
+
           const ReturnedLocationID = response.data.id
 
-          // Append child node object to parent
+          // Delete node from tree
           const Criteria = {
             "id": ReturnedLocationID.toString()
           }
@@ -890,7 +936,7 @@ export default {
             return PseudoObjectID
           } else if (GenericObjectKey == 'cabinet_front') {
             return 'front'
-          } else if (GenericObjectKey == 'cabinet_id') {
+          } else if (GenericObjectKey == 'location_id') {
             return (Context == 'preview') ? vm.InsertTemplateID : null
           } else if (GenericObjectKey == 'cabinet_ru') {
             return 1
@@ -943,7 +989,7 @@ export default {
       WorkingObjectData.push(JSON.parse(JSON.stringify(vm.GenericObject), function (GenericObjectKey, GenericObjectValue) {
         if (GenericObjectKey == 'id') {
             return PseudoObjectID
-        } else if (GenericObjectKey == 'cabinet_id') {
+        } else if (GenericObjectKey == 'location_id') {
             return (Context == 'preview' && TemplateType == 'standard') ? vm.InsertTemplateID : GenericObjectValue
         } else if (GenericObjectKey == 'cabinet_front') {
             return (Context == 'preview' && TemplateType == 'standard') ? 'front' : GenericObjectValue

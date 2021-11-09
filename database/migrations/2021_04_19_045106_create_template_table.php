@@ -14,7 +14,7 @@ class CreateTemplateTable extends Migration
     public function up()
     {
         Schema::connection('mysql')->create('template', function (Blueprint $table) {
-            $table->integer('id', true);
+            $table->integer('id', true)->from(10);
             $table->dateTime('created_at');
 			$table->dateTime('updated_at');
             $table->string('name');

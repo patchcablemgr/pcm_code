@@ -96,6 +96,15 @@ class DatabaseSeeder extends Seeder
             DB::table('attributes_cable_connector')->insert($cableConnector);
         }
 
+        // location
+        $LocationArray = [
+            [ 'name' => 'Location', 'parent_id' => 0, 'type' => 'location']
+        ];
+
+        foreach($LocationArray as $location) {
+            DB::table('location')->insert($location);
+        }
+
         // attributes_history_function
         $historyFunctionArray = [
             [ 'value' => 1, 'name' => 'Build->Templates'],

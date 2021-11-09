@@ -17,7 +17,7 @@ class CreateObjectTable extends Migration
             $table->integer('id', true);
 			$table->dateTime('created_at');
 			$table->dateTime('updated_at');
-            $table->integer('cabinet_id');
+            $table->integer('location_id');
             $table->string('name')->default('New_Object');
             $table->integer('template_id');
             $table->integer('cabinet_ru')->nullable();

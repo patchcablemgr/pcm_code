@@ -98,11 +98,37 @@ class DatabaseSeeder extends Seeder
 
         // location
         $LocationArray = [
-            [ 'name' => 'Location', 'parent_id' => 0, 'type' => 'location']
+            [ 'created_at' => now(), 'updated_at' => now(), 'name' => 'Location', 'parent_id' => 0, 'type' => 'location']
         ];
 
         foreach($LocationArray as $location) {
             DB::table('location')->insert($location);
+        }
+
+        // category
+        $categoryArray = [
+            [ 'id' => 1, 'created_at' => now(), 'updated_at' => now(), 'name' => 'Floorplan_Object', 'color' => '#FFFFFFFF', 'default' => 0, 'visible' => 0],
+            [ 'id' => 2, 'created_at' => now(), 'updated_at' => now(), 'name' => 'Patch_Panel', 'color' => '#9B9B9BFF', 'default' => 1],
+            [ 'id' => 3, 'created_at' => now(), 'updated_at' => now(), 'name' => 'Switch', 'color' => '#B8E986FF', 'default' => 0],
+            [ 'id' => 4, 'created_at' => now(), 'updated_at' => now(), 'name' => 'Router', 'color' => '#4A90E2FF', 'default' => 0],
+            [ 'id' => 5, 'created_at' => now(), 'updated_at' => now(), 'name' => 'Server', 'color' => '#50E3C2FF', 'default' => 0]
+        ];
+
+        foreach($categoryArray as $category) {
+            DB::table('category')->insert($category);
+        }
+
+        // template
+        $templateArray = [
+            [ 'id' => 1, 'created_at' => now(), 'updated_at' => now(), 'name' => 'Device', 'category_id' => 1, 'type' => 'device', 'function' => 'endpoint', 'visible' => 0],
+            [ 'id' => 2, 'created_at' => now(), 'updated_at' => now(), 'name' => 'Camera', 'category_id' => 1, 'type' => 'camera', 'function' => 'endpoint', 'visible' => 0],
+            [ 'id' => 3, 'created_at' => now(), 'updated_at' => now(), 'name' => 'WAP', 'category_id' => 1, 'type' => 'wap', 'function' => 'endpoint', 'visible' => 0],
+            [ 'id' => 4, 'created_at' => now(), 'updated_at' => now(), 'name' => 'Walljack', 'category_id' => 1, 'type' => 'walljack', 'function' => 'passive', 'visible' => 0],
+            [ 'id' => 5, 'created_at' => now(), 'updated_at' => now(), 'name' => 'Switch', 'category_id' => 3, 'type' => 'standard', 'ru_size' => 1, 'function' => 'endpoint', 'mount_config' => '4-post', 'blueprint' => '{"front":[{"type":"connectable","units":20,"children":[],"port_format":[{"type":"static","value":"G1\/0\/","count":0,"order":0},{"type":"incremental","value":"1","count":0,"order":1}],"port_layout":{"cols":"24","rows":"2"},"media":1,"port_connector":1,"port_orientation":2},{"type":"enclosure","units":4,"children":[],"enc_layout":{"cols":1,"rows":1}}],"rear":[{"type":"generic","units":1,"children":[{"type":"connectable","units":1,"children":[],"port_format":[{"type":"static","value":"Con","count":0,"order":0}],"port_layout":{"cols":1,"rows":1},"media":1,"port_connector":1,"port_orientation":1},{"type":"connectable","units":1,"children":[],"port_format":[{"type":"static","value":"Mgmt","count":0,"order":0}],"port_layout":{"cols":1,"rows":1},"media":1,"port_connector":1,"port_orientation":1}]}]}'],
+        ];
+
+        foreach($templateArray as $template) {
+            DB::table('template')->insert($template);
         }
 
         // attributes_history_function

@@ -27,6 +27,7 @@ class CreateTemplateTable extends Migration
             $table->text('blueprint')->nullable();
             $table->string('image_front', 45)->nullable();
             $table->string('image_rear', 45)->nullable();
+            $table->tinyInteger('visible')->default('1');
         });
     }
 

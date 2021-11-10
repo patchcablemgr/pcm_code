@@ -20,6 +20,7 @@ class CreateCategoryTable extends Migration
             $table->string('name');
             $table->string('color');
             $table->tinyInteger('default')->default('0');
+            $table->tinyInteger('visible')->default('1');
         });
     }
 

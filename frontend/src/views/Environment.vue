@@ -32,7 +32,8 @@
           <component-floorplan
             :FloorplanImage="FloorplanImage"
             :File="File"
-            @FloorplanObjectDropped="FloorplanObjectDropped($event)"
+            :CabinetData="CabinetData"
+            @ObjectDropped="ObjectDropped($event)"
             @FileSelected="FileSelected($event)"
             @FileSubmitted="FileSubmitted()"
           />
@@ -625,12 +626,16 @@ export default {
       const vm = this
       const Context = EmitData.context
       const DropType = EmitData.drop_type
-      const TemplateID = EmitData.template_id
-      const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-      const Template = vm.TemplateData[Context][TemplateIndex]
-      const TemplateType = Template.type
+      let TemplateType
 
-      if((TemplateType == 'standard' && DropType == 'cabinet') || (TemplateType == 'insert' && DropType == 'enclosure')) {
+      if(DropType == 'cabinet' || DropType == 'enclosure') {
+        const TemplateID = EmitData.template_id
+        const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+        const Template = vm.TemplateData[Context][TemplateIndex]
+        TemplateType = Template.type
+      }
+
+      if((TemplateType == 'standard' && DropType == 'cabinet') || (TemplateType == 'insert' && DropType == 'enclosure') || DropType == 'floorplan') {
       
         let data
         if(DropType == 'cabinet') {
@@ -648,12 +653,21 @@ export default {
             "parent_partition_address": EmitData.parent_partition_address,
             "parent_enclosure_address": EmitData.parent_enclosure_address,
           }
+        } else if(DropType == 'floorplan') {
+
+          data = {
+            'location_id': EmitData.location_id,
+            'floorplan_address': EmitData.floorplan_address,
+            'floorplan_object_type': EmitData.floorplan_object_type,
+          }
         }
 
-        if(Context == 'template') {
+        if(Context == 'template' || DropType == 'floorplan') {
 
-          data.template_id = EmitData.template_id
-          data.template_face = EmitData.template_face
+          if(Context == 'template') {
+            data.template_id = EmitData.template_id
+            data.template_face = EmitData.template_face
+          }
 
           const url = '/api/objects'
 

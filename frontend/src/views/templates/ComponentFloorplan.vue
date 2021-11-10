@@ -11,6 +11,7 @@
             <span class="mr-1">
               <div
                 draggable="true"
+                @dragstart.stop="StartDrag({ 'floorplan_object_type': 'device' }, $event)"
                 class="pcm_floorplan_object"
               >
                 <feather-icon
@@ -129,6 +130,7 @@ export default {
   props: {
     FloorplanImage: {type: String},
     File: {type: File},
+    CabinetData: {type: Object},
   },
   directives: {
 		Ripple,
@@ -140,6 +142,9 @@ export default {
   computed: {
   },
   methods: {
+    StartDrag: function(TransferData, e) {
+      e.dataTransfer.setData('floorplan_object_type', TransferData.floorplan_object_type)
+    },
     UploadFloorplanImageClicked: function() {
 
       const vm = this
@@ -150,11 +155,17 @@ export default {
 
       // Store data
       const vm = this
+      const OffsetX = event.offsetX
+      const OffsetY = event.offsetY
+      const FloorplanAddress = [OffsetX, OffsetY]
       const data = {
-        "event": event,
+        "drop_type": "floorplan",
+        "location_id": vm.CabinetData.id,
+        "floorplan_address": FloorplanAddress,
+        "floorplan_object_type": event.dataTransfer.getData('floorplan_object_type'),
       }
 
-      vm.$emit('FloorplanObjectDropped', data )
+      vm.$emit('ObjectDropped', data )
     },
   }
 }

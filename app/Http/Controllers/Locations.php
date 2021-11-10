@@ -56,6 +56,7 @@ class Locations extends Controller
         $location->name = "New_".ucfirst($request->type);
         $location->parent_id = $request->parent_id;
         $location->type = $request->type;
+        $location->img = null;
         $location->size = ($request->type == 'cabinet') ? 42 : null;
 
         $location->save();

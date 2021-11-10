@@ -83,7 +83,7 @@
             :PartitionAddressHovered="PartitionAddressHovered"
             @PartitionClicked=" $emit('PartitionClicked', $event) "
             @PartitionHovered=" $emit('PartitionHovered', $event) "
-            @ObjectDropped=" $emit('ObjectDropped', $event) "
+            @InsertObjectDropped=" $emit('InsertObjectDropped', $event) "
           />
           <div
             v-else
@@ -242,23 +242,36 @@ export default {
 
       return [row, col]
     },
-    HandleDrop: function(ObjectID, TemplateFace, TemplatePartition, EnclosureAddress, event) {
+    HandleDrop: function(ParentID, ParentFace, ParentPartitionAddress, ParentEnclosureAddress, event) {
       
-      // Store data
+      // Store dataa
       const vm = this
-      const data = {
-        "drop_type": "enclosure",
-        "context": event.dataTransfer.getData('context'),
-        "parent_id": ObjectID,
-        "parent_face": TemplateFace,
-        "parent_partition_address": TemplatePartition,
-        "parent_enclosure_address": EnclosureAddress,
-        "object_id": event.dataTransfer.getData('object_id'),
-        "template_id": event.dataTransfer.getData('template_id'),
-        "template_face": event.dataTransfer.getData('template_face'),
-      }
+      const Context = event.dataTransfer.getData('context')
+      const InsertObjectID = event.dataTransfer.getData('object_id')
+      const TemplateID = event.dataTransfer.getData('template_id')
+      const TemplateFace = event.dataTransfer.getData('template_face')
 
-      vm.$emit('ObjectDropped', data )
+      // Validate dropped object template type
+      const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+      const Template = vm.TemplateData[Context][TemplateIndex]
+      const TemplateType = Template.type
+
+      if(TemplateType == 'insert') {
+
+        const data = {
+          "drop_type": "enclosure",
+          "context": Context,
+          "parent_id": ParentID,
+          "parent_face": ParentFace,
+          "parent_partition_address": ParentPartitionAddress,
+          "parent_enclosure_address": ParentEnclosureAddress,
+          "object_id": InsertObjectID,
+          "template_id": TemplateID,
+          "template_face": TemplateFace,
+        }
+
+        vm.$emit('InsertObjectDropped', data )
+      }
     },
     GetGlobalPartitionMax: function(Template, PartitionAddress) {
 

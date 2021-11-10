@@ -29,7 +29,7 @@
       :PartitionAddressHovered="PartitionAddressHovered"
       @PartitionClicked=" $emit('PartitionClicked', $event) "
       @PartitionHovered=" $emit('PartitionHovered', $event) "
-      @ObjectDropped=" $emit('ObjectDropped', $event) "
+      @InsertObjectDropped=" $emit('InsertObjectDropped', $event) "
     />
   </div>
 </template>

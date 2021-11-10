@@ -11,7 +11,7 @@ use App\Rules\TemplateBlueprint;
 use App\Rules\TemplateInsertParentData;
 use Illuminate\Support\Facades\Log;
 
-class Templates extends Controller
+class TemplateController extends Controller
 {
     /**
      * Display a listing of the resource.

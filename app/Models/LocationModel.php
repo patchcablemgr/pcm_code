@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 
-class LocationsModel extends Model
+class LocationModel extends Model
 {
     protected $table = 'location';
 

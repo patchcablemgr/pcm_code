@@ -5,11 +5,11 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
-use App\Models\LocationsModel;
+use App\Models\LocationModel;
 use App\Http\Controllers\PCM;
 use Illuminate\Support\Facades\Log;
 
-class UploadImageController extends Controller
+class ImageController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -27,7 +27,7 @@ class UploadImageController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request, $id)
+    public function storeLocationImage(Request $request, $id)
     {
         // Prepare variables
         $validatorInput = [
@@ -48,7 +48,7 @@ class UploadImageController extends Controller
         Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
 
         // Retrieve location record
-        $location = LocationsModel::where('id', $id)->first();
+        $location = LocationModel::where('id', $id)->first();
 
         // Store floorplan image
         $path = $request->file('file')->store('images');

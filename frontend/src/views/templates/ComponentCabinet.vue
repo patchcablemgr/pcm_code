@@ -31,7 +31,7 @@
           :PartitionAddressHovered="PartitionAddressHovered"
           @PartitionClicked=" $emit('PartitionClicked', $event) "
           @PartitionHovered=" $emit('PartitionHovered', $event) "
-          @ObjectDropped=" $emit('ObjectDropped', $event) "
+          @InsertObjectDropped=" $emit('InsertObjectDropped', $event) "
         />
       </td>
       <td
@@ -165,20 +165,31 @@ export default {
     },
     HandleDrop: function(CabinetID, CabinetFace, CabinetRU, event) {
 
-      // Store data
       const vm = this
-      const data = {
-        "drop_type": "cabinet",
-        "context": event.dataTransfer.getData('context'),
-        "location_id": CabinetID,
-        "cabinet_face": CabinetFace,
-        "cabinet_ru": CabinetRU,
-        "object_id": event.dataTransfer.getData('object_id'),
-        "template_id": event.dataTransfer.getData('template_id'),
-        "template_face": event.dataTransfer.getData('template_face'),
-      }
+      const Context = event.dataTransfer.getData('context')
+      const ObjectID = event.dataTransfer.getData('object_id')
+      const TemplateID = event.dataTransfer.getData('template_id')
+      const TemplateFace = event.dataTransfer.getData('template_face')
 
-      vm.$emit('ObjectDropped', data )
+      const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+      const Template = vm.TemplateData[Context][TemplateIndex]
+      const TemplateType = Template.type
+
+      if(TemplateType == 'standard') {
+      
+        const data = {
+          "drop_type": "cabinet",
+          "context": Context,
+          "location_id": CabinetID,
+          "cabinet_face": CabinetFace,
+          "cabinet_ru": CabinetRU,
+          "object_id": ObjectID,
+          "template_id": TemplateID,
+          "template_face": TemplateFace,
+        }
+
+        vm.$emit('StandardObjectDropped', data )
+      }
     },
   }
 }

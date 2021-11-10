@@ -5,11 +5,11 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
-use App\Models\LocationsModel;
+use App\Models\LocationModel;
 use App\Http\Controllers\PCM;
 use Illuminate\Support\Facades\Log;
 
-class Locations extends Controller
+class LocationController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -18,7 +18,7 @@ class Locations extends Controller
      */
     public function index()
     {
-        $locations = LocationsModel::all();
+        $locations = LocationModel::all();
 
         return $locations;
     }
@@ -51,7 +51,7 @@ class Locations extends Controller
             ]
         ]);
 
-        $location = new LocationsModel;
+        $location = new LocationModel;
 
         $location->name = "New_".ucfirst($request->type);
         $location->parent_id = $request->parent_id;
@@ -85,7 +85,7 @@ class Locations extends Controller
         Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
 
         // Retrieve location record
-        $location = LocationsModel::where('id', $id)->first();
+        $location = LocationModel::where('id', $id)->first();
 
         return $location;
     }
@@ -116,7 +116,7 @@ class Locations extends Controller
         $data = $request->all();
 
         // Retrieve location record
-        $location = LocationsModel::where('id', $id)->first();
+        $location = LocationModel::where('id', $id)->first();
 
         // Update template record
         foreach($data as $key => $value) {
@@ -166,7 +166,7 @@ class Locations extends Controller
         ];
         Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
 
-        $location = LocationsModel::where('id', $id)->first();
+        $location = LocationModel::where('id', $id)->first();
 
         $location->delete();
 

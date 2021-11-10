@@ -33,7 +33,8 @@
             :FloorplanImage="FloorplanImage"
             :File="File"
             :CabinetData="CabinetData"
-            @ObjectDropped="ObjectDropped($event)"
+            :ObjectData="ObjectData"
+            @FloorplanObjectDropped="FloorplanObjectDropped($event)"
             @FileSelected="FileSelected($event)"
             @FileSubmitted="FileSubmitted()"
           />
@@ -71,7 +72,8 @@
                 :PartitionAddressHovered="PartitionAddressHovered"
                 @PartitionClicked=" PartitionClicked($event) "
                 @PartitionHovered=" PartitionHovered($event) "
-                @ObjectDropped="ObjectDropped($event)"
+                @StandardObjectDropped="StandardObjectDropped($event)"
+                @InsertObjectDropped="InsertObjectDropped($event)"
               />
             </b-card-body>
           </b-card>
@@ -595,125 +597,216 @@ export default {
     FloorplanObjectDropped: function(EmitData) {
 
       const vm = this
-      const NodeID = vm.NodeIDSelected
-      const OffsetX = EmitData.event.offsetX
-      const OffsetY = EmitData.event.offsetY
-      const FloorplanAddress = [OffsetX, OffsetY]
-      const data = {
-        'floorplan_id': NodeID,
+      const Context = 'template'
+      const LocationID = EmitData.location_id
+      const FloorplanAddress = EmitData.floorplan_address
+      const FloorplanObjectType = EmitData.floorplan_object_type
+      let data
+      let url
+
+      data = {
+        'location_id': LocationID,
         'floorplan_address': FloorplanAddress,
-        'floorplan_object_type': 'device',
+        'floorplan_object_type': FloorplanObjectType,
       }
-      console.log('Debug (x, y): '+OffsetX+', '+OffsetY)
+      //console.log('Debug (x, y): '+OffsetX+', '+OffsetY)
 
-      const url = '/api/objects'
+      // POST new object
+      if(Context == 'template') {
 
-      // POST to objects
-      vm.$http.post(url, data).then(function(response){
+        url = '/api/objects/floorplan'
 
-      }).catch(error => {
+        // POST to objects
+        vm.$http.post(url, data).then(function(response){
 
-        // Display error to user via toast
-        vm.$bvToast.toast(JSON.stringify(error.response), {
-          title: 'Error',
-          variant: 'danger',
+          const Object = response.data
+          
+          // Create child node object
+          vm.ObjectData.preview.push(Object)
+
+        }).catch(error => {
+
+          // Display error to user via toast
+          vm.$bvToast.toast(JSON.stringify(error.response), {
+            title: 'Error',
+            variant: 'danger',
+          })
+
         })
+      } else {
 
-      })
+        const ObjectID = EmitData.object_id
+
+        data.object_id = ObjectID
+
+        url = '/api/objects/'+ObjectID
+
+        // POST to objects
+        vm.$http.patch(url, data).then(function(response){
+
+          const Object = response.data
+          const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
+          
+          // Create child node object
+          vm.$set(vm.ObjectData.preview, ObjectIndex, Object)
+
+        }).catch(error => {
+
+          // Display error to user via toast
+          vm.$bvToast.toast(JSON.stringify(error.response), {
+            title: 'Error',
+            variant: 'danger',
+          })
+
+        })
+      }
     },
-    ObjectDropped: function(EmitData) {
+    InsertObjectDropped: function(EmitData) {
 
       const vm = this
       const Context = EmitData.context
-      const DropType = EmitData.drop_type
-      let TemplateType
+      const ParentID = EmitData.parent_id
+      const ParentFace = EmitData.parent_face
+      const ParentPartitionAddress = EmitData.parent_partition_address
+      const ParentEnclosureAddress = EmitData.parent_enclosure_address
+      let data
+      let url
 
-      if(DropType == 'cabinet' || DropType == 'enclosure') {
-        const TemplateID = EmitData.template_id
-        const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-        const Template = vm.TemplateData[Context][TemplateIndex]
-        TemplateType = Template.type
+      data = {
+        "parent_id": ParentID,
+        "parent_face": ParentFace,
+        "parent_partition_address": ParentPartitionAddress,
+        "parent_enclosure_address": ParentEnclosureAddress,
       }
 
-      if((TemplateType == 'standard' && DropType == 'cabinet') || (TemplateType == 'insert' && DropType == 'enclosure') || DropType == 'floorplan') {
-      
-        let data
-        if(DropType == 'cabinet') {
+      // POST new object
+      if(Context == 'template') {
 
-          data = {
-            "location_id": EmitData.location_id,
-            "cabinet_face": EmitData.cabinet_face,
-            "cabinet_ru": EmitData.cabinet_ru,
-          }
-        } else if(DropType == 'enclosure') {
+        const TemplateID = EmitData.template_id
+        const TemplateFace = EmitData.template_face
 
-          data = {
-            "parent_id": EmitData.parent_id,
-            "parent_face": EmitData.parent_face,
-            "parent_partition_address": EmitData.parent_partition_address,
-            "parent_enclosure_address": EmitData.parent_enclosure_address,
-          }
-        } else if(DropType == 'floorplan') {
+        data.template_id = TemplateID
+        data.template_face = TemplateFace
 
-          data = {
-            'location_id': EmitData.location_id,
-            'floorplan_address': EmitData.floorplan_address,
-            'floorplan_object_type': EmitData.floorplan_object_type,
-          }
-        }
+        url = '/api/objects/insert'
 
-        if(Context == 'template' || DropType == 'floorplan') {
+        // POST to objects
+        vm.$http.post(url, data).then(function(response){
 
-          if(Context == 'template') {
-            data.template_id = EmitData.template_id
-            data.template_face = EmitData.template_face
-          }
+          const Object = response.data
+          
+          // Create child node object
+          vm.ObjectData.preview.push(Object)
 
-          const url = '/api/objects'
+        }).catch(error => {
 
-          // POST to objects
-          vm.$http.post(url, data).then(function(response){
-
-            const Object = response.data
-            
-            // Create child node object
-            vm.ObjectData.preview.push(Object)
-
-          }).catch(error => {
-
-            // Display error to user via toast
-            vm.$bvToast.toast(JSON.stringify(error.response), {
-              title: 'Error',
-              variant: 'danger',
-            })
-
+          // Display error to user via toast
+          vm.$bvToast.toast(JSON.stringify(error.response), {
+            title: 'Error',
+            variant: 'danger',
           })
-        } else if(Context == 'preview') {
 
-          data.object_id = EmitData.object_id
+        })
+      } else {
 
-          const ObjectID = EmitData.object_id
-          const url = '/api/objects/'+ObjectID
+        const ObjectID = EmitData.object_id
 
-          // POST to objects
-          vm.$http.patch(url, data).then(function(response){
+        data.object_id = ObjectID
 
-            const Object = response.data
-            const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
-            
-            // Create child node object
-            vm.$set(vm.ObjectData.preview, ObjectIndex, Object)
+        url = '/api/objects/'+ObjectID
 
-          }).catch(error => {
+        // POST to objects
+        vm.$http.patch(url, data).then(function(response){
 
-            // Display error to user via toast
-            vm.$bvToast.toast(JSON.stringify(error.response), {
-              title: 'Error',
-              variant: 'danger',
-            })
+          const Object = response.data
+          const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
+          
+          // Create child node object
+          vm.$set(vm.ObjectData.preview, ObjectIndex, Object)
 
+        }).catch(error => {
+
+          // Display error to user via toast
+          vm.$bvToast.toast(JSON.stringify(error.response), {
+            title: 'Error',
+            variant: 'danger',
           })
-        }
+
+        })
+      }
+    },
+    StandardObjectDropped: function(EmitData) {
+
+      const vm = this
+      const Context = EmitData.context
+      const LocationID = EmitData.location_id
+      const CabinetFace = EmitData.cabinet_face
+      const CabinetRU = EmitData.cabinet_ru
+      let data
+      let url
+
+      data = {
+        "location_id": LocationID,
+        "cabinet_face": CabinetFace,
+        "cabinet_ru": CabinetRU,
+      }
+
+      // POST new object
+      if(Context == 'template') {
+
+        const TemplateID = EmitData.template_id
+        const TemplateFace = EmitData.template_face
+
+        data.template_id = TemplateID
+        data.template_face = TemplateFace
+
+        url = '/api/objects/standard'
+
+        // POST to objects
+        vm.$http.post(url, data).then(function(response){
+
+          const Object = response.data
+          
+          // Create child node object
+          vm.ObjectData.preview.push(Object)
+
+        }).catch(error => {
+
+          // Display error to user via toast
+          vm.$bvToast.toast(JSON.stringify(error.response), {
+            title: 'Error',
+            variant: 'danger',
+          })
+
+        })
+
+      // PATCH existing object
+      } else {
+
+        const ObjectID = EmitData.object_id
+
+        data.object_id = ObjectID
+
+        url = '/api/objects/'+ObjectID
+
+        // POST to objects
+        vm.$http.patch(url, data).then(function(response){
+
+          const Object = response.data
+          const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
+          
+          // Create child node object
+          vm.$set(vm.ObjectData.preview, ObjectIndex, Object)
+
+        }).catch(error => {
+
+          // Display error to user via toast
+          vm.$bvToast.toast(JSON.stringify(error.response), {
+            title: 'Error',
+            variant: 'danger',
+          })
+
+        })
       }
     },
     TemplateObjectDeleteClicked: function() {

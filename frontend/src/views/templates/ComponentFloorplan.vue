@@ -131,6 +131,7 @@ export default {
     FloorplanImage: {type: String},
     File: {type: File},
     CabinetData: {type: Object},
+    ObjectData: {type: Object},
   },
   directives: {
 		Ripple,
@@ -155,17 +156,19 @@ export default {
 
       // Store data
       const vm = this
+      const LocationID = vm.CabinetData.id
       const OffsetX = event.offsetX
       const OffsetY = event.offsetY
       const FloorplanAddress = [OffsetX, OffsetY]
+      const FloorplanObjectType = event.dataTransfer.getData('floorplan_object_type')
+
       const data = {
-        "drop_type": "floorplan",
-        "location_id": vm.CabinetData.id,
+        "location_id": LocationID,
         "floorplan_address": FloorplanAddress,
-        "floorplan_object_type": event.dataTransfer.getData('floorplan_object_type'),
+        "floorplan_object_type": FloorplanObjectType,
       }
 
-      vm.$emit('ObjectDropped', data )
+      vm.$emit('FloorplanObjectDropped', data )
     },
   }
 }

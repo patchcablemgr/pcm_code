@@ -306,6 +306,10 @@ class ObjectController extends Controller
 
                 // Update parent enclosure address
                 $object->parent_enclosure_address = $value;
+            } else if($key == 'floorplan_address') {
+
+                // Update parent enclosure address
+                $object->floorplan_address = $value;
             }
         }
 

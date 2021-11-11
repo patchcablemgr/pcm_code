@@ -10,6 +10,7 @@ use App\Http\Controllers\ObjectController;
 use App\Http\Controllers\AttributesMedia;
 use App\Http\Controllers\AttributesPortOrientation;
 use App\Http\Controllers\AttributesPortConnector;
+use App\Http\Controllers\FloorplanTemplateController;
 use App\Http\Controllers\ImageController;
 
 /*
@@ -46,6 +47,7 @@ Route::group(['middleware' => 'auth:sanctum'], function(){
   Route::get('medium', [AttributesMedia::class, 'index']);
   Route::get('port-orientation', [AttributesPortOrientation::class, 'index']);
   Route::get('port-connectors', [AttributesPortConnector::class, 'index']);
+  Route::get('floorplan-templates', [FloorplanTemplateController::class, 'index']);
 
   // No POST
   Route::apiResources([

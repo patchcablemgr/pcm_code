@@ -24,6 +24,14 @@
             </b-card-body>
           </b-card>
 
+          <component-floorplan-objects
+            v-if=" PreviewDisplay == 'floorplan' "
+            :FloorplanTemplateData="FloorplanTemplateData"
+            :ObjectData="ObjectData"
+            @FloorplanClicked=" FloorplanClicked($event) "
+            @FloorplanHovered=" FloorplanHovered($event) "
+          />
+
         </b-col>
         <b-col
           cols="8"
@@ -34,6 +42,12 @@
             :File="File"
             :CabinetData="CabinetData"
             :ObjectData="ObjectData"
+            Context="preview"
+            :FloorplanTemplateData="FloorplanTemplateData"
+            :PartitionAddressSelected="PartitionAddressSelected"
+            :PartitionAddressHovered="PartitionAddressHovered"
+            @FloorplanClicked=" FloorplanClicked($event) "
+            @FloorplanHovered=" FloorplanHovered($event) "
             @FloorplanObjectDropped="FloorplanObjectDropped($event)"
             @FileSelected="FileSelected($event)"
             @FileSubmitted="FileSubmitted()"
@@ -179,6 +193,7 @@ import 'vue-simple-context-menu/dist/vue-simple-context-menu.css'
 import VueSimpleContextMenu from 'vue-simple-context-menu'
 import { PCM } from '../mixins/PCM.js'
 import ComponentFloorplan from './templates/ComponentFloorplan.vue'
+import ComponentFloorplanObjects from './templates/ComponentFloorplanObjects.vue'
 
 const TreeData = []
 
@@ -272,6 +287,9 @@ const PartitionAddressSelected = {
     'template_id': null,
     'front': [0],
     'rear': [0]
+  },
+  'floorplan': {
+    'object_id': null
   }
 }
 
@@ -287,6 +305,9 @@ const PartitionAddressHovered = {
     'template_id': null,
     'front': false,
     'rear': false
+  },
+  'floorplan': {
+    'object_id': null
   }
 }
 
@@ -353,6 +374,8 @@ const MediaData = [
   }
 ]
 
+const FloorplanTemplateData = []
+
 const NodeIDSelected = null
 
 export default {
@@ -379,6 +402,7 @@ export default {
     VueSimpleContextMenu,
     ModalTemplatesEdit,
     ComponentFloorplan,
+    ComponentFloorplanObjects,
   },
   directives: {
     'b-tooltip': VBTooltip,
@@ -400,6 +424,7 @@ export default {
       NodeIDSelected,
       PortOrientationData,
       MediaData,
+      FloorplanTemplateData,
       PortConnectorData,
       File: null,
     }
@@ -597,22 +622,21 @@ export default {
     FloorplanObjectDropped: function(EmitData) {
 
       const vm = this
-      const Context = 'template'
-      const LocationID = EmitData.location_id
+      const Context = EmitData.context
       const FloorplanAddress = EmitData.floorplan_address
-      const FloorplanObjectType = EmitData.floorplan_object_type
-      let data
+      let data = {}
       let url
 
-      data = {
-        'location_id': LocationID,
-        'floorplan_address': FloorplanAddress,
-        'floorplan_object_type': FloorplanObjectType,
-      }
-      //console.log('Debug (x, y): '+OffsetX+', '+OffsetY)
+      data.floorplan_address = FloorplanAddress
 
       // POST new object
       if(Context == 'template') {
+
+        const LocationID = EmitData.location_id
+        const FloorplanObjectType = EmitData.floorplan_object_type
+
+        data.location_id = LocationID
+        data.floorplan_object_type = FloorplanObjectType
 
         url = '/api/objects/floorplan'
 
@@ -633,19 +657,17 @@ export default {
           })
 
         })
-      } else {
+      } else if(Context == 'floorplan') {
 
-        const ObjectID = EmitData.object_id
+        const FloorplanObjectID = EmitData.floorplan_object_id
 
-        data.object_id = ObjectID
+        url = '/api/objects/'+FloorplanObjectID
 
-        url = '/api/objects/'+ObjectID
-
-        // POST to objects
+        // PATCH to objects
         vm.$http.patch(url, data).then(function(response){
 
           const Object = response.data
-          const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
+          const ObjectIndex = vm.GetObjectIndex(FloorplanObjectID, 'preview')
           
           // Create child node object
           vm.$set(vm.ObjectData.preview, ObjectIndex, Object)
@@ -669,15 +691,13 @@ export default {
       const ParentFace = EmitData.parent_face
       const ParentPartitionAddress = EmitData.parent_partition_address
       const ParentEnclosureAddress = EmitData.parent_enclosure_address
-      let data
+      let data = {}
       let url
 
-      data = {
-        "parent_id": ParentID,
-        "parent_face": ParentFace,
-        "parent_partition_address": ParentPartitionAddress,
-        "parent_enclosure_address": ParentEnclosureAddress,
-      }
+      data.parent_id = ParentID
+      data.parent_face = ParentFace
+      data.parent_partition_address = ParentPartitionAddress
+      data.parent_enclosure_address = ParentEnclosureAddress
 
       // POST new object
       if(Context == 'template') {
@@ -1323,6 +1343,14 @@ export default {
         vm.PortConnectorData = response.data;
       });
     },
+    GETFloorplanTemplates: function() {
+
+      const vm = this;
+
+      vm.$http.get('/api/floorplan-templates').then(function(response){
+        vm.FloorplanTemplateData = response.data;
+      });
+    },
   },
   mounted() {
 
@@ -1331,6 +1359,7 @@ export default {
     vm.GETLocations()
     vm.GETCategories()
     vm.GETTemplates()
+    vm.GETFloorplanTemplates()
     vm.GETMedia()
     vm.GETObjects()
     vm.GETPortOrientations()

@@ -201,6 +201,39 @@ export const PCM = {
             return AreasString
         },
 
+// Floorplan
+        FloorplanHovered: function(EmitData) {
+
+            // Store variables
+            const vm = this
+            const ObjectID = EmitData.object_id
+            const HoverState = EmitData.hover_state
+                
+            vm.PartitionAddressHovered.floorplan.object_id = (HoverState) ? ObjectID : false
+
+        },
+        FloorplanIsHovered: function(ObjectID) {
+
+            // Store variables
+            const vm = this
+            return vm.PartitionAddressHovered.floorplan.object_id == ObjectID
+        },
+        FloorplanClicked: function(EmitData) {
+
+            // Store variables
+            const vm = this
+            const ObjectID = EmitData.object_id
+                
+            vm.PartitionAddressSelected.floorplan.object_id = ObjectID
+
+        },
+        FloorplanIsSelected: function(ObjectID) {
+
+            // Store variables
+            const vm = this
+            return vm.PartitionAddressSelected.floorplan.object_id == ObjectID
+        },
+
 // Misc
         GeneratePortID: function(Index, PortTotal, PortFormat){
 

@@ -8,58 +8,23 @@
           </div>
           <div class="demo-inline-spacing">
 
-            <span class="mr-1">
+            <div
+              v-for="FloorplanTemplate in FloorplanTemplateData"
+              :key="FloorplanTemplate.id"
+              style="display: flex;"
+            >
               <div
                 draggable="true"
-                @dragstart.stop="StartDrag({ 'floorplan_object_type': 'device' }, $event)"
-                class="pcm_floorplan_object"
+                @dragstart.stop="StartDrag({ 'context': 'template', 'floorplan_object_type': FloorplanTemplate.type }, $event)"
+                class="pcm_floorplan_object mr-1"
               >
                 <feather-icon
-                  icon="MonitorIcon"
+                  :icon="FloorplanTemplate.icon"
                   size="16"
                 />
               </div>
-            </span>
-            <span>Device</span>
-
-            <span class="mr-1">
-              <div
-                draggable="true"
-                class="pcm_floorplan_object"
-              >
-                <feather-icon
-                  icon="VideoIcon"
-                  size="16"
-                />
-              </div>
-            </span>
-            <span>Camera</span>
-
-            <span class="mr-1">
-              <div
-                draggable="true"
-                class="pcm_floorplan_object"
-              >
-                <feather-icon
-                  icon="WifiIcon"
-                  size="16"
-                />
-              </div>
-            </span>
-            <span>WAP</span>
-
-            <span class="mr-1">
-              <div
-                draggable="true"
-                class="pcm_floorplan_object"
-              >
-                <feather-icon
-                  icon="GridIcon"
-                  size="16"
-                />
-              </div>
-            </span>
-            <span>Walljack</span>
+              <div>{{ FloorplanTemplate.name }}</div>
+            </div>
 
             <!-- Button -->
             <b-button
@@ -83,8 +48,30 @@
           @drop="HandleDrop($event)"
           @dragover.prevent
           @dragenter.prevent
+          style="position:relative;"
         >
+          <div
+            v-for="FloorplanObject in FloorplanObjects"
+            :key="FloorplanObject.id"
+            draggable="true"
+            class="pcm_floorplan_object"
+            :class="{
+              pcm_template_partition_selected: FloorplanIsSelected(FloorplanObject.id),
+              pcm_template_partition_hovered: FloorplanIsHovered(FloorplanObject.id),
+            }"
+            @dragstart.stop="StartDrag({ 'context': 'floorplan', 'floorplan_object_id': FloorplanObject.id }, $event)"
+            @click.stop=" $emit('FloorplanClicked', {'object_id': FloorplanObject.id}) "
+            @mouseover.stop=" $emit('FloorplanHovered', {'object_id': FloorplanObject.id, 'hover_state': true}) "
+            @mouseleave.stop=" $emit('FloorplanHovered', {'object_id': FloorplanObject.id, 'hover_state': false}) "
+            :style="{position: 'absolute', left: FloorplanObject.floorplan_address[0]+'px', top: FloorplanObject.floorplan_address[1]+'px'}"
+          >
+            <feather-icon
+              :icon="GetFloorplanIcon(FloorplanObject.id)"
+              size="16"
+            />
+          </div>
           <img
+            @dragstart.prevent
             :src="FloorplanImage"
           />
         </div>
@@ -132,6 +119,10 @@ export default {
     File: {type: File},
     CabinetData: {type: Object},
     ObjectData: {type: Object},
+    Context: {type: String},
+    FloorplanTemplateData: {type: Array},
+    PartitionAddressSelected: {type: Object},
+    PartitionAddressHovered: {type: Object},
   },
   directives: {
 		Ripple,
@@ -141,10 +132,54 @@ export default {
     }
   },
   computed: {
+    FloorplanObjects: function() {
+
+      const vm = this
+      const LocationID = vm.CabinetData.id
+      const ObjectData = vm.ObjectData.preview
+      const FloorplanObjects = ObjectData.filter((object) => object.location_id == LocationID )
+
+      return FloorplanObjects
+    }
   },
   methods: {
+    GetFloorplanIcon: function(FloorplanObjectID) {
+
+      const vm = this
+      const ObjectData = vm.ObjectData.preview
+      const FloorplanObject = ObjectData.find((object) => object.id == FloorplanObjectID )
+      const FloorplanObjectType = FloorplanObject.floorplan_object_type
+      const FloorplanTemplate = vm.FloorplanTemplateData.find((template) => template.type == FloorplanObjectType )
+      const FloorplanTemplateIcon = FloorplanTemplate.icon
+
+      return FloorplanTemplateIcon
+
+    },
     StartDrag: function(TransferData, e) {
-      e.dataTransfer.setData('floorplan_object_type', TransferData.floorplan_object_type)
+
+      const MouseX = e.pageX
+      const ElemX = e.target.getBoundingClientRect().left
+      const MouseY = e.pageY
+      const ElemY = e.target.getBoundingClientRect().top
+
+      const CursorOffsetX = MouseX-ElemX
+      const CursorOffsetY = MouseY-ElemY
+      
+      const Context = TransferData.context
+      e.dataTransfer.setData('context', TransferData.context)
+      e.dataTransfer.setData('cursor_offset_x', CursorOffsetX)
+      e.dataTransfer.setData('cursor_offset_y', CursorOffsetY)
+
+      if(Context == 'template') {
+
+        e.dataTransfer.setData('floorplan_object_type', TransferData.floorplan_object_type)
+
+      } else if(Context == 'floorplan') {
+
+        e.dataTransfer.setData('floorplan_object_id', TransferData.floorplan_object_id)
+
+      }
+
     },
     UploadFloorplanImageClicked: function() {
 
@@ -156,16 +191,34 @@ export default {
 
       // Store data
       const vm = this
-      const LocationID = vm.CabinetData.id
-      const OffsetX = event.offsetX
-      const OffsetY = event.offsetY
-      const FloorplanAddress = [OffsetX, OffsetY]
-      const FloorplanObjectType = event.dataTransfer.getData('floorplan_object_type')
-
-      const data = {
-        "location_id": LocationID,
+      const Context = event.dataTransfer.getData('context')
+      const CursorOffsetX = event.dataTransfer.getData('cursor_offset_x')
+      const CursorOffsetY = event.dataTransfer.getData('cursor_offset_y')
+      const ElemOffsetX = event.offsetX
+      const ElemOffsetY = event.offsetY
+      const PosX = parseInt(ElemOffsetX) - parseInt(CursorOffsetX)
+      const PosY = parseInt(ElemOffsetY) - parseInt(CursorOffsetY)
+      const FloorplanAddress = [PosX, PosY]
+      
+      let data = {
+        "context": Context,
         "floorplan_address": FloorplanAddress,
-        "floorplan_object_type": FloorplanObjectType,
+      }
+
+      if(Context == 'template') {
+
+        const LocationID = vm.CabinetData.id
+        const FloorplanObjectType = event.dataTransfer.getData('floorplan_object_type')
+
+        data.location_id = LocationID
+        data.floorplan_object_type = FloorplanObjectType
+
+      } else if(Context == 'floorplan') {
+
+        const FloorplanObjectID = event.dataTransfer.getData('floorplan_object_id')
+
+        data.floorplan_object_id = FloorplanObjectID
+
       }
 
       vm.$emit('FloorplanObjectDropped', data )

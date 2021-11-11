@@ -96,6 +96,18 @@ class DatabaseSeeder extends Seeder
             DB::table('attributes_cable_connector')->insert($cableConnector);
         }
 
+        // floorplan_template
+        $floorplanTemplateArray = [
+            [ 'type' => 'device', 'name' => 'Device', 'icon' => 'MonitorIcon', 'function' => 'endpoint'],
+            [ 'type' => 'camera', 'name' => 'Camera', 'icon' => 'VideoIcon', 'function' => 'endpoint'],
+            [ 'type' => 'wap', 'name' => 'WAP', 'icon' => 'WifiIcon', 'function' => 'endpoint'],
+            [ 'type' => 'walljack', 'name' => 'Walljack', 'icon' => 'GridIcon', 'function' => 'passive'],
+        ];
+
+        foreach($floorplanTemplateArray as $floorplanTemplate) {
+            DB::table('floorplan_template')->insert($floorplanTemplate);
+        }
+
         // location
         $LocationArray = [
             [ 'created_at' => now(), 'updated_at' => now(), 'name' => 'Location', 'parent_id' => 0, 'type' => 'location']

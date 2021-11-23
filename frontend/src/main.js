@@ -33,4 +33,10 @@ new Vue({
   router,
   store,
   render: h => h(App),
+  watch:{
+    '$route' (to, from){
+      store.dispatch('pcmCategories/GET_Categories')
+      store.dispatch('pcmTemplates/GET_Templates')
+    }
+  }
 }).$mount('#app')

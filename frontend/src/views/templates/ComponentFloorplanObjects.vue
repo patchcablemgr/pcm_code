@@ -21,15 +21,19 @@
           :key="FloorplanTemplate.id"
           :title="FloorplanTemplate.name+' ('+FloorplanObjectsCount(FloorplanTemplate.type)+')'"
         >
-          <div
-            v-for="FloorplanObject in FilteredFloorplanObjects(FloorplanTemplate.type)"
-            :key="FloorplanObject.id"
-            @click.stop=" $emit('FloorplanClicked', {'object_id': FloorplanObject.id}) "
-            @mouseover.stop=" $emit('FloorplanHovered', {'object_id': FloorplanObject.id, 'hover_state': true}) "
-            @mouseleave.stop=" $emit('FloorplanHovered', {'object_id': FloorplanObject.id, 'hover_state': false}) "
-          >
-            {{ FloorplanObject.name }}
-          </div>
+          <b-list-group>
+            <b-list-group-item
+              v-for="FloorplanObject in FilteredFloorplanObjects(FloorplanTemplate.type)"
+              :key="FloorplanObject.id"
+              @click.stop=" $emit('FloorplanClicked', {'object_id': FloorplanObject.id}) "
+              @mouseover.stop=" $emit('FloorplanHovered', {'object_id': FloorplanObject.id, 'hover_state': true}) "
+              @mouseleave.stop=" $emit('FloorplanHovered', {'object_id': FloorplanObject.id, 'hover_state': false}) "
+              :variant="(SelectedFloorplanObjectID == FloorplanObject.id) ? 'primary' : null "
+              style="cursor:pointer;"
+            >
+              {{ FloorplanObject.name }}
+            </b-list-group-item>
+          </b-list-group>
         </app-collapse-item>
       </app-collapse>
 
@@ -38,7 +42,7 @@
 </template>
 
 <script>
-import { BCard, BCardBody, BFormTags, BFormRadio } from 'bootstrap-vue'
+import { BCard, BCardBody, BFormTags, BFormRadio, BListGroup, BListGroupItem } from 'bootstrap-vue'
 import AppCollapse from '@core/components/app-collapse/AppCollapse.vue'
 import AppCollapseItem from '@core/components/app-collapse/AppCollapseItem.vue'
 
@@ -52,10 +56,13 @@ export default {
     BFormRadio,
     AppCollapse,
     AppCollapseItem,
+    BListGroup,
+    BListGroupItem,
   },
   props: {
     FloorplanTemplateData: {type: Array},
     ObjectData: {type: Object},
+    PartitionAddressSelected: {type: Object},
   },
   data() {
     return {
@@ -63,6 +70,11 @@ export default {
     }
   },
   computed: {
+    SelectedFloorplanObjectID: function() {
+
+      const vm = this
+      return vm.PartitionAddressSelected.floorplan.object_id
+    }
   },
   methods: {
     FloorplanObjectsCount: function(FloorplanTemplateType) {

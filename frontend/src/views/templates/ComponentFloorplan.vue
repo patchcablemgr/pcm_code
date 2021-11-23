@@ -17,6 +17,7 @@
                 draggable="true"
                 @dragstart.stop="StartDrag({ 'context': 'template', 'floorplan_object_type': FloorplanTemplate.type }, $event)"
                 class="pcm_floorplan_object mr-1"
+                style="cursor:grab;"
               >
                 <feather-icon
                   :icon="FloorplanTemplate.icon"
@@ -64,6 +65,7 @@
             @mouseover.stop=" $emit('FloorplanHovered', {'object_id': FloorplanObject.id, 'hover_state': true}) "
             @mouseleave.stop=" $emit('FloorplanHovered', {'object_id': FloorplanObject.id, 'hover_state': false}) "
             :style="{position: 'absolute', left: FloorplanObject.floorplan_address[0]+'px', top: FloorplanObject.floorplan_address[1]+'px'}"
+            style="cursor:grab;"
           >
             <feather-icon
               :icon="GetFloorplanIcon(FloorplanObject.id)"

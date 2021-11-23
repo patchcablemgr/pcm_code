@@ -14,7 +14,7 @@
             title="Create/Edit"
             class="position-static"
           >
-            <b-form @submit.prevent=" $emit('TemplateCategorySubmitted', LocalCategoryData) ">
+            <b-form>
 
               <!-- Name -->
               <dl class="row">
@@ -23,7 +23,7 @@
                 </dt>
                 <dd class="col-sm-8">
                   <b-form-input
-                    v-model="ComputedCategoryName"
+                    v-model="LocalCategoryData.name"
                     placeholder="New_Category"
                   />
                 </dd>
@@ -36,7 +36,7 @@
                 </dt>
                 <dd class="col-sm-8">
                   <b-form-checkbox
-                    v-model="ComputedCategoryDefault"
+                    v-model="LocalCategoryData.default"
                   />
                 </dd>
               </dl>
@@ -47,7 +47,7 @@
                   Color
                 </dt>
                 <dd class="col-sm-8">
-                  <sketch v-model="ComputedCategoryColor" />
+                  <sketch v-model="LocalCategoryData.color" />
                 </dd>
               </dl>
 
@@ -55,9 +55,10 @@
               <div offset-md="4">
                 <b-button
                   v-ripple.400="'rgba(255, 255, 255, 0.15)'"
-                  type="submit"
+                  type="button"
                   :variant="SelectedCategoryID ? 'secondary' : 'primary'"
                   class="mr-1"
+                  @click="Submit()"
                 >
                   {{ (SelectedCategoryID) ? "Update" : "Create" }}
                 </b-button>
@@ -79,7 +80,7 @@
                   type="button"
                   variant="danger"
                   class="mr-1"
-                  @click=" $emit('TemplateCategoryDeleted', {'CategoryID': SelectedCategoryID} ) "
+                  @click="Delete()"
                   :disabled="!SelectedCategoryID"
                 >
                   Delete
@@ -96,7 +97,7 @@
           >
             <b-card-text>
               <div
-                v-for="(Category) in CategoryData"
+                v-for="(Category) in Categories"
                 v-bind:key="Category.id"
                 class="pcm_box"
                 :class="{
@@ -104,9 +105,9 @@
                   pcm_template_partition_hovered: Category.id == HoveredCategoryID,
                 }"
                 :style="{ background: Category.color}"
-                @click="CategorySelected(Category.id)"
-                @mouseover.stop=" CategoryMouseOver(Category.id) "
-                @mouseleave.stop=" CategoryMouseOver(null) "
+                @click="Clicked(Category.id)"
+                @mouseover.stop="HoveredCategoryID = Category.id"
+                @mouseleave.stop="HoveredCategoryID = null"
               >
                 <span
                   v-if="Category.default"
@@ -131,6 +132,7 @@ const DefaultCategoryName = ''
 const DefaultCategoryDefault = false
 const DefaultCategoryColor = '#194D33FF'
 const HoveredCategoryID = null
+const SelectedCategoryID = null
 const LocalCategoryData = {"name": DefaultCategoryName, "default": DefaultCategoryDefault, "color": DefaultCategoryColor}
 
 export default {
@@ -149,136 +151,87 @@ export default {
   directives: {
     Ripple,
   },
-  props: {
-    TemplateData: {type: Object},
-    CategoryData: {type: Array},
-    SelectedCategoryID: {type: Number},
-    Context: {type: String},
-  },
+  props: {},
   data () {
     return {
       DefaultCategoryName,
       DefaultCategoryDefault,
       DefaultCategoryColor,
       HoveredCategoryID,
+      SelectedCategoryID,
       LocalCategoryData,
     }
   },
   computed: {
-    ComputedCategoryName: {
-      get() {
-
-        // Store variables
-        const vm = this
-        const SelectedCategoryID = vm.SelectedCategoryID
-
-        if(SelectedCategoryID) {
-
-          const CategoryIndex = vm.CategoryData.findIndex((category) => category.id == SelectedCategoryID);
-          return vm.CategoryData[CategoryIndex].name
-        } else {
-          return vm.DefaultCategoryName
-        }
-        
-      },
-      set(newValue) {
-
-        // Store variables
-        const vm = this
-        vm.LocalCategoryData.name = newValue
-
-        return
-      }
+    Categories() {
+      return this.$store.state.pcmCategories.Categories
     },
-    ComputedCategoryDefault: {
-      get() {
-
-        // Store variables
-        const vm = this
-        const SelectedCategoryID = vm.SelectedCategoryID
-
-        if(SelectedCategoryID) {
-
-          const CategoryIndex = vm.CategoryData.findIndex((category) => category.id == SelectedCategoryID);
-          return !!vm.CategoryData[CategoryIndex].default
-        } else {
-          return vm.DefaultCategoryDefault
-        }
-        
-      },
-      set(newValue) {
-
-        // Store variables
-        const vm = this
-        vm.LocalCategoryData.default = newValue
-        
-        return
-      }
-    },
-    ComputedCategoryColor: {
-      get() {
-
-        // Store variables
-        const vm = this
-        const SelectedCategoryID = vm.SelectedCategoryID
-
-        if(SelectedCategoryID) {
-
-          const CategoryIndex = vm.CategoryData.findIndex((category) => category.id == SelectedCategoryID);
-          return vm.CategoryData[CategoryIndex].color
-        } else {
-          return vm.DefaultCategoryColor
-        }
-        
-      },
-      set(newValue) {
-
-        // Store variables
-        const vm = this
-        vm.LocalCategoryData.color = newValue.hex8
-        
-        return
-      }
+    Templates() {
+      return this.$store.state.pcmTemplates.Templates
     },
   },
   methods: {
+    Clicked: function(CategoryID) {
+
+      const vm = this
+      const SelectedCategoryID = vm.SelectedCategoryID
+
+      if(SelectedCategoryID == CategoryID) {
+
+        vm.Reset()
+      } else {
+
+        vm.SelectedCategoryID = CategoryID
+        const CategoryIndex = vm.Categories.findIndex((category) => category.id == CategoryID)
+        const Category = vm.Categories[CategoryIndex]
+        vm.LocalCategoryData.name = Category.name
+        vm.LocalCategoryData.default = Category.default
+        vm.LocalCategoryData.color = Category.color
+      }
+    },
     CategoryTemplateCount: function(CategoryID) {
 
       // Store data
       const vm = this
-      const Context = vm.Context
-      const TemplateData = vm.TemplateData[Context]
-      const TemplateDataFiltered = TemplateData.filter(template => template.category_id == CategoryID)
+      const TemplatesFiltered = vm.Templates.template.filter((template) => template.category_id == CategoryID)
 
-      return TemplateDataFiltered.length
+      return TemplatesFiltered.length
 
     },
-    CategoryMouseOver: function(CategoryID) {
-
-      // Store data
-      const vm = this;
-
-      vm.HoveredCategoryID = CategoryID
-    },
-    CategorySelected: function(CategoryID) {
+    Submit: function() {
 
       const vm = this
-      const SelectedCategoryIndex = vm.CategoryData.findIndex((category) => category.id == CategoryID);
-      const SelectedCategory = vm.CategoryData[SelectedCategoryIndex]
+      const SelectedCategoryID = vm.SelectedCategoryID
+      let data = {
+        'vm': vm,
+        'data': this.LocalCategoryData
+      }
+      
+      if(SelectedCategoryID) {
+        data.data.id = SelectedCategoryID
+        this.$store.dispatch('pcmCategories/PATCH_Categories', data)
+      } else {
+        this.$store.dispatch('pcmCategories/POST_Categories', data)
+      }
+    },
+    Delete: function() {
 
-      // Set local category data to currently selected category data
-      vm.LocalCategoryData.name = SelectedCategory.name
-      vm.LocalCategoryData.default = SelectedCategory.default
-      vm.LocalCategoryData.color = SelectedCategory.color
+      const vm = this
+      const data = {
+        'vm': vm,
+        'data': {
+          'id': vm.SelectedCategoryID
+        }
+      }
 
-      vm.$emit('TemplateCategorySelected', {'CategoryID': CategoryID} )
-
+      vm.SelectedCategoryID = null
+      this.$store.dispatch('pcmCategories/DELETE_Categories', data)
     },
     Reset: function() {
 
       // Reset category form
       const vm = this
-      vm.$emit('TemplateCategorySelected', {'CategoryID': null} )
+      vm.SelectedCategoryID = null
       vm.LocalCategoryData.name = vm.DefaultCategoryName
       vm.LocalCategoryData.default = vm.DefaultCategoryDefault
       vm.LocalCategoryData.color = vm.DefaultCategoryColor

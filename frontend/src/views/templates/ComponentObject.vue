@@ -61,6 +61,15 @@ export default {
     PartitionAddressHovered: {type: Object},
   },
   computed: {
+    Categories() {
+      return this.$store.state.pcmCategories.Categories
+    },
+    Templates() {
+      return this.$store.state.pcmTemplates.Templates
+    },
+    Objects() {
+      return this.$store.state.pcmObjects.Objects
+    },
     IsPseudoObject: function() {
 
       const vm = this
@@ -102,14 +111,15 @@ export default {
 
       // Initial variables
       const vm = this
-      const TemplateData = vm.TemplateData
+      const Categories = vm.Categories
+      const Templates = vm.Templates
       const Context = vm.Context
       let TemplateColor
 
       // Get Template
       const TemplateID = vm.GetTemplateID(ObjectID)
       const TemplateIndex = vm.GetTemplateIndex(TemplateID)
-      const Template = TemplateData[Context][TemplateIndex]
+      const Template = Templates[Context][TemplateIndex]
 
       if (Template.hasOwnProperty('pseudo') && !Template.hasOwnProperty('pseudoParentTemplate')) {
         TemplateColor = '#FFFFFF00'
@@ -117,11 +127,11 @@ export default {
 
         // Get category index
         const ObjectCategoryID = Template.category_id
-        const ObjectCategoryIndex = vm.CategoryData.findIndex((category) => category.id == ObjectCategoryID);
+        const ObjectCategoryIndex = Categories.findIndex((category) => category.id == ObjectCategoryID);
 
         // Get category
-        const ObjectCategoryData = vm.CategoryData[ObjectCategoryIndex]
-        TemplateColor = ObjectCategoryData.color
+        const Category = Categories[ObjectCategoryIndex]
+        TemplateColor = Category.color
       }
 
       // Return category

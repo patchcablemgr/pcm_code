@@ -32,7 +32,7 @@
       <!-- Templates -->
       <app-collapse>
         <app-collapse-item
-          v-for="Category in CategoryData"
+          v-for="Category in Categories"
           :key="Category.id"
           :title="Category.name+' ('+CategoryTemplateCount(Category.id)+')'"
         >
@@ -112,6 +112,15 @@ export default {
     }
   },
   computed: {
+    Categories() {
+      return this.$store.state.pcmCategories.Categories
+    },
+    Templates() {
+      return this.$store.state.pcmTemplates.Templates
+    },
+    Objects() {
+      return this.$store.state.pcmObjects.Objects
+    },
     ComputedTemplateFace: {
       get() {
 
@@ -134,9 +143,7 @@ export default {
     GetObjectIndex: function(TemplateID) {
 
       const vm = this
-      const Context = vm.Context
-
-      const ObjectIndex = vm.ObjectData[Context].findIndex((object) => object.template_id == TemplateID)
+      const ObjectIndex = vm.Objects.template.findIndex((object) => object.template_id == TemplateID)
 
       return ObjectIndex
 
@@ -147,7 +154,7 @@ export default {
       const Context = vm.Context
 
       const ObjectIndex = vm.GetObjectIndex(TemplateID)
-      const ObjectID = vm.ObjectData[Context][ObjectIndex].id
+      const ObjectID = vm.Objects.template[ObjectIndex].id
       
       return ObjectID
 
@@ -182,10 +189,8 @@ export default {
 
       // Store data
       const vm = this
-      const Context = vm.Context
-      const TemplateData = vm.TemplateData[Context]
 
-      const TemplateDataFiltered = TemplateData.filter(template => template.category_id == CategoryID && template.type == 'standard')
+      const TemplateDataFiltered = vm.Templates.template.filter(template => template.category_id == CategoryID && template.type == 'standard')
 
       return TemplateDataFiltered.length
 
@@ -209,7 +214,7 @@ export default {
       const vm = this
       const Context = vm.Context
       const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
-      const FilteredCategoryTemplates = vm.TemplateData[Context].filter(function(template) {
+      const FilteredCategoryTemplates = vm.Templates.template.filter(function(template) {
 
         let match = false
 

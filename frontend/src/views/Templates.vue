@@ -1,5 +1,7 @@
 <template>
-  <div>
+  <div
+    v-if="CategoriesReady == true && TemplatesReady == true"
+  >
     <b-container class="bv-example-row" fluid="xs">
       <b-row>
         <b-col>
@@ -27,11 +29,6 @@
                 :SelectedPortFormat="SelectedPortFormat"
                 :PreviewPortID="PreviewPortID"
                 @TemplateNameUpdated="TemplateNameUpdated($event)"
-                @TemplateCategoriesUpdated="TemplateCategoriesUpdated($event)"
-                @TemplateCategoryUpdated="TemplateCategoryUpdated($event)"
-                @TemplateCategorySubmitted="TemplateCategorySubmitted($event)"
-                @TemplateCategoryDeleted="TemplateCategoryDeleted($event)"
-                @TemplateCategorySelected="TemplateCategorySelected($event)"
                 @TemplateTypeUpdated="TemplateTypeUpdated($event)"
                 @TemplateRUSizeUpdated="TemplateRUSizeUpdated($event)"
                 @TemplateFunctionUpdated="TemplateFunctionUpdated($event)"
@@ -90,7 +87,7 @@
                 :CabinetData="CabinetData"
                 :CategoryData="CategoryData"
                 :ObjectData="ObjectData"
-                Context="preview"
+                Context="workspace"
                 :TemplateFaceSelected="TemplateFaceSelected"
                 :PartitionAddressSelected="PartitionAddressSelected"
                 :PartitionAddressHovered="PartitionAddressHovered"
@@ -123,6 +120,7 @@
             @TemplateObjectEditClicked="TemplateObjectEditClicked()"
             @TemplateObjectCloneClicked="TemplateObjectCloneClicked()"
 						@TemplateObjectDeleteClicked="TemplateObjectDeleteClicked()"
+            @TemplateEdited="TemplateEdited($event)"
 					/>
 
           <component-templates
@@ -343,33 +341,33 @@ const GenericObject = {
     "parent_enclosure_address": null,
 }
 const GenericTemplate = {
-    "id": null,
-    "pseudo": true,
-    "name": "PseudoTemplate",
-    "category_id": null,
-    "type": null,
-    "ru_size": null,
-    "function": null,
-    "mount_config": "2-post",
-    "insert_constraints": null,
-    "blueprint": {
-        "front": [{
-                "type": "generic",
-                "units": null,
-                "children": [{
-                        "type": "enclosure",
-                        "units": null,
-                        "children": [],
-                        "enc_layout": {
-                            "cols": null,
-                            "rows": null,
-                        },
-                    },
-                ],
-            },
-        ],
-        "rear": []
+  "id": null,
+  "pseudo": true,
+  "name": "PseudoTemplate",
+  "category_id": null,
+  "type": null,
+  "ru_size": null,
+  "function": null,
+  "mount_config": "2-post",
+  "insert_constraints": null,
+  "blueprint": {
+    "front": [{
+      "type": "generic",
+      "units": null,
+      "children": [{
+        "type": "enclosure",
+        "units": null,
+        "children": [],
+        "enc_layout": {
+          "cols": null,
+          "rows": null,
+        },
+      },
+      ],
     },
+    ],
+    "rear": []
+  },
 }
 
 export default {
@@ -413,6 +411,24 @@ export default {
     }
   },
   computed: {
+    CategoriesReady: function() {
+      return this.$store.state.pcmCategories.CategoriesReady
+    },
+    TemplatesReady: function() {
+      return this.$store.state.pcmTemplates.TemplatesReady
+    },
+    Categories() {
+      return this.$store.state.pcmCategories.Categories
+    },
+    Templates() {
+      return this.$store.state.pcmTemplates.Templates
+    },
+    StoreStandardTemplateID() {
+      return this.$store.state.pcmTemplates.StandardTemplateID
+    },
+    StoreInsertTemplateID() {
+      return this.$store.state.pcmTemplates.InsertTemplateID
+    },
     CabinetData: function(){
       
       const vm = this
@@ -624,9 +640,7 @@ export default {
 
       let SelectedPortFormat = []
 
-      console.log('Debug (Partition): '+JSON.stringify(Partition))
       if(Partition.type == 'connectable') {
-        console.log('Debug: here1')
         SelectedPortFormat = Partition.port_format
       }
 
@@ -828,118 +842,6 @@ export default {
       const vm = this
       const PreviewData = vm.GetPreviewData()
       PreviewData.name = newValue
-    },
-    TemplateCategoriesUpdated: function() {
-      const vm = this;
-
-      vm.categoryGET();
-    },
-    TemplateCategoryUpdated: function(newValue) {
-
-      const vm = this
-      const PreviewData = vm.GetPreviewData()
-      PreviewData.category_id = newValue
-    },
-    TemplateCategoryDeleted: function(newValue) {
-
-      // Store data
-      const vm = this;
-      const CategoryID = newValue.CategoryID
-      const url = '/api/categories/'+CategoryID
-
-      // DELETE category form data
-      vm.$http.delete(url).then(function(response){
-
-        // Clear SelectedCategoryID
-        vm.SelectedCategoryID = null
-
-        // Delete category from CategoryData variable
-        const returnedCategoryID = response.data.id
-        const categoryIndex = vm.CategoryData.findIndex((category) => category.id == returnedCategoryID);
-        vm.CategoryData.splice(categoryIndex, 1)
-        
-      }).catch(error => {
-
-        // Display error to user via toast
-        vm.$bvToast.toast(JSON.stringify(error.response.data), {
-          title: 'Error',
-          variant: 'danger',
-        })
-
-      });
-    },
-    TemplateCategorySubmitted: function(newValue) {
-
-      // Store data
-      const vm = this
-      const CategoryID = vm.SelectedCategoryID
-      const data = {
-        name: newValue.name,
-        color: newValue.color,
-        default: newValue.default,
-      };
-
-      if(CategoryID) {
-
-        const url = '/api/categories/'+CategoryID
-
-        // PUT category form data
-        vm.$http.put(url, data).then(function(response){
-
-          // Update categories
-          const CategoryDataIndex = vm.CategoryData.findIndex((category) => category.id == CategoryID);
-
-          // If this category is default, clear any previously default category
-          if(response.data.default) {
-            const CategoryDataDefaultIndex = vm.CategoryData.findIndex((category) => category.default);
-            if(CategoryDataDefaultIndex !== -1) {
-              vm.CategoryData[CategoryDataDefaultIndex].default = false
-            }
-          }
-
-          vm.CategoryData[CategoryDataIndex].name = response.data.name
-          vm.CategoryData[CategoryDataIndex].default = response.data.default
-          vm.CategoryData[CategoryDataIndex].color = response.data.color
-
-        }).catch(error => {
-
-          // Display error to user via toast
-          vm.$bvToast.toast(JSON.stringify(error.response.data), {
-            title: 'Error',
-            variant: 'danger',
-          })
-
-        });
-
-      } else {
-
-        const url = '/api/categories'
-
-        // POST category form data
-        this.$http.post(url, data).then(function(response){
-
-          // Update categories
-          vm.CategoryData.push(response.data)
-
-        }).catch(error => {
-
-          // Display error to user via toast
-          vm.$bvToast.toast(JSON.stringify(error.response.data), {
-            title: 'Error',
-            variant: 'danger',
-          })
-
-        });
-
-      }
-    },
-    TemplateCategorySelected: function(newValue) {
-
-      // Store data
-      const vm = this;
-      const CategoryID = newValue.CategoryID
-      vm.SelectedCategoryID = CategoryID
-      
     },
     TemplateTypeUpdated: function(newValue) {
 
@@ -1916,7 +1818,7 @@ export default {
     },
     templatesGET: function () {
 
-      const vm = this;
+      const vm = this
 			const Context = 'template'
       
       this.$http.get('/api/templates').then(function(response){
@@ -1925,15 +1827,52 @@ export default {
 
         response.data.forEach(function(Template, TemplateIndex){
 					
-					vm.GeneratePseudoData(Template, Context)
+					//vm.GeneratePseudoData(Template, Context)
         })
       });
+    },
+    SetDefaultCategory: function() {
+
+      const vm = this
+      const Context = 'workspace'
+      const Categories = vm.Categories
+      const StandardTemplateIndex = vm.GetTemplateIndex(vm.StoreStandardTemplateID, Context)
+      const InsertTemplateIndex = vm.GetTemplateIndex(vm.StoreInsertTemplateID, Context)
+
+      const DefaultCategoryIndex = Categories.findIndex((category) => category.default)
+      let DefaultCategoryID
+
+      if(DefaultCategoryIndex !== -1) {
+        DefaultCategoryID = Categories[DefaultCategoryIndex].id
+      } else {
+        DefaultCategoryID = Categories[0].id
+      }
+
+      const StandardTemplateUpdated = JSON.parse(JSON.stringify(vm.Templates[Context][StandardTemplateIndex]), function(key, value){
+        if(key == 'category_id') {
+          return DefaultCategoryID
+        } else {
+          return value
+        }
+      })
+
+      const InsertTemplateUpdated = JSON.parse(JSON.stringify(vm.Templates[Context][InsertTemplateIndex]), function(key, value){
+        if(key == 'category_id') {
+          return DefaultCategoryID
+        } else {
+          return value
+        }
+      })
+
+      commit('pcmTemplates/UPDATE_template', {pcmContext:Context, data:StandardTemplateUpdated})
+      commit('pcmTemplates/UPDATE_template', {pcmContext:Context, data:InsertTemplateUpdated})
+
     },
     categoryGET: function(SetCategoryToDefault = false) {
 
       const vm = this
-      const StandardTemplateIndex = vm.GetTemplateIndex(vm.StandardTemplateID, 'preview')
-      const InsertTemplateIndex = vm.GetTemplateIndex(vm.InsertTemplateID, 'preview')
+      const StandardTemplateIndex = vm.GetTemplateIndex(vm.StandardTemplateID, 'workspace')
+      const InsertTemplateIndex = vm.GetTemplateIndex(vm.InsertTemplateID, 'workspace')
 
       vm.$http.get('/api/categories').then(function(response){
 
@@ -2015,12 +1954,19 @@ export default {
       console.log('Form Reset')
     },
   },
+  watch: {
+    Categories(newValue, oldValue) {
+
+      const vm = this
+      vm.SetDefaultCategory()
+    }
+  },
   mounted() {
 
     const vm = this
     const SetCategoryToDefault = true
 
-    vm.categoryGET(SetCategoryToDefault)
+    //vm.categoryGET(SetCategoryToDefault)
     vm.templatesGET()
     vm.mediumGET()
     vm.portOrientationGET()

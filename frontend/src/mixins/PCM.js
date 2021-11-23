@@ -40,13 +40,13 @@ export const PCM = {
 
             const vm = this
             Context = (Context) ? Context : vm.Context
-            const ObjectData = vm.ObjectData[Context]
+            const Objects = vm.Objects
             let TemplateID = 0
         
-            const ObjectIndex = ObjectData.findIndex((object) => object.id == ObjectID )
+            const ObjectIndex = Objects[Context].findIndex((object) => object.id == ObjectID )
         
             if(ObjectIndex !== -1) {
-                const Object = ObjectData[ObjectIndex]
+                const Object = Objects[Context][ObjectIndex]
                 TemplateID = Object.template_id
             }
         
@@ -57,11 +57,12 @@ export const PCM = {
 
             // Initial variables
             const vm = this
-            const TemplateData = vm.TemplateData
+            const Templates = vm.Templates
             Context = (Context) ? Context : vm.Context
       
             // Get object index
-            const TemplateIndex = TemplateData[Context].findIndex((template) => template.id == TemplateID);
+            console.log('Templates: '+JSON.stringify(Templates))
+            const TemplateIndex = Templates[Context].findIndex((template) => template.id == TemplateID);
       
             return TemplateIndex
         },
@@ -312,6 +313,21 @@ export const PCM = {
             })
             
             return PreviewPortID
+        },
+        GetNodeIcon: function(NodeType) {
+
+            let Icon = "HomeIcon"
+            if(NodeType == 'location') {
+                Icon = "HomeIcon"
+            } else if(NodeType == 'pod') {
+                Icon = "CircleIcon"
+            } else if(NodeType == 'cabinet') {
+                Icon = "ServerIcon"
+            } else if(NodeType == 'floorplan') {
+                Icon = "MapIcon"
+            }
+        
+            return Icon
         },
     }
 }

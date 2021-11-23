@@ -1,7 +1,7 @@
 <template>
     <!-- Template port Format modal -->
     <b-modal
-      id="modal-templates-port-id"
+      :id="ModalID"
       title="Port ID"
       ok-only
       ok-title="OK"
@@ -11,7 +11,9 @@
         class="position-static"
       >
         <validation-observer ref="simpleRules">
-          <b-form>
+          <b-form
+            v-if="SelectedPortFormat.length"
+          >
 
             <div
              class="mb-3 pcm_template_port_format_field_container"
@@ -353,6 +355,7 @@ export default {
     'b-tooltip': VBTooltip,
   },
   props: {
+    ModalID: {type: String},
     Context: {type: String},
     TemplateData: {type: Object},
     TemplateFaceSelected: {type: Object},
@@ -381,14 +384,17 @@ export default {
 
       const vm = this
       const Context = vm.Context
+      let SelectedPortFormat = []
       const SelectedTemplateID = vm.PartitionAddressSelected[Context].template_id
-      const SelectedTemplateFace = vm.TemplateFaceSelected[Context]
-      const SelectedTemplatePartitionAddress = vm.PartitionAddressSelected[Context][SelectedTemplateFace]
-      const SelectedTemplateIndex = vm.GetTemplateIndex(SelectedTemplateID, Context)
-      const SelectedTemplate = vm.TemplateData[Context][SelectedTemplateIndex]
-      const SelectedBlueprint = SelectedTemplate.blueprint[SelectedTemplateFace]
-      const SelectedPartition = vm.GetPartition(SelectedBlueprint, SelectedTemplatePartitionAddress)
-      const SelectedPortFormat = SelectedPartition.port_format
+      if(SelectedTemplateID) {
+        const SelectedTemplateFace = vm.TemplateFaceSelected[Context]
+        const SelectedTemplatePartitionAddress = vm.PartitionAddressSelected[Context][SelectedTemplateFace]
+        const SelectedTemplateIndex = vm.GetTemplateIndex(SelectedTemplateID, Context)
+        const SelectedTemplate = vm.TemplateData[Context][SelectedTemplateIndex]
+        const SelectedBlueprint = SelectedTemplate.blueprint[SelectedTemplateFace]
+        const SelectedPartition = vm.GetPartition(SelectedBlueprint, SelectedTemplatePartitionAddress)
+        SelectedPortFormat = SelectedPartition.port_format
+      }
 
       return SelectedPortFormat
     },

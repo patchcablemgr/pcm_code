@@ -107,7 +107,7 @@
       </b-row>
 
       <!-- Port ID Modal -->
-      <modal-templates-port-id
+      <modal-edit-template-port-id
         v-if="PartitionType == 'connectable'"
         :Context="Context"
         :TemplateData="TemplateData"
@@ -130,7 +130,7 @@
 <script>
 import { BContainer, BRow, BCol, BCard, BForm, BButton, BFormInput, BFormSelect, BFormCheckbox, BCardText, } from 'bootstrap-vue'
 import Ripple from 'vue-ripple-directive'
-import ModalTemplatesPortId from './ModalTemplatesPortId.vue'
+import ModalEditTemplatePortId from './ModalEditTemplatePortId.vue'
 
 export default {
   components: {
@@ -145,7 +145,7 @@ export default {
     BFormCheckbox,
     BCardText,
 
-    ModalTemplatesPortId,
+    ModalEditTemplatePortId,
   },
   directives: {
     Ripple,

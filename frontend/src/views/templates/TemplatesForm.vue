@@ -263,7 +263,7 @@
             v-ripple.400="'rgba(40, 199, 111, 0.15)'"
             variant="flat-success"
             class="btn-icon"
-            v-b-modal.modal-templates-port-id
+            v-b-modal.modal-edit-template-port-id-form
           >
             <feather-icon icon="EditIcon" />
           </b-button>
@@ -443,21 +443,11 @@
     </b-form>
 
     <!-- Category Modal -->
-    <modal-templates-category
-      :TemplateData="TemplateData"
-      :CategoryData="CategoryData"
-      :SelectedCategoryID="SelectedCategoryID"
-      :Context="Context"
-      @TemplateCategoriesUpdated="$emit('TemplateCategoriesUpdated')"
-      @categoriesUpdatedOrig="updateCategories($event)"
-      @TemplateCategoryDeleted="$emit('TemplateCategoryDeleted', $event)"
-      @TemplateCategorySubmitted="$emit('TemplateCategorySubmitted', $event)"
-      @TemplateCategorySelected="$emit('TemplateCategorySelected', $event)"
-      @categoriesSetDefault="setDefaultCategory($event)"
-    />
+    <modal-templates-category/>
 
     <!-- Port ID Modal -->
-    <modal-templates-port-id
+    <modal-edit-template-port-id
+      ModalID="modal-edit-template-port-id-form"
       v-if="ComputedInputTemplatePartitionType == 'connectable'"
       Context="preview"
       :TemplateData="TemplateData"
@@ -482,7 +472,7 @@
 import { BContainer, BRow, BCol, BForm, BFormGroup, BFormInput, BFormSelect, BFormRadioGroup, BButton, VBModal, } from 'bootstrap-vue'
 import Ripple from 'vue-ripple-directive'
 import ModalTemplatesCategory from './ModalTemplatesCategory.vue'
-import ModalTemplatesPortId from './ModalTemplatesPortId.vue'
+import ModalEditTemplatePortId from './ModalEditTemplatePortId.vue'
 
 export default {
   components: {
@@ -498,7 +488,7 @@ export default {
     VBModal,
 
     ModalTemplatesCategory,
-    ModalTemplatesPortId,
+    ModalEditTemplatePortId,
   },
   directives: {
     Ripple,
@@ -547,6 +537,9 @@ export default {
     }
   },
   computed: {
+    Categories() {
+      return this.$store.state.pcmCategories.Categories
+    },
     TemplateFunction: {
       get() {
 
@@ -1028,9 +1021,9 @@ export default {
       let WorkingArray = []
 
       // Populate working array with data to be used as select options
-      for(let i = 0; i < vm.CategoryData.length; i++) {
+      for(let i = 0; i < vm.Categories.length; i++) {
 
-        let Category = vm.CategoryData[i]
+        let Category = vm.Categories[i]
         WorkingArray.push({'value': Category.id, 'text': Category.name})
       }
 
@@ -1082,16 +1075,6 @@ export default {
       }
 
       return WorkingArray
-    },
-    updateCategories: function(v) {
-      this.optionsCategory = [];
-      let x;
-      for (x in v) {
-        this.optionsCategory.push({value: v[x].id, text: v[x].name});
-      }
-    },
-    setDefaultCategory: function(v) {
-      this.selectedCategory = v;
     },
     CastPartitionSizeToInteger: function(value) {
 

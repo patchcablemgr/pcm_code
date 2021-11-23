@@ -1,6 +1,7 @@
 <!-- Template/Object Details -->
 
 <template>
+  <div>
 	
   <b-card>
     <b-card-title>
@@ -57,85 +58,125 @@
       class="separator mt-0"
     >
 
-    <!-- Object Name -->
-    <dl class="row mb-0">
-      <dt class="col-sm-4">
-        Object Name:
-      </dt>
-      <dd class="col-sm-8 mb-0">
-        {{ComputedObjectName}}
-      </dd>
-    </dl>
+    <table>
+      <tr>
+        <td class="text-right">
+          Object Name:
+        </td>
+        <td>
+          <b-button
+            v-if="Context == 'preview'"
+            v-ripple.400="'rgba(40, 199, 111, 0.15)'"
+            variant="flat-success"
+            class="btn-icon"
+            v-b-modal.modal-edit-object-name
+            :disabled="!ComputedObjectSelected"
+          >
+            <feather-icon icon="EditIcon" />
+          </b-button>
+        </td>
+        <td>
+          {{ComputedObjectName}}
+        </td>
+      </tr>
 
-    <!-- Template Name -->
-    <dl class="row mb-0">
-      <dt class="col-sm-4">
-        Template Name:
-      </dt>
-      <dd class="col-sm-8 mb-0">
-        {{ComputedTemplateName}}
-      </dd>
-    </dl>
+      <tr>
+        <td class="text-right">
+          Template Name:
+        </td>
+        <td>
+          <b-button
+            v-if="Context == 'template'"
+            v-ripple.400="'rgba(40, 199, 111, 0.15)'"
+            variant="flat-success"
+            class="btn-icon"
+            v-b-modal.modal-edit-template-name
+            :disabled="!ComputedObjectSelected"
+          >
+            <feather-icon icon="EditIcon" />
+          </b-button>
+        </td>
+        <td>
+          {{ComputedTemplateName}}
+        </td>
+      </tr>
 
-    <!-- Category -->
-    <dl class="row mb-0">
-      <dt class="col-sm-4">
-        Category:
-      </dt>
-      <dd class="col-sm-8 mb-0">
-        {{ComputedCategoryName}}
-      </dd>
-    </dl>
+      <tr>
+        <td class="text-right">
+          Category:
+        </td>
+        <td>
+          <b-button
+            v-if="Context == 'template'"
+            v-ripple.400="'rgba(40, 199, 111, 0.15)'"
+            variant="flat-success"
+            class="btn-icon"
+            v-b-modal.modal-edit-template-category
+            :disabled="!ComputedObjectSelected"
+          >
+            <feather-icon icon="EditIcon" />
+          </b-button>
+        </td>
+        <td>
+          {{ComputedCategoryName}}
+        </td>
+      </tr>
 
-    <!-- Type -->
-    <dl class="row mb-0">
-      <dt class="col-sm-4">
-        Template Type:
-      </dt>
-      <dd class="col-sm-8 mb-0">
-        {{ComputedType}}
-      </dd>
-    </dl>
+      <tr>
+        <td class="text-right">
+          Type:
+        </td>
+        <td>
+        </td>
+        <td>
+          {{ComputedType}}
+        </td>
+      </tr>
 
-    <!-- Function -->
-    <dl class="row mb-0">
-      <dt class="col-sm-4">
-        Function:
-      </dt>
-      <dd class="col-sm-8 mb-0">
-        {{ComputedFunction}}
-      </dd>
-    </dl>
+      <tr>
+        <td class="text-right">
+          Function:
+        </td>
+        <td>
+        </td>
+        <td>
+          {{ComputedFunction}}
+        </td>
+      </tr>
 
-    <!-- RU Size -->
-    <dl class="row mb-0">
-      <dt class="col-sm-4">
-        RU Size:
-      </dt>
-      <dd class="col-sm-8 mb-0">
-        {{ComputedRUSize}}
-      </dd>
-    </dl>
+      <tr>
+        <td class="text-right">
+          RU Size:
+        </td>
+        <td>
+        </td>
+        <td>
+          {{ComputedRUSize}}
+        </td>
+      </tr>
 
-    <!-- Mount Config -->
-    <dl class="row mb-0">
-      <dt class="col-sm-4">
-        Mount Config:
-      </dt>
-      <dd class="col-sm-8 mb-0">
-        {{ComputedMountConfig}}
-      </dd>
-    </dl>
+      <tr>
+        <td class="text-right">
+          Mount Config:
+        </td>
+        <td>
+        </td>
+        <td>
+          {{ComputedMountConfig}}
+        </td>
+      </tr>
 
-    <!-- Image -->
-    <dl class="row mb-0">
-      <dt class="col-sm-4">
-        Image:
-      </dt>
-      <dd class="col-sm-8 mb-0">
-        {{ComputedCategoryName}}
-      </dd>
-    </dl>
+      <tr>
+        <td class="text-right">
+          Image:
+        </td>
+        <td>
+        </td>
+        <td>
+          {{ComputedCategoryName}}
+        </td>
+      </tr>
+    </table>
 
     <div
       class="h5 font-weight-bolder m-0"
@@ -146,84 +187,159 @@
       class="separator mt-0"
     >
 
-    <!-- Partition Type -->
-    <dl class="row mb-0">
-      <dt class="col-sm-4">
-        Partition Type:
-      </dt>
-      <dd class="col-sm-8 mb-0">
-        {{ComputedPartitionType}}
-      </dd>
-    </dl>
+    <table>
+      <tr>
+        <td class="text-right">
+          Partition Type:
+        </td>
+        <td>
+        </td>
+        <td>
+          {{ComputedPartitionType}}
+        </td>
+      </tr>
 
-    <!-- Trunked To -->
-    <dl class="row mb-0">
-      <dt class="col-sm-4">
-        Trunked To:
-      </dt>
-      <dd class="col-sm-8 mb-0">
-        {{ComputedTrunkedTo}}
-      </dd>
-    </dl>
+      <tr>
+        <td class="text-right">
+          Trunked To:
+        </td>
+        <td>
+        </td>
+        <td>
+          {{ComputedTrunkedTo}}
+        </td>
+      </tr>
 
-    <!-- Port Range -->
-    <dl class="row mb-0">
-      <dt class="col-sm-4">
-        Port Range:
-      </dt>
-      <dd class="col-sm-8 mb-0">
-        {{TemplatePartitionPortRange}}
-      </dd>
-    </dl>
+      <tr>
+        <td class="text-right">
+          Port Range:
+        </td>
+        <td>
+          <b-button
+            v-if="Context == 'template'"
+            v-ripple.400="'rgba(40, 199, 111, 0.15)'"
+            variant="flat-success"
+            class="btn-icon"
+            v-b-modal.modal-edit-template-port-id-details
+            :disabled="!ComputedObjectSelected"
+          >
+            <feather-icon icon="EditIcon" />
+          </b-button>
+        </td>
+        <td>
+          {{TemplatePartitionPortRange}}
+        </td>
+      </tr>
 
-    <!-- Port Orientation -->
-    <dl class="row mb-0">
-      <dt class="col-sm-4">
-        Port Orientation:
-      </dt>
-      <dd class="col-sm-8 mb-0">
-        {{ComputedPortOrientation}}
-      </dd>
-    </dl>
+      <tr>
+        <td class="text-right">
+          Port Orientation:
+        </td>
+        <td>
+        </td>
+        <td>
+          {{ComputedPortOrientation}}
+        </td>
+      </tr>
 
-    <!-- Port Type -->
-    <dl class="row mb-0">
-      <dt class="col-sm-4">
-        Port Type:
-      </dt>
-      <dd class="col-sm-8 mb-0">
-        {{ComputedPortType}}
-      </dd>
-    </dl>
+      <tr>
+        <td class="text-right">
+          Port Type:
+        </td>
+        <td>
+        </td>
+        <td>
+          {{ComputedPortType}}
+        </td>
+      </tr>
 
-    <!-- Media Type -->
-    <dl class="row mb-0">
-      <dt class="col-sm-4">
-        Media Type:
-      </dt>
-      <dd class="col-sm-8 mb-0">
-        {{ComputedPortMediaType}}
-      </dd>
-    </dl>
+      <tr>
+        <td class="text-right">
+          Media Type:
+        </td>
+        <td>
+        </td>
+        <td>
+          {{ComputedPortMediaType}}
+        </td>
+      </tr>
 
-    <!-- Enclosure Tolerance -->
-    <dl class="row mb-0">
-      <dt class="col-sm-4">
-        Enclosure Tolerance:
-      </dt>
-      <dd class="col-sm-8 mb-0">
-        {{ComputedCategoryName}}
-      </dd>
-    </dl>
+      <tr>
+        <td class="text-right">
+          Enclosure Tolerance:
+        </td>
+        <td>
+        </td>
+        <td>
+          {{ComputedCategoryName}}
+        </td>
+      </tr>
+    </table>
 
   </b-card-body>
   
   </b-card>
 
+    <!-- Modal Edit Object Name -->
+    <modal-edit-object-name
+      ModalTitle="Object Name"
+      :NameValue="ComputedObjectName"
+      @ObjectNameEdited=" $emit('ObjectEdited', $event) "
+    />
+
+    <!-- Modal Edit Template Name -->
+    <modal-edit-template-name
+      ModalTitle="Template Name"
+      :NameValue="ComputedTemplateName"
+      @TemplateNameEdited=" $emit('TemplateEdited', $event) "
+    />
+
+    <!-- Modal Edit Template Category -->
+    <modal-edit-template-category
+      :Context="Context"
+      ModalTitle="Category"
+      :TemplateData="TemplateData"
+      :CategoryData="CategoryData"
+      :ObjectData="ObjectData"
+      :PartitionAddressSelected="PartitionAddressSelected"
+      @TemplateCategoryEdited=" $emit('TemplateEdited', $event) "
+    />
+
+    <!-- Modal Edit Template Port ID -->
+    <modal-edit-template-port-id
+      ModalID="modal-edit-template-port-id-details"
+      :Context="Context"
+      :TemplateData="TemplateData"
+      :TemplateFaceSelected="TemplateFaceSelected"
+      :PartitionAddressSelected="PartitionAddressSelected"
+      PreviewPortID="temp"
+      v-on:TemplatePartitionPortFormatFieldSelected="$emit('TemplatePartitionPortFormatFieldSelected', $event)"
+      v-on:TemplatePartitionPortFormatValueUpdated="$emit('TemplatePartitionPortFormatValueUpdated', $event)"
+      v-on:TemplatePartitionPortFormatTypeUpdated="$emit('TemplatePartitionPortFormatTypeUpdated', $event)"
+      v-on:TemplatePartitionPortFormatCountUpdated="$emit('TemplatePartitionPortFormatCountUpdated', $event)"
+      v-on:TemplatePartitionPortFormatOrderUpdated="$emit('TemplatePartitionPortFormatOrderUpdated', $event)"
+      @TemplatePartitionPortFormatFieldMove="$emit('TemplatePartitionPortFormatFieldMove', $event)"
+      v-on:TemplatePartitionPortFormatFieldCreate="$emit('TemplatePartitionPortFormatFieldCreate', $event)"
+      v-on:TemplatePartitionPortFormatFieldDelete="$emit('TemplatePartitionPortFormatFieldDelete', $event)"
+    />
+
+  </div>
 </template>
 
 <script>
-import { BCard, BCardTitle, BCardBody, BDropdown, BDropdownItem, BDropdownDivider } from 'bootstrap-vue'
+import {
+  BCard,
+  BCardTitle,
+  BCardBody,
+  BDropdown,
+  BDropdownItem,
+  BDropdownDivider,
+  BButton,
+} from 'bootstrap-vue'
+import ModalEditObjectName from './ModalEditObjectName.vue'
+import ModalEditTemplateName from './ModalEditTemplateName.vue'
+import ModalEditTemplateCategory from './ModalEditTemplateCategory.vue'
+import ModalEditTemplatePortId from './ModalEditTemplatePortId.vue'
 import Ripple from 'vue-ripple-directive'
 
 export default {
@@ -234,6 +350,12 @@ export default {
 		BDropdown,
 		BDropdownItem,
 		BDropdownDivider,
+    BButton,
+
+    ModalEditObjectName,
+    ModalEditTemplateName,
+    ModalEditTemplateCategory,
+    ModalEditTemplatePortId,
   },
 	directives: {
 		Ripple,
@@ -256,6 +378,12 @@ export default {
     }
   },
   computed: {
+    ComputedObjectSelected: function() {
+
+      const vm = this
+      const Context = vm.Context
+      return (vm.PartitionAddressSelected[Context].object_id) ? true : false
+    },
     TemplateSelected: function(){
 
       const vm = this
@@ -580,10 +708,10 @@ export default {
     },
     GetCategoryIndex: function(CategoryID) {
 
-      const vm = this;
-      const CategoryIndex = vm.CategoryData.findIndex((category) => category.id == CategoryID);
+      const vm = this
+      const CategoryIndex = vm.CategoryData.findIndex((category) => category.id == CategoryID)
 
-      return CategoryIndex
+      return parseInt(CategoryIndex)
     },
     GetPartition: function(Blueprint, PartitionAddress) {
 

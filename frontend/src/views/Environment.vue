@@ -24,10 +24,23 @@
             </b-card-body>
           </b-card>
 
+          <component-floorplan-object-details
+            v-if=" PreviewDisplay == 'floorplan' "
+            :FloorplanTemplateData="FloorplanTemplateData"
+            :ObjectData="ObjectData"
+            :TemplateData="TemplateData"
+            :LocationData="LocationData"
+            :PartitionAddressSelected="PartitionAddressSelected"
+            @FloorplanClicked=" FloorplanClicked($event) "
+            @FloorplanHovered=" FloorplanHovered($event) "
+            @ObjectEdited="ObjectEdited($event, 'floorplan')"
+          />
+
           <component-floorplan-objects
             v-if=" PreviewDisplay == 'floorplan' "
             :FloorplanTemplateData="FloorplanTemplateData"
             :ObjectData="ObjectData"
+            :PartitionAddressSelected="PartitionAddressSelected"
             @FloorplanClicked=" FloorplanClicked($event) "
             @FloorplanHovered=" FloorplanHovered($event) "
           />
@@ -112,6 +125,8 @@
             @TemplateObjectEditClicked="TemplateObjectEditClicked()"
             @TemplateObjectCloneClicked="TemplateObjectCloneClicked()"
 						@TemplateObjectDeleteClicked="TemplateObjectDeleteClicked()"
+            @ObjectEdited="ObjectEdited($event, 'preview')"
+            @TemplateEdited="TemplateEdited($event)"
 					/>
 
           <component-templates
@@ -145,7 +160,6 @@
       :TemplatePartitionPortRange="TemplatePartitionPortRange"
       PreviewPortID="test"
       @ObjectEdited="ObjectEdited($event)"
-      @TemplateEdited="TemplateEdited($event)"
       @TemplatePartitionPortFormatValueUpdated="TemplatePartitionPortFormatValueUpdated($event)"
       @TemplatePartitionPortFormatTypeUpdated="TemplatePartitionPortFormatTypeUpdated($event)"
       @TemplatePartitionPortFormatCountUpdated="TemplatePartitionPortFormatCountUpdated($event)"
@@ -194,6 +208,8 @@ import VueSimpleContextMenu from 'vue-simple-context-menu'
 import { PCM } from '../mixins/PCM.js'
 import ComponentFloorplan from './templates/ComponentFloorplan.vue'
 import ComponentFloorplanObjects from './templates/ComponentFloorplanObjects.vue'
+import ComponentFloorplanObjectDetails from './templates/ComponentFloorplanObjectDetails.vue'
+
 
 const TreeData = []
 
@@ -237,6 +253,8 @@ const MenuOptions = [
     "action": "delete",
   }
 ]
+
+const LocationData = []
 
 const CabinetData = {
   "id": 0,
@@ -403,6 +421,7 @@ export default {
     ModalTemplatesEdit,
     ComponentFloorplan,
     ComponentFloorplanObjects,
+    ComponentFloorplanObjectDetails,
   },
   directives: {
     'b-tooltip': VBTooltip,
@@ -412,6 +431,7 @@ export default {
       TreeData,
       TreeOptions,
       MenuOptions,
+      LocationData,
       CabinetData,
       CategoryData,
       ObjectData,
@@ -591,11 +611,10 @@ export default {
       vm.TemplateFaceSelected[Context] = TemplateFace
 
     },
-    ObjectEdited: function(EmitData) {
+    ObjectEdited: function(EmitData, Context='preview') {
 
       // Store data
       const vm = this
-      const Context = 'preview'
       const ObjectID = vm.PartitionAddressSelected[Context].object_id
       const url = '/api/objects/'+ObjectID
       const data = EmitData
@@ -604,10 +623,10 @@ export default {
       this.$http.patch(url, data).then(function(response){
         
         const Object = response.data
-        const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
+        const ObjectIndex = vm.GetObjectIndex(ObjectID, 'preview')
 				
         // Append new object to object array
-        vm.$set(vm.ObjectData[Context], ObjectIndex, Object)
+        vm.$set(vm.ObjectData.preview, ObjectIndex, Object)
 
       }).catch(error => {
 
@@ -882,21 +901,6 @@ export default {
 					}
         })
 		},
-    GetNodeIcon: function(NodeType) {
-
-      let Icon = "HomeIcon"
-      if(NodeType == 'location') {
-        Icon = "HomeIcon"
-      } else if(NodeType == 'pod') {
-        Icon = "CircleIcon"
-      } else if(NodeType == 'cabinet') {
-        Icon = "ServerIcon"
-      } else if(NodeType == 'floorplan') {
-        Icon = "MapIcon"
-      }
-
-      return Icon
-    },
     handleClick (event, node) {
       this.$refs.vueSimpleContextMenu.showMenu(event, node)
     },
@@ -1261,6 +1265,8 @@ export default {
       const vm = this
       
       this.$http.get('/api/locations').then(function(response){
+
+        vm.LocationData = response.data
 
         vm.BuildLocationTree(response.data)
         const SelectedNodeID = vm.GetCookie('environment_location_nodeID')

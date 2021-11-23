@@ -111,6 +111,7 @@ export default {
     UPDATE_Template(state, {pcmContext, data}) {
 
       const ID = data.id
+      console.log(pcmContext)
       const Index = state.Templates[pcmContext].findIndex((item) => item.id == ID)
       state.Templates[pcmContext].splice(Index, 1, data)
     },
@@ -122,9 +123,12 @@ export default {
     },
     Templates_Ready(state) {
       state.TemplatesReady = true
-    }
+    },
   },
   actions: {
+    TEST(context, data) {
+      console.log(data)
+    },
     GET_Templates(context) {
 
       axios.get('/api/templates')
@@ -132,6 +136,7 @@ export default {
         context.commit('GET_Templates', response.data)
         response.data.forEach(function(element) {
           context.dispatch('GeneratePseudoData', {pcmContext:'template', Template:element})
+          context.commit('Templates_Ready')
         })
       })
       
@@ -279,7 +284,7 @@ export default {
       WorkingObjectData.forEach(function(element) {
         context.commit('pcmObjects/ADD_Object', {pcmContext:'template', data:element}, {root:true})
       })
-      context.commit('Templates_Ready')
+      
     },
     ERROR({vm, data}) {
       

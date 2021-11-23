@@ -81,23 +81,30 @@ export default {
     return {
     }
   },
+  computed: {
+    Objects: function() {
+      return this.$store.state.pcmObjects.Objects
+    },
+    Templates: function() {
+      return this.$store.state.pcmTemplates.Templates
+    },
+  },
   methods: {
     GetPreviewData: function(ObjectID) {
 
       // Initial variables
       const vm = this
-      const TemplateData = vm.TemplateData
       const Context = vm.Context
 
       // Get object index
       const ObjectIndex = vm.GetObjectIndex(ObjectID)
 
       // Get template index
-      const TemplateID = vm.ObjectData[Context][ObjectIndex].template_id
+      const TemplateID = vm.Objects[Context][ObjectIndex].template_id
       const TemplateIndex = vm.GetTemplateIndex(TemplateID)
 
       // Get template
-      const ObjectPreviewData = TemplateData[Context][TemplateIndex]
+      const ObjectPreviewData = vm.Templates[Context][TemplateIndex]
 
       // Return template
       return ObjectPreviewData
@@ -109,7 +116,7 @@ export default {
       const Context = vm.Context
       const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
 
-      const ObjectIndex = vm.ObjectData[Context].findIndex(function(Object, ObjectIndex) {
+      const ObjectIndex = vm.Objects[Context].findIndex(function(Object, ObjectIndex) {
         if(Object.location_id == CabinetID && Object.cabinet_ru == CabinetRU) {
           const ObjectCabinetFace = Object.cabinet_front
           const ObjectID = Object.id
@@ -131,8 +138,10 @@ export default {
       // Store variables
       const vm = this
       const Context = vm.Context
+      const Objects = vm.Objects
+      const Templates = vm.Templates
       const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
-      const CabinetObjects = vm.ObjectData[Context].filter((object) => object.location_id == CabinetID);
+      const CabinetObjects = Objects[Context].filter((object) => object.location_id == CabinetID);
       let ObjectIsPresent = false
 
       CabinetObjects.forEach(function(object){
@@ -144,7 +153,7 @@ export default {
         // Get template data
         const TemplateID = vm.GetTemplateID(ObjectID, Context)
         const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-        const Template = vm.TemplateData[Context][TemplateIndex]
+        const Template = Templates[Context][TemplateIndex]
 
         // Store template variables
         const TemplateSize = Template.ru_size

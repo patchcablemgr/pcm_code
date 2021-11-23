@@ -124,12 +124,22 @@ export default {
     PartitionAddressHovered: {type: Object},
   },
   computed: {
+    Categories() {
+      return this.$store.state.pcmCategories.Categories
+    },
+    Templates() {
+      return this.$store.state.pcmTemplates.Templates
+    },
+    Objects() {
+      return this.$store.state.pcmObjects.Objects
+    },
     TemplateClasses: function() {
 
       const vm = this
       const PartitionAddress = vm.GetPartitionAddress(0)
       const PartitionDirection = vm.GetPartitionDirection(PartitionAddress)
       const Template = vm.GetTemplate()
+      console.log('Template: '+JSON.stringify(Template))
       const isPseudo = Template.hasOwnProperty("pseudo")
       const isPseudoParentTemplate = Template.hasOwnProperty("pseudoParentTemplate")
 
@@ -203,15 +213,20 @@ export default {
       // Initial variables
       const vm = this
       const ObjectID = vm.ObjectID
-      const TemplateData = vm.TemplateData
+      const Templates = vm.Templates
       const Context = vm.Context
 
       // Get template index
+      console.log('Objects: '+JSON.stringify(vm.Objects))
+      console.log('Context: '+Context)
+      console.log('ObjectID: '+ObjectID)
       const TemplateID = vm.GetTemplateID(ObjectID)
+      console.log('TemplateID: '+TemplateID)
       const TemplateIndex = vm.GetTemplateIndex(TemplateID)
+      console.log('TemplateIndex: '+TemplateIndex)
 
       // Get template
-      const Template = TemplateData[Context][TemplateIndex]
+      const Template = Templates[Context][TemplateIndex]
 
       // Return template
       return Template

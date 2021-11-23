@@ -73,6 +73,9 @@ export default {
     Categories() {
       return this.$store.state.pcmCategories.Categories
     },
+    Templates() {
+      return this.$store.state.pcmTemplates.Templates
+    },
     TemplateCategoryID: {
       get() {
       

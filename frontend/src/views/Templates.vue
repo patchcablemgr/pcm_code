@@ -16,7 +16,7 @@
                 :PortConnectorData="PortConnectorData"
                 :PortOrientationData="PortOrientationData"
                 :MediaData="MediaData"
-                :PreviewDataIndex="GetTemplateIndex(ActivePreviewTemplateID, 'preview')"
+                :PreviewDataIndex="GetTemplateIndex(ActivePreviewTemplateID, 'workspace')"
                 Context="preview"
                 :TemplateFaceSelected="TemplateFaceSelected"
                 :PartitionAddressSelected="PartitionAddressSelected"
@@ -432,13 +432,13 @@ export default {
     CabinetData: function(){
       
       const vm = this
-      const Context = 'preview'
+      const Context = 'workspace'
       const StandardTemplateID = vm.StandardTemplateID
       const InsertTemplateID = vm.InsertTemplateID
       const GenericCabinet = vm.GenericCabinet
       const ActivePreviewTemplateID = vm.ActivePreviewTemplateID
       const ActivePreviewTemplateIndex = vm.GetTemplateIndex(ActivePreviewTemplateID, Context)
-      const ActivePreviewTemplate = vm.TemplateData[Context][ActivePreviewTemplateIndex]
+      const ActivePreviewTemplate = vm.Templates[Context][ActivePreviewTemplateIndex]
 
       const CabinetData =  JSON.parse(JSON.stringify(GenericCabinet), function(key, value) {
         if(key == 'id') {
@@ -1685,12 +1685,13 @@ export default {
 
       // Initial variables
       const vm = this
+      const Context = 'workspace'
 
       // Get template index
-      const TemplateIndex = vm.GetTemplateIndex(vm.ActivePreviewTemplateID, 'preview')
+      const TemplateIndex = vm.GetTemplateIndex(vm.ActivePreviewTemplateID, Context)
 
       // Get template
-      const ObjectPreviewData = vm.TemplateData.preview[TemplateIndex]
+      const ObjectPreviewData = vm.Templates[Context][TemplateIndex]
 
       // Return template
       return ObjectPreviewData
@@ -1864,8 +1865,8 @@ export default {
         }
       })
 
-      commit('pcmTemplates/UPDATE_template', {pcmContext:Context, data:StandardTemplateUpdated})
-      commit('pcmTemplates/UPDATE_template', {pcmContext:Context, data:InsertTemplateUpdated})
+      vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:StandardTemplateUpdated})
+      vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:InsertTemplateUpdated})
 
     },
     categoryGET: function(SetCategoryToDefault = false) {

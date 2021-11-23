@@ -40,10 +40,10 @@ export default {
     GET_Objects(state, data) {
 
       state.Objects.actual = data
-      state.CategoriesReady = true
+      state.ObjectsReady = true
     },
     ADD_Object(state, {pcmContext, data}) {
-      console.log('here2')
+      
       state.Objects[pcmContext].push(data)
     },
     PATCH_Objects(state, data) {

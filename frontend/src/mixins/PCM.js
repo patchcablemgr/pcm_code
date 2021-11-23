@@ -7,9 +7,10 @@ export const PCM = {
             // Initial variables
             const vm = this
             Context = (Context) ? Context : vm.Context
+            const Objects = vm.Objects
       
             // Get object index
-            const ObjectIndex = vm.ObjectData[Context].findIndex((object) => object.id == ObjectID);
+            const ObjectIndex = Objects[Context].findIndex((object) => object.id == ObjectID);
       
             return ObjectIndex
         },
@@ -18,17 +19,18 @@ export const PCM = {
             // Store variables
             const vm = this
             const Context = vm.Context
-            const TemplateData = vm.TemplateData
+            const Templates = vm.Templates
+            const Objects = vm.Objects
         
             // Get object index
-            const ObjectIndex = vm.ObjectData[Context].findIndex((object) => object.id == ObjectID);
+            const ObjectIndex = Objects[Context].findIndex((object) => object.id == ObjectID);
         
             // Get template index
-            const TemplateID = vm.ObjectData[Context][ObjectIndex].template_id
-            const TemplateIndex = TemplateData[Context].findIndex((template) => template.id == TemplateID);
+            const TemplateID = Objects[Context][ObjectIndex].template_id
+            const TemplateIndex = Templates[Context].findIndex((template) => template.id == TemplateID);
         
             // Get template
-            const ObjectPreviewData = TemplateData[Context][TemplateIndex]
+            const ObjectPreviewData = Templates[Context][TemplateIndex]
         
             const ObjectSize = ObjectPreviewData.ru_size
         
@@ -61,7 +63,6 @@ export const PCM = {
             Context = (Context) ? Context : vm.Context
       
             // Get object index
-            console.log('Templates: '+JSON.stringify(Templates))
             const TemplateIndex = Templates[Context].findIndex((template) => template.id == TemplateID);
       
             return TemplateIndex

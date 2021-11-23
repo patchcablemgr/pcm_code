@@ -133,11 +133,17 @@ export default {
 
       axios.get('/api/templates')
       .then(response => {
+
+        // Store template data
         context.commit('GET_Templates', response.data)
+
+        // Generate pseudo data for templates
         response.data.forEach(function(element) {
           context.dispatch('GeneratePseudoData', {pcmContext:'template', Template:element})
-          context.commit('Templates_Ready')
         })
+
+        // Flag template data as ready
+        context.commit('Templates_Ready')
       })
       
     },

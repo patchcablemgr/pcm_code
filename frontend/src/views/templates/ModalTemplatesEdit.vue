@@ -110,7 +110,6 @@
       <modal-edit-template-port-id
         v-if="PartitionType == 'connectable'"
         :Context="Context"
-        :TemplateData="TemplateData"
         :TemplateFaceSelected="TemplateFaceSelected"
         :PartitionAddressSelected="PartitionAddressSelected"
         :PreviewPortID="PreviewPortID"
@@ -131,8 +130,10 @@
 import { BContainer, BRow, BCol, BCard, BForm, BButton, BFormInput, BFormSelect, BFormCheckbox, BCardText, } from 'bootstrap-vue'
 import Ripple from 'vue-ripple-directive'
 import ModalEditTemplatePortId from './ModalEditTemplatePortId.vue'
+import { PCM } from '@/mixins/PCM.js'
 
 export default {
+  mixins: [PCM],
   components: {
     BContainer,
     BRow,
@@ -151,9 +152,6 @@ export default {
     Ripple,
   },
   props: {
-    TemplateData: {type: Object},
-    CategoryData: {type: Array},
-    ObjectData: {type: Object},
     Context: {type: String},
     TemplateFaceSelected: {type: Object},
     PartitionAddressSelected: {type: Object},
@@ -165,6 +163,15 @@ export default {
     }
   },
   computed: {
+    Categories() {
+      return this.$store.state.pcmCategories.Categories
+    },
+    Templates() {
+      return this.$store.state.pcmTemplates.Templates
+    },
+    Objects() {
+      return this.$store.state.pcmObjects.Objects
+    },
     ObjectName: {
       get() {
 
@@ -188,7 +195,7 @@ export default {
         const vm = this
         const Template = vm.GetTemplate()
 
-        if(typeof Template !== 'undefined') {
+        if(Template) {
           return Template.name
         } else {
           return '-'
@@ -205,7 +212,7 @@ export default {
         const vm = this
         const Template = vm.GetTemplate()
 
-        if(typeof Template !== 'undefined') {
+        if(Template) {
           return Template.category_id
         } else {
           return '-'
@@ -230,30 +237,13 @@ export default {
     },
   },
   methods: {
-    GetObjectIndex: function() {
-
-      const vm = this
-      const Context = vm.Context
-      const ObjectID = vm.PartitionAddressSelected[Context].object_id
-      const ObjectIndex = vm.ObjectData[Context].findIndex((object) => object.id == ObjectID);
-
-      return ObjectIndex
-    },
-    GetTemplateIndex: function() {
-
-      const vm = this
-      const Context = vm.Context
-      const TemplateID = vm.PartitionAddressSelected[Context].template_id
-      const TemplateIndex = vm.TemplateData[Context].findIndex((template) => template.id == TemplateID);
-
-      return TemplateIndex
-    },
     GetObject: function() {
 
       const vm = this
       const Context = vm.Context
-      const ObjectIndex = vm.GetObjectIndex()
-      const Object = vm.ObjectData[Context][ObjectIndex]
+      const ObjectID = vm.PartitionAddressSelected[Context].object_id
+      const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
+      const Object = vm.Objects[Context][ObjectIndex]
 
       return Object
     },
@@ -261,37 +251,54 @@ export default {
 
       const vm = this
       const Context = vm.Context
-      const TemplateIndex = vm.GetTemplateIndex()
-      const Template = vm.TemplateData[Context][TemplateIndex]
+      const ObjectID = vm.PartitionAddressSelected[Context].object_id
+
+      let Template
+      if(ObjectID) {
+        const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
+        const Object = vm.Objects[Context][ObjectIndex]
+        const TemplateID = Object.template_id
+        const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+        Template = vm.Templates[Context][TemplateIndex]
+      } else {
+        Template = false
+      }
 
       return Template
     },
     GetPartition: function() {
 
       const vm = this
-      const TemplateData = vm.TemplateData
       const Context = vm.Context
-      const TemplateIndex = vm.GetTemplateIndex()
-      const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
-      const PartitionAddress = vm.PartitionAddressSelected[Context][TemplateFaceSelected]
+      const ObjectID = vm.PartitionAddressSelected[Context].object_id
 
-      if(TemplateIndex !== -1) {
+      let Partition
+      if(ObjectID) {
+        const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
+        const Object = vm.Objects[Context][ObjectIndex]
+        const TemplateID = Object.template_id
+        const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
 
-        // Store variables
-        let WorkingPartition = TemplateData[Context][TemplateIndex].blueprint[TemplateFaceSelected]
-        let Partition
+        const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
+        const PartitionAddress = vm.PartitionAddressSelected[Context][TemplateFaceSelected]
 
-        PartitionAddress.forEach(function(PartitionAddressIndex){
-          Partition = WorkingPartition[PartitionAddressIndex]
-          WorkingPartition = WorkingPartition[PartitionAddressIndex].children
-        })
+        if(TemplateIndex !== -1) {
 
-        return Partition
-      } else {
+          // Store variables
+          let WorkingPartition = vm.Templates[Context][TemplateIndex].blueprint[TemplateFaceSelected]
 
-        return false
+          PartitionAddress.forEach(function(PartitionAddressIndex){
+            Partition = WorkingPartition[PartitionAddressIndex]
+            WorkingPartition = WorkingPartition[PartitionAddressIndex].children
+          })
+
+        } else {
+
+          Partition = false
+        }
       }
 
+      return Partition
     },
     GetCategoryOptions: function() {
 
@@ -300,9 +307,9 @@ export default {
       let WorkingArray = []
 
       // Populate working array with data to be used as select options
-      for(let i = 0; i < vm.CategoryData.length; i++) {
+      for(let i = 0; i < vm.Categories.length; i++) {
 
-        let Category = vm.CategoryData[i]
+        let Category = vm.Categories[i]
         WorkingArray.push({'value': Category.id, 'text': Category.name})
       }
 

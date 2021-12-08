@@ -24,8 +24,7 @@
         <dd class="col-sm-8">
           <b-form-input
             name="name"
-            v-model="TemplateData[Context][PreviewDataIndex].name"
-            @change="$emit('TemplateNameUpdated', $event)"
+            v-model="TemplateName"
             placeholder="New_Template"
           />
         </dd>
@@ -49,9 +48,8 @@
         <dd class="col-sm-8">
           <b-form-select
             name="category"
-            v-model="TemplateData[Context][PreviewDataIndex].category_id"
+            v-model="TemplateCategory"
             :options="GetCategoryOptions()"
-            @change="$emit('TemplateCategoryUpdated', $event)"
           />
         </dd>
       </dl>
@@ -66,7 +64,6 @@
             name="type"
             v-model="TemplateType"
             :options="optionsTemplateType"
-            @change="$emit('TemplateTypeUpdated', $event)"
             stacked
           />
         </dd>
@@ -140,7 +137,7 @@
         <dd class="col-sm-8">
           <b-form-radio-group
             name="partitionType"
-            v-model="ComputedInputTemplatePartitionType"
+            v-model="PartitionType"
             :options="optionsTemplatePartitionType"
             stacked
             :disabled="PartitionTypeDisabled"
@@ -242,18 +239,18 @@
 
       <div
         class="h5 font-weight-bolder m-0"
-        v-show="ComputedInputTemplatePartitionType == 'connectable'"
+        v-show="PartitionType == 'connectable'"
       >
         Connectable:</div>
       <hr
         class="separator mt-0"
-        v-show="ComputedInputTemplatePartitionType == 'connectable'"
+        v-show="PartitionType == 'connectable'"
       >
 
       <!-- Port ID -->
       <dl
         class="row"
-        v-show="ComputedInputTemplatePartitionType == 'connectable'"
+        v-show="PartitionType == 'connectable'"
       >
         <dt class="col-sm-3">
           Port ID
@@ -269,14 +266,14 @@
           </b-button>
         </dd>
         <dd class="col-sm-8 my-auto">
-          {{ PreviewPortID }}
+          PreviewPortID
         </dd>
       </dl>
 
       <!-- Port Layout -->
       <dl
         class="row"
-        v-show="ComputedInputTemplatePartitionType == 'connectable'"
+        v-show="PartitionType == 'connectable'"
       >
         <dt class="col-sm-4">
           Port Layout
@@ -290,7 +287,7 @@
               <b-col>
                 <b-form-input
                   name="portLayoutCol"
-                  :disabled="ComputedInputTemplatePartitionType != 'connectable'"
+                  :disabled="PartitionType != 'connectable'"
                   v-model="ComputedInputTemplatePortLayoutCols"
                   type="number"
                   min=1
@@ -304,7 +301,7 @@
               <b-col>
                 <b-form-input
                   name="portLayoutRow"
-                  :disabled="ComputedInputTemplatePartitionType != 'connectable'"
+                  :disabled="PartitionType != 'connectable'"
                   v-model="ComputedInputTemplatePortLayoutRows"
                   type="number"
                   min=1
@@ -318,7 +315,7 @@
       <!-- Media -->
       <dl
         class="row"
-        v-show="ComputedInputTemplatePartitionType == 'connectable'"
+        v-show="PartitionType == 'connectable'"
       >
         <dt class="col-sm-4">
           Medium
@@ -335,7 +332,7 @@
       <!-- Port Connector -->
       <dl
         class="row"
-        v-show="ComputedInputTemplatePartitionType == 'connectable'"
+        v-show="PartitionType == 'connectable'"
       >
         <dt class="col-sm-4">
           Port Type
@@ -352,7 +349,7 @@
       <!-- Port Orientation -->
       <dl
         class="row"
-        v-show="ComputedInputTemplatePartitionType == 'connectable'"
+        v-show="PartitionType == 'connectable'"
       >
         <dt class="col-sm-4">
           Port Orientation
@@ -372,18 +369,18 @@
 
       <div
         class="h5 font-weight-bolder m-0"
-        v-show="ComputedInputTemplatePartitionType == 'enclosure'"
+        v-show="PartitionType == 'enclosure'"
       >
         Enclosure:</div>
       <hr
         class="separator mt-0"
-        v-show="ComputedInputTemplatePartitionType == 'enclosure'"
+        v-show="PartitionType == 'enclosure'"
       >
 
       <!-- Enclosure Layout -->
       <dl
         class="row"
-        v-show="ComputedInputTemplatePartitionType == 'enclosure'"
+        v-show="PartitionType == 'enclosure'"
       >
         <dt class="col-sm-4">
           Enclosure Layout
@@ -397,7 +394,7 @@
               <b-col>
                 <b-form-input
                   name="encLayoutCol"
-                  :disabled="ComputedInputTemplatePartitionType != 'enclosure'"
+                  :disabled="PartitionType != 'enclosure'"
                   v-model="ComputedInputTemplateEncLayoutCols"
                   type="number"
                   min=1
@@ -411,7 +408,7 @@
               <b-col>
                 <b-form-input
                   name="encLayoutRow"
-                  :disabled="ComputedInputTemplatePartitionType != 'enclosure'"
+                  :disabled="PartitionType != 'enclosure'"
                   v-model="ComputedInputTemplateEncLayoutRows"
                   type="number"
                   min=1
@@ -448,13 +445,12 @@
     <!-- Port ID Modal -->
     <modal-edit-template-port-id
       ModalID="modal-edit-template-port-id-form"
-      v-if="ComputedInputTemplatePartitionType == 'connectable'"
-      Context="preview"
-      :TemplateData="TemplateData"
+      v-if="PartitionType == 'connectable'"
+      Context="workspace"
       :TemplateFaceSelected="TemplateFaceSelected"
       :PartitionAddressSelected="PartitionAddressSelected"
       :SelectedPortFormatIndex="SelectedPortFormatIndex"
-      :PreviewPortID="PreviewPortID"
+      PreviewPortID="PreviewPortID"
       v-on:TemplatePartitionPortFormatFieldSelected="$emit('TemplatePartitionPortFormatFieldSelected', $event)"
       v-on:TemplatePartitionPortFormatValueUpdated="$emit('TemplatePartitionPortFormatValueUpdated', $event)"
       v-on:TemplatePartitionPortFormatTypeUpdated="$emit('TemplatePartitionPortFormatTypeUpdated', $event)"
@@ -473,8 +469,10 @@ import { BContainer, BRow, BCol, BForm, BFormGroup, BFormInput, BFormSelect, BFo
 import Ripple from 'vue-ripple-directive'
 import ModalTemplatesCategory from './ModalTemplatesCategory.vue'
 import ModalEditTemplatePortId from './ModalEditTemplatePortId.vue'
+import { PCM } from '../../mixins/PCM.js'
 
 export default {
+  mixins: [PCM],
   components: {
     BContainer,
     BRow,
@@ -496,22 +494,18 @@ export default {
   },
   props: {
     Context: {type: String},
-    TemplateData: {type: Object},
     TemplateFaceSelected: {type: Object},
     PartitionAddressSelected: {type: Object},
     SelectedPortFormatIndex: {type: Object},
-    CategoryData: {type: Array},
     SelectedCategoryID: {type: Number},
     PortConnectorData: {type: Array},
     PortOrientationData: {type: Array},
     MediaData: {type: Array},
-    PreviewDataIndex: {type: Number},
     AddChildPartitionDisabled: {type: Boolean},
     AddSiblingPartitionDisabled: {type: Boolean},
     RemovePartitionDisabled: {type: Boolean},
     PartitionTypeDisabled: {type: Boolean},
     SelectedPortFormat: {type: Array},
-    PreviewPortID: {type: String},
   },
   data() {
     return {
@@ -540,13 +534,21 @@ export default {
     Categories() {
       return this.$store.state.pcmCategories.Categories
     },
+    Templates() {
+      return this.$store.state.pcmTemplates.Templates
+    },
+    Objects() {
+      return this.$store.state.pcmObjects.Objects
+    },
     TemplateFunction: {
       get() {
 
         const vm = this
         const Context = vm.Context
-        const TemplateIndex = vm.PreviewDataIndex
-        const TemplateFunction = vm.TemplateData[Context][TemplateIndex].function
+        const ObjectID = vm.PartitionAddressSelected[Context].object_id
+        const TemplateID = vm.GetTemplateID(ObjectID, Context)
+        const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+        const TemplateFunction = vm.Templates[Context][TemplateIndex].function
 
         return TemplateFunction
       },
@@ -560,8 +562,10 @@ export default {
 
         const vm = this
         const Context = vm.Context
-        const TemplateIndex = vm.PreviewDataIndex
-        const MountConfig = vm.TemplateData[Context][TemplateIndex].mount_config
+        const ObjectID = vm.PartitionAddressSelected[Context].object_id
+        const TemplateID = vm.GetTemplateID(ObjectID, Context)
+        const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+        const MountConfig = vm.Templates[Context][TemplateIndex].mount_config
 
         return MountConfig
       },
@@ -578,31 +582,100 @@ export default {
         return vm.GetPartitionDirection()
       }
     },
-    TemplateType: {
-      get() {
-        // Store variables
-        const vm = this
-        const Context = vm.Context
-        const PreviewDataIndex = vm.PreviewDataIndex
-        const TemplateType = vm.TemplateData[Context][PreviewDataIndex].type
-
-        return TemplateType
-      },
-      set() {
-        return false
-      }
-    },
     ComputedInputTemplateRUSize: function() {
 
       // Store variables
       const vm = this
       const Context = vm.Context
-      const PreviewDataIndex = vm.PreviewDataIndex
-      const TemplateRUSize = vm.TemplateData[Context][PreviewDataIndex].ru_size
+      const ObjectID = vm.PartitionAddressSelected[Context].object_id
+      const TemplateID = vm.GetTemplateID(ObjectID, Context)
+      const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+      const TemplateRUSize = vm.Templates[Context][TemplateIndex].ru_size
 
       return TemplateRUSize
     },
-    ComputedInputTemplatePartitionType: {
+    TemplateName: {
+      get() {
+
+        const vm = this
+        const Context = vm.Context
+        const ObjectID = vm.PartitionAddressSelected[Context].object_id
+        const TemplateID = vm.GetTemplateID(ObjectID, Context)
+        const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+        const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
+        const TemplateName = Template.name
+
+        return TemplateName
+      },
+      set(newValue) {
+
+        const vm = this
+        const Context = vm.Context
+        const TemplateID = vm.PartitionAddressSelected[Context].template_id
+        const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+        const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
+
+        Template.name = newValue
+        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
+      }
+    },
+    TemplateCategory: {
+      get() {
+
+        const vm = this
+        const Context = vm.Context
+        const ObjectID = vm.PartitionAddressSelected[Context].object_id
+        const TemplateID = vm.GetTemplateID(ObjectID, Context)
+        const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+        const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
+        const TemplateCategory = Template.category_id
+
+        return TemplateCategory
+      },
+      set(newValue) {
+
+        const vm = this
+        const Context = vm.Context
+        const ObjectID = vm.PartitionAddressSelected[Context].object_id
+        const TemplateID = vm.GetTemplateID(ObjectID, Context)
+        const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+        const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
+
+        Template.category_id = newValue
+        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
+      }
+    },
+    TemplateType: {
+      get() {
+
+        // Store variables
+        const vm = this
+        const Context = vm.Context
+        const TemplateID = vm.PartitionAddressSelected[Context].template_id
+        const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+        const Template = vm.Templates[Context][TemplateIndex]
+        const TemplateType = Template.type
+
+        return TemplateType
+      },
+      set(newValue) {
+        
+        const vm = this
+        const WorkspaceStandardID = vm.$store.state.pcmProps.WorkspaceStandardID
+        const WorkspaceInsertID = vm.$store.state.pcmProps.WorkspaceInsertID
+			
+        // Set active preview template index
+        const ActiveWorkspaceID = (newValue == 'insert') ? WorkspaceInsertID : WorkspaceStandardID
+
+        vm.$emit('SetLocationID', ActiveWorkspaceID)
+        
+        // Reset PartitionAddressSelected
+        vm.PartitionAddressSelected.workspace.object_id = ActiveWorkspaceID
+        vm.PartitionAddressSelected.workspace.front = [0]
+        vm.PartitionAddressSelected.workspace.rear = [0]
+      }
+    },
+    PartitionType: {
       get() {
 
         // Store variables
@@ -614,11 +687,43 @@ export default {
       },
       set(newValue) {
 
-        // Store variables
         const vm = this
+        const Context = vm.Context
+        const TemplateID = vm.PartitionAddressSelected[Context].template_id
+        const TemplateFace = vm.TemplateFaceSelected[Context]
+        const TemplatePartitionAddress = vm.PartitionAddressSelected[Context][TemplateFace]
 
-        // Emit new value
-        vm.$emit('TemplatePartitionTypeUpdated', newValue)
+        const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+        const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
+        const Blueprint = Template.blueprint[TemplateFace]
+        let Partition = vm.GetPartition(Blueprint, TemplatePartitionAddress)
+
+        Partition.type = newValue
+
+        if(newValue == 'connectable') {
+          Partition.port_format = vm.$store.state.pcmTemplates.DefaultPortFormat
+          Partition.port_layout = vm.$store.state.pcmTemplates.DefaultPortLayout
+
+          // Port media type
+          const defaultMediaIndex = vm.$store.state.pcmProps.Medium.findIndex((media) => media.default)
+          const defaultMediaValue = vm.$store.state.pcmProps.Medium[defaultMediaIndex].value
+          Partition.media = defaultMediaValue
+
+          // Port media type
+          const defaultPortConnectorIndex = vm.$store.state.pcmProps.Connectors.findIndex((connector) => connector.default)
+          const defaultPortConnectorValue = vm.$store.state.pcmProps.Connectors[defaultPortConnectorIndex].value
+          Partition.port_connector = defaultPortConnectorValue
+
+          // Port media type
+          const defaultPortOrientationIndex = vm.$store.state.pcmProps.Orientations.findIndex((orientation) => orientation.default)
+          const defaultPortOrientationValue = vm.$store.state.pcmProps.Orientations[defaultPortOrientationIndex].value
+          Partition.port_orientation = defaultPortOrientationValue
+
+        } else if(newValue == 'enclosure') {
+          Partition.enc_layout = vm.$store.state.pcmTemplates.DefaultEncLayout
+        }
+
+        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
 
       }
     },
@@ -627,11 +732,7 @@ export default {
 
         // Store variables
         const vm = this
-        const Context = vm.Context
-        const TemplateFaceSelected = vm.TemplateFaceSelected
-        const PartitionAddressSelected = vm.PartitionAddressSelected
-        const PartitionAddress = PartitionAddressSelected[Context][TemplateFaceSelected[Context]]
-        const Partition = vm.GetPartition(PartitionAddress)
+        const Partition = vm.GetSelectedPartition()
         
         // Return selected partition type
         return Partition.units
@@ -807,11 +908,12 @@ export default {
     onSubmit: function() {
 
       const vm = this
-      const TemplateData = vm.TemplateData
       const Context = vm.Context
-      const PreviewDataIndex = vm.PreviewDataIndex
+      const ObjectID = vm.PartitionAddressSelected[Context].object_id
+      const TemplateID = vm.GetTemplateID(ObjectID, Context)
+      const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
 
-      console.log("Debug (Submit): "+JSON.stringify(TemplateData[Context][PreviewDataIndex]))
+      console.log("Debug (Submit): "+JSON.stringify(vm.Templates[Context][TemplateIndex]))
       this.$emit('FormSubmit')
     },
     onReset: function() {
@@ -821,10 +923,11 @@ export default {
     GetRUSizeMin() {
 
       const vm = this
-      const TemplateData = vm.TemplateData
       const Context = vm.Context
-      const PreviewDataIndex = vm.PreviewDataIndex
-      const PreviewData = TemplateData[Context][PreviewDataIndex]
+      const ObjectID = vm.PartitionAddressSelected[Context].object_id
+      const TemplateID = vm.GetTemplateID(ObjectID, Context)
+      const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+      const PreviewData = vm.Templates[Context][TemplateIndex]
       const TemplateFaceArray = ['front','rear']
       let RUSizeMin = 1
 
@@ -856,31 +959,16 @@ export default {
 
       // Store variables
       const vm = this
-      const TemplateData = vm.TemplateData
       const Context = vm.Context
       const TemplateFace = vm.TemplateFaceSelected[Context]
       const PartitionAddress = vm.PartitionAddressSelected[Context][TemplateFace]
-      const SelectedPartition = vm.GetPartition(PartitionAddress)
+      const TemplateID = vm.PartitionAddressSelected[Context].template_id
+      const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+      const Template = vm.Templates[Context][TemplateIndex]
+      const Blueprint = Template.blueprint[TemplateFace]
+      const SelectedPartition = vm.GetPartition(Blueprint, PartitionAddress)
 
       return SelectedPartition
-    },
-    GetPartition: function(PartitionAddress) {
-
-      // Store variables
-      const vm = this
-      const TemplateData = vm.TemplateData
-      const Context = vm.Context
-      const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
-      const PreviewDataIndex = vm.PreviewDataIndex
-      let WorkingPartition = TemplateData[Context][PreviewDataIndex].blueprint[TemplateFaceSelected]
-      let Partition
-
-      PartitionAddress.forEach(function(PartitionAddressIndex){
-          Partition = WorkingPartition[PartitionAddressIndex]
-          WorkingPartition = WorkingPartition[PartitionAddressIndex].children
-      })
-
-      return Partition
     },
     GetPartitionDirection: function(PartitionAddress=false) {
 
@@ -932,10 +1020,11 @@ export default {
 
       // Store variables
       const vm = this
-      const TemplateData = vm.TemplateData
       const Context = vm.Context
-      const PreviewDataIndex = vm.PreviewDataIndex
-      const PreviewData = TemplateData[Context][PreviewDataIndex]
+      const ObjectID = vm.PartitionAddressSelected[Context].object_id
+      const TemplateID = vm.GetTemplateID(ObjectID, Context)
+      const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+      const PreviewData = vm.Templates[Context][TemplateIndex]
       const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
       const PartitionAddressSelected = JSON.parse(JSON.stringify(vm.PartitionAddressSelected[Context][TemplateFaceSelected]))
       const SelectedPartitionDirection = vm.ComputedSelectedPartitionDirection
@@ -977,10 +1066,11 @@ export default {
 
       // Store variables
       const vm = this
-      const TemplateData = vm.TemplateData
       const Context = vm.Context
-      const PreviewDataIndex = vm.PreviewDataIndex
-      const PreviewData = TemplateData[Context][PreviewDataIndex]
+      const ObjectID = vm.PartitionAddressSelected[Context].object_id
+      const TemplateID = vm.GetTemplateID(ObjectID, Context)
+      const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+      const PreviewData = vm.Templates[Context][TemplateIndex]
       const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
       const PartitionAddressSelected = vm.PartitionAddressSelected[Context][TemplateFaceSelected]
       const SelectedPartitionDepth = PartitionAddressSelected.length

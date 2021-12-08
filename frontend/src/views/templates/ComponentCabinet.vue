@@ -3,29 +3,26 @@
   <table>
     <tr>
       <td class="pcm_cabinet" colspan=3>
-        {{ CabinetData.name }}
+        {{ LocationData.name }}
       </td>
     </tr>
     <tr
       class="pcm_cabinet_row"
-      v-for="CabinetRU in CabinetData.size"
+      v-for="CabinetRU in LocationData.size"
       :key="CabinetRU"
-      :CabinetID="CabinetData.id"
+      :CabinetID="LocationID"
     >
       <td class="pcm_cabinet">{{ CabinetRU }}</td>
       <td
-        v-if=" RackObjectID(CabinetData.id, CabinetRU) !== false "
+        v-if=" RackObjectID(LocationID, CabinetRU) !== false "
         class="pcm_cabinet_ru"
-        :rowspan=" GetObjectSize( RackObjectID(CabinetData.id, CabinetRU) ) "
+        :rowspan=" GetObjectSize( RackObjectID(LocationID, CabinetRU) ) "
       >
         <component-object
-          :ObjectData="ObjectData"
-          :TemplateData="TemplateData"
-          :CategoryData="CategoryData"
-          :TemplateRUSize=" GetObjectSize( RackObjectID(CabinetData.id, CabinetRU) ) "
+          :TemplateRUSize=" GetObjectSize( RackObjectID(LocationID, CabinetRU) ) "
           :InitialPartitionAddress=[]
           :Context="Context"
-          :ObjectID="RackObjectID(CabinetData.id, CabinetRU)"
+          :ObjectID="RackObjectID(LocationID, CabinetRU)"
           :TemplateFaceSelected="TemplateFaceSelected"
           :PartitionAddressSelected="PartitionAddressSelected"
           :PartitionAddressHovered="PartitionAddressHovered"
@@ -35,8 +32,8 @@
         />
       </td>
       <td
-        v-else-if="!RUIsOccupied(CabinetData.id, CabinetRU)"
-        @drop="HandleDrop(CabinetData.id, TemplateFaceSelected.preview, CabinetRU, $event)"
+        v-else-if="!RUIsOccupied(LocationID, CabinetRU)"
+        @drop="HandleDrop(LocationID, TemplateFaceSelected.preview, CabinetRU, $event)"
         @dragover.prevent
         @dragenter.prevent
         class="pcm_cabinet_ru"
@@ -45,7 +42,7 @@
     </tr>
     <tr>
       <td class="pcm_cabinet" colspan=3>
-        {{ CabinetData.name }}
+        {{ LocationData.name }}
       </td>
     </tr>
   </table>
@@ -68,10 +65,7 @@ export default {
     CartDropdown,
   },
   props: {
-    TemplateData: {type: Object},
-    CabinetData: {type: Object},
-    CategoryData: {type: Array},
-    ObjectData: {type: Object},
+    LocationID: {type: Number},
     Context: {type: String},
     TemplateFaceSelected: {type: Object},
     PartitionAddressSelected: {type: Object},
@@ -88,48 +82,43 @@ export default {
     Templates: function() {
       return this.$store.state.pcmTemplates.Templates
     },
-  },
-  methods: {
-    GetPreviewData: function(ObjectID) {
+    Locations: function() {
+      return this.$store.state.pcmLocations.Locations
+    },
+    LocationData: function() {
 
-      // Initial variables
       const vm = this
       const Context = vm.Context
+      const LocationID = vm.LocationID
+      const LocationIndex = vm.Locations[Context].findIndex((location) => location.id == LocationID)
 
-      // Get object index
-      const ObjectIndex = vm.GetObjectIndex(ObjectID)
-
-      // Get template index
-      const TemplateID = vm.Objects[Context][ObjectIndex].template_id
-      const TemplateIndex = vm.GetTemplateIndex(TemplateID)
-
-      // Get template
-      const ObjectPreviewData = vm.Templates[Context][TemplateIndex]
-
-      // Return template
-      return ObjectPreviewData
-    },
+      return vm.Locations[Context][LocationIndex]
+    }
+  },
+  methods: {
     RackObjectID: function(CabinetID, CabinetRU) {
       
       // Initial variables
       const vm = this
       const Context = vm.Context
-      const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
+      const TemplateFace = vm.TemplateFaceSelected[Context]
 
       const ObjectIndex = vm.Objects[Context].findIndex(function(Object, ObjectIndex) {
         if(Object.location_id == CabinetID && Object.cabinet_ru == CabinetRU) {
           const ObjectCabinetFace = Object.cabinet_front
           const ObjectID = Object.id
-          const ObjectPreviewData = vm.GetPreviewData(ObjectID)
-          const TemplateMountConfig = ObjectPreviewData.mount_config
+          const TemplateID = vm.GetTemplateID(ObjectID, Context)
+          const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+          const Template = vm.Templates[Context][TemplateIndex]
+          const TemplateMountConfig = Template.mount_config
 
-          if(ObjectCabinetFace == TemplateFaceSelected || TemplateMountConfig == "4-post") {
+          if(ObjectCabinetFace == TemplateFace || TemplateMountConfig == "4-post") {
             return true
           }
         }
       })
 
-      const RackObjectID = (ObjectIndex !== -1) ? vm.ObjectData[Context][ObjectIndex].id : false
+      const RackObjectID = (ObjectIndex !== -1) ? vm.Objects[Context][ObjectIndex].id : false
 
       return RackObjectID
     },
@@ -181,7 +170,7 @@ export default {
       const TemplateFace = event.dataTransfer.getData('template_face')
 
       const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-      const Template = vm.TemplateData[Context][TemplateIndex]
+      const Template = vm.Templates[Context][TemplateIndex]
       const TemplateType = Template.type
 
       if(TemplateType == 'standard') {

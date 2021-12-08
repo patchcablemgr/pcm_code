@@ -298,9 +298,6 @@
     <modal-edit-template-category
       :Context="Context"
       ModalTitle="Category"
-      :TemplateData="TemplateData"
-      :CategoryData="CategoryData"
-      :ObjectData="ObjectData"
       :PartitionAddressSelected="PartitionAddressSelected"
       @TemplateCategoryEdited=" $emit('TemplateEdited', $event) "
     />
@@ -309,7 +306,6 @@
     <modal-edit-template-port-id
       ModalID="modal-edit-template-port-id-details"
       :Context="Context"
-      :TemplateData="TemplateData"
       :TemplateFaceSelected="TemplateFaceSelected"
       :PartitionAddressSelected="PartitionAddressSelected"
       PreviewPortID="temp"
@@ -341,8 +337,10 @@ import ModalEditTemplateName from './ModalEditTemplateName.vue'
 import ModalEditTemplateCategory from './ModalEditTemplateCategory.vue'
 import ModalEditTemplatePortId from './ModalEditTemplatePortId.vue'
 import Ripple from 'vue-ripple-directive'
+import { PCM } from '@/mixins/PCM.js'
 
 export default {
+  mixins: [PCM],
   components: {
 		BCard,
 		BCardTitle,
@@ -362,9 +360,6 @@ export default {
 	},
   props: {
     CardTitle: {type: String},
-    TemplateData: {type: Object},
-    CategoryData: {type: Array},
-    ObjectData: {type: Object},
     PortConnectorData: {type: Array},
     MediaData: {type: Array},
     Context: {type: String},
@@ -378,6 +373,15 @@ export default {
     }
   },
   computed: {
+    Categories() {
+      return this.$store.state.pcmCategories.Categories
+    },
+    Templates() {
+      return this.$store.state.pcmTemplates.Templates
+    },
+    Objects() {
+      return this.$store.state.pcmObjects.Objects
+    },
     ComputedObjectSelected: function() {
 
       const vm = this
@@ -400,10 +404,10 @@ export default {
         const ObjectID = vm.PartitionAddressSelected[Context].object_id
         let ReturnString = '-'
 
-        if(Context == 'preview') {
+        if(Context == 'workspace') {
           if(ObjectID) {
             const ObjectIndex = vm.GetObjectIndex(ObjectID)
-            ReturnString = vm.ObjectData[Context][ObjectIndex].name
+            ReturnString = vm.Objects[Context][ObjectIndex].name
           }
         } else {
           ReturnString = 'N/A'
@@ -421,8 +425,8 @@ export default {
         let ReturnString = '-'
         
         if(TemplateID) {
-          const TemplateIndex = vm.GetTemplateIndex(TemplateID)
-          ReturnString = vm.TemplateData[Context][TemplateIndex].name
+          const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+          ReturnString = vm.Templates[Context][TemplateIndex].name
         }
 
         return ReturnString
@@ -437,10 +441,10 @@ export default {
         let ReturnString = '-'
 
         if(TemplateID) {
-          const TemplateIndex = vm.GetTemplateIndex(TemplateID)
-          const CategoryID = vm.TemplateData[Context][TemplateIndex].category_id
+          const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+          const CategoryID = vm.Templates[Context][TemplateIndex].category_id
           const CategoryIndex = vm.GetCategoryIndex(CategoryID)
-          ReturnString = vm.CategoryData[CategoryIndex].name
+          ReturnString = vm.Categories[CategoryIndex].name
         }
 
         return ReturnString
@@ -470,8 +474,8 @@ export default {
         let ReturnString = '-'
 
         if(TemplateID) {
-          const TemplateIndex = vm.GetTemplateIndex(TemplateID)
-          ReturnString = vm.TemplateData[Context][TemplateIndex].type
+          const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+          ReturnString = vm.Templates[Context][TemplateIndex].type
           ReturnString = ReturnString.charAt(0).toUpperCase() + ReturnString.slice(1)
         }
 
@@ -487,8 +491,8 @@ export default {
         let ReturnString = '-'
 
         if(TemplateID) {
-          const TemplateIndex = vm.GetTemplateIndex(TemplateID)
-          ReturnString = vm.TemplateData[Context][TemplateIndex].function
+          const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+          ReturnString = vm.Templates[Context][TemplateIndex].function
           ReturnString = ReturnString.charAt(0).toUpperCase() + ReturnString.slice(1)
         }
 
@@ -504,8 +508,8 @@ export default {
         let ReturnString = '-'
 
         if(TemplateID) {
-          const TemplateIndex = vm.GetTemplateIndex(TemplateID)
-          ReturnString = vm.TemplateData[Context][TemplateIndex].ru_size
+          const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+          ReturnString = vm.Templates[Context][TemplateIndex].ru_size
         }
 
         return ReturnString
@@ -520,8 +524,8 @@ export default {
         let ReturnString = '-'
 
         if(TemplateID) {
-          const TemplateIndex = vm.GetTemplateIndex(TemplateID)
-          ReturnString = vm.TemplateData[Context][TemplateIndex].mount_config
+          const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+          ReturnString = vm.Templates[Context][TemplateIndex].mount_config
         }
 
         return ReturnString
@@ -539,8 +543,8 @@ export default {
         if(TemplateID) {
 
           // Get template
-          const TemplateIndex = vm.GetTemplateIndex(TemplateID)
-          const Template = vm.TemplateData[Context][TemplateIndex]
+          const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+          const Template = vm.Templates[Context][TemplateIndex]
 
           // Get partition
           const Blueprint = Template.blueprint[TemplateFace]
@@ -567,8 +571,8 @@ export default {
         if(TemplateID) {
 
           // Get template
-          const TemplateIndex = vm.GetTemplateIndex(TemplateID)
-          const Template = vm.TemplateData[Context][TemplateIndex]
+          const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+          const Template = vm.Templates[Context][TemplateIndex]
 
           // Get partition
           const Blueprint = Template.blueprint[TemplateFace]
@@ -604,8 +608,8 @@ export default {
         if(TemplateID) {
 
           // Get template
-          const TemplateIndex = vm.GetTemplateIndex(TemplateID)
-          const Template = vm.TemplateData[Context][TemplateIndex]
+          const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+          const Template = vm.Templates[Context][TemplateIndex]
 
           // Get partition
           const Blueprint = Template.blueprint[TemplateFace]
@@ -640,8 +644,8 @@ export default {
         if(TemplateID) {
 
           // Get template
-          const TemplateIndex = vm.GetTemplateIndex(TemplateID)
-          const Template = vm.TemplateData[Context][TemplateIndex]
+          const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+          const Template = vm.Templates[Context][TemplateIndex]
           const TemplateType = Template.type
 
           if(TemplateType == 'passive') {
@@ -694,22 +698,14 @@ export default {
 
       const vm = this
       const Context = vm.Context
-      const ObjectIndex = vm.ObjectData[Context].findIndex((object) => object.id == ObjectID);
+      const ObjectIndex = vm.Objects[Context].findIndex((object) => object.id == ObjectID);
       
       return ObjectIndex
-    },
-    GetTemplateIndex: function(TemplateID) {
-
-      const vm = this
-      const Context = vm.Context
-      const TemplateIndex = vm.TemplateData[Context].findIndex((template) => template.id == TemplateID);
-
-      return TemplateIndex
     },
     GetCategoryIndex: function(CategoryID) {
 
       const vm = this
-      const CategoryIndex = vm.CategoryData.findIndex((category) => category.id == CategoryID)
+      const CategoryIndex = vm.Categories.findIndex((category) => category.id == CategoryID)
 
       return parseInt(CategoryIndex)
     },

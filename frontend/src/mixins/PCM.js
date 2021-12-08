@@ -82,7 +82,7 @@ export const PCM = {
                 
             // Hovered partition should not be highlighted if it is a preview insert parent
             const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-            const HonorHover = (vm.TemplateData[Context][TemplateIndex].hasOwnProperty('pseudo')) ? false : true
+            const HonorHover = (vm.Templates[Context][TemplateIndex].id.toString().includes('pseudo')) ? false : true
 
             if(HonorHover) {
                 vm.PartitionAddressHovered[Context][TemplateFaceSelected] = (HoverState) ? PartitionAddress : false
@@ -95,13 +95,15 @@ export const PCM = {
             const vm = this
             const Context = vm.Context
             const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
+            const ObjectIDHovered = vm.PartitionAddressHovered[Context].object_id
             const PartitionAddressHovered = vm.PartitionAddressHovered[Context][TemplateFaceSelected]
+
             const PartitionAddress = vm.GetPartitionAddress(PartitionIndex)
-            const IDSelected = (Context == 'template') ? vm.PartitionAddressHovered[Context].template_id : vm.PartitionAddressHovered[Context].object_id
-            const ID = (Context == 'template') ? vm.GetTemplateID(vm.ObjectID) : vm.ObjectID
+            const ObjectID = vm.ObjectID
+            
             let PartitionIsHovered = false
 
-            if(PartitionAddressHovered.length === PartitionAddress.length && PartitionAddressHovered.every(function(value, index) { return value === PartitionAddress[index]}) && IDSelected == ID) {
+            if(PartitionAddressHovered.length === PartitionAddress.length && PartitionAddressHovered.every(function(value, index) { return value === PartitionAddress[index]}) && ObjectID == ObjectIDHovered) {
                 PartitionIsHovered = true
             }
             return PartitionIsHovered
@@ -118,7 +120,7 @@ export const PCM = {
             const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
                   
             // Clicked partition should not be highlighted if it is a preview insert parent
-            const HonorClick = (vm.TemplateData[Context][TemplateIndex].hasOwnProperty('pseudo')) ? false : true
+            const HonorClick = (vm.Templates[Context][TemplateIndex].id.toString().includes('pseudo')) ? false : true
       
             if(HonorClick) {
                 vm.PartitionAddressSelected[Context][TemplateFaceSelected] = PartitionAddress
@@ -146,6 +148,7 @@ export const PCM = {
 			// Locate template partition
 			let Partition = Blueprint
 			let PartitionCollection = Blueprint
+            
 			PartitionAddress.forEach(function(PartitionIndex) {
 				if(typeof PartitionCollection[PartitionIndex] !== 'undefined') {
 					Partition = PartitionCollection[PartitionIndex]
@@ -329,6 +332,137 @@ export const PCM = {
             }
         
             return Icon
+        },
+        GeneratePseudoData(Context, Template) {
+
+            const vm = this
+
+            let WorkingObjectData = []
+            let WorkingTemplateData = []
+            let PseudoObjectID = null
+            let PseudoTemplateID = null
+            let PseudoObjectParentID = null
+            let PseudoObjectParentFace = null
+            let PseudoObjectParentPartitionAddress = null
+            let PseudoObjectParentEnclosureAddress = null
+            const GenericObject = vm.$store.state.pcmProps.GenericObject
+            const GenericTemplate = vm.$store.state.pcmProps.GenericTemplate
+            const WorkspaceStandardID = vm.$store.state.pcmProps.WorkspaceStandardID
+            const WorkspaceInsertID = vm.$store.state.pcmProps.WorkspaceInsertID
+            const TemplateID = Template.id
+            const TemplateType = Template.type
+        
+            if (TemplateType == 'insert') {
+                
+                PseudoObjectParentFace = 'front'
+                PseudoObjectParentPartitionAddress = [0, 0]
+                PseudoObjectParentEnclosureAddress = [0, 0]
+                const InsertConstraints = Template.insert_constraints
+        
+                // Generate pseudo IDs
+                PseudoTemplateID = "pseudo-" + TemplateID
+                PseudoObjectID = "pseudo-" + TemplateID
+        
+                // Create pseudo object
+                WorkingObjectData.push(JSON.parse(JSON.stringify(GenericObject), function (Key, Value) {
+                    if (Key == 'id') {
+                        return PseudoObjectID
+                    } else if (Key == 'cabinet_front') {
+                        return 'front'
+                    } else if (Key == 'location_id') {
+                        return (Context == 'workspace') ? WorkspaceInsertID : null
+                    } else if (Key == 'cabinet_ru') {
+                        return 1
+                    } else if (Key == 'template_id') {
+                        return PseudoTemplateID
+                    } else if (Key == 'parent_id') {
+                        return PseudoObjectParentID
+                    } else {
+                        return Value
+                    }
+                }))
+        
+                // Create pseudo template
+                WorkingTemplateData.push(JSON.parse(JSON.stringify(GenericTemplate), function (Key, Value) {
+                    if (Key == 'id') {
+                        return PseudoTemplateID
+                    } else if (Key == 'name') {
+                        return Template.name
+                    } else if (Key == 'category_id') {
+                        return Template.category_id
+                    } else if (Key == 'type') {
+                        // Set pseudo template type, but avoid setting partition type
+                        if (Value === null) {
+                            return 'standard'
+                        } else {
+                            return Value
+                        }
+                    } else if (Key == 'ru_size') {
+                        // Set pseudo template RU size if this is the insert constraint origin ('standard' template type)
+                        return Math.ceil(InsertConstraints.part_layout.height / 2)
+                    } else if (Key == 'blueprint') {
+
+                        // Generate enclosure partition
+                        let EnclosurePartition = {
+                            'type': 'enclosure',
+                            'units': InsertConstraints.part_layout.height,
+                            'enc_layout': {
+                                'cols': InsertConstraints.enc_layout.cols,
+                                'rows': InsertConstraints.enc_layout.rows
+                            },
+                            'children': []
+                        }
+
+                        // Set pseudo template partition attributes
+                        Value.front[0].units = InsertConstraints.part_layout.width
+                        Value.front[0].children.push(EnclosurePartition)
+                        return Value
+            
+                    } else {
+            
+                        return Value
+                    }
+                }))
+            }
+        
+            // Create object
+            const ObjectID = TemplateID
+            WorkingObjectData.push(JSON.parse(JSON.stringify(GenericObject), function (Key, Value) {
+                if (Key == 'id') {
+                    return TemplateID
+                } else if (Key == 'template_id') {
+                    return TemplateID
+                } else if (Key == 'location_id') {
+                    return (Context == 'workspace' && TemplateType == 'standard') ? WorkspaceInsertID : Value
+                } else if (Key == 'cabinet_front') {
+                    return (Context == 'workspace' && TemplateType == 'standard') ? 'front' : Value
+                } else if (Key == 'cabinet_ru') {
+                    return (Context == 'workspace' && TemplateType == 'standard') ? 1 : Value
+                } else if (Key == 'parent_id') {
+                    return PseudoObjectID
+                } else if (Key == 'parent_face') {
+                    return PseudoObjectParentFace
+                } else if (Key == 'parent_part_addr') {
+                    return PseudoObjectParentPartitionAddress
+                } else if (Key == 'parent_enclosure_address') {
+                    return PseudoObjectParentEnclosureAddress
+                } else {
+                    return Value
+                }
+            }))
+        
+            // Add Templates
+            WorkingTemplateData.forEach(function(element) {
+                vm.$store.commit('pcmTemplates/ADD_Template', {pcmContext:Context, data:element})
+            })
+            
+            // Add Objects
+            WorkingObjectData.forEach(function(element) {
+                vm.$store.commit('pcmObjects/ADD_Object', {pcmContext:Context, data:element}, {root:true})
+            })
+
+            return ObjectID
+            
         },
     }
 }

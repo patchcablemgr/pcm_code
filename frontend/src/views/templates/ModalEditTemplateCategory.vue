@@ -60,9 +60,6 @@ export default {
   props: {
     Context: {type: String},
     ModalTitle: {type: String},
-    TemplateData: {type: Object},
-    CategoryData: {type: Array},
-    ObjectData: {type: Object},
     PartitionAddressSelected: {type: Object},
   },
   data () {
@@ -83,7 +80,7 @@ export default {
         const Context = vm.Context
         const TemplateID = vm.PartitionAddressSelected[Context].template_id
         const TemplateIndex = vm.GetTemplateIndex(TemplateID)
-        const Template = vm.TemplateData[Context][TemplateIndex]
+        const Template = vm.Templates[Context][TemplateIndex]
 
         if(typeof Template !== 'undefined') {
           return Template.category_id

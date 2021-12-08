@@ -17,9 +17,6 @@
     @mouseleave.stop=" $emit('PartitionHovered', {'Context': Context, 'ObjectID': ObjectID, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': InitialPartitionAddress, 'HoverState': false}) "
   >
     <component-template
-      :ObjectData="ObjectData"
-      :TemplateData="TemplateData"
-      :CategoryData="CategoryData"
       :TemplateRUSize="TemplateRUSize"
       :InitialPartitionAddress=" InitialPartitionAddress "
       :Context="Context"
@@ -49,9 +46,6 @@ export default {
     ComponentTemplate,
   },
   props: {
-    ObjectData: {type: Object},
-    TemplateData: {type: Object},
-    CategoryData: {type: Array},
     TemplateRUSize: {type: Number},
     InitialPartitionAddress: {type: Array},
     Context: {type: String},
@@ -91,46 +85,45 @@ export default {
 
       // Initial variables
       const vm = this
-      const TemplateData = vm.TemplateData
       const Context = vm.Context
 
       // Get object index
       const ObjectIndex = vm.GetObjectIndex(ObjectID)
 
       // Get template index
-      const TemplateID = vm.ObjectData[Context][ObjectIndex].template_id
+      const TemplateID = vm.Objects[Context][ObjectIndex].template_id
       const TemplateIndex = vm.GetTemplateIndex(TemplateID)
 
       // Get template
-      const ObjectPreviewData = TemplateData[Context][TemplateIndex]
+      const ObjectPreviewData = vm.Templates[Context][TemplateIndex]
 
       // Return template
       return ObjectPreviewData
     },
     TemplateColor: function(ObjectID) {
 
+      console.log('ObjectID: '+ObjectID)
+
       // Initial variables
       const vm = this
-      const Categories = vm.Categories
-      const Templates = vm.Templates
       const Context = vm.Context
       let TemplateColor
 
       // Get Template
       const TemplateID = vm.GetTemplateID(ObjectID)
       const TemplateIndex = vm.GetTemplateIndex(TemplateID)
-      const Template = Templates[Context][TemplateIndex]
+      const Template = vm.Templates[Context][TemplateIndex]
 
-      if (Template.hasOwnProperty('pseudo') && !Template.hasOwnProperty('pseudoParentTemplate')) {
+      if (Template.id.toString().includes('pseudo')) {
         TemplateColor = '#FFFFFF00'
       } else {
 
         // Get category index
         const ObjectCategoryID = Template.category_id
-        const ObjectCategoryIndex = Categories.findIndex((category) => category.id == ObjectCategoryID);
+        const ObjectCategoryIndex = vm.Categories.findIndex((category) => category.id == ObjectCategoryID);
 
         // Get category
-        const Category = Categories[ObjectCategoryIndex]
+        const Category = vm.Categories[ObjectCategoryIndex]
         TemplateColor = Category.color
       }
 

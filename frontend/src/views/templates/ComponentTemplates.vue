@@ -55,9 +55,6 @@
                 >
                   <component-object
                     v-if=" RU == 1 && GetObjectID(Template.id)"
-                    :TemplateData="TemplateData"
-                    :ObjectData="ObjectData"
-                    :CategoryData="CategoryData"
                     :TemplateRUSize=" Template.ru_size "
                     :InitialPartitionAddress=[]
                     :Context="Context"
@@ -98,9 +95,6 @@ export default {
     ComponentObject,
   },
   props: {
-    TemplateData: {type: Object},
-    CategoryData: {type: Array},
-    ObjectData: {type: Object},
     Context: {type: String},
     TemplateFaceSelected: {type: Object},
     PartitionAddressSelected: {type: Object},
@@ -154,6 +148,7 @@ export default {
       const Context = vm.Context
 
       const ObjectIndex = vm.GetObjectIndex(TemplateID)
+      
       const ObjectID = vm.Objects.template[ObjectIndex].id
       
       return ObjectID
@@ -190,24 +185,10 @@ export default {
       // Store data
       const vm = this
 
-      const TemplateDataFiltered = vm.Templates.template.filter(template => template.category_id == CategoryID && template.type == 'standard')
+      const TemplatesFiltered = vm.Templates.template.filter(template => template.category_id == CategoryID && template.type == 'standard')
 
-      return TemplateDataFiltered.length
+      return TemplatesFiltered.length
 
-    },
-    ObjectCategoryData: function(CategoryID) {
-
-      // Initial variables
-      const vm = this;
-
-      // Get category index
-      const ObjectCategoryIndex = vm.CategoryData.findIndex((category) => category.id == CategoryID)
-
-      // Get category
-      const ObjectCategoryData = vm.CategoryData[ObjectCategoryIndex]
-
-      // Return category
-      return ObjectCategoryData
     },
     FilteredCategoryTemplates: function(CategoryID){
 
@@ -246,7 +227,6 @@ export default {
 
         return match
       })
-
       return FilteredCategoryTemplates
     },
   }

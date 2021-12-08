@@ -339,7 +339,7 @@ const GenericObject = {
     "cabinet_front": null,
     "parent_id": null,
     "parent_face": null,
-    "parent_part_addr": null,
+    "parent_partition_address": null,
     "parent_enclosure_address": null,
 }
 
@@ -1130,7 +1130,7 @@ export default {
             return PseudoObjectParentID
         } else if (GenericObjectKey == 'parent_face') {
             return PseudoObjectParentFace
-        } else if (GenericObjectKey == 'parent_part_addr') {
+        } else if (GenericObjectKey == 'parent_partition_address') {
             return PseudoObjectParentPartitionAddress
         } else if (GenericObjectKey == 'parent_enclosure_address') {
             return PseudoObjectParentEnclosureAddress

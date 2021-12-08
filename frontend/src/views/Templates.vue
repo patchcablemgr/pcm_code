@@ -1,6 +1,6 @@
 <template>
   <div
-    v-if="CategoriesReady == true && TemplatesReady == true"
+    v-if="DependenciesReady"
   >
     <b-container class="bv-example-row" fluid="xs">
       <b-row>
@@ -10,14 +10,11 @@
           >
             <b-card-body>
               <templates-form
-                :TemplateData="TemplateData"
-                :CategoryData="CategoryData"
                 :SelectedCategoryID="SelectedCategoryID"
                 :PortConnectorData="PortConnectorData"
                 :PortOrientationData="PortOrientationData"
                 :MediaData="MediaData"
-                :PreviewDataIndex="GetTemplateIndex(ActivePreviewTemplateID, 'workspace')"
-                Context="preview"
+                Context="workspace"
                 :TemplateFaceSelected="TemplateFaceSelected"
                 :PartitionAddressSelected="PartitionAddressSelected"
                 :SelectedPortFormatIndex="SelectedPortFormatIndex"
@@ -27,13 +24,11 @@
                 :PartitionTypeDisabled="PartitionTypeDisabled"
                 :SelectedPartition="SelectedPartition"
                 :SelectedPortFormat="SelectedPortFormat"
-                :PreviewPortID="PreviewPortID"
-                @TemplateNameUpdated="TemplateNameUpdated($event)"
-                @TemplateTypeUpdated="TemplateTypeUpdated($event)"
+                SetLocationID
+                @SetLocationID="SetLocationID($event)"
                 @TemplateRUSizeUpdated="TemplateRUSizeUpdated($event)"
                 @TemplateFunctionUpdated="TemplateFunctionUpdated($event)"
                 @TemplateMountConfigUpdated="TemplateMountConfigUpdated($event)"
-                @TemplatePartitionTypeUpdated="TemplatePartitionTypeUpdated($event)"
                 @TemplatePartitionAdd="TemplatePartitionAdd($event)"
                 @TemplatePartitionRemove="TemplatePartitionRemove()"
                 @TemplatePartitionSizeUpdated="TemplatePartitionSizeUpdated($event)"
@@ -68,14 +63,14 @@
               v-if=" PreviewDisplay == 'cabinet' "
             >
               <b-form-radio
-                v-model="TemplateFaceSelected.preview"
+                v-model="TemplateFaceSelected.workspace"
                 plain
                 value="front"
                 :disabled="TemplateFaceToggleIsDisabled"
               >Front
               </b-form-radio>
               <b-form-radio
-                v-model="TemplateFaceSelected.preview"
+                v-model="TemplateFaceSelected.workspace"
                 plain
                 value="rear"
                 :disabled="TemplateFaceToggleIsDisabled"
@@ -83,10 +78,7 @@
                 Rear
               </b-form-radio>
               <component-cabinet
-                :TemplateData="TemplateData"
-                :CabinetData="CabinetData"
-                :CategoryData="CategoryData"
-                :ObjectData="ObjectData"
+                :LocationID="LocationID"
                 Context="workspace"
                 :TemplateFaceSelected="TemplateFaceSelected"
                 :PartitionAddressSelected="PartitionAddressSelected"
@@ -107,9 +99,6 @@
 
           <component-template-Object-details
             CardTitle="Template Details"
-						:TemplateData="TemplateData"
-						:CategoryData="CategoryData"
-            :ObjectData="ObjectData"
             :PortConnectorData="PortConnectorData"
             :MediaData="MediaData"
 						Context="template"
@@ -124,9 +113,6 @@
 					/>
 
           <component-templates
-            :TemplateData="TemplateData"
-            :CategoryData="CategoryData"
-            :ObjectData="ObjectData"
             Context="template"
             :TemplateFaceSelected="TemplateFaceSelected"
             :PartitionAddressSelected="PartitionAddressSelected"
@@ -145,9 +131,6 @@
 
     <!-- Template Edit Modal -->
     <modal-templates-edit
-      :TemplateData="TemplateData"
-      :CategoryData="CategoryData"
-      :ObjectData="ObjectData"
       Context="template"
       :TemplateFaceSelected="TemplateFaceSelected"
       :PartitionAddressSelected="PartitionAddressSelected"
@@ -175,59 +158,11 @@ import ComponentTemplates from './templates/ComponentTemplates.vue'
 import ModalTemplatesEdit from './templates/ModalTemplatesEdit.vue'
 import { PCM } from '../mixins/PCM.js'
 
+const TemplatesWatcherActive = true
+const CategoriesWatcherActive = true
+const LocationID = 1
 const StandardTemplateID = 1
 const InsertTemplateID = 2
-const GenericInsertBlueprint = {
-  "front": [{
-    "type": "generic",
-    "units":24,
-    "children": [],
-  }],
-  "rear": [],
-}
-const TemplateData = {
-  'preview': [
-    {
-      "id": StandardTemplateID,
-      "name": "New_Template",
-      "category_id": 0,
-      "type": "standard",
-      "ru_size": 1,
-      "function": "endpoint",
-      "mount_config": "2-post",
-      "insert_constraints": null,
-      "blueprint": {
-        "front": [{
-          "type": "generic",
-          "units":24,
-          "children": [],
-        }],
-        "rear": [{
-          "type": "generic",
-          "units":24,
-          "children": [],
-        }],
-      }
-    },
-    {
-      "id": InsertTemplateID,
-      "name": "New_Template",
-      "category_id": 0,
-      "type": "insert",
-      "function": "endpoint",
-      "insert_constraints": null,
-			"parent_template": null,
-      "blueprint": GenericInsertBlueprint
-    }
-  ],
-  'template': []
-}
-const CategoryData = [
-  {
-    "id": 0,
-    "color": "#FFFFFFFF",
-  }
-]
 const PortConnectorData = [
   {
     "value": 1,
@@ -255,15 +190,15 @@ const MediaData = [
 ]
 const SelectedCategoryID = null
 const SelectedPortFormatIndex = {
-  'preview': 0,
+  'workspace': 0,
   'template': 0,
 }
 const TemplateFaceSelected = {
-  'preview': 'front',
+  'workspace': 'front',
   'template': 'front',
 }
 const PartitionAddressSelected = {
-  'preview': {
+  'workspace': {
     'object_id': StandardTemplateID,
     'template_id': StandardTemplateID,
     'front': [0],
@@ -283,7 +218,7 @@ const PartitionAddressSelected = {
   }
 }
 const PartitionAddressHovered = {
-  'preview': {
+  'workspace': {
     'object_id': null,
     'template_id': null,
     'front': false,
@@ -295,79 +230,6 @@ const PartitionAddressHovered = {
     'front': false,
     'rear': false
   }
-}
-const GenericCabinet = {
-  "id": StandardTemplateID,
-  "size": 25,
-  "name": "Cabinet",
-}
-const ObjectData = {
-  'preview': [
-    {
-      "id": StandardTemplateID,
-      "name": "Standard",
-      "template_id": StandardTemplateID,
-      "location_id": 1,
-      "cabinet_ru": 1,
-      "cabinet_front": "front",
-    },
-    {
-      "id": InsertTemplateID,
-      "name": "Insert",
-      "template_id": InsertTemplateID,
-      "location_id": null,
-      "cabinet_ru": null,
-      "cabinet_front": null,
-      "parent_id": null,
-      "parent_face": "front",
-      "parent_part_addr": null,
-      "parent_enclosure_address": [0,0],
-    }
-  ],
-  'template': [],
-}
-const ActivePreviewTemplateID = StandardTemplateID
-const GenericObject = {
-    "id": null,
-    "pseudo": true,
-    "name": null,
-    "template_id": null,
-    "location_id": null,
-    "cabinet_ru": null,
-    "cabinet_front": null,
-    "parent_id": null,
-    "parent_face": null,
-    "parent_part_addr": null,
-    "parent_enclosure_address": null,
-}
-const GenericTemplate = {
-  "id": null,
-  "pseudo": true,
-  "name": "PseudoTemplate",
-  "category_id": null,
-  "type": null,
-  "ru_size": null,
-  "function": null,
-  "mount_config": "2-post",
-  "insert_constraints": null,
-  "blueprint": {
-    "front": [{
-      "type": "generic",
-      "units": null,
-      "children": [{
-        "type": "enclosure",
-        "units": null,
-        "children": [],
-        "enc_layout": {
-          "cols": null,
-          "rows": null,
-        },
-      },
-      ],
-    },
-    ],
-    "rear": []
-  },
 }
 
 export default {
@@ -390,32 +252,44 @@ export default {
   },
   data() {
     return {
-      TemplateData,
-      CategoryData,
+      TemplatesWatcherActive,
+      CategoriesWatcherActive,
+      LocationID,
       SelectedCategoryID,
       SelectedPortFormatIndex,
       MediaData,
       PortConnectorData,
       PortOrientationData,
-      GenericCabinet,
-      ObjectData,
-      ActivePreviewTemplateID,
       TemplateFaceSelected,
       PartitionAddressSelected,
       PartitionAddressHovered,
       StandardTemplateID,
       InsertTemplateID,
-      GenericObject,
-      GenericTemplate,
-      GenericInsertBlueprint,
     }
   },
   computed: {
+    DependenciesReady: function() {
+
+      const vm = this
+      const Dependencies = [
+        vm.CategoriesReady,
+        vm.TemplatesReady.template,
+        vm.TemplatesReady.workspace,
+        vm.ObjectsReady.template,
+        vm.ObjectsReady.workspace,
+      ]
+      
+      const DependenciesReady = Dependencies.every(function(element){ return element == true })
+      return DependenciesReady
+    },
     CategoriesReady: function() {
       return this.$store.state.pcmCategories.CategoriesReady
     },
     TemplatesReady: function() {
       return this.$store.state.pcmTemplates.TemplatesReady
+    },
+    ObjectsReady: function() {
+      return this.$store.state.pcmObjects.ObjectsReady
     },
     Categories() {
       return this.$store.state.pcmCategories.Categories
@@ -423,33 +297,8 @@ export default {
     Templates() {
       return this.$store.state.pcmTemplates.Templates
     },
-    StoreStandardTemplateID() {
-      return this.$store.state.pcmTemplates.StandardTemplateID
-    },
-    StoreInsertTemplateID() {
-      return this.$store.state.pcmTemplates.InsertTemplateID
-    },
-    CabinetData: function(){
-      
-      const vm = this
-      const Context = 'workspace'
-      const StandardTemplateID = vm.StandardTemplateID
-      const InsertTemplateID = vm.InsertTemplateID
-      const GenericCabinet = vm.GenericCabinet
-      const ActivePreviewTemplateID = vm.ActivePreviewTemplateID
-      const ActivePreviewTemplateIndex = vm.GetTemplateIndex(ActivePreviewTemplateID, Context)
-      const ActivePreviewTemplate = vm.Templates[Context][ActivePreviewTemplateIndex]
-
-      const CabinetData =  JSON.parse(JSON.stringify(GenericCabinet), function(key, value) {
-        if(key == 'id') {
-          return (ActivePreviewTemplate.type == 'insert') ? InsertTemplateID : StandardTemplateID
-        } else {
-          return value
-        }
-      })
-
-      return CabinetData
-
+    Objects() {
+      return this.$store.state.pcmObjects.Objects
     },
     PreviewDisplay: function(){
 
@@ -466,7 +315,7 @@ export default {
         if(TemplateID) {
           const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
           const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
-          const Blueprint = vm.TemplateData[Context][TemplateIndex].blueprint[TemplateFaceSelected]
+          const Blueprint = vm.Templates[Context][TemplateIndex].blueprint[TemplateFaceSelected]
           const PartitionAddress = PartitionAddressSelected[TemplateFaceSelected]
           const Partition = vm.GetPartition(Blueprint, PartitionAddress)
           const PartitionType = Partition.type
@@ -505,7 +354,7 @@ export default {
 
         // Get template blueprint
         const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-        const Template = vm.TemplateData[Context][TemplateIndex]
+        const Template = vm.Templates[Context][TemplateIndex]
         const TemplateBlueprint = Template.blueprint[TemplateFace]
 
         // Get template partition
@@ -589,8 +438,8 @@ export default {
     AddSiblingPartitionDisabled: function() {
       // Store variables
       const vm = this
-      const TemplateFaceSelected = vm.TemplateFaceSelected.preview
-      const PartitionAddress = vm.PartitionAddressSelected.preview[TemplateFaceSelected]
+      const TemplateFaceSelected = vm.TemplateFaceSelected.workspace
+      const PartitionAddress = vm.PartitionAddressSelected.workspace[TemplateFaceSelected]
       const PartitionParentAddress = PartitionAddress.slice(0, PartitionAddress.length - 1)
 
       return !vm.GetPartitionUnitsAvailable(PartitionParentAddress)
@@ -601,8 +450,8 @@ export default {
       // Store variables
       const vm = this
       const PreviewData = vm.GetPreviewData()
-      const TemplateFaceSelected = vm.TemplateFaceSelected.preview
-      const PartitionAddressSelected = vm.PartitionAddressSelected.preview[TemplateFaceSelected]
+      const TemplateFaceSelected = vm.TemplateFaceSelected.workspace
+      const PartitionAddressSelected = vm.PartitionAddressSelected.workspace[TemplateFaceSelected]
       const Layer1Partitions = PreviewData.blueprint[TemplateFaceSelected]
       let RemovePartitionDisabled = false
 
@@ -617,8 +466,8 @@ export default {
     PartitionTypeDisabled: function() {
       // Store variables
       const vm = this
-      const TemplateFaceSelected = vm.TemplateFaceSelected.preview
-      const PartitionAddressSelected = vm.PartitionAddressSelected.preview[TemplateFaceSelected]
+      const TemplateFaceSelected = vm.TemplateFaceSelected.workspace
+      const PartitionAddressSelected = vm.PartitionAddressSelected.workspace[TemplateFaceSelected]
 
       return !PartitionAddressSelected.length
     },
@@ -653,22 +502,24 @@ export default {
       // Store variables
       const vm = this
       const Context = EmitData.Context
-      const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
+      const Face = vm.TemplateFaceSelected[Context]
       const PartitionAddress = EmitData.PartitionAddress
       const TemplateID = EmitData.TemplateID
       const ObjectID = EmitData.ObjectID
       const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-      const Template = vm.TemplateData[Context][TemplateIndex]
-      const Blueprint = Template.blueprint[TemplateFaceSelected]
+      const Template = vm.Templates[Context][TemplateIndex]
+      const Blueprint = Template.blueprint[Face]
       const Partition = vm.GetPartition(Blueprint, PartitionAddress)
       const PartitionType = Partition.type
+      const WorkspaceInsertID = vm.$store.state.pcmProps.WorkspaceInsertID
+      const GenericBlueprintGeneric = vm.$store.state.pcmProps.GenericBlueprintGeneric
 			
 			// Clicked partition should not be highlighted if it is a preview insert parent
 			
-      const HonorClick = (vm.TemplateData[Context][TemplateIndex].hasOwnProperty('pseudo')) ? false : true
+      const HonorClick = (vm.Templates[Context][TemplateIndex].id.toString().includes('pseudo')) ? false : true
 
 			if(HonorClick) {
-				vm.PartitionAddressSelected[Context][TemplateFaceSelected] = PartitionAddress
+				vm.PartitionAddressSelected[Context][Face] = PartitionAddress
 				vm.PartitionAddressSelected[Context].template_id = TemplateID
         vm.PartitionAddressSelected[Context].object_id = ObjectID
         vm.SelectedPortFormatIndex[Context] = 0
@@ -684,7 +535,7 @@ export default {
         vm.RemovePreviewPseudoData()
 
         // Copy selected template to insert parent template and correct id
-        const InsertParentTemplateID = 'pseudo-'+(vm.TemplateData.preview.length)
+        const InsertParentTemplateID = 'pseudo-'+(vm.Templates.workspace.length)
         const InsertParentTemplate = JSON.parse(JSON.stringify(Template), function(key, value) {
           if(key == 'id') {
             return InsertParentTemplateID
@@ -692,32 +543,39 @@ export default {
             return value
           }
         })
-        InsertParentTemplate.pseudo = true
-        InsertParentTemplate.pseudoParentTemplate = true
-        vm.TemplateData.preview.push(InsertParentTemplate)
+        vm.$store.commit('pcmTemplates/ADD_Template', {pcmContext:'workspace', data:InsertParentTemplate})
 
 				// Generate pseudo object and constraining templates/objects if necessary
-        const PseudoObjectID = vm.GeneratePseudoData(InsertParentTemplate, 'preview')
+        const PseudoObjectID = vm.GeneratePseudoData('workspace', InsertParentTemplate)
 
         // Get insert constraints
-        const InsertConstraints = vm.GetInsertConstraints(Template, TemplateFaceSelected, PartitionAddress)
+        const InsertConstraints = vm.GetInsertConstraints(Template, Face, PartitionAddress)
 
         // Adjust insert template properties
-        const InsertTemplateIndex = vm.GetTemplateIndex(vm.InsertTemplateID, 'preview')
-        vm.TemplateData.preview[InsertTemplateIndex].blueprint = JSON.parse(JSON.stringify(vm.GenericInsertBlueprint), function(key, value) {
-          if(key == 'units') {
-            return InsertConstraints.part_layout.width
-          } else {
-            return value
-          }
-        })
-        vm.TemplateData.preview[InsertTemplateIndex].category_id = TemplateCategoryID
-        vm.TemplateData.preview[InsertTemplateIndex].function = TemplateFunction
-        vm.TemplateData.preview[InsertTemplateIndex].insert_constraints = InsertConstraints
+        const InsertTemplateIndex = vm.GetTemplateIndex(WorkspaceInsertID, 'workspace')
+        const InsertTemplate = JSON.parse(JSON.stringify(vm.Templates['workspace'][InsertTemplateIndex]))
+        InsertTemplate.blueprint.front = [
+          JSON.parse(JSON.stringify(GenericBlueprintGeneric), function(Key, Value) {
+            if(Key == 'units') {
+              return InsertConstraints.part_layout.width
+            } else {
+              return Value
+            }
+          })
+        ]
+        InsertTemplate.category_id = TemplateCategoryID
+        InsertTemplate.function = TemplateFunction
+        InsertTemplate.insert_constraints = InsertConstraints
+        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:'workspace', data:InsertTemplate})
 
         // Adjust insert object properties
-        const InsertObjectIndex = vm.GetObjectIndex(vm.InsertTemplateID, 'preview')
-        vm.ObjectData.preview[InsertObjectIndex].parent_id = PseudoObjectID
+        const InsertObjectIndex = vm.GetObjectIndex(WorkspaceInsertID, 'workspace')
+        const InsertObject = JSON.parse(JSON.stringify(vm.Objects['workspace'][InsertObjectIndex]))
+        InsertObject.parent_id = PseudoObjectID
+        InsertObject.parent_face = Face
+        InsertObject.parent_partition_address = PartitionAddress
+        InsertObject.parent_enclosure_address = [0,0]
+        vm.$store.commit('pcmObjects/UPDATE_Object', {pcmContext:'workspace', data:InsertObject})
       }
 
     },
@@ -825,7 +683,7 @@ export default {
         const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
 				
         // Append new template to template array
-        vm.$set(vm.TemplateData[Context], TemplateIndex, Template)
+        vm.$set(vm.Templates[Context], TemplateIndex, Template)
 
       }).catch(error => {
 
@@ -837,28 +695,10 @@ export default {
 
       });
     },
-    TemplateNameUpdated: function(newValue) {
+    SetLocationID: function(newValue) {
 
       const vm = this
-      const PreviewData = vm.GetPreviewData()
-      PreviewData.name = newValue
-    },
-    TemplateTypeUpdated: function(newValue) {
-
-      const vm = this
-			const StandardPreviewObjectIndex = vm.GetObjectIndex(vm.StandardTemplateID, 'preview')
-			
-			// Set active preview template index
-			const ActivePreviewTemplateID = (newValue == 'insert') ? vm.InsertTemplateID : vm.StandardTemplateID
-      vm.ActivePreviewTemplateID = ActivePreviewTemplateID
-
-      // Update cabinet ID to display appropriate preview template
-      vm.CabinetData.id = (newValue == 'insert') ? vm.InsertTemplateID : vm.StandardTemplateID
-			
-			// Reset PartitionAddressSelected
-			vm.PartitionAddressSelected.preview.template_id = ActivePreviewTemplateID
-			vm.PartitionAddressSelected.preview.front = [0]
-			vm.PartitionAddressSelected.preview.rear = [0]
+      vm.LocationID = newValue
     },
     TemplateRUSizeUpdated: function(newValue) {
 
@@ -877,64 +717,7 @@ export default {
       const vm = this
       const PreviewData = vm.GetPreviewData()
       PreviewData.mount_config = newValue
-      vm.TemplateFaceSelected.preview = newValue == '2-post' ? 'front' : vm.TemplateFaceSelected.preview
-    },
-    TemplatePartitionTypeUpdated: function(newValue) {
-
-      // Store variables
-      const vm = this
-
-      // Get Partition
-      const SelectedPartition = vm.GetSelectedPreviewPartition()
-
-      const PartitionTypeOriginal = SelectedPartition.type
-
-      SelectedPartition.type = newValue
-
-      if(PartitionTypeOriginal != newValue) {
-
-        // Define port_layout if it doesn't exist
-        if(newValue == 'connectable') {
-
-          // Port Format
-          const PortFormat = [
-            {'type': 'static', 'value': 'Port', 'count': 0, 'order': 0},
-            {'type': 'incremental', 'value': '1', 'count': 0, 'order': 2},
-            {'type': 'series', 'value': 'A,B,C', 'count': 0, 'order': 1},
-          ]
-
-          // Port layout
-          const PortLayout = {'cols': 1, 'rows': 1}
-
-          // Port media type
-          const defaultMediaIndex = vm.MediaData.findIndex((media) => media.default);
-          const defaultMediaValue = vm.MediaData[defaultMediaIndex].value
-          const Media = defaultMediaValue
-
-          // Port connector
-          const defaultPortConnectorIndex = vm.PortConnectorData.findIndex((PortConnector) => PortConnector.default);
-          const defaultPortConnectorValue = vm.PortConnectorData[defaultPortConnectorIndex].value
-          const PortConnector = defaultPortConnectorValue
-
-          // Port orientation
-          const defaultPortOrientationIndex = vm.PortOrientationData.findIndex((PortOrientation) => PortOrientation.default);
-          const defaultPortOrientationValue = vm.PortOrientationData[defaultPortOrientationIndex].value
-          const PortOrientation = defaultPortOrientationValue
-
-          // Set connectable properties
-          vm.$set(SelectedPartition, 'port_format', PortFormat)
-          vm.$set(SelectedPartition, 'port_layout', PortLayout)
-          vm.$set(SelectedPartition, 'media', Media)
-          vm.$set(SelectedPartition, 'port_connector', PortConnector)
-          vm.$set(SelectedPartition, 'port_orientation', PortOrientation)
-
-        } else if(newValue == 'enclosure') {
-          
-          const EncLayout = {'cols': 1, 'rows': 1}
-          vm.$set(SelectedPartition, 'enc_layout', EncLayout)
-
-        }
-      }
+      vm.TemplateFaceSelected.workspace = newValue == '2-post' ? 'front' : vm.TemplateFaceSelected.workspace
     },
     TemplatePartitionAdd: function(InsertPosition) {
 
@@ -943,8 +726,8 @@ export default {
       const PreviewData = vm.GetPreviewData()
       
       // Get Partition
-      const TemplateFaceSelected = vm.TemplateFaceSelected.preview
-      const PartitionAddress = vm.PartitionAddressSelected.preview[TemplateFaceSelected]
+      const TemplateFaceSelected = vm.TemplateFaceSelected.workspace
+      const PartitionAddress = vm.PartitionAddressSelected.workspace[TemplateFaceSelected]
       const Blueprint = PreviewData.blueprint[TemplateFaceSelected]
       let SelectedPartition = vm.GetPartition(Blueprint, PartitionAddress)
 
@@ -992,8 +775,8 @@ export default {
       // Store variables
       const vm = this
       const PreviewData = vm.GetPreviewData()
-      const TemplateFaceSelected = vm.TemplateFaceSelected.preview
-      const PartitionAddressSelected = vm.PartitionAddressSelected.preview[TemplateFaceSelected]
+      const TemplateFaceSelected = vm.TemplateFaceSelected.workspace
+      const PartitionAddressSelected = vm.PartitionAddressSelected.workspace[TemplateFaceSelected]
       const PartitionAddressSelectedCopy = JSON.parse(JSON.stringify(PartitionAddressSelected))
       let SelectedPartitionParent = PreviewData.blueprint[TemplateFaceSelected]
       const SelectedPartitionIndex = PartitionAddressSelectedCopy.pop()
@@ -1186,7 +969,7 @@ export default {
       const SelectedTemplateFace = vm.TemplateFaceSelected[Context]
       const SelectedTemplatePartitionAddress = vm.PartitionAddressSelected[Context][SelectedTemplateFace]
       const SelectedTemplateIndex = vm.GetTemplateIndex(SelectedTemplateID, Context)
-      const SelectedTemplate = vm.TemplateData[Context][SelectedTemplateIndex]
+      const SelectedTemplate = vm.Templates[Context][SelectedTemplateIndex]
       const SelectedBlueprint = SelectedTemplate.blueprint[SelectedTemplateFace]
       const SelectedPartition = vm.GetPartition(SelectedBlueprint, SelectedTemplatePartitionAddress)
       const SelectedPortFormat = SelectedPartition.port_format
@@ -1461,16 +1244,15 @@ export default {
 
       const vm = this
       const TemplateContext = 'template'
-      const PreviewContext = 'preview'
+      const PreviewContext = 'workspace'
 
       // Get cloned template
       const TemplateID = vm.PartitionAddressSelected[TemplateContext].template_id
       const TemplateIndex = vm.GetTemplateIndex(TemplateID, TemplateContext)
-      const Template = vm.TemplateData[TemplateContext][TemplateIndex]
+      const Template = vm.Templates[TemplateContext][TemplateIndex]
 
       // Set active preview template
       const PreviewTemplateID = (Template.type == 'standard') ? vm.StandardTemplateID : vm.InsertTemplateID
-      vm.ActivePreviewTemplateID = PreviewTemplateID
 
       vm.TemplateFaceSelected[PreviewContext] = 'front'
 
@@ -1486,7 +1268,7 @@ export default {
 
       // Copy cloned template to active preview template
       const PreviewTemplateIndex = vm.GetTemplateIndex(PreviewTemplateID, PreviewContext)
-      vm.$set(vm.TemplateData[PreviewContext], PreviewTemplateIndex, TemplateClone)
+      vm.$set(vm.Templates[PreviewContext], PreviewTemplateIndex, TemplateClone)
 
       if(Template.type == 'insert') {
 
@@ -1494,7 +1276,7 @@ export default {
         vm.RemovePreviewPseudoData()
 
         // Create pseudo template clone parent
-        const PseudoTemplateID = "pseudo-" + (vm.TemplateData[PreviewContext].length)
+        const PseudoTemplateID = "pseudo-" + (vm.Templates[PreviewContext].length)
         const InsertConstraints = Template.insert_constraints
         const TemplateCloneParent = JSON.parse(JSON.stringify(vm.GenericTemplate), function (GenericTemplateKey, GenericTemplateValue) {
           if (GenericTemplateKey == 'id') {
@@ -1525,11 +1307,11 @@ export default {
               return GenericTemplateValue
           }
         })
-        vm.TemplateData[PreviewContext].push(TemplateCloneParent)
+        vm.Templates[PreviewContext].push(TemplateCloneParent)
 
         // Generate pseudo object and constraining templates/objects if necessary
-        const PseudoObjectID = vm.GeneratePseudoData(TemplateCloneParent, 'preview')
-        vm.ObjectData.preview[PreviewTemplateIndex].parent_id = PseudoObjectID
+        const PseudoObjectID = vm.GeneratePseudoData(TemplateCloneParent, 'workspace')
+        vm.Objects.workspace[PreviewTemplateIndex].parent_id = PseudoObjectID
       }
     },
     TemplateObjectDeleteClicked: function() {
@@ -1538,7 +1320,7 @@ export default {
 			const TemplateID = vm.PartitionAddressSelected.template.template_id
 			const Context = 'template'
 			const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-			const TemplateName = vm.TemplateData[Context][TemplateIndex].name
+			const TemplateName = vm.Templates[Context][TemplateIndex].name
 			
       vm.$bvModal
         .msgBoxConfirm('Delete '+TemplateName+'?', {
@@ -1565,26 +1347,26 @@ export default {
 							vm.PartitionAddressSelected[Context].template_id = null
 
               // Get template object data
-              let TemplateObjectIndex = vm.ObjectData[Context].findIndex((object) => object.template_id == TemplateID)
-              let TemplateObject = vm.ObjectData[Context][TemplateObjectIndex]
+              let TemplateObjectIndex = vm.Objects[Context].findIndex((object) => object.template_id == TemplateID)
+              let TemplateObject = vm.Objects[Context][TemplateObjectIndex]
               let TemplateObjectParentID = TemplateObject.parent_id
 
               // Delete template and object
-              vm.ObjectData[Context].splice(TemplateObjectIndex,1)
-              vm.TemplateData[Context].splice(TemplateIndex,1)
+              vm.Objects[Context].splice(TemplateObjectIndex,1)
+              vm.Templates[Context].splice(TemplateIndex,1)
 
               // Delete parent template(s) and object(s) if necessary
               while (TemplateObjectParentID != null) {
 
-                TemplateObjectIndex = vm.ObjectData[Context].findIndex((object) => object.id == TemplateObjectParentID)
-                TemplateObject = vm.ObjectData[Context][TemplateObjectIndex]
+                TemplateObjectIndex = vm.Objects[Context].findIndex((object) => object.id == TemplateObjectParentID)
+                TemplateObject = vm.Objects[Context][TemplateObjectIndex]
                 TemplateObjectParentID = TemplateObject.parent_id
 
                 let TemplateObjectTemplateID = TemplateObject.template_id
                 let TemplateObjectTemplateIndex = vm.GetTemplateIndex(TemplateObjectTemplateID, Context)
 
-                vm.ObjectData[Context].splice(TemplateObjectIndex,1)
-                vm.TemplateData[Context].splice(TemplateObjectTemplateIndex,1)
+                vm.Objects[Context].splice(TemplateObjectIndex,1)
+                vm.Templates[Context].splice(TemplateObjectTemplateIndex,1)
               }
 
 						}).catch(error => {
@@ -1640,9 +1422,9 @@ export default {
       const PreviewData = vm.GetPreviewData()
 
       // Get Partition
-      const TemplateFaceSelected = vm.TemplateFaceSelected.preview
-      const PartitionAddress = (PartAddr !== false) ? PartAddr : vm.PartitionAddressSelected.preview[TemplateFaceSelected]
-      const Blueprint = PreviewData.blueprint[TemplateFaceSelected]
+      const Face = vm.TemplateFaceSelected.workspace
+      const PartitionAddress = (PartAddr !== false) ? PartAddr : vm.PartitionAddressSelected.workspace[Face]
+      const Blueprint = PreviewData.blueprint[Face]
       const Partition = vm.GetPartition(Blueprint, PartitionAddress)
 
       let UnitsAvailable = vm.GetGlobalPartitionMax(PreviewData, PartitionAddress)
@@ -1673,9 +1455,9 @@ export default {
       const PreviewData = vm.GetPreviewData()
 
       // Get Partition
-      const TemplateFaceSelected = vm.TemplateFaceSelected.preview
-      const PartAddr = vm.PartitionAddressSelected.preview[TemplateFaceSelected]
-      const Blueprint = PreviewData.blueprint[TemplateFaceSelected]
+      const Face = vm.TemplateFaceSelected.workspace
+      const PartAddr = vm.PartitionAddressSelected.workspace[Face]
+      const Blueprint = PreviewData.blueprint[Face]
 
       let SelectedPartition = vm.GetPartition(Blueprint, PartAddr)
       
@@ -1688,134 +1470,34 @@ export default {
       const Context = 'workspace'
 
       // Get template index
-      const TemplateIndex = vm.GetTemplateIndex(vm.ActivePreviewTemplateID, Context)
+      const ObjectID = vm.PartitionAddressSelected[Context].object_id
+      const TemplateID = vm.GetTemplateID(ObjectID, Context)
+      const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
 
       // Get template
-      const ObjectPreviewData = vm.Templates[Context][TemplateIndex]
+      const Template = vm.Templates[Context][TemplateIndex]
 
       // Return template
-      return ObjectPreviewData
+      return Template
     },
     RemovePreviewPseudoData: function() {
 
       const vm = this
 
-      vm.ObjectData.preview = vm.ObjectData.preview.filter(function(Object){
-        return !Object.hasOwnProperty('pseudo')
+      const PseudoObjects = vm.Objects.workspace.filter(function(Object){
+        return Object.id.toString().includes('pseudo')
+      })
+      PseudoObjects.forEach(function(object){
+        vm.$store.commit('pcmObjects/REMOVE_Object', {pcmContext:'workspace', data:object})
       })
 
-      vm.TemplateData.preview = vm.TemplateData.preview.filter(function(Template){
-        return !Template.hasOwnProperty('pseudo')
+      const PseudoTemplates = vm.Templates.workspace.filter(function(Template){
+        return Template.id.toString().includes('pseudo')
+      })
+      PseudoTemplates.forEach(function(template){
+        vm.$store.commit('pcmTemplates/REMOVE_Template', {pcmContext:'workspace', data:template})
       })
 
-    },
-	  GeneratePseudoData: function (Template, Context) {
-
-      const vm = this
-      let WorkingObjectData = []
-      let WorkingTemplateData = []
-      let PseudoObjectParentID = null
-      let PseudoObjectParentFace = null
-      let PseudoObjectParentPartitionAddress = null
-      let PseudoObjectParentEnclosureAddress = null
-      const TemplateID = Template.id
-      const TemplateType = Template.type
-
-      if (TemplateType == 'insert') {
-        
-        PseudoObjectParentFace = 'front'
-        PseudoObjectParentPartitionAddress = [0, 0]
-        PseudoObjectParentEnclosureAddress = [0, 0]
-        const InsertConstraints = Template.insert_constraints
-
-        // Generate pseudo IDs
-        const PseudoTemplateID = "pseudo-" + (vm.TemplateData[Context].length + WorkingTemplateData.length)
-        const PseudoObjectID = "pseudo-" + (vm.ObjectData[Context].length + WorkingObjectData.length)
-
-        // Create pseudo object
-        WorkingObjectData.push(JSON.parse(JSON.stringify(vm.GenericObject), function (GenericObjectKey, GenericObjectValue) {
-          if (GenericObjectKey == 'id') {
-            return PseudoObjectID
-          } else if (GenericObjectKey == 'cabinet_front') {
-            return 'front'
-          } else if (GenericObjectKey == 'location_id') {
-            return (Context == 'preview') ? vm.InsertTemplateID : null
-          } else if (GenericObjectKey == 'cabinet_ru') {
-            return 1
-          } else if (GenericObjectKey == 'template_id') {
-            return PseudoTemplateID
-          } else if (GenericObjectKey == 'parent_id') {
-            return PseudoObjectParentID
-          } else {
-            return GenericObjectValue
-          }
-        }))
-
-        // Create pseudo template
-        WorkingTemplateData.push(JSON.parse(JSON.stringify(vm.GenericTemplate), function (GenericTemplateKey, GenericTemplateValue) {
-          if (GenericTemplateKey == 'id') {
-            return PseudoTemplateID
-          } else if (GenericTemplateKey == 'name') {
-            return Template.name
-          } else if (GenericTemplateKey == 'category_id') {
-            return Template.category_id
-          } else if (GenericTemplateKey == 'type') {
-            // Set pseudo template type, but avoid setting partition type
-            if (GenericTemplateValue === null) {
-                return 'standard'
-            } else {
-                return GenericTemplateValue
-            }
-          } else if (GenericTemplateKey == 'ru_size') {
-            // Set pseudo template RU size if this is the insert constraint origin ('standard' template type)
-            return Math.ceil(InsertConstraints.part_layout.height / 2)
-          } else if (GenericTemplateKey == 'blueprint') {
-            // Set pseudo template partition attributes
-            GenericTemplateValue.front[0].units = InsertConstraints.part_layout.width
-            GenericTemplateValue.front[0].children[0].units = InsertConstraints.part_layout.height
-            GenericTemplateValue.front[0].children[0].enc_layout.cols = InsertConstraints.enc_layout.cols
-            GenericTemplateValue.front[0].children[0].enc_layout.rows = InsertConstraints.enc_layout.rows
-            return GenericTemplateValue
-
-          } else {
-
-              return GenericTemplateValue
-          }
-        }))
-
-        PseudoObjectParentID = PseudoObjectID
-      }
-
-      // Create pseudo object for template
-      const PseudoObjectID = "pseudo-" + (vm.ObjectData[Context].length + WorkingObjectData.length)
-      WorkingObjectData.push(JSON.parse(JSON.stringify(vm.GenericObject), function (GenericObjectKey, GenericObjectValue) {
-        if (GenericObjectKey == 'id') {
-            return PseudoObjectID
-        } else if (GenericObjectKey == 'location_id') {
-            return (Context == 'preview' && TemplateType == 'standard') ? vm.InsertTemplateID : GenericObjectValue
-        } else if (GenericObjectKey == 'cabinet_front') {
-            return (Context == 'preview' && TemplateType == 'standard') ? 'front' : GenericObjectValue
-        } else if (GenericObjectKey == 'cabinet_ru') {
-            return (Context == 'preview' && TemplateType == 'standard') ? 1 : GenericObjectValue
-        } else if (GenericObjectKey == 'parent_id') {
-            return PseudoObjectParentID
-        } else if (GenericObjectKey == 'parent_face') {
-            return PseudoObjectParentFace
-        } else if (GenericObjectKey == 'parent_part_addr') {
-            return PseudoObjectParentPartitionAddress
-        } else if (GenericObjectKey == 'parent_enclosure_address') {
-            return PseudoObjectParentEnclosureAddress
-        } else if (GenericObjectKey == 'template_id') {
-            return TemplateID
-        } else {
-            return GenericObjectValue
-        }
-      }))
-
-      vm.TemplateData[Context] = vm.TemplateData[Context].concat(WorkingTemplateData)
-      vm.ObjectData[Context] = vm.ObjectData[Context].concat(WorkingObjectData)
-
-      return PseudoObjectID
     },
     templatesGET: function () {
 
@@ -1824,12 +1506,7 @@ export default {
       
       this.$http.get('/api/templates').then(function(response){
 
-        vm.TemplateData.template = response.data
-
-        response.data.forEach(function(Template, TemplateIndex){
-					
-					//vm.GeneratePseudoData(Template, Context)
-        })
+        vm.Templates.template = response.data
       });
     },
     SetDefaultCategory: function() {
@@ -1837,8 +1514,10 @@ export default {
       const vm = this
       const Context = 'workspace'
       const Categories = vm.Categories
-      const StandardTemplateIndex = vm.GetTemplateIndex(vm.StoreStandardTemplateID, Context)
-      const InsertTemplateIndex = vm.GetTemplateIndex(vm.StoreInsertTemplateID, Context)
+      const WorkspaceStandardID = vm.$store.state.pcmProps.WorkspaceStandardID
+      const WorkspaceInsertID = vm.$store.state.pcmProps.WorkspaceInsertID
+      const StandardTemplateIndex = vm.GetTemplateIndex(WorkspaceStandardID, Context)
+      const InsertTemplateIndex = vm.GetTemplateIndex(WorkspaceInsertID, Context)
 
       const DefaultCategoryIndex = Categories.findIndex((category) => category.default)
       let DefaultCategoryID
@@ -1868,33 +1547,6 @@ export default {
       vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:StandardTemplateUpdated})
       vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:InsertTemplateUpdated})
 
-    },
-    categoryGET: function(SetCategoryToDefault = false) {
-
-      const vm = this
-      const StandardTemplateIndex = vm.GetTemplateIndex(vm.StandardTemplateID, 'workspace')
-      const InsertTemplateIndex = vm.GetTemplateIndex(vm.InsertTemplateID, 'workspace')
-
-      vm.$http.get('/api/categories').then(function(response){
-
-        vm.CategoryData = response.data
-
-        // Apply default category to template preview
-        if(SetCategoryToDefault) {
-          const DefaultCategoryIndex = vm.CategoryData.findIndex((category) => category.default)
-          let DefaultCategoryID
-
-          if(DefaultCategoryIndex !== -1) {
-            DefaultCategoryID = vm.CategoryData[DefaultCategoryIndex].id
-          } else {
-            DefaultCategoryID = vm.CategoryData[0].id
-          }
-
-          vm.TemplateData.preview[StandardTemplateIndex].category_id = DefaultCategoryID
-          vm.TemplateData.preview[InsertTemplateIndex].category_id = DefaultCategoryID
-        }
-
-      })
     },
     mediumGET: function() {
 
@@ -1934,7 +1586,7 @@ export default {
         const Template = response.data
 				
         // Append new template to template array
-        vm.TemplateData.template.push(Template)
+        vm.Templates.template.push(Template)
 
         vm.GeneratePseudoData(Template, 'template')
 
@@ -1956,18 +1608,46 @@ export default {
     },
   },
   watch: {
-    Categories(newValue, oldValue) {
+    Categories: {
+      handler() {
 
-      const vm = this
-      vm.SetDefaultCategory()
-    }
+        const vm = this
+
+        if(vm.CategoriesWatcherActive) {
+
+          vm.CategoriesWatcherActive = false
+          vm.SetDefaultCategory()
+          
+        }
+      }
+    },
+    Templates: {
+      deep: true,
+      handler() {
+
+        const vm = this
+        if(vm.TemplatesWatcherActive && vm.TemplatesReady.template) {
+
+          vm.TemplatesWatcherActive = false
+          const Context = 'template'
+          const WorkspaceStandardID = vm.$store.state.pcmProps.WorkspaceStandardID
+
+          vm.Templates[Context].forEach(function(template) {
+            vm.GeneratePseudoData(Context, template)
+          })
+          vm.$store.commit('pcmObjects/SET_Ready', {pcmContext:Context, ReadyState:true})
+
+          // Set standard object as selected
+          vm.PartitionAddressSelected['workspace'].object_id = WorkspaceStandardID
+          
+        }
+      }
+    },
   },
   mounted() {
 
     const vm = this
-    const SetCategoryToDefault = true
-
-    //vm.categoryGET(SetCategoryToDefault)
+    
     vm.templatesGET()
     vm.mediumGET()
     vm.portOrientationGET()

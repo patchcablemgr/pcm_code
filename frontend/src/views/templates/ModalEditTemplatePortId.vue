@@ -12,7 +12,7 @@
       >
         <validation-observer ref="simpleRules">
           <b-form
-            v-if="SelectedPortFormat.length"
+            v-if="SelectedPortFormat"
           >
 
             <div
@@ -43,7 +43,7 @@
                     <b-form-input
                       v-model="PortFormat.value"
                       @click="$emit('TemplatePartitionPortFormatFieldSelected', {'context': Context, 'index': PortFormatIndex} )"
-                      @change="$emit('TemplatePartitionPortFormatValueUpdated', {'context': Context, 'index': PortFormatIndex, 'value': $event} )"
+                      @change="UpdateValue($event)"
                       :state="errors.length > 0 ? false:null"
                     />
                   </div>
@@ -242,6 +242,7 @@ import {
 import Ripple from 'vue-ripple-directive'
 import { configure, ValidationProvider, ValidationObserver } from 'vee-validate'
 import { required, regex } from '@validations'
+import { PCM } from '../../mixins/PCM.js'
 
 const config = {
   useConstraintAttrs: false,
@@ -338,6 +339,7 @@ const ToolTipPreview = {
 const SelectedPortFormatIndex = 0
 
 export default {
+  mixins: [PCM],
   components: {
     ValidationProvider,
     ValidationObserver,
@@ -357,7 +359,6 @@ export default {
   props: {
     ModalID: {type: String},
     Context: {type: String},
-    TemplateData: {type: Object},
     TemplateFaceSelected: {type: Object},
     PartitionAddressSelected: {type: Object},
     PreviewPortID: {type: String},
@@ -380,23 +381,34 @@ export default {
     }
   },
   computed: {
+    Categories() {
+      return this.$store.state.pcmCategories.Categories
+    },
+    Templates() {
+      return this.$store.state.pcmTemplates.Templates
+    },
+    Objects() {
+      return this.$store.state.pcmObjects.Objects
+    },
     SelectedPortFormat: function() {
 
       const vm = this
       const Context = vm.Context
-      let SelectedPortFormat = []
-      const SelectedTemplateID = vm.PartitionAddressSelected[Context].template_id
-      if(SelectedTemplateID) {
-        const SelectedTemplateFace = vm.TemplateFaceSelected[Context]
-        const SelectedTemplatePartitionAddress = vm.PartitionAddressSelected[Context][SelectedTemplateFace]
-        const SelectedTemplateIndex = vm.GetTemplateIndex(SelectedTemplateID, Context)
-        const SelectedTemplate = vm.TemplateData[Context][SelectedTemplateIndex]
-        const SelectedBlueprint = SelectedTemplate.blueprint[SelectedTemplateFace]
-        const SelectedPartition = vm.GetPartition(SelectedBlueprint, SelectedTemplatePartitionAddress)
-        SelectedPortFormat = SelectedPartition.port_format
+      let PortFormat = null
+      const ObjectID = vm.PartitionAddressSelected[Context].object_id
+      if(ObjectID) {
+        const TemplateID = vm.GetTemplateID(ObjectID, Context)
+        const Face = vm.TemplateFaceSelected[Context]
+        const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+        const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+        const Template = vm.Templates[Context][TemplateIndex]
+        const Blueprint = Template.blueprint[Face]
+        const Partition = vm.GetPartition(Blueprint, PartitionAddress)
+        PortFormat = (Partition.type == 'connectable') ? Partition.port_format : null
       }
 
-      return SelectedPortFormat
+      console.log('PortFormat: '+PortFormat)
+      return PortFormat
     },
     ComputedOrderOptions: {
       get() {
@@ -432,6 +444,12 @@ export default {
     },
   },
   methods: {
+    UpdateValue: function(Value) {
+
+      const vm = this
+      const Context = vm.Context
+
+    },
     PortFormatFieldSelected: function(PortFormatIndex) {
 
       const vm = this
@@ -444,7 +462,7 @@ export default {
 
       const vm = this
       const Context = vm.Context
-      const TemplateIndex = vm.TemplateData[Context].findIndex((template) => template.id == TemplateID);
+      const TemplateIndex = vm.Templates[Context].findIndex((template) => template.id == TemplateID);
 
       return TemplateIndex
     },

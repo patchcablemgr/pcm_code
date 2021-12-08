@@ -1,31 +1,12 @@
 import axios from '@axios'
 
-const ObjectsReady = false
-const StandardTemplateID = 1
-const InsertTemplateID = 2
+const ObjectsReady = {
+  'workspace': false,
+  'actual': false,
+  'template': false,
+}
 const Objects = {
-  'workspace': [
-    {
-      "id": StandardTemplateID,
-      "name": "Standard",
-      "template_id": StandardTemplateID,
-      "location_id": 1,
-      "cabinet_ru": 1,
-      "cabinet_front": "front",
-    },
-    {
-      "id": InsertTemplateID,
-      "name": "Insert",
-      "template_id": InsertTemplateID,
-      "location_id": null,
-      "cabinet_ru": null,
-      "cabinet_front": null,
-      "parent_id": null,
-      "parent_face": "front",
-      "parent_part_addr": null,
-      "parent_enclosure_address": [0,0],
-    }
-  ],
+  'workspace': [],
   'actual': [],
   'template': [],
 }
@@ -34,43 +15,73 @@ export default {
   namespaced: true,
   state: {
     ObjectsReady,
-    Objects
+    Objects,
   },
   mutations: {
-    GET_Objects(state, data) {
+    SET_Objects(state, data) {
 
       state.Objects.actual = data
-      state.ObjectsReady = true
     },
     ADD_Object(state, {pcmContext, data}) {
       
       state.Objects[pcmContext].push(data)
     },
-    PATCH_Objects(state, data) {
+    UPDATE_Object(state, {pcmContext, data}) {
 
       const ID = data.id
-      const Index = state.Objects.actual.findIndex((item) => item.id == ID)
-      state.Objects.actual.splice(Index, 1, data)
+      const Index = state.Objects[pcmContext].findIndex((item) => item.id == ID)
+      state.Objects[pcmContext].splice(Index, 1, data)
     },
-    DELETE_Objects(state, data) {
+    REMOVE_Object(state, {pcmContext, data}) {
 
       const ID = data.id
-      const Index = state.Objects.actual.findIndex((item) => item.id == ID)
-      state.Objects.actual.splice(Index, 1)
+      const Index = state.Objects[pcmContext].findIndex((item) => item.id == ID)
+      state.Objects[pcmContext].splice(Index, 1)
+    },
+    SET_Ready(state, {pcmContext, ReadyState}) {
+
+      state.ObjectsReady[pcmContext] = ReadyState
     },
   },
   actions: {
     GET_Objects(context) {
 
+      // Create workspace objects
+      const WorkspaceIDs = {
+        standard: context.rootState.pcmProps.WorkspaceStandardID,
+        insert: context.rootState.pcmProps.WorkspaceInsertID
+      }
+      let WorkspaceObject
+      Object.entries(WorkspaceIDs).forEach(function([Type, ID]){
+        WorkspaceObject = JSON.parse(JSON.stringify(context.rootState.pcmProps.GenericObject), function (Key, Value) {
+          if(Key == 'id') {
+            return ID
+          } else if(Key == 'name') {
+            return "New_Object"
+          } else if(Key == 'template_id') {
+            return ID
+          } else if(Key == 'location_id') {
+            return ID
+          } else if(Key == 'cabinet_ru') {
+            return (Type == 'standard') ? 1 : Value
+          } else if(Key == 'cabinet_front') {
+            return (Type == 'standard') ? 'front' : Value
+          } else {
+            return Value
+          }
+        })
+        context.commit('ADD_Object', {pcmContext:'workspace', data:WorkspaceObject})
+      })
+      context.commit('SET_Ready', {pcmContext:'workspace', ReadyState:true})
+
       axios.get('/api/objects')
       .then(response => {
-        context.commit('GET_Objects', response.data)
-      }).catch(error => {
-        context.dispatch('ERROR', {vm: vm, data: error.response.data})
+        context.commit('SET_Objects', response.data)
+        context.commit('SET_Ready', {pcmContext:'actual', ReadyState:true})
       })
       
     },
-    POST_Objects(context, {vm, data}) {
+    POST_Object(context, {vm, data}) {
 
       axios.post('/api/objects', data)
       .then(response => {
@@ -80,7 +91,7 @@ export default {
       })
 
     },
-    PATCH_Objects(context, {vm, data}) {
+    PATCH_Object(context, {vm, data}) {
 
       const ID = data.id
 
@@ -92,7 +103,7 @@ export default {
       })
 
     },
-    DELETE_Objects(context, {vm, data}) {
+    DELETE_Object(context, {vm, data}) {
       
       const ID = data.id
 

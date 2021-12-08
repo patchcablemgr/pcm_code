@@ -35,8 +35,13 @@ new Vue({
   render: h => h(App),
   watch:{
     '$route' (to, from){
+      store.dispatch('pcmLocations/GET_Locations')
       store.dispatch('pcmCategories/GET_Categories')
       store.dispatch('pcmTemplates/GET_Templates')
+      store.dispatch('pcmObjects/GET_Objects')
+      store.dispatch('pcmProps/GET_Connectors')
+      store.dispatch('pcmProps/GET_Medium')
+      store.dispatch('pcmProps/GET_Orientations')
     }
   }
 }).$mount('#app')

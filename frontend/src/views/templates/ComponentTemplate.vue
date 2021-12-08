@@ -20,9 +20,6 @@
       <!-- Generic partition -->
       <ComponentTemplate
         v-if=" Partition.type == 'generic' "
-        :ObjectData="ObjectData"
-        :TemplateData="TemplateData"
-				:CategoryData="CategoryData"
         :TemplateRUSize="TemplateRUSize"
         :InitialPartitionAddress="GetPartitionAddress(PartitionIndex)"
         :Context="Context"
@@ -71,9 +68,6 @@
         >
           <component-object
             v-if="GetEnclosureInsertID(encIndex-1, Partition.enc_layout.cols)"
-            :ObjectData="ObjectData"
-            :TemplateData="TemplateData"
-            :CategoryData="CategoryData"
             :TemplateRUSize="TemplateRUSize"
             :InitialPartitionAddress=[]
             :Context="Context"
@@ -112,9 +106,6 @@ export default {
     ComponentObject: () => import('./ComponentObject.vue'),
   },
   props: {
-    ObjectData: {type: Object},
-    TemplateData: {type: Object},
-    CategoryData: {type: Array},
     TemplateRUSize: {type: Number},
     InitialPartitionAddress: {type: Array},
     Context: {type: String},
@@ -139,7 +130,6 @@ export default {
       const PartitionAddress = vm.GetPartitionAddress(0)
       const PartitionDirection = vm.GetPartitionDirection(PartitionAddress)
       const Template = vm.GetTemplate()
-      console.log('Template: '+JSON.stringify(Template))
       const isPseudo = Template.hasOwnProperty("pseudo")
       const isPseudoParentTemplate = Template.hasOwnProperty("pseudoParentTemplate")
 
@@ -199,8 +189,8 @@ export default {
       const TemplateFaceSelected = vm.TemplateFaceSelected
       const Context = vm.Context
       const PartitionAddress = vm.InitialPartitionAddress
-      let PartitionCollection = Template.blueprint[TemplateFaceSelected[Context]]
 
+      let PartitionCollection = Template.blueprint[TemplateFaceSelected[Context]]
       PartitionAddress.forEach(function(PartitionAddressIndex, Depth){
         PartitionCollection = PartitionCollection[PartitionAddressIndex].children
       })
@@ -217,13 +207,8 @@ export default {
       const Context = vm.Context
 
       // Get template index
-      console.log('Objects: '+JSON.stringify(vm.Objects))
-      console.log('Context: '+Context)
-      console.log('ObjectID: '+ObjectID)
-      const TemplateID = vm.GetTemplateID(ObjectID)
-      console.log('TemplateID: '+TemplateID)
-      const TemplateIndex = vm.GetTemplateIndex(TemplateID)
-      console.log('TemplateIndex: '+TemplateIndex)
+      const TemplateID = vm.GetTemplateID(ObjectID, Context)
+      const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
 
       // Get template
       const Template = Templates[Context][TemplateIndex]
@@ -236,11 +221,11 @@ export default {
       const vm = this
       const Context = vm.Context
       const ObjectID = vm.ObjectID
-      const InsertIndex = vm.ObjectData[Context].findIndex((object) => object.parent_id == ObjectID)
+      const InsertIndex = vm.Objects[Context].findIndex((object) => object.parent_id == ObjectID)
       let EnclosureInsertID = false
 			
       if(InsertIndex !== -1) {
-        const Insert = vm.ObjectData[Context][InsertIndex]
+        const Insert = vm.Objects[Context][InsertIndex]
         const InsertParentEnclosureAddress = Insert.parent_enclosure_address
         const EnclosureAddress = vm.GetEnclosureAddress(encIndex, encCols)
 
@@ -268,7 +253,7 @@ export default {
 
       // Validate dropped object template type
       const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-      const Template = vm.TemplateData[Context][TemplateIndex]
+      const Template = vm.Templates[Context][TemplateIndex]
       const TemplateType = Template.type
 
       if(TemplateType == 'insert') {
@@ -326,12 +311,12 @@ export default {
 
       // Store variables
       const vm = this
-      const TemplateFaceSelected = vm.TemplateFaceSelected
       const Context = vm.Context
+      const Face = vm.TemplateFaceSelected[Context]
       const Template = vm.GetTemplate()
       const PartitionDirection = vm.GetPartitionDirection(PartitionAddress)
       let WorkingMax = vm.GetGlobalPartitionMax(Template, PartitionAddress)
-      let WorkingPartition = JSON.parse(JSON.stringify(Template.blueprint[TemplateFaceSelected[Context]]))
+      let WorkingPartition = JSON.parse(JSON.stringify(Template.blueprint[Face]))
       
       PartitionAddress.pop()
       PartitionAddress.forEach(function(PartitionAddressIndex, Depth){
@@ -346,7 +331,8 @@ export default {
     },
     GetPartitionFlexGrow: function(PartitionUnits, PartitionIndex) {
 
-      const vm = this;
+      const vm = this
+      const Context = vm.Context
       let PartitionFlexGrow
       const PartitionAddress = vm.GetPartitionAddress(PartitionIndex)
       const PartitionParentSize = vm.GetPartitionParentSize(PartitionAddress)

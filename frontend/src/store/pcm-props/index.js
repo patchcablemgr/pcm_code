@@ -15,7 +15,7 @@ const GenericCabinet = {
 }
 const GenericBlueprintGeneric = {
   "type": "generic",
-  "units": null,
+  "units": 1,
   "children": [],
 }
 const GenericBlueprintConnectable = {
@@ -52,7 +52,13 @@ const GenericTemplate = {
         "children": []
       }
     ],
-    "rear": []
+    "rear": [
+      {
+        "type": "generic",
+        "units": 24,
+        "children": []
+      }
+    ]
   }
 }
 const GenericObject = {

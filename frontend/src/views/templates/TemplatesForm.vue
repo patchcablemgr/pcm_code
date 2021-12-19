@@ -77,8 +77,7 @@
         <dd class="col-sm-8">
           <b-form-input
             name="size"
-            v-model.number="ComputedInputTemplateRUSize"
-            @change="$emit('TemplateRUSizeUpdated', $event)"
+            v-model.number="TemplateRUSize"
             ref="ElementTemplateRUSize"
             type="number"
             :min="GetRUSizeMin()"
@@ -98,7 +97,6 @@
           <b-form-radio-group
             name="function"
             v-model="TemplateFunction"
-            @change="$emit('TemplateFunctionUpdated', $event)"
             :options="optionsTemplateFunction"
             stacked
             :disabled="TemplateType=='insert'"
@@ -114,9 +112,8 @@
         <dd class="col-sm-8">
           <b-form-radio-group
               name="mountConfig"
-              v-model="MountConfig"
+              v-model="TemplateMountConfig"
               :options="optionsTemplateMountConfig"
-              @change="$emit('TemplateMountConfigUpdated', $event)"
               stacked
               :disabled="TemplateType=='insert'"
             />
@@ -156,7 +153,7 @@
             v-ripple.400="'rgba(113, 102, 240, 0.15)'"
             variant="outline-primary"
             class="btn-icon"
-            @click="$emit('TemplatePartitionAdd', 'inside')"
+            @click="PartitionAdd('inside')"
             :disabled="AddChildPartitionDisabled"
           >
             <feather-icon icon="PlusSquareIcon" />
@@ -166,19 +163,19 @@
             v-ripple.400="'rgba(113, 102, 240, 0.15)'"
             variant="outline-primary"
             class="btn-icon"
-            @click="$emit('TemplatePartitionAdd', 'after')"
+            @click="PartitionAdd('after')"
             :disabled="AddSiblingPartitionDisabled"
           >
             <feather-icon
               icon="MoreVerticalIcon"
-              v-show="ComputedSelectedPartitionDirection == 'row'"
+              v-show="ComputedSelectedPartitionDirection == 'col'"
             />
             <feather-icon
               icon="MoreHorizontalIcon"
-              v-show="ComputedSelectedPartitionDirection == 'column'"
+              v-show="ComputedSelectedPartitionDirection == 'row'"
             />
             <br
-              v-show="ComputedSelectedPartitionDirection == 'row'"
+              v-show="ComputedSelectedPartitionDirection == 'col'"
             >
             <feather-icon icon="PlusIcon" />
           </b-button>
@@ -187,20 +184,20 @@
             v-ripple.400="'rgba(113, 102, 240, 0.15)'"
             variant="outline-primary"
             class="btn-icon"
-            @click="$emit('TemplatePartitionAdd', 'before')"
+            @click="PartitionAdd('before')"
             :disabled="AddSiblingPartitionDisabled"
           >
             <feather-icon icon="PlusIcon" />
             <br
-              v-show="ComputedSelectedPartitionDirection == 'row'"
+              v-show="ComputedSelectedPartitionDirection == 'col'"
             >
             <feather-icon
               icon="MoreVerticalIcon"
-              v-show="ComputedSelectedPartitionDirection == 'row'"
+              v-show="ComputedSelectedPartitionDirection == 'col'"
             />
             <feather-icon
               icon="MoreHorizontalIcon"
-              v-show="ComputedSelectedPartitionDirection == 'column'"
+              v-show="ComputedSelectedPartitionDirection == 'row'"
             />
           </b-button>
           <b-button
@@ -208,7 +205,7 @@
             v-ripple.400="'rgba(113, 102, 240, 0.15)'"
             variant="outline-primary"
             class="btn-icon"
-            @click="$emit('TemplatePartitionRemove')"
+            @click="PartitionDelete()"
             :disabled="RemovePartitionDisabled"
           >
             <feather-icon icon="MinusSquareIcon" />
@@ -224,10 +221,10 @@
         <dd class="col-sm-8">
           <b-form-input
             name="partitionSize"
-            v-model.number="ComputedInputTemplatePartitionSize"
+            v-model.number="PartitionSize"
             type="number"
-            :min="GetSelectedPartitionSizeMin()"
-            :max="GetSelectedPartitionSizeMax()"
+            :min="GetPartitionSelectedSizeMin()"
+            :max="GetPartitionSelectedSizeMax()"
             :formatter="CastPartitionSizeToInteger"
           />
         </dd>
@@ -288,7 +285,7 @@
                 <b-form-input
                   name="portLayoutCol"
                   :disabled="PartitionType != 'connectable'"
-                  v-model="ComputedInputTemplatePortLayoutCols"
+                  v-model="PortLayoutCols"
                   type="number"
                   min=1
                 />
@@ -302,7 +299,7 @@
                 <b-form-input
                   name="portLayoutRow"
                   :disabled="PartitionType != 'connectable'"
-                  v-model="ComputedInputTemplatePortLayoutRows"
+                  v-model="PortLayoutRows"
                   type="number"
                   min=1
                 />
@@ -323,7 +320,7 @@
         <dd class="col-sm-8">
           <b-form-select
             name="media"
-            v-model="ComputedInputTemplateMedia"
+            v-model="PortMedia"
             :options="GetMediaOptions()"
           />
         </dd>
@@ -340,7 +337,7 @@
         <dd class="col-sm-8">
           <b-form-select
             name="portType"
-            v-model="ComputedInputTemplatePortConnector"
+            v-model="PortConnector"
             :options="GetPortConnectorOptions()"
           />
         </dd>
@@ -357,7 +354,7 @@
         <dd class="col-sm-8">
           <b-form-select
             name="portOrientation"
-            v-model="ComputedInputTemplatePortOrientation"
+            v-model="PortOrientation"
             :options="GetPortOrientationOptions()"
           />
         </dd>
@@ -395,7 +392,7 @@
                 <b-form-input
                   name="encLayoutCol"
                   :disabled="PartitionType != 'enclosure'"
-                  v-model="ComputedInputTemplateEncLayoutCols"
+                  v-model="EncLayoutCols"
                   type="number"
                   min=1
                 />
@@ -409,7 +406,7 @@
                 <b-form-input
                   name="encLayoutRow"
                   :disabled="PartitionType != 'enclosure'"
-                  v-model="ComputedInputTemplateEncLayoutRows"
+                  v-model="EncLayoutRows"
                   type="number"
                   min=1
                 />
@@ -501,7 +498,6 @@ export default {
     PortConnectorData: {type: Array},
     PortOrientationData: {type: Array},
     MediaData: {type: Array},
-    AddChildPartitionDisabled: {type: Boolean},
     AddSiblingPartitionDisabled: {type: Boolean},
     RemovePartitionDisabled: {type: Boolean},
     PartitionTypeDisabled: {type: Boolean},
@@ -540,79 +536,32 @@ export default {
     Objects() {
       return this.$store.state.pcmObjects.Objects
     },
-    TemplateFunction: {
-      get() {
-
-        const vm = this
-        const Context = vm.Context
-        const ObjectID = vm.PartitionAddressSelected[Context].object_id
-        const TemplateID = vm.GetTemplateID(ObjectID, Context)
-        const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-        const TemplateFunction = vm.Templates[Context][TemplateIndex].function
-
-        return TemplateFunction
-      },
-      set() {
-
-        return true
-      }
-    },
-    MountConfig: {
-      get() {
-
-        const vm = this
-        const Context = vm.Context
-        const ObjectID = vm.PartitionAddressSelected[Context].object_id
-        const TemplateID = vm.GetTemplateID(ObjectID, Context)
-        const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-        const MountConfig = vm.Templates[Context][TemplateIndex].mount_config
-
-        return MountConfig
-      },
-      set() {
-
-        return true
-      }
-    },
     ComputedSelectedPartitionDirection: {
       get() {
         // Store variables
         const vm = this
+        const Context = vm.Context
+        const Face = vm.TemplateFaceSelected[Context]
+        const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
 
-        return vm.GetPartitionDirection()
+        return vm.GetPartitionDirection(PartitionAddress)
       }
-    },
-    ComputedInputTemplateRUSize: function() {
-
-      // Store variables
-      const vm = this
-      const Context = vm.Context
-      const ObjectID = vm.PartitionAddressSelected[Context].object_id
-      const TemplateID = vm.GetTemplateID(ObjectID, Context)
-      const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-      const TemplateRUSize = vm.Templates[Context][TemplateIndex].ru_size
-
-      return TemplateRUSize
     },
     TemplateName: {
       get() {
 
-        const vm = this
-        const Context = vm.Context
-        const ObjectID = vm.PartitionAddressSelected[Context].object_id
-        const TemplateID = vm.GetTemplateID(ObjectID, Context)
-        const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-        const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
-        const TemplateName = Template.name
+        const Context = this.Context
+        const Template = this.GetTemplateSelected(Context)
+        console.log("Template: "+Template)
+        const ReturnData = (Template) ? Template.name : ''
 
-        return TemplateName
+        return ReturnData
       },
       set(newValue) {
 
         const vm = this
         const Context = vm.Context
-        const TemplateID = vm.PartitionAddressSelected[Context].template_id
-        const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+        const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
         const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
 
         Template.name = newValue
@@ -622,23 +571,17 @@ export default {
     TemplateCategory: {
       get() {
 
-        const vm = this
-        const Context = vm.Context
-        const ObjectID = vm.PartitionAddressSelected[Context].object_id
-        const TemplateID = vm.GetTemplateID(ObjectID, Context)
-        const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-        const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
-        const TemplateCategory = Template.category_id
+        const Context = this.Context
+        const Template = this.GetTemplateSelected(Context)
+        const ReturnData = (Template) ? Template.category_id : 0
 
-        return TemplateCategory
+        return ReturnData
       },
       set(newValue) {
 
         const vm = this
         const Context = vm.Context
-        const ObjectID = vm.PartitionAddressSelected[Context].object_id
-        const TemplateID = vm.GetTemplateID(ObjectID, Context)
-        const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+        const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
         const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
 
         Template.category_id = newValue
@@ -648,55 +591,118 @@ export default {
     TemplateType: {
       get() {
 
-        // Store variables
-        const vm = this
-        const Context = vm.Context
-        const TemplateID = vm.PartitionAddressSelected[Context].template_id
-        const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-        const Template = vm.Templates[Context][TemplateIndex]
-        const TemplateType = Template.type
+        const Context = this.Context
+        const Template = this.GetTemplateSelected(Context)
+        const ReturnData = (Template) ? Template.type : ''
 
-        return TemplateType
+        return ReturnData
       },
       set(newValue) {
         
         const vm = this
+        const Context = vm.Context
         const WorkspaceStandardID = vm.$store.state.pcmProps.WorkspaceStandardID
         const WorkspaceInsertID = vm.$store.state.pcmProps.WorkspaceInsertID
 			
         // Set active preview template index
         const ActiveWorkspaceID = (newValue == 'insert') ? WorkspaceInsertID : WorkspaceStandardID
 
+        // Set LocationID
         vm.$emit('SetLocationID', ActiveWorkspaceID)
         
-        // Reset PartitionAddressSelected
-        vm.PartitionAddressSelected.workspace.object_id = ActiveWorkspaceID
-        vm.PartitionAddressSelected.workspace.front = [0]
-        vm.PartitionAddressSelected.workspace.rear = [0]
+        // Set PartitionAddressSelected
+        const object_id = ActiveWorkspaceID
+        const front = [0]
+        const rear = [0]
+        vm.$emit('SetPartitionAddressSelected', {Context, object_id, front, rear})
       }
     },
-    PartitionType: {
+    TemplateRUSize: {
       get() {
 
-        // Store variables
-        const vm = this
-        const SelectedPartition = vm.GetSelectedPartition()
-        
-        // Return selected partition type
-        return SelectedPartition.type
+        const Context = this.Context
+        const Template = this.GetTemplateSelected(Context)
+        const ReturnData = (Template) ? Template.ru_size : 0
+
+        return ReturnData
       },
       set(newValue) {
 
         const vm = this
         const Context = vm.Context
-        const TemplateID = vm.PartitionAddressSelected[Context].template_id
+        const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
+        const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
+
+        Template.ru_size = newValue
+        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
+      }
+    },
+    TemplateFunction: {
+      get() {
+
+        const Context = this.Context
+        const Template = this.GetTemplateSelected(Context)
+        const ReturnData = (Template) ? Template.function : ''
+
+        return ReturnData
+      },
+      set(newValue) {
+
+        const vm = this
+        const Context = vm.Context
+        const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
+        const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
+
+        Template.function = newValue
+        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
+      }
+    },
+    TemplateMountConfig: {
+      get() {
+
+        const Context = this.Context
+        const Template = this.GetTemplateSelected(Context)
+        const ReturnData = (Template) ? Template.mount_config : ''
+
+        return ReturnData
+      },
+      set(newValue) {
+
+        const vm = this
+        const Context = vm.Context
+        const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
+        const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
+
+        Template.mount_config = newValue
+        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
+
+        // Set TemplateFaceSelected
+        if(newValue == '2-post') {
+          const Face = 'front'
+          vm.$emit('SetTemplateFaceSelected', {Context, Face})
+        }
+      }
+    },
+    PartitionType: {
+      get() {
+
+        const Context = this.Context
+        const Partition = this.GetPartitionSelected(Context)
+        const ReturnData = (Partition) ? Partition.type : ''
+
+        return ReturnData
+      },
+      set(newValue) {
+
+        const vm = this
+        const Context = vm.Context
         const TemplateFace = vm.TemplateFaceSelected[Context]
         const TemplatePartitionAddress = vm.PartitionAddressSelected[Context][TemplateFace]
 
-        const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+        const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
         const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
         const Blueprint = Template.blueprint[TemplateFace]
-        let Partition = vm.GetPartition(Blueprint, TemplatePartitionAddress)
+        const Partition = vm.GetPartition(Blueprint, TemplatePartitionAddress)
 
         Partition.type = newValue
 
@@ -727,198 +733,406 @@ export default {
 
       }
     },
-    ComputedInputTemplatePartitionSize: {
+    PartitionSize: {
       get() {
 
-        // Store variables
-        const vm = this
-        const Partition = vm.GetSelectedPartition()
-        
-        // Return selected partition type
-        return Partition.units
+        const Context = this.Context
+        const Partition = this.GetPartitionSelected(Context)
+        const ReturnData = (Partition) ? Partition.units : 0
+
+        return ReturnData
       },
       set(newValue) {
 
-        // Store variables
         const vm = this
+        const Context = vm.Context
+        const Face = vm.TemplateFaceSelected[Context]
+        const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+        const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
+        const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
+        const Blueprint = Template.blueprint[Face]
+        const Partition = vm.GetPartition(Blueprint, PartitionAddress)
+        Partition.units = newValue
 
-        // Emit new value
-        vm.$emit('TemplatePartitionSizeUpdated', newValue)
+        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
+      }
+    },
+    PortLayoutCols: {
+      get() {
+
+        const Context = this.Context
+        const Partition = this.GetPartitionSelected(Context)
+        const ReturnData = (Partition && this.PartitionType == 'connectable') ? Partition.port_layout.cols : 0
+
+        return ReturnData
+      },
+      set(newValue) {
+
+        const vm = this
+        const Context = vm.Context
+        const Face = vm.TemplateFaceSelected[Context]
+        const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+        const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
+        const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
+        const Blueprint = Template.blueprint[Face]
+        const Partition = vm.GetPartition(Blueprint, PartitionAddress)
+        Partition.port_layout.cols = newValue
+
+        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
 
       }
     },
-    ComputedInputTemplatePortLayoutCols: {
+    PortLayoutRows: {
       get() {
 
-        // Store variables
-        const vm = this
-        const SelectedPartition = vm.GetSelectedPartition()
-        const PortLayoutCols = (SelectedPartition.type == 'connectable') ? SelectedPartition.port_layout.cols : 0
-        
-        // Return selected partition type
-        return PortLayoutCols
+        const Context = this.Context
+        const Partition = this.GetPartitionSelected(Context)
+        const ReturnData = (Partition && this.PartitionType == 'connectable') ? Partition.port_layout.rows : 0
+
+        return ReturnData
       },
       set(newValue) {
 
-        // Store variables
         const vm = this
+        const Context = vm.Context
+        const Face = vm.TemplateFaceSelected[Context]
+        const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+        const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
+        const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
+        const Blueprint = Template.blueprint[Face]
+        const Partition = vm.GetPartition(Blueprint, PartitionAddress)
+        Partition.port_layout.rows = newValue
 
-        // Emit new value
-        vm.$emit('TemplatePartitionPortLayoutColsUpdated', newValue)
+        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
 
       }
     },
-    ComputedInputTemplatePortLayoutRows: {
+    PortMedia: {
       get() {
 
-        // Store variables
-        const vm = this
-        const SelectedPartition = vm.GetSelectedPartition()
-        const PortLayoutCols = (SelectedPartition.type == 'connectable') ? SelectedPartition.port_layout.rows : 0
-        
-        // Return selected partition type
-        return PortLayoutCols
+        const Context = this.Context
+        const Partition = this.GetPartitionSelected(Context)
+        const ReturnData = (Partition && this.PartitionType == 'connectable') ? Partition.media : 0
+
+        return ReturnData
       },
       set(newValue) {
 
-        // Store variables
         const vm = this
+        const Context = vm.Context
+        const Face = vm.TemplateFaceSelected[Context]
+        const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+        const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
+        const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
+        const Blueprint = Template.blueprint[Face]
+        const Partition = vm.GetPartition(Blueprint, PartitionAddress)
+        Partition.media = newValue
 
-        // Emit new value
-        vm.$emit('TemplatePartitionPortLayoutRowsUpdated', newValue)
+        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
 
       }
     },
-    ComputedInputTemplateMedia: {
+    PortConnector: {
       get() {
 
-        // Store variables
-        const vm = this
-        const SelectedPartition = vm.GetSelectedPartition()
-        const DefaultMediaIndex = vm.MediaData.findIndex((media) => media.default);
-        const DefaultMediaValue = vm.MediaData[DefaultMediaIndex].value
+        const Context = this.Context
+        const Partition = this.GetPartitionSelected(Context)
+        const ReturnData = (Partition && this.PartitionType == 'connectable') ? Partition.port_connector : 0
 
-        const MediaValue = (SelectedPartition.media) ? SelectedPartition.media : DefaultMediaValue
-        
-        // Return selected partition type
-        return MediaValue
+        return ReturnData
       },
       set(newValue) {
 
-        // Store variables
         const vm = this
+        const Context = vm.Context
+        const Face = vm.TemplateFaceSelected[Context]
+        const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+        const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
+        const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
+        const Blueprint = Template.blueprint[Face]
+        const Partition = vm.GetPartition(Blueprint, PartitionAddress)
+        Partition.port_connector = newValue
 
-        // Emit new value
-        vm.$emit('TemplatePartitionMediaUpdated', newValue)
+        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
 
       }
     },
-    ComputedInputTemplatePortConnector: {
+    PortOrientation: {
       get() {
 
-        // Store variables
-        const vm = this
-        const SelectedPartition = vm.GetSelectedPartition()
-        const DefaultPortConnectorIndex = vm.PortConnectorData.findIndex((PortConnector) => PortConnector.default);
-        const DefaultPortConnectorValue = vm.PortConnectorData[DefaultPortConnectorIndex].value
+        const Context = this.Context
+        const Partition = this.GetPartitionSelected(Context)
+        const ReturnData = (Partition && this.PartitionType == 'connectable') ? Partition.port_orientation : 0
 
-        const PortConnectorValue = (SelectedPartition.port_connector) ? SelectedPartition.port_connector : DefaultPortConnectorValue
-        
-        // Return selected partition type
-        return PortConnectorValue
+        return ReturnData
       },
       set(newValue) {
 
-        // Store variables
         const vm = this
+        const Context = vm.Context
+        const Face = vm.TemplateFaceSelected[Context]
+        const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+        const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
+        const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
+        const Blueprint = Template.blueprint[Face]
+        const Partition = vm.GetPartition(Blueprint, PartitionAddress)
+        Partition.port_orientation = newValue
 
-        // Emit new value
-        vm.$emit('TemplatePartitionPortConnectorUpdated', newValue)
+        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
 
       }
     },
-    ComputedInputTemplatePortOrientation: {
+    EncLayoutCols: {
       get() {
 
-        // Store variables
-        const vm = this
-        const SelectedPartition = vm.GetSelectedPartition()
-        const DefaultPortOrientationIndex = vm.PortOrientationData.findIndex((PortOrientation) => PortOrientation.default);
-        const DefaultPortOrientationValue = vm.PortOrientationData[DefaultPortOrientationIndex].value
+        const Context = this.Context
+        const Partition = this.GetPartitionSelected(Context)
+        const ReturnData = (Partition && this.PartitionType == 'enclosure') ? Partition.enc_layout.cols : 0
 
-        const PortOrientationValue = (SelectedPartition.port_orientation) ? SelectedPartition.port_orientation : DefaultPortOrientationValue
-        
-        // Return selected partition type
-        return PortOrientationValue
+        return ReturnData
       },
       set(newValue) {
 
-        // Store variables
         const vm = this
+        const Context = vm.Context
+        const Face = vm.TemplateFaceSelected[Context]
+        const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+        const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
+        const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
+        const Blueprint = Template.blueprint[Face]
+        const Partition = vm.GetPartition(Blueprint, PartitionAddress)
+        Partition.enc_layout.cols = newValue
 
-        // Emit new value
-        vm.$emit('TemplatePartitionPortOrientationUpdated', newValue)
+        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
 
       }
     },
-    ComputedInputTemplateEncLayoutCols: {
+    EncLayoutRows: {
       get() {
 
-        // Store variables
-        const vm = this
-        const SelectedPartition = vm.GetSelectedPartition()
-        const EncLayoutCols = (SelectedPartition.type == 'enclosure') ? SelectedPartition.enc_layout.cols : 0
-        
-        // Return selected partition type
-        return EncLayoutCols
+        const Context = this.Context
+        const Partition = this.GetPartitionSelected(Context)
+        const ReturnData = (Partition && this.PartitionType == 'enclosure') ? Partition.enc_layout.rows : 0
+
+        return ReturnData
       },
       set(newValue) {
 
-        // Store variables
         const vm = this
+        const Context = vm.Context
+        const Face = vm.TemplateFaceSelected[Context]
+        const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+        const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
+        const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
+        const Blueprint = Template.blueprint[Face]
+        const Partition = vm.GetPartition(Blueprint, PartitionAddress)
+        Partition.enc_layout.rows = newValue
 
-        // Emit new value
-        vm.$emit('TemplatePartitionEncLayoutColsUpdated', newValue)
+        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
 
       }
     },
-    ComputedInputTemplateEncLayoutRows: {
-      get() {
+    AddChildPartitionDisabled: function() {
+      // Store variables
+      const vm = this
+      const Context = vm.Context
+      const Face = vm.TemplateFaceSelected[Context]
+      const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
 
-        // Store variables
-        const vm = this
-        const SelectedPartition = vm.GetSelectedPartition()
-        const EncLayoutCols = (SelectedPartition.type == 'enclosure') ? SelectedPartition.enc_layout.rows : 0
-        
-        // Return selected partition type
-        return EncLayoutCols
-      },
-      set(newValue) {
+      // Get Partition
+      const Partition = vm.GetPartitionSelected()
 
-        // Store variables
-        const vm = this
-
-        // Emit new value
-        vm.$emit('TemplatePartitionEncLayoutRowsUpdated', newValue)
-
-      }
+      return (!vm.GetPartitionUnitsAvailable(PartitionAddress) || Partition.type != 'generic')
     },
   },
   methods: {
+    PartitionAdd: function(Position) {
+
+      const vm = this
+      const Context = vm.Context
+      const Face = vm.TemplateFaceSelected[Context]
+      const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+      const GenericPartition = vm.$store.state.pcmProps.GenericBlueprintGeneric
+      const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
+      const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
+      const Blueprint = Template.blueprint[Face]
+
+      if(Position == 'inside') {
+        
+        if(vm.GetPartitionUnitsAvailable(PartitionAddress)) {
+
+          const Partition = vm.GetPartition(Blueprint, PartitionAddress)
+          Partition.children.push(GenericPartition)
+          
+        }
+      } else {
+
+        const PartitionIndex = PartitionAddress[PartitionAddress.length - 1]
+        const ParentPartitionAddress = PartitionAddress.slice(0, PartitionAddress.length - 1)
+        let ParentTemplate = vm.GetPartition(Blueprint, ParentPartitionAddress)
+
+        if(vm.GetPartitionUnitsAvailable(ParentPartitionAddress)) {
+
+          const ParentTemplateChildren = (ParentPartitionAddress.length) ? ParentTemplate.children : ParentTemplate
+
+          if(Position == 'after') {
+
+            // Insert new partition after selected partition
+            ParentTemplateChildren.splice(PartitionIndex + 1, 0, GenericPartition)
+
+          } else if (Position == 'before') {
+
+            // Insert new partition before selected partition
+            ParentTemplateChildren.splice(PartitionIndex, 0, GenericPartition)
+
+            // Update PartitionAddressSelected as it is shifted right
+            PartitionAddress[PartitionAddress.length - 1] = PartitionIndex + 1
+            const SelectedObjectID = vm.PartitionAddressSelected[Context].object_id
+            const SelectedPartitionAddressFront = (Face == 'front') ? PartitionAddress : vm.PartitionAddressSelected[Context]['front']
+            const SelectedPartitionAddressRear = (Face == 'rear') ? PartitionAddress : vm.PartitionAddressSelected[Context]['rear']
+            vm.$emit('SetPartitionAddressSelected', {Context, object_id: SelectedObjectID, front: SelectedPartitionAddressFront, rear: SelectedPartitionAddressRear})
+          }
+        }
+      }
+
+      vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
+    },
+    PartitionDelete: function() {
+      
+      // Store variables
+      const vm = this
+      const Context = vm.Context
+      const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
+      const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
+      const Face = vm.TemplateFaceSelected[Context]
+      const ParentPartitionAddress = JSON.parse(JSON.stringify(vm.PartitionAddressSelected[Context][Face]))
+      const PartitionIndex = ParentPartitionAddress.pop()
+      let ParentPartitionSet = Template.blueprint[Face]
+
+      // Delete partition
+      ParentPartitionAddress.forEach(function(PartitionIndex, Index){
+        ParentPartitionSet = ParentPartitionSet[PartitionIndex].children
+      })
+      ParentPartitionSet.splice(PartitionIndex, 1)
+
+      // Adjust selected partition
+      let PartitionAddress = JSON.parse(JSON.stringify(vm.PartitionAddressSelected[Context][Face]))
+      if(ParentPartitionSet.length) {
+        if(PartitionIndex == 0) {
+          PartitionAddress[PartitionAddress.length - 1] = 0
+        } else {
+          PartitionAddress[PartitionAddress.length - 1] = PartitionIndex - 1
+        }
+      } else {
+        PartitionAddress = ParentPartitionAddress
+      }
+      const SelectedObjectID = vm.PartitionAddressSelected[Context].object_id
+      const SelectedPartitionAddressFront = (Face == 'front') ? PartitionAddress : vm.PartitionAddressSelected[Context]['front']
+      const SelectedPartitionAddressRear = (Face == 'rear') ? PartitionAddress : vm.PartitionAddressSelected[Context]['rear']
+      vm.$emit('SetPartitionAddressSelected', {Context, object_id: SelectedObjectID, front: SelectedPartitionAddressFront, rear: SelectedPartitionAddressRear})
+      vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
+
+    },
+    GetPartitionUnitsAvailable: function(PartitionAddress) {
+
+      // Store variables
+      const vm = this
+      const Context = vm.Context
+      let UnitsAvailable = 0
+      const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
+
+      if(TemplateIndex) {
+        const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
+
+        // Get Partition
+        const Face = vm.TemplateFaceSelected[Context]
+        const Blueprint = Template.blueprint[Face]
+        const Partition = vm.GetPartition(Blueprint, PartitionAddress)
+
+        UnitsAvailable = vm.GetGlobalPartitionMax(Template, PartitionAddress)
+        let PartitionChildren
+
+        if(PartitionAddress.length > 1) {
+          const PartitionParentAddress = PartitionAddress.slice(0, PartitionAddress.length - 1)
+          const PartitionParent = vm.GetPartition(Blueprint, PartitionParentAddress)
+          UnitsAvailable = PartitionParent.units
+        }
+
+        if(PartitionAddress.length > 0) {
+          PartitionChildren = Partition.children
+        } else {
+          PartitionChildren = Partition
+        }
+
+        PartitionChildren.forEach(function(PartitionChild) {
+          UnitsAvailable = UnitsAvailable - PartitionChild.units
+        })
+      }
+
+      return UnitsAvailable
+    },
+    GetGlobalPartitionMax: function(Template, PartitionAddress) {
+
+      const vm = this
+      const PartitionDirection = vm.GetPartitionDirection(PartitionAddress)
+
+      // Get working max
+      let WorkingMax
+      if (PartitionDirection == 'col') {
+
+        if (Template.insert_constraints !== null) {
+
+          // Partition is an insert with constraints
+          WorkingMax = Template.insert_constraints.part_layout.width
+        } else {
+
+          // Partition is standard
+          WorkingMax = 24
+        }
+      } else {
+
+        if (Template.insert_constraints !== null) {
+
+          // Partition is an insert with constraints
+          WorkingMax = Template.insert_constraints.part_layout.height
+        } else {
+
+          // Partition is standard
+          WorkingMax = Template.ru_size * 2
+        }
+      }
+
+      return WorkingMax
+
+    },
     onSubmit: function() {
 
       const vm = this
       const Context = vm.Context
-      const ObjectID = vm.PartitionAddressSelected[Context].object_id
-      const TemplateID = vm.GetTemplateID(ObjectID, Context)
-      const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+      const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
+      const Template = vm.Templates[Context][TemplateIndex]
+      const url = '/api/templates'
 
-      console.log("Debug (Submit): "+JSON.stringify(vm.Templates[Context][TemplateIndex]))
-      this.$emit('FormSubmit')
+      // POST category form data
+      this.$http.post(url, Template).then(function(response){
+        
+        const Template = response.data
+        vm.GeneratePseudoData('template', Template)
+				
+        // Append new template to template array
+        vm.$store.commit('pcmTemplates/ADD_Template', {pcmContext:'template', data:Template})
+
+      }).catch(error => {
+        // Display error to user via toast
+        vm.$bvToast.toast(JSON.stringify(error.response), {
+          title: 'Error',
+          variant: 'danger',
+        })
+
+      })
     },
     onReset: function() {
       console.log("Debug (Reset): ")
-      this.$emit('FormReset')
     },
     GetRUSizeMin() {
 
@@ -955,154 +1169,79 @@ export default {
 
       return RUSizeMin
     },
-    GetSelectedPartition: function() {
-
-      // Store variables
-      const vm = this
-      const Context = vm.Context
-      const TemplateFace = vm.TemplateFaceSelected[Context]
-      const PartitionAddress = vm.PartitionAddressSelected[Context][TemplateFace]
-      const TemplateID = vm.PartitionAddressSelected[Context].template_id
-      const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-      const Template = vm.Templates[Context][TemplateIndex]
-      const Blueprint = Template.blueprint[TemplateFace]
-      const SelectedPartition = vm.GetPartition(Blueprint, PartitionAddress)
-
-      return SelectedPartition
-    },
-    GetPartitionDirection: function(PartitionAddress=false) {
+    GetPartitionSelectedSizeMin: function(){
 
       const vm = this
       const Context = vm.Context
-      const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
-      const PartitionAddressSelected = vm.PartitionAddressSelected[Context][TemplateFaceSelected]
-      PartitionAddress = (PartitionAddress) ? PartitionAddress : PartitionAddressSelected
-
-      const PartitionDirection = (PartitionAddress.length % 2) ? 'column' : 'row'
+      let PartitionSizeMin = 0
+      const Partition = vm.GetPartitionSelected(Context)
       
-      return PartitionDirection
-    },
-    GetGlobalPartitionMax: function(Template, PartitionAddress) {
-
-      const vm = this
-      const PartitionDirection = vm.GetPartitionDirection(PartitionAddress)
-
-      // Get working max
-      let WorkingMax
-      if (PartitionDirection == 'column') {
-
-        if (Template.insert_constraints !== null) {
-
-          // Partition is an insert with constraints
-          WorkingMax = Template.insert_constraints.part_layout.width
-        } else {
-
-          // Partition is standard
-          WorkingMax = 24
-        }
-      } else {
-
-        if (Template.insert_constraints !== null) {
-
-          // Partition is an insert with constraints
-          WorkingMax = Template.insert_constraints.part_layout.height
-        } else {
-
-          // Partition is standard
-          WorkingMax = Template.ru_size * 2
-        }
+      if(Partition) {
+        PartitionSizeMin = vm.GetPartitionSelectedSizeMinRecursion(Partition.children)
       }
-
-      return WorkingMax
-
-    },
-    GetSelectedPartitionParentSize: function() {
-
-      // Store variables
-      const vm = this
-      const Context = vm.Context
-      const ObjectID = vm.PartitionAddressSelected[Context].object_id
-      const TemplateID = vm.GetTemplateID(ObjectID, Context)
-      const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-      const PreviewData = vm.Templates[Context][TemplateIndex]
-      const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
-      const PartitionAddressSelected = JSON.parse(JSON.stringify(vm.PartitionAddressSelected[Context][TemplateFaceSelected]))
-      const SelectedPartitionDirection = vm.ComputedSelectedPartitionDirection
-      let WorkingMax = vm.GetGlobalPartitionMax(PreviewData, PartitionAddressSelected)
-      let WorkingPartitionChildren = JSON.parse(JSON.stringify(PreviewData.blueprint[TemplateFaceSelected]))
-
-      PartitionAddressSelected.pop()
-      PartitionAddressSelected.forEach(function(PartitionAddressIndex, Depth){
-        let WorkingPartitionDirection = ((Depth + 1) % 2) ? 'column' : 'row'
-        if(WorkingPartitionDirection == SelectedPartitionDirection) {
-          WorkingMax = WorkingPartitionChildren[PartitionAddressIndex].units
-        }
-        WorkingPartitionChildren = WorkingPartitionChildren[PartitionAddressIndex].children
-      })
-      
-      return WorkingMax
-    },
-    GetSelectedPartitionSizeMin: function(){
-
-      const vm = this
-      const SelectedPartition = vm.GetSelectedPartition()
-      const PartitionSizeMin = vm.GetSelectedPartitionSizeMinRecursion(SelectedPartition.children)
 
       return (PartitionSizeMin > 0) ? PartitionSizeMin : 1
     },
-    GetSelectedPartitionSizeMinRecursion: function(PartitionArray, SelectedPartitionSizeMin = 0, RelativeDepth = 0) {
+    GetPartitionSelectedSizeMinRecursion: function(PartitionArray, SelectedPartitionSizeMin = 0, RelativeDepth = 0) {
 
       // Store variables
       const vm = this
 
       PartitionArray.forEach(function(Partition){
         SelectedPartitionSizeMin = (RelativeDepth % 2) ? SelectedPartitionSizeMin + parseInt(Partition.units) : SelectedPartitionSizeMin
-        SelectedPartitionSizeMin = vm.GetSelectedPartitionSizeMinRecursion(Partition.children, SelectedPartitionSizeMin, RelativeDepth + 1)
+        SelectedPartitionSizeMin = vm.GetPartitionSelectedSizeMinRecursion(Partition.children, SelectedPartitionSizeMin, RelativeDepth + 1)
       })
 
       return SelectedPartitionSizeMin;
     },
-    GetSelectedPartitionSizeMax: function() {
+    GetPartitionSelectedSizeMax: function() {
 
       // Store variables
       const vm = this
       const Context = vm.Context
-      const ObjectID = vm.PartitionAddressSelected[Context].object_id
-      const TemplateID = vm.GetTemplateID(ObjectID, Context)
-      const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-      const PreviewData = vm.Templates[Context][TemplateIndex]
-      const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
-      const PartitionAddressSelected = vm.PartitionAddressSelected[Context][TemplateFaceSelected]
-      const SelectedPartitionDepth = PartitionAddressSelected.length
-      const SelectedPartitionParentSize = vm.GetSelectedPartitionParentSize()
-      let SelectedPartitionSizeMax = SelectedPartitionParentSize
-      let WorkingPartitionChildren = JSON.parse(JSON.stringify(PreviewData.blueprint[TemplateFaceSelected]))
-      let WorkingPartitionAddress = []
-      let WorkingSiblingPartitionAddress = []
-
-      PartitionAddressSelected.forEach(function(PartitionAddressIndex, Depth) {
+      const Template = vm.GetTemplateSelected(Context)
+      const Face = vm.TemplateFaceSelected[Context]
+      let PartitionSizeMax = 0
+      
+      
+      if(Template) {
+        const Blueprint = Template.blueprint[Face]
+        const TemplateType = Template.type
         
-        const WorkingPartitionDepth = Depth + 1
+        const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+        const ParentPartitionAddress = JSON.parse(JSON.stringify(PartitionAddress))
+        const PartitionIndex = ParentPartitionAddress.pop()
+        const ParentPartition = vm.GetPartition(Blueprint, ParentPartitionAddress)
 
-        if(WorkingPartitionDepth == SelectedPartitionDepth) {
+        // Determine starting partition size max
+        if(ParentPartitionAddress.length == 0) {
 
-          WorkingPartitionChildren.forEach(function(Sibling, SiblingIndex){
+          // Parent partition is root partition.  Start with max template width
+          PartitionSizeMax = (TemplateType == 'insert') ? Template.insert_constraints.part_layout.width : 24
+        } else if (ParentPartitionAddress.length == 1) {
 
-            // Set the partition address appropriate for the current partition
-            WorkingSiblingPartitionAddress = WorkingPartitionAddress.concat([SiblingIndex])
-            
-            // Subtract units if partition is not selected
-            if(WorkingSiblingPartitionAddress.length !== PartitionAddressSelected.length || WorkingSiblingPartitionAddress.every(function(value, index) { return value === PartitionAddressSelected[index]}) === false) {
-              SelectedPartitionSizeMax = SelectedPartitionSizeMax - Sibling.units
-            }
-          })
+          // Parent partition is first level partition.  Start with RU size
+          PartitionSizeMax = (TemplateType == 'insert') ? Template.insert_constraints.part_layout.height : Template.ru_size * 2
+        } else {
+
+          // Parent partition is deply nested.  Start with grand parent partition size
+          const GrandParentPartitionAddress = JSON.parse(JSON.stringify(ParentPartitionAddress))
+          GrandParentPartitionAddress.pop()
+          const GrandParentPartition = vm.GetPartition(Blueprint, GrandParentPartitionAddress)
+          PartitionSizeMax = GrandParentPartition.units
         }
 
-        WorkingPartitionChildren = WorkingPartitionChildren[PartitionAddressIndex].children
-        WorkingPartitionAddress.push(PartitionAddressIndex)
-      })
+        // Subtract child partitions
+        const ParentPartitionChildren = (ParentPartitionAddress.length) ? ParentPartition.children : ParentPartition
+        ParentPartitionChildren.forEach(function(ChildPartition, Index){
+          if(Index != PartitionIndex) {
+            let ChildPartitionSize = ChildPartition.units
+            PartitionSizeMax = PartitionSizeMax - ChildPartitionSize
+          }
+        })
+      }
 
-      return SelectedPartitionSizeMax;
+      return PartitionSizeMax
     },
     GetCategoryOptions: function() {
 
@@ -1171,8 +1310,8 @@ export default {
       // Store variables
       const vm = this
       const Element = vm.$refs.ElementTemplateRUSize.$el
-      const min = vm.GetSelectedPartitionSizeMin()
-      const max = vm.GetSelectedPartitionSizeMax()
+      const min = vm.GetPartitionSelectedSizeMin()
+      const max = vm.GetPartitionSelectedSizeMax()
 
       // Convert value from String to Integer
       let formattedValue = parseInt(value)

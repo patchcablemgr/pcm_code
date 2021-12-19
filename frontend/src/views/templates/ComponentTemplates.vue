@@ -195,7 +195,7 @@ export default {
       const vm = this
       const Context = vm.Context
       const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
-      const FilteredCategoryTemplates = vm.Templates.template.filter(function(template) {
+      const FilteredCategoryTemplates = vm.Templates[Context].filter(function(template) {
 
         let match = false
 

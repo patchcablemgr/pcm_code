@@ -7,10 +7,9 @@ export const PCM = {
             // Initial variables
             const vm = this
             Context = (Context) ? Context : vm.Context
-            const Objects = vm.Objects
       
             // Get object index
-            const ObjectIndex = Objects[Context].findIndex((object) => object.id == ObjectID);
+            const ObjectIndex = vm.Objects[Context].findIndex((object) => object.id == ObjectID);
       
             return ObjectIndex
         },
@@ -42,15 +41,9 @@ export const PCM = {
 
             const vm = this
             Context = (Context) ? Context : vm.Context
-            const Objects = vm.Objects
-            let TemplateID = 0
         
-            const ObjectIndex = Objects[Context].findIndex((object) => object.id == ObjectID )
-        
-            if(ObjectIndex !== -1) {
-                const Object = Objects[Context][ObjectIndex]
-                TemplateID = Object.template_id
-            }
+            const ObjectIndex = vm.Objects[Context].findIndex((object) => object.id == ObjectID )
+            const TemplateID = (ObjectIndex !== -1) ? vm.Objects[Context][ObjectIndex].template_id : false
         
             return TemplateID
     
@@ -59,13 +52,31 @@ export const PCM = {
 
             // Initial variables
             const vm = this
-            const Templates = vm.Templates
             Context = (Context) ? Context : vm.Context
       
             // Get object index
-            const TemplateIndex = Templates[Context].findIndex((template) => template.id == TemplateID);
+            const TemplateIndex = vm.Templates[Context].findIndex((template) => template.id == TemplateID )
       
             return TemplateIndex
+        },
+        GetSelectedTemplateIndex: function(Context){
+
+            const vm = this
+            const ObjectID = vm.PartitionAddressSelected[Context].object_id
+
+            const TemplateID = vm.GetTemplateID(ObjectID, Context)
+            const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+
+            return TemplateIndex
+        },
+        GetTemplateSelected: function(Context) {
+
+            // Store variables
+            const vm = this
+            const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
+            const Template = (TemplateIndex !== -1) ? vm.Templates[Context][TemplateIndex] : false
+    
+            return Template
         },
 
 // Partition
@@ -113,19 +124,82 @@ export const PCM = {
             // Store variables
             const vm = this
             const Context = EmitData.Context
-            const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
+            const Face = vm.TemplateFaceSelected[Context]
             const PartitionAddress = EmitData.PartitionAddress
             const TemplateID = EmitData.TemplateID
             const ObjectID = EmitData.ObjectID
             const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+
+            // Get partition type
+            const Template = vm.Templates[Context][TemplateIndex]
+            const Blueprint = Template.blueprint[Face]
+            const Partition = vm.GetPartition(Blueprint, PartitionAddress)
+            const PartitionType = Partition.type
                   
             // Clicked partition should not be highlighted if it is a preview insert parent
-            const HonorClick = (vm.Templates[Context][TemplateIndex].id.toString().includes('pseudo')) ? false : true
+            let HonorClick
+            HonorClick = (vm.Templates[Context][TemplateIndex].id.toString().includes('pseudo')) ? false : true
+            HonorClick = (Context == 'workspace' && PartitionAddress.length == 0) ? false : HonorClick
       
             if(HonorClick) {
-                vm.PartitionAddressSelected[Context][TemplateFaceSelected] = PartitionAddress
+                vm.PartitionAddressSelected[Context][Face] = PartitionAddress
                 vm.PartitionAddressSelected[Context].template_id = TemplateID
                 vm.PartitionAddressSelected[Context].object_id = ObjectID
+            }
+
+            if(HonorClick && Context == 'template' && PartitionType == 'enclosure') {
+
+                // Get selected template data
+                const TemplateFunction = Template.function
+                const TemplateCategoryID = Template.category_id
+        
+                // Remove preview pseudo objects/templates
+                vm.RemovePreviewPseudoData()
+        
+                // Copy selected template to insert parent template and correct id
+                const InsertParentTemplateID = 'pseudo-'+(vm.Templates.workspace.length)
+                const InsertParentTemplate = JSON.parse(JSON.stringify(Template), function(key, value) {
+                  if(key == 'id') {
+                    return InsertParentTemplateID
+                  } else {
+                    return value
+                  }
+                })
+                vm.$store.commit('pcmTemplates/ADD_Template', {pcmContext:'workspace', data:InsertParentTemplate})
+        
+                // Generate pseudo object and constraining templates/objects if necessary
+                const PseudoObjectID = vm.GeneratePseudoData('workspace', InsertParentTemplate)
+        
+                // Get insert constraints
+                const InsertConstraints = vm.GetInsertConstraints(Template, Face, PartitionAddress)
+        
+                // Adjust insert template properties
+                const WorkspaceInsertID = vm.$store.state.pcmProps.WorkspaceInsertID
+                const InsertTemplateIndex = vm.GetTemplateIndex(WorkspaceInsertID, 'workspace')
+                const InsertTemplate = JSON.parse(JSON.stringify(vm.Templates['workspace'][InsertTemplateIndex]))
+                const GenericBlueprint = vm.$store.state.pcmProps.GenericBlueprintGeneric
+                InsertTemplate.blueprint.front = [
+                    JSON.parse(JSON.stringify(GenericBlueprint), function(Key, Value) {
+                        if(Key == 'units') {
+                            return InsertConstraints.part_layout.width
+                        } else {
+                            return Value
+                        }
+                    })
+                ]
+                InsertTemplate.category_id = TemplateCategoryID
+                InsertTemplate.function = TemplateFunction
+                InsertTemplate.insert_constraints = InsertConstraints
+                vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:'workspace', data:InsertTemplate})
+        
+                // Adjust insert object properties
+                const InsertObjectIndex = vm.GetObjectIndex(WorkspaceInsertID, 'workspace')
+                const InsertObject = JSON.parse(JSON.stringify(vm.Objects['workspace'][InsertObjectIndex]))
+                InsertObject.parent_id = PseudoObjectID
+                InsertObject.parent_face = Face
+                InsertObject.parent_partition_address = PartitionAddress
+                InsertObject.parent_enclosure_address = [0,0]
+                vm.$store.commit('pcmObjects/UPDATE_Object', {pcmContext:'workspace', data:InsertObject})
             }
         },
         PartitionIsSelected: function(PartitionIndex=false) {
@@ -160,6 +234,24 @@ export const PCM = {
 			
 			return Partition
       
+        },
+        GetPartitionSelected: function(Context=false) {
+
+            // Store variables
+            const vm = this
+            Context = (Context) ? Context : vm.Context
+            const Face = vm.TemplateFaceSelected[Context]
+            const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+            let Partition = false
+
+            const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
+            if(TemplateIndex !== -1) {
+                const Template = vm.Templates[Context][TemplateIndex]
+                const Blueprint = Template.blueprint[Face]
+                Partition = vm.GetPartition(Blueprint, PartitionAddress)
+            }
+    
+            return Partition
         },
         GetPartitionAddress: function(PartitionIndex=false) {
 
@@ -463,6 +555,114 @@ export const PCM = {
 
             return ObjectID
             
+        },
+        RemovePreviewPseudoData: function() {
+
+            const vm = this
+        
+            const PseudoObjects = vm.Objects.workspace.filter(function(Object){
+                return Object.id.toString().includes('pseudo')
+            })
+            PseudoObjects.forEach(function(object){
+                vm.$store.commit('pcmObjects/REMOVE_Object', {pcmContext:'workspace', data:object})
+            })
+        
+            const PseudoTemplates = vm.Templates.workspace.filter(function(Template){
+                return Template.id.toString().includes('pseudo')
+            })
+            PseudoTemplates.forEach(function(template){
+                vm.$store.commit('pcmTemplates/REMOVE_Template', {pcmContext:'workspace', data:template})
+            })
+    
+        },
+        GetInsertConstraints: function(Template, TemplateFace, PartitionAddress) {
+
+            const vm = this
+            const Blueprint = Template.blueprint[TemplateFace]
+            const Partition = vm.GetPartition(Blueprint, PartitionAddress)
+            const PartitionDirection = vm.GetPartitionDirection(PartitionAddress)
+            let Width
+            let Height
+            let InsertConstraints = {
+              "part_layout": {
+                "height": null,
+                "width": null
+              },
+              "enc_layout": {
+                "cols": Partition.enc_layout.cols,
+                "rows": Partition.enc_layout.rows
+              }
+            }
+      
+            if (PartitionDirection == 'col') {
+      
+              // Store height
+              Height = Partition.units
+      
+              // Store width
+              if (PartitionAddress.length > 1) {
+                
+                // Partition is deeper than 1st level, take parent partition units
+                const ParentPartitionAddress = PartitionAddress.slice(0, PartitionAddress.length - 1)
+                let ParentPartition = vm.GetPartition(Blueprint, ParentPartitionAddress)
+                Width = ParentPartition.units
+      
+              } else {
+      
+                // Partition is 1st level and has no parent partition
+                if (Template.insert_constraints !== null) {
+      
+                  // Get width from constraints if they exist
+                  Width = Template.insert_constraints.part_layout.width
+                } else {
+      
+                  // Get width from template RU size
+                  Width = 24
+                }
+              }
+            } else {
+      
+              // Store width
+              Width = Partition.units
+      
+              // Store height
+              if (PartitionAddress.length > 1) {
+                
+                // Partition is deeper than 1st level, take parent partition units
+                const ParentPartitionAddress = PartitionAddress.slice(0, PartitionAddress.length - 1)
+                let ParentPartition = vm.GetPartition(Blueprint, ParentPartitionAddress)
+                Height = ParentPartition.units
+      
+              } else {
+      
+                // Partition is 1st level and has no parent partition
+                if (Template.insert_constraints !== null) {
+      
+                  // Get height from constraints if they exist
+                  Height = Template.insert_constraints.part_layout.height
+                } else {
+      
+                  // Get height from template RU size
+                  Height = Template.ru_size * 2
+                }
+              }
+            }
+      
+            InsertConstraints.part_layout.height = Height
+            InsertConstraints.part_layout.width = Width
+      
+            return InsertConstraints
+      
+        },
+        DisplayError: function(errData) {
+
+            const errMsg = errData.response.data
+
+            // Display error to user via toast
+            this.$bvToast.toast(JSON.stringify(errMsg), {
+                title: 'Error',
+                variant: 'danger',
+            })
         },
     }
 }

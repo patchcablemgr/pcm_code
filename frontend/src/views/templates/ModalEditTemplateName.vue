@@ -10,13 +10,12 @@
       <b-row>
         <b-col>
           <b-card
-            :title="ModalTitle"
+            title="Template Names"
           >
             <b-card-text>
 
               <b-form-input
-                v-model="ComputedNameValue"
-                @change=" $emit('TemplateNameEdited', {'name': $event}) "
+                v-model="TemplateName"
               />
             </b-card-text>
           </b-card>
@@ -28,8 +27,10 @@
 
 <script>
 import { BContainer, BRow, BCol, BCard, BForm, BButton, BFormInput, BFormSelect, BFormCheckbox, BCardText, } from 'bootstrap-vue'
+import { PCM } from '@/mixins/PCM.js'
 
 export default {
+  mixins: [PCM],
   components: {
     BContainer,
     BRow,
@@ -44,23 +45,47 @@ export default {
   },
   directives: {},
   props: {
-    ModalTitle: {type: String},
-    NameValue: {type: String},
+    Context: {type: String},
+    PartitionAddressSelected: {type: Object},
   },
   data () {
     return {
     }
   },
   computed: {
-    ComputedNameValue: {
+    Categories() {
+      return this.$store.state.pcmCategories.Categories
+    },
+    Templates() {
+      return this.$store.state.pcmTemplates.Templates
+    },
+    Objects() {
+      return this.$store.state.pcmObjects.Objects
+    },
+    TemplateName: {
       get() {
 
-        const vm = this
-        return vm.NameValue
-      },
-      set() {
+        const Context = this.Context
+        const Template = this.GetTemplateSelected(Context)
+        const ReturnData = (Template) ? Template.name : ''
 
-        return true
+        return ReturnData
+      },
+      set(newValue) {
+
+        const vm = this
+        const Context = vm.Context
+        const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
+        const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
+        const TemplateID = Template.id
+        const URL = '/api/templates/'+TemplateID
+
+        Template.name = newValue
+        vm.$http.patch(URL, Template).then(response => {
+          vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:'template', data:response.data})
+        }).catch(error => {
+          vm.DisplayError(error)
+        })
       }
     },
   },

@@ -350,7 +350,7 @@ class TemplateController extends Controller
             'id' => [
                 'required',
                 'exists:template',
-                'unique:App\Models\ObjectsModel,template_id'
+                'unique:App\Models\ObjectModel,template_id'
             ]
         ];
         $validatorMessages = [

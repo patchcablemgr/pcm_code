@@ -26,8 +26,6 @@
           :TemplateFaceSelected="TemplateFaceSelected"
           :PartitionAddressSelected="PartitionAddressSelected"
           :PartitionAddressHovered="PartitionAddressHovered"
-          @PartitionClicked=" $emit('PartitionClicked', $event) "
-          @PartitionHovered=" $emit('PartitionHovered', $event) "
           @InsertObjectDropped=" $emit('InsertObjectDropped', $event) "
         />
       </td>

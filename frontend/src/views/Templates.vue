@@ -18,7 +18,6 @@
                 :TemplateFaceSelected="TemplateFaceSelected"
                 :PartitionAddressSelected="PartitionAddressSelected"
                 :SelectedPortFormatIndex="SelectedPortFormatIndex"
-                :AddChildPartitionDisabled="AddChildPartitionDisabled"
                 :AddSiblingPartitionDisabled="AddSiblingPartitionDisabled"
                 :RemovePartitionDisabled="RemovePartitionDisabled"
                 :PartitionTypeDisabled="PartitionTypeDisabled"
@@ -26,11 +25,9 @@
                 :SelectedPortFormat="SelectedPortFormat"
                 SetLocationID
                 @SetLocationID="SetLocationID($event)"
-                @TemplateRUSizeUpdated="TemplateRUSizeUpdated($event)"
-                @TemplateFunctionUpdated="TemplateFunctionUpdated($event)"
-                @TemplateMountConfigUpdated="TemplateMountConfigUpdated($event)"
-                @TemplatePartitionAdd="TemplatePartitionAdd($event)"
-                @TemplatePartitionRemove="TemplatePartitionRemove()"
+                @SetPartitionAddressSelected="SetPartitionAddressSelected($event)"
+                @SetTemplateFaceSelected="SetTemplateFaceSelected($event)"
+
                 @TemplatePartitionSizeUpdated="TemplatePartitionSizeUpdated($event)"
                 @TemplatePartitionPortFormatFieldSelected="TemplatePartitionPortFormatFieldSelected($event)"
                 @TemplatePartitionPortFormatValueUpdated="TemplatePartitionPortFormatValueUpdated($event)"
@@ -40,15 +37,6 @@
                 @TemplatePartitionPortFormatFieldMove="TemplatePartitionPortFormatFieldMove($event)"
                 @TemplatePartitionPortFormatFieldCreate="TemplatePartitionPortFormatFieldCreate($event)"
                 @TemplatePartitionPortFormatFieldDelete="TemplatePartitionPortFormatFieldDelete($event)"
-                @TemplatePartitionPortLayoutColsUpdated="TemplatePartitionPortLayoutColsUpdated($event)"
-                @TemplatePartitionPortLayoutRowsUpdated="TemplatePartitionPortLayoutRowsUpdated($event)"
-                @TemplatePartitionMediaUpdated="TemplatePartitionMediaUpdated($event)"
-                @TemplatePartitionPortConnectorUpdated="TemplatePartitionPortConnectorUpdated($event)"
-                @TemplatePartitionPortOrientationUpdated="TemplatePartitionPortOrientationUpdated($event)"
-                @TemplatePartitionEncLayoutColsUpdated="TemplatePartitionEncLayoutColsUpdated($event)"
-                @TemplatePartitionEncLayoutRowsUpdated="TemplatePartitionEncLayoutRowsUpdated($event)"
-                @FormSubmit="FormSubmit($event)"
-                @FormReset="FormReset($event)"
               />
             </b-card-body>
           </b-card>
@@ -83,8 +71,6 @@
                 :TemplateFaceSelected="TemplateFaceSelected"
                 :PartitionAddressSelected="PartitionAddressSelected"
                 :PartitionAddressHovered="PartitionAddressHovered"
-                @PartitionClicked=" PartitionClicked($event) "
-                @PartitionHovered=" PartitionHovered($event) "
               />
             </b-card-body>
             <b-card-body
@@ -104,12 +90,11 @@
 						Context="template"
 						:TemplateFaceSelected="TemplateFaceSelected"
 						:PartitionAddressSelected="PartitionAddressSelected"
-						:TemplatePartitionPortRange="TemplatePartitionPortRange"
             :PortOrientationData="PortOrientationData"
-            @TemplateObjectEditClicked="TemplateObjectEditClicked()"
             @TemplateObjectCloneClicked="TemplateObjectCloneClicked()"
 						@TemplateObjectDeleteClicked="TemplateObjectDeleteClicked()"
             @TemplateEdited="TemplateEdited($event)"
+            @SetPartitionAddressSelected="SetPartitionAddressSelected($event)"
 					/>
 
           <component-templates
@@ -117,8 +102,6 @@
             :TemplateFaceSelected="TemplateFaceSelected"
             :PartitionAddressSelected="PartitionAddressSelected"
             :PartitionAddressHovered="PartitionAddressHovered"
-            @PartitionClicked="PartitionClicked($event)"
-            @PartitionHovered="PartitionHovered($event)"
             @TemplateFaceChanged="TemplateFaceChanged($event)"
           />
 
@@ -129,22 +112,6 @@
     <!-- Toast -->
     <toast-general/>
 
-    <!-- Template Edit Modal -->
-    <modal-templates-edit
-      Context="template"
-      :TemplateFaceSelected="TemplateFaceSelected"
-      :PartitionAddressSelected="PartitionAddressSelected"
-      :TemplatePartitionPortRange="TemplatePartitionPortRange"
-      PreviewPortID="test"
-      @TemplateEdited="TemplateEdited($event)"
-      @TemplatePartitionPortFormatValueUpdated="TemplatePartitionPortFormatValueUpdated($event)"
-      @TemplatePartitionPortFormatTypeUpdated="TemplatePartitionPortFormatTypeUpdated($event)"
-      @TemplatePartitionPortFormatCountUpdated="TemplatePartitionPortFormatCountUpdated($event)"
-      @TemplatePartitionPortFormatOrderUpdated="TemplatePartitionPortFormatOrderUpdated($event)"
-      @TemplatePartitionPortFormatFieldMove="TemplatePartitionPortFormatFieldMove($event)"
-      @TemplatePartitionPortFormatFieldCreate="TemplatePartitionPortFormatFieldCreate($event)"
-      @TemplatePartitionPortFormatFieldDelete="TemplatePartitionPortFormatFieldDelete($event)"
-    />
   </div>
 </template>
 
@@ -338,49 +305,6 @@ export default {
 
       return PreviewDisplay
     },
-    TemplatePartitionPortRange: function(){
-      
-      // Initialize some variables
-      const vm = this
-      const Context = 'template'
-      const TemplateID = vm.PartitionAddressSelected[Context].template_id
-      let PortRangeString = '-'
-
-      if(TemplateID) {
-
-        // Get template partition address
-        const TemplateFace = vm.TemplateFaceSelected[Context]
-        const TemplatePartition = vm.PartitionAddressSelected[Context][TemplateFace]
-
-        // Get template blueprint
-        const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-        const Template = vm.Templates[Context][TemplateIndex]
-        const TemplateBlueprint = Template.blueprint[TemplateFace]
-
-        // Get template partition
-        const Partition = vm.GetPartition(TemplateBlueprint, TemplatePartition)
-        const PartitionType = Partition.type
-
-        if(PartitionType == 'connectable') {
-
-          // Calculate port numbers
-          const PortFormat = Partition.port_format
-          const PortLayoutCols = Partition.port_layout.cols
-          const PortLayoutRows = Partition.port_layout.rows
-          const PortTotal = PortLayoutCols * PortLayoutRows
-          const FirstPortID = 0
-          const LastPortID = PortTotal - 1
-
-          const FirstPortIDString = vm.GeneratePortID(FirstPortID, PortTotal, PortFormat)
-          const LastPortIDString = vm.GeneratePortID(LastPortID, PortTotal, PortFormat)
-
-          PortRangeString = FirstPortIDString+' - '+LastPortIDString
-        }
-      }
-
-      return PortRangeString
-
-    },
     PreviewPortID: function(){
       
       const vm = this
@@ -497,167 +421,6 @@ export default {
     },
   },
   methods: {
-    PartitionClicked: function(EmitData) {
-
-      // Store variables
-      const vm = this
-      const Context = EmitData.Context
-      const Face = vm.TemplateFaceSelected[Context]
-      const PartitionAddress = EmitData.PartitionAddress
-      const TemplateID = EmitData.TemplateID
-      const ObjectID = EmitData.ObjectID
-      const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-      const Template = vm.Templates[Context][TemplateIndex]
-      const Blueprint = Template.blueprint[Face]
-      const Partition = vm.GetPartition(Blueprint, PartitionAddress)
-      const PartitionType = Partition.type
-      const WorkspaceInsertID = vm.$store.state.pcmProps.WorkspaceInsertID
-      const GenericBlueprintGeneric = vm.$store.state.pcmProps.GenericBlueprintGeneric
-			
-			// Clicked partition should not be highlighted if it is a preview insert parent
-			
-      const HonorClick = (vm.Templates[Context][TemplateIndex].id.toString().includes('pseudo')) ? false : true
-
-			if(HonorClick) {
-				vm.PartitionAddressSelected[Context][Face] = PartitionAddress
-				vm.PartitionAddressSelected[Context].template_id = TemplateID
-        vm.PartitionAddressSelected[Context].object_id = ObjectID
-        vm.SelectedPortFormatIndex[Context] = 0
-			}
-
-      if(HonorClick && Context == 'template' && PartitionType == 'enclosure') {
-
-        // Get selected template data
-        const TemplateFunction = Template.function
-        const TemplateCategoryID = Template.category_id
-
-        // Remove preview pseudo objects/templates
-        vm.RemovePreviewPseudoData()
-
-        // Copy selected template to insert parent template and correct id
-        const InsertParentTemplateID = 'pseudo-'+(vm.Templates.workspace.length)
-        const InsertParentTemplate = JSON.parse(JSON.stringify(Template), function(key, value) {
-          if(key == 'id') {
-            return InsertParentTemplateID
-          } else {
-            return value
-          }
-        })
-        vm.$store.commit('pcmTemplates/ADD_Template', {pcmContext:'workspace', data:InsertParentTemplate})
-
-				// Generate pseudo object and constraining templates/objects if necessary
-        const PseudoObjectID = vm.GeneratePseudoData('workspace', InsertParentTemplate)
-
-        // Get insert constraints
-        const InsertConstraints = vm.GetInsertConstraints(Template, Face, PartitionAddress)
-
-        // Adjust insert template properties
-        const InsertTemplateIndex = vm.GetTemplateIndex(WorkspaceInsertID, 'workspace')
-        const InsertTemplate = JSON.parse(JSON.stringify(vm.Templates['workspace'][InsertTemplateIndex]))
-        InsertTemplate.blueprint.front = [
-          JSON.parse(JSON.stringify(GenericBlueprintGeneric), function(Key, Value) {
-            if(Key == 'units') {
-              return InsertConstraints.part_layout.width
-            } else {
-              return Value
-            }
-          })
-        ]
-        InsertTemplate.category_id = TemplateCategoryID
-        InsertTemplate.function = TemplateFunction
-        InsertTemplate.insert_constraints = InsertConstraints
-        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:'workspace', data:InsertTemplate})
-
-        // Adjust insert object properties
-        const InsertObjectIndex = vm.GetObjectIndex(WorkspaceInsertID, 'workspace')
-        const InsertObject = JSON.parse(JSON.stringify(vm.Objects['workspace'][InsertObjectIndex]))
-        InsertObject.parent_id = PseudoObjectID
-        InsertObject.parent_face = Face
-        InsertObject.parent_partition_address = PartitionAddress
-        InsertObject.parent_enclosure_address = [0,0]
-        vm.$store.commit('pcmObjects/UPDATE_Object', {pcmContext:'workspace', data:InsertObject})
-      }
-
-    },
-    GetInsertConstraints: function(Template, TemplateFace, PartitionAddress) {
-
-      const vm = this
-      const Blueprint = Template.blueprint[TemplateFace]
-      const Partition = vm.GetPartition(Blueprint, PartitionAddress)
-      const PartitionDirection = vm.GetPartitionDirection(PartitionAddress)
-      let Width
-      let Height
-      let InsertConstraints = {
-        "part_layout": {
-          "height": null,
-          "width": null
-        },
-        "enc_layout": {
-          "cols": Partition.enc_layout.cols,
-          "rows": Partition.enc_layout.rows
-        }
-      }
-
-      if (PartitionDirection == 'col') {
-
-        // Store height
-        Height = Partition.units
-
-        // Store width
-        if (PartitionAddress.length > 1) {
-          
-          // Partition is deeper than 1st level, take parent partition units
-          const ParentPartitionAddress = PartitionAddress.slice(0, PartitionAddress.length - 1)
-          let ParentPartition = vm.GetPartition(Blueprint, ParentPartitionAddress)
-          Width = ParentPartition.units
-
-        } else {
-
-          // Partition is 1st level and has no parent partition
-          if (Template.insert_constraints !== null) {
-
-            // Get width from constraints if they exist
-            Width = Template.insert_constraints.part_layout.width
-          } else {
-
-            // Get width from template RU size
-            Width = 24
-          }
-        }
-      } else {
-
-        // Store width
-        Width = Partition.units
-
-        // Store height
-        if (PartitionAddress.length > 1) {
-          
-          // Partition is deeper than 1st level, take parent partition units
-          const ParentPartitionAddress = PartitionAddress.slice(0, PartitionAddress.length - 1)
-          let ParentPartition = vm.GetPartition(Blueprint, ParentPartitionAddress)
-          Height = ParentPartition.units
-
-        } else {
-
-          // Partition is 1st level and has no parent partition
-          if (Template.insert_constraints !== null) {
-
-            // Get height from constraints if they exist
-            Height = Template.insert_constraints.part_layout.height
-          } else {
-
-            // Get height from template RU size
-            Height = Template.ru_size * 2
-          }
-        }
-      }
-
-      InsertConstraints.part_layout.height = Height
-      InsertConstraints.part_layout.width = Width
-
-      return InsertConstraints
-
-    },
     TemplateFaceChanged: function(EmitData) {
 
       // Store variables
@@ -700,105 +463,17 @@ export default {
       const vm = this
       vm.LocationID = newValue
     },
-    TemplateRUSizeUpdated: function(newValue) {
+    SetPartitionAddressSelected: function({Context, object_id, front, rear}) {
 
       const vm = this
-      const PreviewData = vm.GetPreviewData()
-      PreviewData.ru_size = newValue
+      vm.PartitionAddressSelected[Context].object_id = object_id
+      vm.PartitionAddressSelected[Context].front = front
+      vm.PartitionAddressSelected[Context].rear = rear
     },
-    TemplateFunctionUpdated: function(newValue) {
+    SetTemplateFaceSelected: function({Context, Face}) {
 
       const vm = this
-      const PreviewData = vm.GetPreviewData()
-      PreviewData.function = newValue
-    },
-    TemplateMountConfigUpdated: function(newValue) {
-
-      const vm = this
-      const PreviewData = vm.GetPreviewData()
-      PreviewData.mount_config = newValue
-      vm.TemplateFaceSelected.workspace = newValue == '2-post' ? 'front' : vm.TemplateFaceSelected.workspace
-    },
-    TemplatePartitionAdd: function(InsertPosition) {
-
-      // Store variables
-      const vm = this
-      const PreviewData = vm.GetPreviewData()
-      
-      // Get Partition
-      const TemplateFaceSelected = vm.TemplateFaceSelected.workspace
-      const PartitionAddress = vm.PartitionAddressSelected.workspace[TemplateFaceSelected]
-      const Blueprint = PreviewData.blueprint[TemplateFaceSelected]
-      let SelectedPartition = vm.GetPartition(Blueprint, PartitionAddress)
-
-      // Get Parent Partition
-      const PartitionParentAddress = PartitionAddress.slice(0, PartitionAddress.length - 1)
-      let SelectedPartitionParent = vm.GetPartition(Blueprint, PartitionParentAddress)
-
-      const PartitionIndex = PartitionAddress[PartitionAddress.length - 1]
-      let PartitionBlank = {
-        "type": "generic",
-        "units": 1,
-        "children": [],
-      }
-
-      if(InsertPosition == 'after' || InsertPosition == 'before') {
-
-        // Determine if partition has space available
-        if(vm.GetPartitionUnitsAvailable(PartitionParentAddress)) {
-
-          const SelectedPartitionParentChildren = (PartitionParentAddress.length) ? SelectedPartitionParent.children : SelectedPartitionParent
-
-          if(InsertPosition == 'after') {
-
-            // Insert new partition after selected partition
-            SelectedPartitionParentChildren.splice(PartitionIndex + 1, 0, PartitionBlank)
-          } else if (InsertPosition == 'before') {
-
-            // Insert new partition before selected partition
-            SelectedPartitionParentChildren.splice(PartitionIndex, 0, PartitionBlank)
-
-            // Update PartitionAddressSelected as it is shifted right
-            PartitionAddress[PartitionAddress.length - 1] = PartitionIndex + 1
-          }
-        }
-      } else if (InsertPosition == 'inside') {
-
-        // Determine if partition has space available
-        if(vm.GetPartitionUnitsAvailable()) {
-          SelectedPartition.children.push(PartitionBlank)
-        }
-      }
-    },
-    TemplatePartitionRemove: function() {
-      
-      // Store variables
-      const vm = this
-      const PreviewData = vm.GetPreviewData()
-      const TemplateFaceSelected = vm.TemplateFaceSelected.workspace
-      const PartitionAddressSelected = vm.PartitionAddressSelected.workspace[TemplateFaceSelected]
-      const PartitionAddressSelectedCopy = JSON.parse(JSON.stringify(PartitionAddressSelected))
-      let SelectedPartitionParent = PreviewData.blueprint[TemplateFaceSelected]
-      const SelectedPartitionIndex = PartitionAddressSelectedCopy.pop()
-      
-      // Traverse blueprint until selected partition is reached
-      if(SelectedPartitionIndex !== 'undefined') {
-
-        // Repoint selected partition address to next available
-        if(SelectedPartitionIndex > 0) {
-          PartitionAddressSelected[PartitionAddressSelected.length - 1] = SelectedPartitionIndex - 1
-        } else {
-          PartitionAddressSelected.pop()
-        }
-
-        // Identify selected partition parent
-        PartitionAddressSelectedCopy.some(function(AddressIndex) {
-          SelectedPartitionParent = SelectedPartitionParent[AddressIndex].children
-        })
-      }
-
-      // Remove selected partition from parent
-      vm.$delete(SelectedPartitionParent, SelectedPartitionIndex)
+      vm.TemplateFaceSelected[Context] = Face
     },
     TemplatePartitionSizeUpdated: function(newValue) {
 
@@ -1181,65 +856,6 @@ export default {
       }
 
     },
-    TemplatePartitionPortLayoutColsUpdated: function(newValue) {
-
-      // Get Partition
-      const vm = this
-      let SelectedPartition = vm.GetSelectedPreviewPartition()
-
-      SelectedPartition.port_layout.cols = newValue
-    },
-    TemplatePartitionPortLayoutRowsUpdated: function(newValue) {
-
-      // Get Partition
-      const vm = this
-      let SelectedPartition = vm.GetSelectedPreviewPartition()
-
-      SelectedPartition.port_layout.rows = newValue
-    },
-    TemplatePartitionMediaUpdated: function(newValue) {
-
-      // Get Partition
-      const vm = this
-      let SelectedPartition = vm.GetSelectedPreviewPartition()
-
-      SelectedPartition.media = newValue
-    },
-    TemplatePartitionPortConnectorUpdated: function(newValue) {
-
-      // Get Partition
-      const vm = this
-      let SelectedPartition = vm.GetSelectedPreviewPartition()
-
-      SelectedPartition.port_connector = newValue
-    },
-    TemplatePartitionPortOrientationUpdated: function(newValue) {
-
-      // Store variables
-      const vm = this
-      let SelectedPartition = vm.GetSelectedPreviewPartition()
-      SelectedPartition.port_orientation = newValue
-    },
-    TemplatePartitionEncLayoutColsUpdated: function(newValue) {
-
-      // Store variables
-      const vm = this
-      let SelectedPartition = vm.GetSelectedPreviewPartition()
-      SelectedPartition.enc_layout.cols = newValue
-    },
-    TemplatePartitionEncLayoutRowsUpdated: function(newValue) {
-
-      // Store variables
-      const vm = this
-      let SelectedPartition = vm.GetSelectedPreviewPartition()
-      SelectedPartition.enc_layout.rows = newValue
-    },
-    TemplateObjectEditClicked: function() {
-
-      const vm = this
-      vm.$bvModal.show('modal-templates-edit')
-
-    },
     TemplateObjectCloneClicked: function() {
 
       const vm = this
@@ -1571,40 +1187,6 @@ export default {
       vm.$http.get('/api/port-orientation').then(function(response){
         vm.PortOrientationData = response.data;
       });
-    },
-    FormSubmit: function() {
-
-      // Store data
-      const vm = this
-      const PreviewData = vm.GetPreviewData()
-      const url = '/api/templates'
-      const data = PreviewData
-
-      // POST category form data
-      this.$http.post(url, data).then(function(response){
-        
-        const Template = response.data
-				
-        // Append new template to template array
-        vm.Templates.template.push(Template)
-
-        vm.GeneratePseudoData(Template, 'template')
-
-      }).catch(error => {
-
-        // Display error to user via toast
-        vm.$bvToast.toast(JSON.stringify(error.response.data), {
-          title: 'Error',
-          variant: 'danger',
-        })
-
-      });
-    },
-    FormReset: function() {
-      const vm = this
-      const PreviewData = vm.GetPreviewData()
-
-      console.log('Form Reset')
     },
   },
   watch: {

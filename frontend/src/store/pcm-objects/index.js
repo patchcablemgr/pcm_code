@@ -23,7 +23,6 @@ export default {
       state.Objects.actual = data
     },
     ADD_Object(state, {pcmContext, data}) {
-      
       state.Objects[pcmContext].push(data)
     },
     UPDATE_Object(state, {pcmContext, data}) {

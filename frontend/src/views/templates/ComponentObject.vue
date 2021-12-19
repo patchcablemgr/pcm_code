@@ -12,9 +12,9 @@
       'background-color': TemplateColor(ObjectID),
       'height': '100%',
     }"
-    @click.stop=" $emit('PartitionClicked', {'Context': Context, 'ObjectID': ObjectID, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': InitialPartitionAddress}) "
-    @mouseover.stop=" $emit('PartitionHovered', {'Context': Context, 'ObjectID': ObjectID, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': InitialPartitionAddress, 'HoverState': true}) "
-    @mouseleave.stop=" $emit('PartitionHovered', {'Context': Context, 'ObjectID': ObjectID, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': InitialPartitionAddress, 'HoverState': false}) "
+    @click.stop=" PartitionClicked({'Context': Context, 'ObjectID': ObjectID, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': InitialPartitionAddress}) "
+    @mouseover.stop=" PartitionHovered({'Context': Context, 'ObjectID': ObjectID, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': InitialPartitionAddress, 'HoverState': true}) "
+    @mouseleave.stop=" PartitionHovered({'Context': Context, 'ObjectID': ObjectID, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': InitialPartitionAddress, 'HoverState': false}) "
   >
     <component-template
       :TemplateRUSize="TemplateRUSize"
@@ -24,8 +24,6 @@
       :TemplateFaceSelected="TemplateFaceSelected"
       :PartitionAddressSelected="PartitionAddressSelected"
       :PartitionAddressHovered="PartitionAddressHovered"
-      @PartitionClicked=" $emit('PartitionClicked', $event) "
-      @PartitionHovered=" $emit('PartitionHovered', $event) "
       @InsertObjectDropped=" $emit('InsertObjectDropped', $event) "
     />
   </div>
@@ -102,29 +100,28 @@ export default {
     },
     TemplateColor: function(ObjectID) {
 
-      console.log('ObjectID: '+ObjectID)
-
       // Initial variables
       const vm = this
       const Context = vm.Context
-      let TemplateColor
+      let TemplateColor = '#FFFFFF00'
 
       // Get Template
-      const TemplateID = vm.GetTemplateID(ObjectID)
-      const TemplateIndex = vm.GetTemplateIndex(TemplateID)
-      const Template = vm.Templates[Context][TemplateIndex]
+      const TemplateID = vm.GetTemplateID(ObjectID, Context)
+      const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
 
-      if (Template.id.toString().includes('pseudo')) {
-        TemplateColor = '#FFFFFF00'
-      } else {
+      if (TemplateIndex !== -1) {
 
-        // Get category index
-        const ObjectCategoryID = Template.category_id
-        const ObjectCategoryIndex = vm.Categories.findIndex((category) => category.id == ObjectCategoryID);
+        const Template = vm.Templates[Context][TemplateIndex]
+        if (!Template.id.toString().includes('pseudo')) {
 
-        // Get category
-        const Category = vm.Categories[ObjectCategoryIndex]
-        TemplateColor = Category.color
+          // Get category index
+          const ObjectCategoryID = Template.category_id
+          const ObjectCategoryIndex = vm.Categories.findIndex((category) => category.id == ObjectCategoryID);
+
+          // Get category
+          const Category = vm.Categories[ObjectCategoryIndex]
+          TemplateColor = Category.color
+        }
       }
 
       // Return category

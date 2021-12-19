@@ -407,7 +407,6 @@ export default {
         PortFormat = (Partition.type == 'connectable') ? Partition.port_format : null
       }
 
-      console.log('PortFormat: '+PortFormat)
       return PortFormat
     },
     ComputedOrderOptions: {

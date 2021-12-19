@@ -13,9 +13,9 @@
         pcm_template_partition_hovered: PartitionIsHovered(PartitionIndex),
       }"
       :style="{ 'flex-grow': GetPartitionFlexGrow(Partition.units, PartitionIndex) }"
-      @click.stop=" $emit('PartitionClicked', {'Context': Context, 'ObjectID': ObjectID, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': GetPartitionAddress(PartitionIndex)}) "
-      @mouseover.stop=" $emit('PartitionHovered', {'Context': Context, 'ObjectID': ObjectID, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': GetPartitionAddress(PartitionIndex), 'HoverState': true}) "
-      @mouseleave.stop=" $emit('PartitionHovered', {'Context': Context, 'ObjectID': ObjectID, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': GetPartitionAddress(PartitionIndex), 'HoverState': false}) "
+      @click.stop=" PartitionClicked({'Context': Context, 'ObjectID': ObjectID, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': GetPartitionAddress(PartitionIndex)}) "
+      @mouseover.stop=" PartitionHovered({'Context': Context, 'ObjectID': ObjectID, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': GetPartitionAddress(PartitionIndex), 'HoverState': true}) "
+      @mouseleave.stop=" PartitionHovered({'Context': Context, 'ObjectID': ObjectID, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': GetPartitionAddress(PartitionIndex), 'HoverState': false}) "
     >
       <!-- Generic partition -->
       <ComponentTemplate
@@ -27,8 +27,6 @@
         :TemplateFaceSelected="TemplateFaceSelected"
         :PartitionAddressSelected="PartitionAddressSelected"
         :PartitionAddressHovered="PartitionAddressHovered"
-        @PartitionClicked=" $emit('PartitionClicked', $event) "
-        @PartitionHovered=" $emit('PartitionHovered', $event) "
       />
 
       <!-- Connectable partition -->

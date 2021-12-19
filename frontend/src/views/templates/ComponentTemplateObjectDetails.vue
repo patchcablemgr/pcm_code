@@ -17,11 +17,6 @@
             text="Actions"
             variant="primary"
           >
-            <b-dropdown-item
-              @click=" $emit('TemplateObjectEditClicked') "
-              :disabled="!TemplateSelected"
-            >Edit
-            </b-dropdown-item>
 
             <b-dropdown-item
               v-if="Context == 'template'"
@@ -39,7 +34,7 @@
 
             <b-dropdown-item
               variant="danger"
-              @click=" $emit('TemplateObjectDeleteClicked') "
+              @click=" DeleteTemplate() "
               :disabled="!TemplateSelected"
             >Delete</b-dropdown-item>
 
@@ -97,7 +92,7 @@
           </b-button>
         </td>
         <td>
-          {{ComputedTemplateName}}
+          {{TemplateName}}
         </td>
       </tr>
 
@@ -129,7 +124,7 @@
         <td>
         </td>
         <td>
-          {{ComputedType}}
+          {{TemplateType}}
         </td>
       </tr>
 
@@ -140,7 +135,7 @@
         <td>
         </td>
         <td>
-          {{ComputedFunction}}
+          {{TemplateFunction}}
         </td>
       </tr>
 
@@ -227,7 +222,7 @@
           </b-button>
         </td>
         <td>
-          {{TemplatePartitionPortRange}}
+          {{PortRange}}
         </td>
       </tr>
 
@@ -289,9 +284,8 @@
 
     <!-- Modal Edit Template Name -->
     <modal-edit-template-name
-      ModalTitle="Template Name"
-      :NameValue="ComputedTemplateName"
-      @TemplateNameEdited=" $emit('TemplateEdited', $event) "
+      :Context="Context"
+      :PartitionAddressSelected="PartitionAddressSelected"
     />
 
     <!-- Modal Edit Template Category -->
@@ -365,7 +359,6 @@ export default {
     Context: {type: String},
     TemplateFaceSelected: {type: Object},
     PartitionAddressSelected: {type: Object},
-    TemplatePartitionPortRange: {type: String},
     PortOrientationData: {type: Array},
   },
   data() {
@@ -392,9 +385,7 @@ export default {
 
       const vm = this
       const Context = vm.Context
-      const TemplateID = vm.PartitionAddressSelected[Context].template_id
-
-      return (TemplateID === null) ? false : true
+      return (vm.GetTemplateSelected(Context)) ? true : false
     },
     ComputedObjectName: {
       get() {
@@ -416,20 +407,14 @@ export default {
         return ReturnString
       },
     },
-    ComputedTemplateName: {
+    TemplateName: {
       get() {
 
         const vm = this
         const Context = vm.Context
-        const TemplateID = vm.PartitionAddressSelected[Context].template_id
-        let ReturnString = '-'
-        
-        if(TemplateID) {
-          const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-          ReturnString = vm.Templates[Context][TemplateIndex].name
-        }
+        const Template = vm.GetTemplateSelected(Context)
 
-        return ReturnString
+        return (Template) ? Template.name : '-'
       },
     },
     ComputedCategoryName: {
@@ -437,17 +422,15 @@ export default {
 
         const vm = this
         const Context = vm.Context
-        const TemplateID = vm.PartitionAddressSelected[Context].template_id
-        let ReturnString = '-'
-
-        if(TemplateID) {
-          const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-          const CategoryID = vm.Templates[Context][TemplateIndex].category_id
+        let ReturnData = '-'
+        const Template = vm.GetTemplateSelected(Context)
+        if(Template) {
+          const CategoryID = Template.category_id
           const CategoryIndex = vm.GetCategoryIndex(CategoryID)
-          ReturnString = vm.Categories[CategoryIndex].name
+          ReturnData = vm.Categories[CategoryIndex].name
         }
 
-        return ReturnString
+        return ReturnData
       },
     },
     ComputedTrunkedTo: {
@@ -465,38 +448,25 @@ export default {
         return ReturnString
       },
     },
-    ComputedType: {
+    TemplateType: {
       get() {
 
         const vm = this
         const Context = vm.Context
-        const TemplateID = vm.PartitionAddressSelected[Context].template_id
-        let ReturnString = '-'
+        const Template = vm.GetTemplateSelected(Context)
 
-        if(TemplateID) {
-          const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-          ReturnString = vm.Templates[Context][TemplateIndex].type
-          ReturnString = ReturnString.charAt(0).toUpperCase() + ReturnString.slice(1)
-        }
-
-        return ReturnString
+        return (Template) ? Template.type : '-'
       },
     },
-    ComputedFunction: {
+    TemplateFunction: {
       get() {
 
         const vm = this
         const Context = vm.Context
-        const TemplateID = vm.PartitionAddressSelected[Context].template_id
-        let ReturnString = '-'
+        const Template = vm.GetTemplateSelected(Context)
 
-        if(TemplateID) {
-          const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-          ReturnString = vm.Templates[Context][TemplateIndex].function
-          ReturnString = ReturnString.charAt(0).toUpperCase() + ReturnString.slice(1)
-        }
-
-        return ReturnString
+        const TemplateFunction = (Template) ? Template.function : '-'
+        return TemplateFunction.charAt(0).toUpperCase() + TemplateFunction.slice(1)
       },
     },
     ComputedRUSize: {
@@ -504,15 +474,9 @@ export default {
 
         const vm = this
         const Context = vm.Context
-        const TemplateID = vm.PartitionAddressSelected[Context].template_id
-        let ReturnString = '-'
+        const Template = vm.GetTemplateSelected(Context)
 
-        if(TemplateID) {
-          const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-          ReturnString = vm.Templates[Context][TemplateIndex].ru_size
-        }
-
-        return ReturnString
+        return (Template) ? Template.ru_size : '-'
       },
     },
     ComputedMountConfig: {
@@ -520,15 +484,9 @@ export default {
 
         const vm = this
         const Context = vm.Context
-        const TemplateID = vm.PartitionAddressSelected[Context].template_id
-        let ReturnString = '-'
+        const Template = vm.GetTemplateSelected(Context)
 
-        if(TemplateID) {
-          const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-          ReturnString = vm.Templates[Context][TemplateIndex].mount_config
-        }
-
-        return ReturnString
+        return (Template) ? Template.mount_config : '-'
       },
     },
     ComputedPartitionType: {
@@ -536,64 +494,71 @@ export default {
 
         const vm = this
         const Context = vm.Context
-        const TemplateID = vm.PartitionAddressSelected[Context].template_id
-        const TemplateFace = vm.TemplateFaceSelected[Context]
-        let ReturnString = '-'
+        const Partition = vm.GetPartitionSelected(Context)
+        let PartitionType = '-'
 
-        if(TemplateID) {
-
-          // Get template
-          const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-          const Template = vm.Templates[Context][TemplateIndex]
-
-          // Get partition
-          const Blueprint = Template.blueprint[TemplateFace]
-          const PartitionAddress = vm.PartitionAddressSelected[Context][TemplateFace]
-          const Partition = vm.GetPartition(Blueprint, PartitionAddress)
-
-          // Get partition type
-          ReturnString = (Partition.type) ? Partition.type : 'generic'
-          ReturnString = ReturnString.charAt(0).toUpperCase() + ReturnString.slice(1)
+        if(Partition) {
+          PartitionType = Partition.type
+          PartitionType = PartitionType.charAt(0).toUpperCase() + PartitionType.slice(1)
         }
 
-        return ReturnString
+        return PartitionType
       },
+    },
+    PortRange: {
+      get() {
+      
+        // Initialize some variables
+        const vm = this
+        const Partition = vm.GetPartitionSelected()
+        let PortRange = '-'
+
+        if(Partition) {
+
+          const PartitionType = Partition.type
+
+          if(PartitionType == 'connectable') {
+
+            // Calculate port numbers
+            const PortFormat = Partition.port_format
+            const PortLayoutCols = Partition.port_layout.cols
+            const PortLayoutRows = Partition.port_layout.rows
+            const PortTotal = PortLayoutCols * PortLayoutRows
+            const FirstPortID = 0
+            const LastPortID = PortTotal - 1
+
+            const FirstPortIDString = vm.GeneratePortID(FirstPortID, PortTotal, PortFormat)
+            const LastPortIDString = vm.GeneratePortID(LastPortID, PortTotal, PortFormat)
+
+            PortRange = FirstPortIDString+' - '+LastPortIDString
+          }
+        }
+
+        return PortRange
+      }
     },
     ComputedPortOrientation: {
       get() {
 
         const vm = this
         const Context = vm.Context
-        const TemplateID = vm.PartitionAddressSelected[Context].template_id
-        const TemplateFace = vm.TemplateFaceSelected[Context]
-        let ReturnString = '-'
+        const Partition = vm.GetPartitionSelected(Context)
+        let PortOrientation = '-'
 
-        if(TemplateID) {
+        if(Partition) {
 
-          // Get template
-          const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-          const Template = vm.Templates[Context][TemplateIndex]
-
-          // Get partition
-          const Blueprint = Template.blueprint[TemplateFace]
-          const PartitionAddress = vm.PartitionAddressSelected[Context][TemplateFace]
-          const Partition = vm.GetPartition(Blueprint, PartitionAddress)
-
-          // Get partition type
-          const PartitionType = Partition.type
-
-          if(PartitionType == 'connectable') {
+          if(Partition.type == 'connectable') {
             const PortOrientationID = Partition.port_orientation
             const PortOrientationIndex = vm.GetPortOrientationIndex(PortOrientationID)
             const PortOrientationName = vm.PortOrientationData[PortOrientationIndex].name
-            ReturnString = PortOrientationName
+            PortOrientation = PortOrientationName
           } else {
 
-            ReturnString = 'N/A'
+            PortOrientation = 'N/A'
           }
         }
 
-        return ReturnString
+        return PortOrientation
       },
     },
     ComputedPortType: {
@@ -601,35 +566,22 @@ export default {
 
         const vm = this
         const Context = vm.Context
-        const TemplateID = vm.PartitionAddressSelected[Context].template_id
-        const TemplateFace = vm.TemplateFaceSelected[Context]
-        let ReturnString = '-'
+        const Partition = vm.GetPartitionSelected(Context)
+        let PortType = '-'
 
-        if(TemplateID) {
+        if(Partition) {
 
-          // Get template
-          const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-          const Template = vm.Templates[Context][TemplateIndex]
-
-          // Get partition
-          const Blueprint = Template.blueprint[TemplateFace]
-          const PartitionAddress = vm.PartitionAddressSelected[Context][TemplateFace]
-          const Partition = vm.GetPartition(Blueprint, PartitionAddress)
-
-          // Get partition type
-          const PartitionType = Partition.type
-
-          if(PartitionType == 'connectable') {
+          if(Partition.type == 'connectable') {
             const PortConnectorID = Partition.port_connector
             const PortConnectorIndex = vm.GetPortConnectorIndex(PortConnectorID)
-            ReturnString = vm.PortConnectorData[PortConnectorIndex].name
+            PortType = vm.PortConnectorData[PortConnectorIndex].name
           } else {
 
-            ReturnString = 'N/A'
+            PortType = 'N/A'
           }
         }
 
-        return ReturnString
+        return PortType
       },
     },
     ComputedPortMediaType: {
@@ -637,38 +589,29 @@ export default {
 
         const vm = this
         const Context = vm.Context
-        const TemplateID = vm.PartitionAddressSelected[Context].template_id
-        const TemplateFace = vm.TemplateFaceSelected[Context]
-        let ReturnString = '-'
+        const Partition = vm.GetPartitionSelected(Context)
+        let MediaType = '-'
 
-        if(TemplateID) {
+        if(Partition) {
 
           // Get template
-          const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-          const Template = vm.Templates[Context][TemplateIndex]
+          const Template = vm.GetTemplateSelected(Context)
           const TemplateType = Template.type
 
           if(TemplateType == 'passive') {
-            // Get partition
-            const Blueprint = Template.blueprint[TemplateFace]
-            const PartitionAddress = vm.PartitionAddressSelected[Context][TemplateFace]
-            const Partition = vm.GetPartition(Blueprint, PartitionAddress)
 
-            // Get partition type
-            const PartitionType = Partition.type
-
-            if(PartitionType == 'connectable') {
+            if(Partition.type == 'connectable') {
               const MediaID = Partition.media
               const MediaIndex = vm.GetMediaIndex(MediaID)
-              ReturnString = vm.MediaData[MediaIndex].name
+              MediaType = vm.MediaData[MediaIndex].name
             }
           } else {
 
-            ReturnString = 'N/A'
+            MediaType = 'N/A'
           }
         }
 
-        return ReturnString
+        return MediaType
       },
     },
   },
@@ -724,6 +667,29 @@ export default {
       // Return selected partition
       return SelectedPartition
     },
+    DeleteTemplate: function() {
+
+      const vm = this
+      const Context = vm.Context
+      const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
+      const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
+      const TemplateID = Template.id
+      const URL = '/api/templates/'+TemplateID
+
+      vm.$http.delete(URL).then(response => {
+        const PartitionAddressSelected = {
+          Context,
+          object_id: null,
+          template_id: null,
+          front: [0],
+          rear: [0]
+        }
+        vm.$emit('SetPartitionAddressSelected', PartitionAddressSelected)
+        vm.$store.commit('pcmTemplates/REMOVE_Template', {pcmContext:'template', data:response.data})
+      }).catch(error => {
+        vm.DisplayError(error)
+      })
+    }
   }
 }
 </script>

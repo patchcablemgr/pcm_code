@@ -40,7 +40,6 @@ export default {
       state.Templates.template = data
     },
     ADD_Template(state, {pcmContext, data}) {
-
       state.Templates[pcmContext].push(data)
     },
     UPDATE_Template(state, {pcmContext, data}) {

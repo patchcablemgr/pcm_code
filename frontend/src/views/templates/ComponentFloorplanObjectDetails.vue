@@ -156,7 +156,6 @@ export default {
         const Object = vm.ObjectData.preview[ObjectIndex]
         const ObjectTemplateType = Object.floorplan_object_type
         const FloorplanTemplate = vm.FloorplanTemplateData.find((template) => template.type == ObjectTemplateType)
-        console.log(FloorplanTemplate)
 
         TemplateName = FloorplanTemplate.name
       }

@@ -17,7 +17,6 @@
               <b-form-select
                 v-model="TemplateCategoryID"
                 :options="CategoryOptions"
-                @change=" $emit('TemplateCategoryEdited', {'category_id': $event}) "
               />
             </b-card-text>
           </b-card>
@@ -73,6 +72,9 @@ export default {
     Templates() {
       return this.$store.state.pcmTemplates.Templates
     },
+    Objects() {
+      return this.$store.state.pcmObjects.Objects
+    },
     TemplateCategoryID: {
       get() {
       
@@ -88,8 +90,21 @@ export default {
           return '-'
         }
       },
-      set(){
-        return
+      set(newValue){
+
+        const vm = this
+        const Context = vm.Context
+        const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
+        const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
+        const TemplateID = Template.id
+        const URL = '/api/templates/'+TemplateID
+
+        Template.category_id = newValue
+        vm.$http.patch(URL, Template).then(response => {
+          vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:'template', data:response.data})
+        }).catch(error => {
+          vm.DisplayError(error)
+        })
       }
     },
     CategoryOptions: function() {

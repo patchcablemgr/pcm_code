@@ -42,7 +42,7 @@
                   >
                     <b-form-input
                       v-model="PortFormat.value"
-                      @click="$emit('TemplatePartitionPortFormatFieldSelected', {'context': Context, 'index': PortFormatIndex} )"
+                      @click="PortFormatFieldSelected(PortFormatIndex)"
                       @change="UpdateValue($event)"
                       :state="errors.length > 0 ? false:null"
                     />
@@ -242,7 +242,7 @@ import {
 import Ripple from 'vue-ripple-directive'
 import { configure, ValidationProvider, ValidationObserver } from 'vee-validate'
 import { required, regex } from '@validations'
-import { PCM } from '../../mixins/PCM.js'
+import { PCM } from '@/mixins/PCM.js'
 
 const config = {
   useConstraintAttrs: false,

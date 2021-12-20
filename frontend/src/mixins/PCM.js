@@ -64,7 +64,11 @@ export const PCM = {
             const vm = this
             const ObjectID = vm.PartitionAddressSelected[Context].object_id
 
+            console.log('Context: '+Context)
+            console.log('ObjectID: '+ObjectID)
+            
             const TemplateID = vm.GetTemplateID(ObjectID, Context)
+            console.log('TemplateID: '+TemplateID)
             const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
 
             return TemplateIndex

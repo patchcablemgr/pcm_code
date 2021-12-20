@@ -354,18 +354,24 @@ export default {
 	},
   props: {
     CardTitle: {type: String},
-    PortConnectorData: {type: Array},
-    MediaData: {type: Array},
     Context: {type: String},
     TemplateFaceSelected: {type: Object},
     PartitionAddressSelected: {type: Object},
-    PortOrientationData: {type: Array},
   },
   data() {
     return {
     }
   },
   computed: {
+    Medium() {
+      return this.$store.state.pcmProps.Medium
+    },
+    Connectors() {
+      return this.$store.state.pcmProps.Connectors
+    },
+    Orientations() {
+      return this.$store.state.pcmProps.Orientations
+    },
     Categories() {
       return this.$store.state.pcmCategories.Categories
     },
@@ -515,9 +521,7 @@ export default {
 
         if(Partition) {
 
-          const PartitionType = Partition.type
-
-          if(PartitionType == 'connectable') {
+          if(Partition.type == 'connectable') {
 
             // Calculate port numbers
             const PortFormat = Partition.port_format
@@ -531,6 +535,9 @@ export default {
             const LastPortIDString = vm.GeneratePortID(LastPortID, PortTotal, PortFormat)
 
             PortRange = FirstPortIDString+' - '+LastPortIDString
+          } else {
+
+            PortRange = 'N/A'
           }
         }
 
@@ -550,7 +557,7 @@ export default {
           if(Partition.type == 'connectable') {
             const PortOrientationID = Partition.port_orientation
             const PortOrientationIndex = vm.GetPortOrientationIndex(PortOrientationID)
-            const PortOrientationName = vm.PortOrientationData[PortOrientationIndex].name
+            const PortOrientationName = vm.Orientations[PortOrientationIndex].name
             PortOrientation = PortOrientationName
           } else {
 
@@ -574,7 +581,7 @@ export default {
           if(Partition.type == 'connectable') {
             const PortConnectorID = Partition.port_connector
             const PortConnectorIndex = vm.GetPortConnectorIndex(PortConnectorID)
-            PortType = vm.PortConnectorData[PortConnectorIndex].name
+            PortType = vm.Connectors[PortConnectorIndex].name
           } else {
 
             PortType = 'N/A'
@@ -603,7 +610,7 @@ export default {
             if(Partition.type == 'connectable') {
               const MediaID = Partition.media
               const MediaIndex = vm.GetMediaIndex(MediaID)
-              MediaType = vm.MediaData[MediaIndex].name
+              MediaType = vm.Medium[MediaIndex].name
             }
           } else {
 
@@ -619,21 +626,21 @@ export default {
     GetPortOrientationIndex: function(PortOrientationID) {
 
       const vm = this
-      const PortOrientationIndex = vm.PortOrientationData.findIndex((PortOrientation) => PortOrientation.value == PortOrientationID);
+      const PortOrientationIndex = vm.Orientations.findIndex((PortOrientation) => PortOrientation.value == PortOrientationID);
       
       return PortOrientationIndex
     },
     GetPortConnectorIndex: function(PortConnectorID) {
 
       const vm = this
-      const PortConnectorIndex = vm.PortConnectorData.findIndex((PortConnector) => PortConnector.value == PortConnectorID);
+      const PortConnectorIndex = vm.Connectors.findIndex((PortConnector) => PortConnector.value == PortConnectorID);
       
       return PortConnectorIndex
     },
     GetMediaIndex: function(MediaID) {
 
       const vm = this
-      const MediaIndex = vm.MediaData.findIndex((Media) => Media.value == MediaID);
+      const MediaIndex = vm.Medium.findIndex((Media) => Media.value == MediaID);
       
       return MediaIndex
     },

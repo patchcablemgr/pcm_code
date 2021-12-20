@@ -85,12 +85,9 @@
 
           <component-template-Object-details
             CardTitle="Template Details"
-            :PortConnectorData="PortConnectorData"
-            :MediaData="MediaData"
 						Context="template"
 						:TemplateFaceSelected="TemplateFaceSelected"
 						:PartitionAddressSelected="PartitionAddressSelected"
-            :PortOrientationData="PortOrientationData"
             @TemplateObjectCloneClicked="TemplateObjectCloneClicked()"
 						@TemplateObjectDeleteClicked="TemplateObjectDeleteClicked()"
             @TemplateEdited="TemplateEdited($event)"
@@ -123,7 +120,7 @@ import ComponentCabinet from './templates/ComponentCabinet.vue'
 import ComponentTemplateObjectDetails from './templates/ComponentTemplateObjectDetails.vue'
 import ComponentTemplates from './templates/ComponentTemplates.vue'
 import ModalTemplatesEdit from './templates/ModalTemplatesEdit.vue'
-import { PCM } from '../mixins/PCM.js'
+import { PCM } from '@/mixins/PCM.js'
 
 const TemplatesWatcherActive = true
 const CategoriesWatcherActive = true
@@ -1115,15 +1112,57 @@ export default {
       })
 
     },
-    templatesGET: function () {
+    GETTemplates: function () {
 
       const vm = this
-			const Context = 'template'
-      
-      this.$http.get('/api/templates').then(function(response){
 
-        vm.Templates.template = response.data
-      });
+      // Create workspace templates
+      const WorkspaceIDs = {
+        standard: vm.$store.state.pcmProps.WorkspaceStandardID,
+        insert: vm.$store.state.pcmProps.WorkspaceInsertID
+      }
+      let WorkspaceTemplate
+      Object.entries(WorkspaceIDs).forEach(function([Type, ID]){
+        WorkspaceTemplate = JSON.parse(JSON.stringify(vm.$store.state.pcmProps.GenericTemplate), function (Key, Value) {
+          if(Key == 'id') {
+            return ID
+          } else if(Key == 'name') {
+            return "New_Template"
+          } else if(Key == 'type') {
+            if(Value === null) {
+              return Type
+            } else {
+              return Value
+            }
+          } else if(Key == 'ru_size') {
+            return (Type == 'standard') ? 1 : Value
+          } else if(Key == 'function') {
+            return 'endpoint'
+          } else if(Key == 'mount_config') {
+            return (Type == 'standard') ? '2-post' : Value
+          } else if(Key == 'insert_constraints') {
+            return (Type == 'standard') ? Value : {part_layout:{height:2,width:24},enc_layout:{cols:1,rows:1}}
+          } else {
+            return Value
+          }
+        })
+        vm.$store.commit('pcmTemplates/ADD_Template', {pcmContext:'workspace', data:WorkspaceTemplate})
+      })
+      vm.$store.commit('pcmTemplates/SET_Ready', {pcmContext:'workspace', ReadyState:true})
+
+      // Create actual/template templates
+      vm.$http.get('/api/templates').then(response => {
+
+        response.data.forEach(function(template) {
+          vm.GeneratePseudoData('template', template)
+        })
+        vm.$store.commit('pcmObjects/SET_Ready', {pcmContext:'template', ReadyState:true})
+
+        vm.$store.commit('pcmTemplates/SET_Templates', {pcmContext: 'template', data: response.data})
+        vm.$store.commit('pcmTemplates/SET_Ready', {pcmContext:'template', ReadyState:true})
+      }).catch(error => {
+        vm.DisplayError(error)
+      })
     },
     SetDefaultCategory: function() {
 
@@ -1188,6 +1227,119 @@ export default {
         vm.PortOrientationData = response.data;
       });
     },
+    GETLocations() {
+
+      const vm = this
+
+      // Create workspace locations
+      const WorkspaceIDs = {
+        standard: vm.$store.state.pcmProps.WorkspaceStandardID,
+        insert: vm.$store.state.pcmProps.WorkspaceInsertID
+      }
+      let WorkspaceCabinet
+      Object.entries(WorkspaceIDs).forEach(function([Type, ID]){
+        WorkspaceCabinet = JSON.parse(JSON.stringify(vm.$store.state.pcmProps.GenericCabinet), function (Key, Value) {
+          if(Key == 'id') {
+            return ID
+          } else {
+            return Value
+          }
+        })
+        vm.$store.commit('pcmLocations/ADD_Location', {pcmContext:'workspace', data:WorkspaceCabinet})
+      })
+      vm.$store.commit('pcmLocations/SET_Ready', {pcmContext:'workspace', ReadyState:true})
+
+      // Create template locations
+      vm.$http.get('/api/locations').then(response => {
+        vm.$store.commit('pcmLocations/SET_Locations', {pcmContext:'template', data:response.data})
+        vm.$store.commit('pcmLocations/SET_Ready', {pcmContext:'template', ReadyState:true})
+      }).catch(error => {
+        vm.DisplayError(error)
+      })
+    },
+    GETCategories() {
+
+      const vm = this
+      vm.$http.get('/api/categories')
+      .then(response => {
+        vm.$store.commit('pcmCategories/SET_Categories', response.data)
+        vm.$store.commit('pcmCategories/SET_Ready', true)
+      }).catch(error => {
+        vm.DisplayError(error)
+      })
+    },
+    GETObjects() {
+
+      const vm = this
+
+      // Create workspace objects
+      const WorkspaceIDs = {
+        standard: vm.$store.state.pcmProps.WorkspaceStandardID,
+        insert: vm.$store.state.pcmProps.WorkspaceInsertID
+      }
+      let WorkspaceObject
+      Object.entries(WorkspaceIDs).forEach(function([Type, ID]){
+        WorkspaceObject = JSON.parse(JSON.stringify(vm.$store.state.pcmProps.GenericObject), function (Key, Value) {
+          if(Key == 'id') {
+            return ID
+          } else if(Key == 'name') {
+            return "New_Object"
+          } else if(Key == 'template_id') {
+            return ID
+          } else if(Key == 'location_id') {
+            return ID
+          } else if(Key == 'cabinet_ru') {
+            return (Type == 'standard') ? 1 : Value
+          } else if(Key == 'cabinet_front') {
+            return (Type == 'standard') ? 'front' : Value
+          } else {
+            return Value
+          }
+        })
+        vm.$store.commit('pcmObjects/ADD_Object', {pcmContext:'workspace', data:WorkspaceObject})
+      })
+      vm.$store.commit('pcmObjects/SET_Ready', {pcmContext:'workspace', ReadyState:true})
+
+      vm.$http.get('/api/objects').then(response => {
+        vm.$store.commit('pcmObjects/SET_Objects', response.data)
+        vm.$store.commit('pcmObjects/SET_Ready', {pcmContext:'actual', ReadyState:true})
+      }).catch(error => {
+        vm.DisplayError(error)
+      })
+    },
+    GETConnectors() {
+
+      const vm = this
+
+      vm.$http.get('/api/port-connectors').then(response => {
+        vm.$store.commit('pcmProps/SET_Connectors', response.data)
+        vm.$store.commit('pcmProps/SET_Ready', {Prop: 'connectors', ReadyState: true})
+      }).catch(error => {
+        vm.DisplayError(error)
+      })
+    },
+    GETMedium() {
+
+      const vm = this
+
+      vm.$http.get('/api/medium').then(response => {
+        vm.$store.commit('pcmProps/SET_Medium', response.data)
+        vm.$store.commit('pcmProps/SET_Ready', {Prop: 'medium', ReadyState: true})
+      }).catch(error => {
+        vm.DisplayError(error)
+      })
+    },
+    GETOrientations() {
+
+      const vm = this
+
+      vm.$http.get('/api/port-orientation').then(response => {
+        vm.$store.commit('pcmProps/SET_Orientations', response.data)
+        vm.$store.commit('pcmProps/SET_Ready', {Prop: 'orientations', ReadyState: true})
+      }).catch(error => {
+        vm.DisplayError(error)
+      })
+    }
   },
   watch: {
     Categories: {
@@ -1203,37 +1355,18 @@ export default {
         }
       }
     },
-    Templates: {
-      deep: true,
-      handler() {
-
-        const vm = this
-        if(vm.TemplatesWatcherActive && vm.TemplatesReady.template) {
-
-          vm.TemplatesWatcherActive = false
-          const Context = 'template'
-          const WorkspaceStandardID = vm.$store.state.pcmProps.WorkspaceStandardID
-
-          vm.Templates[Context].forEach(function(template) {
-            vm.GeneratePseudoData(Context, template)
-          })
-          vm.$store.commit('pcmObjects/SET_Ready', {pcmContext:Context, ReadyState:true})
-
-          // Set standard object as selected
-          vm.PartitionAddressSelected['workspace'].object_id = WorkspaceStandardID
-          
-        }
-      }
-    },
   },
   mounted() {
 
     const vm = this
     
-    vm.templatesGET()
-    vm.mediumGET()
-    vm.portOrientationGET()
-    vm.GETPortConnectors()
+    vm.GETObjects()
+    vm.GETLocations()
+    vm.GETCategories()
+    vm.GETTemplates()
+    vm.GETConnectors()
+    vm.GETMedium()
+    vm.GETOrientations()
   },
 }
 </script>

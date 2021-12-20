@@ -127,6 +127,7 @@
 import { BContainer, BRow, BCol, BCard, BForm, BButton, BFormInput, BFormCheckbox, BCardText, } from 'bootstrap-vue'
 import Ripple from 'vue-ripple-directive'
 import { Sketch } from 'vue-color'
+import { PCM } from '@/mixins/PCM.js'
 
 const DefaultCategoryName = ''
 const DefaultCategoryDefault = false
@@ -136,6 +137,7 @@ const SelectedCategoryID = null
 const LocalCategoryData = {"name": DefaultCategoryName, "default": DefaultCategoryDefault, "color": DefaultCategoryColor}
 
 export default {
+  mixins: [PCM],
   components: {
     BContainer,
     BRow,
@@ -201,31 +203,36 @@ export default {
     Submit: function() {
 
       const vm = this
-      const SelectedCategoryID = vm.SelectedCategoryID
-      let data = {
-        'vm': vm,
-        'data': this.LocalCategoryData
-      }
+      const CategoryID = vm.SelectedCategoryID
+      const Category = vm.LocalCategoryData
+      console.log('Category: '+JSON.stringify(Category))
+      Category.color = (Category.color.hasOwnProperty('hex8')) ? Category.color.hex8 : Category.color
       
-      if(SelectedCategoryID) {
-        data.data.id = SelectedCategoryID
-        this.$store.dispatch('pcmCategories/PATCH_Categories', data)
+      if(CategoryID) {
+        vm.$http.patch('/api/categories/'+CategoryID, Category).then(response => {
+          vm.$store.commit('pcmCategories/UPDATE_Category', response.data)
+        }).catch(error => {
+          vm.DisplayError(error)
+        })
       } else {
-        this.$store.dispatch('pcmCategories/POST_Categories', data)
+        vm.$http.post('/api/categories', Category).then(response => {
+          vm.$store.commit('pcmCategories/ADD_Category', response.data)
+        }).catch(error => {
+          vm.DisplayError(error)
+        })
       }
     },
     Delete: function() {
 
       const vm = this
-      const data = {
-        'vm': vm,
-        'data': {
-          'id': vm.SelectedCategoryID
-        }
-      }
-
+      const CategoryID = vm.SelectedCategoryID
       vm.SelectedCategoryID = null
-      this.$store.dispatch('pcmCategories/DELETE_Categories', data)
+
+      vm.$http.delete('/api/categories/'+CategoryID).then(response => {
+        vm.$store.commit('pcmCategories/DELETE_Categories', response.data)
+      }).catch(error => {
+        vm.DisplayError(error)
+      })
     },
     Reset: function() {
 

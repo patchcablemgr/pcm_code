@@ -527,6 +527,15 @@ export default {
     }
   },
   computed: {
+    Medium() {
+      return this.$store.state.pcmProps.Medium
+    },
+    Connectors() {
+      return this.$store.state.pcmProps.Connectors
+    },
+    Orientations() {
+      return this.$store.state.pcmProps.Orientations
+    },
     Categories() {
       return this.$store.state.pcmCategories.Categories
     },
@@ -552,7 +561,6 @@ export default {
 
         const Context = this.Context
         const Template = this.GetTemplateSelected(Context)
-        console.log("Template: "+Template)
         const ReturnData = (Template) ? Template.name : ''
 
         return ReturnData
@@ -1265,9 +1273,9 @@ export default {
       let WorkingArray = []
 
       // Populate working array with data to be used as select options
-      for(let i = 0; i < vm.MediaData.length; i++) {
+      for(let i = 0; i < vm.Medium.length; i++) {
 
-        let Media = vm.MediaData[i]
+        let Media = vm.Medium[i]
         if(Media.display) {
           WorkingArray.push({'value': Media.value, 'text': Media.name})
         }
@@ -1282,9 +1290,9 @@ export default {
       let WorkingArray = []
 
       // Populate working array with data to be used as select options
-      for(let i = 0; i < vm.PortConnectorData.length; i++) {
+      for(let i = 0; i < vm.Connectors.length; i++) {
 
-        let PortConnector = vm.PortConnectorData[i]
+        let PortConnector = vm.Connectors[i]
         WorkingArray.push({'value': PortConnector.value, 'text': PortConnector.name})
       }
 
@@ -1297,9 +1305,9 @@ export default {
       let WorkingArray = []
 
       // Populate working array with data to be used as select options
-      for(let i = 0; i < vm.PortOrientationData.length; i++) {
+      for(let i = 0; i < vm.Orientations.length; i++) {
 
-        let PortOrientation = vm.PortOrientationData[i]
+        let PortOrientation = vm.Orientations[i]
         WorkingArray.push({'value': PortOrientation.value, 'text': PortOrientation.name})
       }
 

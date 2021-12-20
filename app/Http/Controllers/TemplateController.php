@@ -151,30 +151,32 @@ class TemplateController extends Controller
 
         // Validate template ID
         $validatorInput = [
-            'id' => $id
+            'id' => $id,
+            'name' => $request->input('name'),
+            'category_id' => $request->input('category_id')
         ];
         $validatorRules = [
             'id' => [
                 'required',
+                'numeric',
                 'exists:template'
-            ]
-        ];
-        $validatorMessages = [
-        ];
-        Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
-
-        // Validate request data
-        $request->validate([
+            ],
             'name' => [
+                'required',
                 'alpha_dash',
-                'unique:App\Models\TemplateModel,name',
                 'min:1',
-                'max:255'
+                'max:255',
             ],
             'category_id' => [
+                'required',
+                'numeric',
                 'exists:category,id'
-            ],
-        ]);
+            ]
+        ];
+        $validatorMessages = [];
+        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        $customValidator->stopOnFirstFailure();
+        $customValidator->validate();
 
         // Store request data
         $data = $request->all();

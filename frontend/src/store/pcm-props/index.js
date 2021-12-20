@@ -1,10 +1,12 @@
 import axios from '@axios'
 
-const ConnectorsReady = false
+const pcmPropsReady = {
+  connectors: false,
+  medium: false,
+  orientations: false
+}
 const Connectors = []
-const MediumReady = false
 const Medium = []
-const OrientationsReady = false
 const Orientations = []
 const WorkspaceStandardID = 1
 const WorkspaceInsertID = 2
@@ -77,11 +79,9 @@ const GenericObject = {
 export default {
   namespaced: true,
   state: {
-    ConnectorsReady,
+    pcmPropsReady,
     Connectors,
-    MediumReady,
     Medium,
-    OrientationsReady,
     Orientations,
     WorkspaceStandardID,
     WorkspaceInsertID,
@@ -94,57 +94,17 @@ export default {
   },
   mutations: {
     SET_Connectors(state, data) {
-
       state.Connectors = data
     },
-    Connectors_Ready(state) {
-      state.ConnectorsReady = true
-    },
     SET_Medium(state, data) {
-
       state.Medium = data
     },
-    Medium_Ready(state) {
-      state.MediumReady = true
-    },
     SET_Orientations(state, data) {
-
       state.Orientations = data
     },
-    Orientations_Ready(state) {
-      state.OrientationsReady = true
+    SET_Ready(state, {Prop, ReadyState}) {
+      state.pcmPropsReady[Prop] = ReadyState
     },
   },
-  actions: {
-    GET_Connectors(context) {
-
-      axios.get('/api/port-connectors')
-      .then(response => {
-
-        context.commit('SET_Connectors', response.data)
-        context.commit('Connectors_Ready')
-      })
-      
-    },
-    GET_Medium(context) {
-
-      axios.get('/api/medium')
-      .then(response => {
-
-        context.commit('SET_Medium', response.data)
-        context.commit('Medium_Ready')
-      })
-      
-    },
-    GET_Orientations(context) {
-
-      axios.get('/api/port-orientation')
-      .then(response => {
-
-        context.commit('SET_Orientations', response.data)
-        context.commit('Orientations_Ready')
-      })
-      
-    },
-  }
+  actions: {}
 }

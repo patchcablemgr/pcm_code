@@ -39,6 +39,7 @@ class CategoryController extends Controller
 
         $category->name = $request->name;
         $category->color = $request->color;
+        $category->default = 0;
 
         // New category will be default
         if($request->default) {
@@ -82,28 +83,35 @@ class CategoryController extends Controller
 
         $defaultCategory = CategoryModel::where('default', '=', 1)->first();
 
-        $customValidator = Validator::make(array(
+        // Validate template ID
+        $validatorInput = [
             'id' => $id,
             'name' => $request->input('name'),
-            'default' => $request->input('default'),
-        ), [
+            'color' => $request->input('color'),
+            'default' => $request->input('default')
+        ];
+        $validatorRules = [
             'id' => [
                 'required',
                 'numeric',
                 'exists:category',
             ],
             'name' => [
-                Rule::unique('category')->ignore($id),
+                'alpha_dash',
+                'min:1',
+                'max:255',
             ],
-        ]);
+            'color' => [
+                'regex:/^\#[\dA-F]{8}$/'
+            ],
+            'default' => [
+                'boolean'
+            ]
+        ];
+        $validatorMessages = [];
+        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
         $customValidator->stopOnFirstFailure();
         $customValidator->validate();
-
-        $request->validate([
-            'name' => ['alpha_dash', 'min:1', 'max:255'],
-            'color' => ['regex:/^\#[\dA-F]{8}$/'],
-            'default' => ['boolean'],
-        ]);
 
         // Store category
         $category = CategoryModel::where('id', $id)->first();

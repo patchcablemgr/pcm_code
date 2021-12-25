@@ -63,12 +63,8 @@ export const PCM = {
 
             const vm = this
             const ObjectID = vm.PartitionAddressSelected[Context].object_id
-
-            console.log('Context: '+Context)
-            console.log('ObjectID: '+ObjectID)
             
             const TemplateID = vm.GetTemplateID(ObjectID, Context)
-            console.log('TemplateID: '+TemplateID)
             const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
 
             return TemplateIndex
@@ -413,6 +409,43 @@ export const PCM = {
             })
             
             return PreviewPortID
+        },
+        GeneratePortPreview: function(Context){
+
+            const vm = this
+            const Partition = vm.GetPartitionSelected(Context)
+
+            const PortPreviewLimit = 5
+            let PortID = ''
+            let PreviewPortIDArray = []
+
+            if(Partition.type == 'connectable') {
+                const PortFormat = Partition.port_format
+                let PortTotal = Partition.port_layout.cols * Partition.port_layout.rows
+                let Truncated = false
+                let LoopLimit = PortTotal
+
+                // Limit port preview to 5
+                if(PortTotal > PortPreviewLimit) {
+                    Truncated = true
+                    LoopLimit = PortPreviewLimit-1
+                }
+
+                // Generate port IDs
+                for(let i=0; i<LoopLimit; i++){
+                    PortID = vm.GeneratePortID(i, PortTotal, PortFormat)
+                    PreviewPortIDArray.push(PortID)
+                }
+
+                // Append ellipses if port preview is truncated
+                if(Truncated) {
+                    PreviewPortIDArray.push('...')
+                    PortID = vm.GeneratePortID(PortTotal-1, PortTotal, PortFormat)
+                    PreviewPortIDArray.push(PortID)
+                }
+            }
+
+            return PreviewPortIDArray.join(', ')
         },
         GetNodeIcon: function(NodeType) {
 

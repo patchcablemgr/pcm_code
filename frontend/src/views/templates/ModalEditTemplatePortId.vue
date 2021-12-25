@@ -41,9 +41,9 @@
                     }"
                   >
                     <b-form-input
-                      v-model="PortFormat.value"
+                      v-model="FieldValue[PortFormatIndex].value"
+                      @change="FieldValueUpdate"
                       @click="PortFormatFieldSelected(PortFormatIndex)"
-                      @change="UpdateValue($event)"
                       :state="errors.length > 0 ? false:null"
                     />
                   </div>
@@ -71,7 +71,7 @@
                   v-ripple.400="'rgba(113, 102, 240, 0.15)'"
                   variant="outline-primary"
                   class="btn-icon"
-                  @click="$emit('TemplatePartitionPortFormatFieldCreate', {'context': Context, 'position': 'before'} )"
+                  @click="AddField('before')"
                 >
                   <feather-icon icon="PlusIcon" />
                   <feather-icon
@@ -85,7 +85,7 @@
                   v-ripple.400="'rgba(113, 102, 240, 0.15)'"
                   variant="outline-primary"
                   class="btn-icon"
-                  @click="$emit('TemplatePartitionPortFormatFieldCreate', {'context': Context, 'position': 'after'} )"
+                  @click="AddField('after')"
                 >
                   <feather-icon
                     icon="MoreHorizontalIcon"
@@ -99,7 +99,7 @@
                   v-ripple.400="'rgba(113, 102, 240, 0.15)'"
                   variant="outline-primary"
                   class="btn-icon"
-                  @click="$emit('TemplatePartitionPortFormatFieldDelete', {'context': Context} )"
+                  @click="DeleteField()"
                 >
                   <feather-icon icon="MinusIcon" />
                 </b-button>
@@ -125,7 +125,7 @@
                   v-ripple.400="'rgba(113, 102, 240, 0.15)'"
                   variant="outline-primary"
                   class="btn-icon"
-                  @click="$emit('TemplatePartitionPortFormatFieldMove', {'context': Context, 'direction': 'left'} )"
+                  @click="MoveField('left')"
                 >
                   <feather-icon icon="ChevronLeftIcon" />
                 </b-button>
@@ -136,7 +136,7 @@
                   v-ripple.400="'rgba(113, 102, 240, 0.15)'"
                   variant="outline-primary"
                   class="btn-icon"
-                  @click="$emit('TemplatePartitionPortFormatFieldMove', {'context': Context, 'direction': 'right'} )"
+                  @click="MoveField('right')"
                 >
                   <feather-icon icon="ChevronRightIcon" />
                 </b-button>
@@ -156,9 +156,8 @@
               </dt>
               <dd class="col-sm-8">
                 <b-form-select
-                  v-model="SelectedPortFormat[SelectedPortFormatIndex].type"
+                  v-model="FieldType"
                   :options="TypeOptions"
-                  @change="$emit('TemplatePartitionPortFormatTypeUpdated', {'context': Context, 'value': $event} )"
                 />
               </dd>
             </dl>
@@ -176,10 +175,12 @@
               </dt>
               <dd class="col-sm-8">
                 <b-form-input
-                  v-model="SelectedPortFormat[SelectedPortFormatIndex].count"
+                  v-model.number="FieldCount"
                   :disabled=" SelectedPortFormat[SelectedPortFormatIndex].type == 'static' || SelectedPortFormat[SelectedPortFormatIndex].type == 'series' "
-                  @change="$emit('TemplatePartitionPortFormatCountUpdated', {'context': Context, 'value': $event} )"
-                  type=number
+                  :formatter="CastToInteger"
+                  type="number"
+                  min="1"
+                  debounce="500"
                 />
               </dd>
             </dl>
@@ -197,10 +198,9 @@
               </dt>
               <dd class="col-sm-8">
                 <b-form-select
-                  :value=" SelectedPortFormat[SelectedPortFormatIndex].order "
+                  v-model="FieldOrder"
                   :options=" ComputedOrderOptions "
                   :disabled=" SelectedPortFormat[SelectedPortFormatIndex].type == 'static' "
-                  @change=" $emit('TemplatePartitionPortFormatOrderUpdated', {'context': Context, 'value': $event} ) "
                 />
               </dd>
             </dl>
@@ -217,7 +217,7 @@
                 />
               </dt>
               <dd class="col-sm-8">
-                {{ PreviewPortID }}
+                {{ PortPreview }}
               </dd>
             </dl>
             
@@ -390,6 +390,12 @@ export default {
     Objects() {
       return this.$store.state.pcmObjects.Objects
     },
+    PortPreview: function() {
+
+      const vm = this
+      const Context = vm.Context
+      return vm.GeneratePortPreview(Context)
+    },
     SelectedPortFormat: function() {
 
       const vm = this
@@ -416,9 +422,10 @@ export default {
         let OrderValue = 1
         let NumericalSuffix = ""
         let OrderText = ""
+        const Partition = vm.GetPartitionSelected()
 
         // Loop through port format fields
-        vm.SelectedPortFormat.forEach(function(PortFormat){
+        Partition.port_format.forEach(function(PortFormat){
 
           if(PortFormat.type == "series" || PortFormat.type == "incremental") {
 
@@ -440,6 +447,231 @@ export default {
         return OrderOptions
       },
       set() {}
+    },
+    FieldValue: {
+      get() {
+
+        const vm = this
+        const Context = vm.Context
+        const FieldIndex = vm.SelectedPortFormatIndex
+        const Partition = vm.GetPartitionSelected(Context)
+
+        return Partition.port_format
+      }
+    },
+    FieldType: {
+      get() {
+
+        const vm = this
+        const Context = vm.Context
+        const FieldIndex = vm.SelectedPortFormatIndex
+        const Partition = vm.GetPartitionSelected(Context)
+
+        return Partition.port_format[FieldIndex].type
+      },
+      set(Type) {
+
+        const vm = this
+        const Context = vm.Context
+        const FieldIndex = vm.SelectedPortFormatIndex
+        const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
+        const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
+        const TemplateID = Template.id
+        const URL = '/api/templates/'+TemplateID
+
+        const Face = vm.TemplateFaceSelected[Context]
+        const Blueprint = Template.blueprint[Face]
+        const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+        const Partition = vm.GetPartition(Blueprint, PartitionAddress)
+        let Order = 0
+        let Value = ''
+
+        const TypeOrig = Partition.port_format[FieldIndex].type
+
+        if(Type != TypeOrig) {
+
+          // Determine field order
+          if(Type == 'series' || Type == 'incremental') {
+
+            Order = 1
+            let WorkingOrderArray = []
+
+            // Gather all incrementable field orders
+            Partition.port_format.forEach(function(PortFormatField, PortFormatFieldIndex){
+
+              const PortFormatFieldType = PortFormatField.type
+              
+              if((PortFormatFieldType == 'series' || PortFormatFieldType == 'incremental') && PortFormatFieldIndex != FieldIndex) {
+                const PortFormatFieldOrder = PortFormatField.order
+                WorkingOrderArray.push(PortFormatFieldOrder)
+              }
+            })
+
+            // Sort incrementable field orders
+            WorkingOrderArray.sort(function(a, b){return a - b})
+
+            // Find first available
+            WorkingOrderArray.forEach(function(WorkingOrder){
+              if(WorkingOrder == Order) {
+                Order = Order + 1
+              }
+            })
+          }
+
+          // Determine field value
+          if(Type == 'series') {
+            Value = 'A,B,C'
+          } else if(Type == 'incremental') {
+            Value = '1'
+          } else if(Type == 'static') {
+            Value = 'Port'
+          }
+          const DefaultCount = vm.$store.state.pcmTemplates.DefaultCount
+
+          // Apply new values
+          Partition.port_format[FieldIndex].value = Value
+          Partition.port_format[FieldIndex].type = Type
+          Partition.port_format[FieldIndex].count = DefaultCount
+          Partition.port_format[FieldIndex].order = Order
+
+          if(Context == 'template') {
+
+            vm.$http.patch(URL, Template).then(response => {
+              vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:response.data})
+            }).catch(error => {
+              vm.DisplayError(error)
+            })
+          } else {
+
+            // Insert new field
+            vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
+          }
+        }
+      }
+    },
+    FieldCount: {
+      get() {
+
+        const vm = this
+        const Context = vm.Context
+        const FieldIndex = vm.SelectedPortFormatIndex
+        const Partition = vm.GetPartitionSelected(Context)
+        const Count = Partition.port_format[FieldIndex].count
+
+        return Count
+      },
+      set(Count) {
+
+        const vm = this
+        const Context = vm.Context
+        const FieldIndex = vm.SelectedPortFormatIndex
+        const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
+        const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
+        const TemplateID = Template.id
+        const URL = '/api/templates/'+TemplateID
+
+        const Face = vm.TemplateFaceSelected[Context]
+        const Blueprint = Template.blueprint[Face]
+        const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+        const Partition = vm.GetPartition(Blueprint, PartitionAddress)
+        const CountOrig = Partition.port_format[FieldIndex].count
+        const CountNew = parseInt(Count)
+
+        if(CountNew != CountOrig) {
+
+          Partition.port_format[FieldIndex].count = CountNew
+
+          if(Context == 'template') {
+
+            vm.$http.patch(URL, Template).then(response => {
+              vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:response.data})
+            }).catch(error => {
+              vm.DisplayError(error)
+            })
+          } else {
+
+            // Insert new field
+            vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
+          }
+        }
+      }
+    },
+    FieldOrder: {
+      get() {
+
+        const vm = this
+        const Context = vm.Context
+        const FieldIndex = vm.SelectedPortFormatIndex
+        const Partition = vm.GetPartitionSelected(Context)
+
+        return Partition.port_format[FieldIndex].order
+      },
+      set(Order) {
+
+        const vm = this
+        const Context = vm.Context
+        const FieldIndex = vm.SelectedPortFormatIndex
+        const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
+        const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
+        const TemplateID = Template.id
+        const URL = '/api/templates/'+TemplateID
+
+        const Face = vm.TemplateFaceSelected[Context]
+        const Blueprint = Template.blueprint[Face]
+        const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+        const Partition = vm.GetPartition(Blueprint, PartitionAddress)
+        const OrderOrig = Partition.port_format[FieldIndex].order
+
+        if(Order != OrderOrig) {
+          Partition.port_format.forEach(function(PortFormatField, index){
+
+            if(index != FieldIndex) {
+
+              // Is field incrementable?
+              const PortFormatFieldType = PortFormatField.type
+              if(PortFormatFieldType == 'incremental' || PortFormatFieldType == 'series') {
+                
+                // Adjust field order
+                const PortFormatFieldOrder = PortFormatField.order
+                if(PortFormatFieldOrder > Order && PortFormatFieldOrder < OrderOrig) {
+
+                  // Increment
+                  Partition.port_format[index].order = PortFormatFieldOrder + 1
+                } else if(PortFormatFieldOrder < Order && PortFormatFieldOrder > OrderOrig) {
+
+                  // Decrement
+                  Partition.port_format[index].order = PortFormatFieldOrder - 1
+                } else if(PortFormatFieldOrder == Order) {
+                  if(Order > OrderOrig) {
+
+                    // Decrement
+                    Partition.port_format[index].order = PortFormatFieldOrder - 1
+                  } else if(Order < OrderOrig) {
+
+                    // Increment
+                    Partition.port_format[index].order = PortFormatFieldOrder + 1
+                  }
+                }
+              }
+            }
+          })
+
+          Partition.port_format[FieldIndex].order = Order
+
+          if(Context == 'template') {
+
+            vm.$http.patch(URL, Template).then(response => {
+              vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:response.data})
+            }).catch(error => {
+              vm.DisplayError(error)
+            })
+          } else {
+
+            // Insert new field
+            vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
+          }
+        }
+      }
     },
   },
   methods: {
@@ -507,6 +739,204 @@ export default {
       }
 
       return NumericalSuffix
+    },
+    AddField: function(Position) {
+
+      const vm = this
+      const Context = vm.Context
+      const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
+      const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
+      const TemplateID = Template.id
+      const URL = '/api/templates/'+TemplateID
+
+      const Face = vm.TemplateFaceSelected[Context]
+      const Blueprint = Template.blueprint[Face]
+      const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+      const Partition = vm.GetPartition(Blueprint, PartitionAddress)
+      const PortFormatLength = Partition.port_format.length
+      const PortFormatIndex = vm.SelectedPortFormatIndex
+      const InsertPosition = (Position == 'before') ? PortFormatIndex : PortFormatIndex + 1
+      const DefaultCount = vm.$store.state.pcmTemplates.DefaultCount
+      const DefaultPortFormatField = {'type': 'static', 'value': 'Port', 'count': DefaultCount, 'order': 0}
+      Partition.port_format.splice(InsertPosition, 0, DefaultPortFormatField)
+      
+
+      // Limit number of fields to 5
+      if(PortFormatLength < 5) {
+
+        if(Context == 'template') {
+
+          vm.$http.patch(URL, Template).then(response => {
+            vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:response.data})
+            vm.SelectedPortFormatIndex = (Position == 'before') ? PortFormatIndex + 1 : PortFormatIndex
+          }).catch(error => {
+            vm.DisplayError(error)
+          })
+        } else {
+
+          // Insert new field
+          vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
+          vm.SelectedPortFormatIndex = (Position == 'before') ? PortFormatIndex + 1 : PortFormatIndex
+        }
+      }
+    },
+    DeleteField: function() {
+
+      const vm = this
+      const Context = vm.Context
+      const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
+      const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
+      const TemplateID = Template.id
+      const URL = '/api/templates/'+TemplateID
+
+      const Face = vm.TemplateFaceSelected[Context]
+      const Blueprint = Template.blueprint[Face]
+      const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+      const Partition = vm.GetPartition(Blueprint, PartitionAddress)
+      const PortFormatLength = Partition.port_format.length
+
+      // Prevent deleting all port format fields
+      if(PortFormatLength > 1) {
+
+        const PortFormatIndex = vm.SelectedPortFormatIndex
+        const FieldType = Partition.port_format[PortFormatIndex].type
+        const FieldOrder = Partition.port_format[PortFormatIndex].order
+
+        // Adjust incremental order
+        if(FieldType == 'series' || FieldType == 'incremental') {
+          Partition.port_format.forEach(function(PortFormatField){
+            const PortFormatFieldType = PortFormatField.type
+            if(PortFormatFieldType == 'series' || PortFormatFieldType == 'incremental') {
+              const PortFormatFieldOrder = PortFormatField.order
+              if(PortFormatFieldOrder > FieldOrder) {
+                PortFormatField.order = PortFormatFieldOrder - 1
+              }
+            }
+          })
+        }
+
+        // Delete selected field
+        Partition.port_format.splice(PortFormatIndex, 1)
+
+        if(Context == 'template') {
+
+          vm.$http.patch(URL, Template).then(response => {
+
+            // Insert new field
+            vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:response.data})
+
+            // Adjust port format index
+            if(PortFormatIndex >= (PortFormatLength - 1)) {
+              vm.SelectedPortFormatIndex = PortFormatIndex - 1
+            }
+          }).catch(error => {
+            vm.DisplayError(error)
+          })
+        } else {
+
+          // Insert new field
+          vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
+
+          // Adjust port format index
+          if(PortFormatIndex >= (PortFormatLength - 1)) {
+            vm.SelectedPortFormatIndex = PortFormatIndex - 1
+          }
+        }
+      }
+
+      
+    },
+    MoveField: function(Direction) {
+      const vm = this
+      const Context = vm.Context
+      const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
+      const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
+      const TemplateID = Template.id
+      const URL = '/api/templates/'+TemplateID
+
+      const Face = vm.TemplateFaceSelected[Context]
+      const Blueprint = Template.blueprint[Face]
+      const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+      const Partition = vm.GetPartition(Blueprint, PartitionAddress)
+
+      const PortFormatIndex = vm.SelectedPortFormatIndex
+
+      // Determine new position
+      let NewIndex
+      if(Direction == 'left') {
+        NewIndex = (PortFormatIndex == 0) ? 0 : PortFormatIndex - 1
+      } else {
+        NewIndex = (PortFormatIndex == (Partition.port_format.length - 1)) ? PortFormatIndex : PortFormatIndex + 1
+      }
+
+      // Move field to new position
+      Partition.port_format.splice(NewIndex, 0, Partition.port_format.splice(PortFormatIndex, 1)[0])
+
+      if(Context == 'template') {
+
+        vm.$http.patch(URL, Template).then(response => {
+
+          // Insert new field
+          vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:response.data})
+
+          // Adjust port format index
+          vm.SelectedPortFormatIndex = NewIndex
+
+        }).catch(error => {
+
+          vm.DisplayError(error)
+        })
+      } else {
+
+        // Insert new field
+        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
+
+        // Adjust port format index
+        vm.SelectedPortFormatIndex = NewIndex
+      }
+    },
+    FieldValueUpdate: function(Value) {
+      const vm = this
+      const Context = vm.Context
+      const FieldIndex = vm.SelectedPortFormatIndex
+      const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
+      const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
+      const TemplateID = Template.id
+      const URL = '/api/templates/'+TemplateID
+
+      const Face = vm.TemplateFaceSelected[Context]
+      const Blueprint = Template.blueprint[Face]
+      const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+      const Partition = vm.GetPartition(Blueprint, PartitionAddress)
+      const ValueOrig = Partition.port_format[FieldIndex].value
+
+      if(Value != ValueOrig) {
+
+        Partition.port_format[FieldIndex].value = Value
+
+        if(Context == 'template') {
+
+          vm.$http.patch(URL, Template).then(response => {
+
+            // Insert new field
+            vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:response.data})
+
+          }).catch(error => {
+
+            vm.DisplayError(error)
+          })
+        } else {
+
+          // Insert new field
+          vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
+
+        }
+      }
+    },
+    CastToInteger: function(value) {
+
+      // Convert value from String to Integer
+      return parseInt(value)
     },
   },
   mounted() {

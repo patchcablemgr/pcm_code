@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use App\Models\LocationModel;
+use App\Models\TemplateModel;
 use App\Http\Controllers\PCM;
 use Illuminate\Support\Facades\Log;
 
@@ -62,6 +63,57 @@ class ImageController extends Controller
 
         // Return location record
         return $location->toArray();
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function storeTemplateImage(Request $request, $id)
+    {
+        // Prepare variables
+        $validatorInput = [
+            'id' => $id,
+            'file' => $request->file,
+            'face' => $request->face
+        ];
+        $validatorRules = [
+            'id' => [
+                'integer',
+                'exists:template,id'
+            ],
+            'file' => [
+                'mimes:jpg,png,gif',
+                'max:512'
+            ],
+            'face' => [
+                'in:front,rear'
+            ]
+        ];
+        $validatorMessages = [];
+        Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
+
+        // Retrieve record
+        $template = TemplateModel::where('id', $id)->first();
+
+        // Store image
+        $path = $request->file('file')->store('images');
+
+        // Update template image
+        $pathArray = explode('/', $path);
+        if($request->face == 'front') {
+            $template->image_front = end($pathArray);
+        } else {
+            $template->image_rear = end($pathArray);
+        }
+            
+        // Save record
+        $template->save();
+
+        // Return record
+        return $template->toArray();
     }
 
     /**

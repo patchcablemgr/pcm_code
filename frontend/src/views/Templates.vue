@@ -29,14 +29,6 @@
                 @SetTemplateFaceSelected="SetTemplateFaceSelected($event)"
 
                 @TemplatePartitionSizeUpdated="TemplatePartitionSizeUpdated($event)"
-                @TemplatePartitionPortFormatFieldSelected="TemplatePartitionPortFormatFieldSelected($event)"
-                @TemplatePartitionPortFormatValueUpdated="TemplatePartitionPortFormatValueUpdated($event)"
-                @TemplatePartitionPortFormatTypeUpdated="TemplatePartitionPortFormatTypeUpdated($event)"
-                @TemplatePartitionPortFormatCountUpdated="TemplatePartitionPortFormatCountUpdated($event)"
-                @TemplatePartitionPortFormatOrderUpdated="TemplatePartitionPortFormatOrderUpdated($event)"
-                @TemplatePartitionPortFormatFieldMove="TemplatePartitionPortFormatFieldMove($event)"
-                @TemplatePartitionPortFormatFieldCreate="TemplatePartitionPortFormatFieldCreate($event)"
-                @TemplatePartitionPortFormatFieldDelete="TemplatePartitionPortFormatFieldDelete($event)"
               />
             </b-card-body>
           </b-card>
@@ -89,8 +81,6 @@
 						:TemplateFaceSelected="TemplateFaceSelected"
 						:PartitionAddressSelected="PartitionAddressSelected"
             @TemplateObjectCloneClicked="TemplateObjectCloneClicked()"
-						@TemplateObjectDeleteClicked="TemplateObjectDeleteClicked()"
-            @TemplateEdited="TemplateEdited($event)"
             @SetPartitionAddressSelected="SetPartitionAddressSelected($event)"
 					/>
 
@@ -267,76 +257,30 @@ export default {
     PreviewDisplay: function(){
 
       const vm = this
-      const Context = 'template'
-			const PreviewData = vm.GetPreviewData()
-      const TemplateType = PreviewData.type
+      const Template = vm.GetTemplateSelected('workspace')
       let PreviewDisplay = 'cabinet'
 
-      if(TemplateType == 'insert') {
-        const PartitionAddressSelected = vm.PartitionAddressSelected[Context]
-        const TemplateID = PartitionAddressSelected.template_id
+      if(Template.type == 'insert') {
 
-        if(TemplateID) {
-          const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-          const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
-          const Blueprint = vm.Templates[Context][TemplateIndex].blueprint[TemplateFaceSelected]
-          const PartitionAddress = PartitionAddressSelected[TemplateFaceSelected]
-          const Partition = vm.GetPartition(Blueprint, PartitionAddress)
-          const PartitionType = Partition.type
-          const PreviewTemplate = vm.GetPreviewData()
-          const PreviewTemplateClone = PreviewTemplate.hasOwnProperty('clone')
+        if(Template.hasOwnProperty('clone')) {
 
-          if(PartitionType == 'enclosure') {
-            PreviewDisplay = 'cabinet'
-          } else if(PreviewTemplateClone) {
-            PreviewDisplay = 'cabinet'
+          PreviewDisplay = 'cabinet'
+        } else {
+
+          const Partition = vm.GetPartitionSelected('template')
+          if(Partition) {
+            if(Partition.type == 'enclosure') {
+              PreviewDisplay = 'cabinet'
+            } else {
+              PreviewDisplay = 'insertInstructions'
+            }
           } else {
             PreviewDisplay = 'insertInstructions'
           }
-        } else {
-          PreviewDisplay = 'insertInstructions'
         }
-      } else {
-        PreviewDisplay = 'cabinet'
       }
 
       return PreviewDisplay
-    },
-    PreviewPortID: function(){
-      
-      const vm = this
-
-      // Get Partition
-      const Partition = vm.GetSelectedPreviewPartition()
-
-      let PortID = ''
-      let PreviewPortIDArray = []
-
-      if(Partition.type == 'connectable') {
-        const PortFormat = JSON.parse(JSON.stringify(vm.SelectedPortFormat))
-        let PortTotal = Partition.port_layout.cols * Partition.port_layout.rows
-        let Truncated = false
-
-        // Limit port preview to 5
-        if(PortTotal > 5) {
-          PortTotal = 5
-          Truncated = true
-        }
-
-        // Generate port IDs
-        for(let i=0; i<PortTotal; i++){
-          PortID = vm.GeneratePortID(i, PortTotal, PortFormat)
-          PreviewPortIDArray.push(PortID)
-        }
-
-        // Append ellipses if port preview is truncated
-        if(Truncated) {
-          PreviewPortIDArray.push('...')
-        }
-      }
-
-      return PreviewPortIDArray.join(', ')
-
     },
     TemplateFaceToggleIsDisabled: function() {
 
@@ -480,379 +424,6 @@ export default {
       
       SelectedPartition.units = newValue
     },
-    TemplatePartitionPortFormatFieldSelected: function(EmitData) {
-
-      const vm = this
-      const Context = EmitData.context
-      const PortFormatIndex = EmitData.index
-      vm.SelectedPortFormatIndex[Context] = PortFormatIndex
-    },
-    TemplatePartitionPortFormatValueUpdated: function(EmitData) {
-
-      const vm = this
-      const Context = EmitData.context
-      const PortFormatIndex = vm.SelectedPortFormatIndex[Context]
-      const PortFormatValue = EmitData.value
-
-      if(Context == 'template') {
-
-        const PartitionAddressSelected = vm.PartitionAddressSelected[Context]
-        const TemplateID = PartitionAddressSelected.template_id
-        const TemplateFace = vm.TemplateFaceSelected[Context]
-        const PartitionAddress = PartitionAddressSelected[TemplateFace]
-
-        const UpdateData = {
-          "port_format": {
-            "template_id": TemplateID,
-            "template_face": TemplateFace,
-            "template_partition": PartitionAddress,
-            "port_format_index": PortFormatIndex,
-            "port_format_attr": 'value',
-            "port_format_value": PortFormatValue,
-          }
-        }
-
-        vm.TemplateEdited(UpdateData)
-
-      } else {
-
-        vm.SelectedPortFormat[PortFormatIndex].value = PortFormatValue
-      }
-
-    },
-    TemplatePartitionPortFormatTypeUpdated: function(EmitData) {
-
-      const vm = this
-      const Context = EmitData.context
-      const PortFormatIndex = vm.SelectedPortFormatIndex[Context]
-      const SelectedPortFormat = vm.SelectedPortFormat
-      const TypeNew = EmitData.value
-      let OrderNew = 0
-      let ValueNew = ''
-
-      if(Context == 'template') {
-
-        const PartitionAddressSelected = vm.PartitionAddressSelected[Context]
-        const TemplateID = PartitionAddressSelected.template_id
-        const TemplateFace = vm.TemplateFaceSelected[Context]
-        const PartitionAddress = PartitionAddressSelected[TemplateFace]
-
-        const UpdateData = {
-          "port_format": {
-            "template_id": TemplateID,
-            "template_face": TemplateFace,
-            "template_partition": PartitionAddress,
-            "port_format_index": PortFormatIndex,
-            "port_format_attr": 'type',
-            "port_format_value": TypeNew,
-          }
-        }
-
-        vm.TemplateEdited(UpdateData)
-
-      } else {
-
-        // Determine field order
-        if(TypeNew == 'series' || TypeNew == 'incremental') {
-
-          OrderNew = 1
-          let WorkingOrderArray = []
-
-          // Gather all incrementable field orders
-          SelectedPortFormat.forEach(function(PortFormatField, PortFormatFieldIndex){
-
-            const PortFormatFieldType = PortFormatField.type
-            
-            if((PortFormatFieldType == 'series' || PortFormatFieldType == 'incremental') && PortFormatFieldIndex != PortFormatIndex) {
-              const PortFormatFieldOrder = PortFormatField.order
-              WorkingOrderArray.push(PortFormatFieldOrder)
-            }
-          })
-
-          // Sort incrementable field orders
-          WorkingOrderArray.sort(function(a, b){return a - b})
-
-          // Find first available
-          WorkingOrderArray.forEach(function(WorkingOrder){
-            if(WorkingOrder == OrderNew) {
-              OrderNew = OrderNew + 1
-            }
-          })
-        }
-
-        // Determine field value
-        if(TypeNew == 'series') {
-          ValueNew = 'A,B,C'
-        } else if(TypeNew == 'incremental') {
-          ValueNew = '1'
-        } else if(TypeNew == 'static') {
-          ValueNew = 'Port'
-        }
-
-        // Apply new values
-        vm.SelectedPortFormat[PortFormatIndex].value = ValueNew
-        vm.SelectedPortFormat[PortFormatIndex].type = TypeNew
-        vm.SelectedPortFormat[PortFormatIndex].count = 0
-        vm.SelectedPortFormat[PortFormatIndex].order = OrderNew
-
-      }
-
-    },
-    TemplatePartitionPortFormatCountUpdated: function(EmitData) {
-
-      const vm = this
-      const Context = EmitData.context
-      const PortFormatIndex = vm.SelectedPortFormatIndex[Context]
-      const SelectedPortFormat = vm.SelectedPortFormat
-      const CountNew = EmitData.value
-
-      if(Context == 'template') {
-
-        const PartitionAddressSelected = vm.PartitionAddressSelected[Context]
-        const TemplateID = PartitionAddressSelected.template_id
-        const TemplateFace = vm.TemplateFaceSelected[Context]
-        const PartitionAddress = PartitionAddressSelected[TemplateFace]
-
-        const UpdateData = {
-          "port_format": {
-            "template_id": TemplateID,
-            "template_face": TemplateFace,
-            "template_partition": PartitionAddress,
-            "port_format_index": PortFormatIndex,
-            "port_format_attr": 'count',
-            "port_format_value": CountNew,
-          }
-        }
-
-        vm.TemplateEdited(UpdateData)
-
-      } else {
-
-        // Apply new value
-        SelectedPortFormat[PortFormatIndex].count = CountNew
-      }
-
-    },
-    TemplatePartitionPortFormatOrderUpdated: function(EmitData) {
-
-      const vm = this
-      const Context = EmitData.context
-      const SelectedTemplateID = vm.PartitionAddressSelected[Context].template_id
-      const SelectedTemplateFace = vm.TemplateFaceSelected[Context]
-      const SelectedTemplatePartitionAddress = vm.PartitionAddressSelected[Context][SelectedTemplateFace]
-      const SelectedTemplateIndex = vm.GetTemplateIndex(SelectedTemplateID, Context)
-      const SelectedTemplate = vm.Templates[Context][SelectedTemplateIndex]
-      const SelectedBlueprint = SelectedTemplate.blueprint[SelectedTemplateFace]
-      const SelectedPartition = vm.GetPartition(SelectedBlueprint, SelectedTemplatePartitionAddress)
-      const SelectedPortFormat = SelectedPartition.port_format
-      const PortFormatIndex = vm.SelectedPortFormatIndex[Context]
-      const PortFormatValue = EmitData.value
-      const PortFormatValueOrig = SelectedPortFormat[PortFormatIndex].order
-
-      if(Context == 'template') {
-
-        const PartitionAddressSelected = vm.PartitionAddressSelected[Context]
-        const TemplateID = PartitionAddressSelected.template_id
-        const TemplateFace = vm.TemplateFaceSelected[Context]
-        const PartitionAddress = PartitionAddressSelected[TemplateFace]
-
-        const UpdateData = {
-          "port_format": {
-            "template_id": TemplateID,
-            "template_face": TemplateFace,
-            "template_partition": PartitionAddress,
-            "port_format_index": PortFormatIndex,
-            "port_format_attr": 'order',
-            "port_format_value": PortFormatValue,
-          }
-        }
-
-        vm.TemplateEdited(UpdateData)
-
-      } else {
-
-        SelectedPortFormat.forEach(function(PortFormatField, index){
-
-          if(index != PortFormatIndex) {
-
-            // Is field incrementable?
-            const PortFormatFieldType = PortFormatField.type
-            if(PortFormatFieldType == 'incremental' || PortFormatFieldType == 'series') {
-              
-              // Adjust field order
-              const PortFormatFieldOrder = PortFormatField.order
-              if(PortFormatFieldOrder > PortFormatValue && PortFormatFieldOrder < PortFormatValueOrig) {
-
-                // Increment
-                vm.SelectedPortFormat[index].order = PortFormatFieldOrder + 1
-              } else if(PortFormatFieldOrder < PortFormatValue && PortFormatFieldOrder > PortFormatValueOrig) {
-
-                // Decrement
-                vm.SelectedPortFormat[index].order = PortFormatFieldOrder - 1
-              } else if(PortFormatFieldOrder == PortFormatValue) {
-                if(PortFormatValue > PortFormatValueOrig) {
-
-                  // Decrement
-                  vm.SelectedPortFormat[index].order = PortFormatFieldOrder - 1
-                } else if(PortFormatValue < PortFormatValueOrig) {
-
-                  // Increment
-                  vm.SelectedPortFormat[index].order = PortFormatFieldOrder + 1
-                }
-              }
-            }
-          }
-        })
-
-        // Update field order
-        SelectedPortFormat[PortFormatIndex].order = PortFormatValue
-      }
-
-    },
-    TemplatePartitionPortFormatFieldMove: function(EmitData) {
-
-      const vm = this
-      const Context = EmitData.context
-      const PortFormatIndex = vm.SelectedPortFormatIndex[Context]
-      const SelectedPortFormat = vm.SelectedPortFormat
-      const MoveDirection = EmitData.direction
-      
-      // Determine new position
-      let PortFormatIndexTo
-      if(MoveDirection == 'left') {
-        PortFormatIndexTo = (PortFormatIndex == 0) ? 0 : PortFormatIndex - 1
-      } else {
-        PortFormatIndexTo = (PortFormatIndex == (SelectedPortFormat.length - 1)) ? PortFormatIndex : PortFormatIndex + 1
-      }
-      
-      if(Context == 'template') {
-
-        const PartitionAddressSelected = vm.PartitionAddressSelected[Context]
-        const TemplateID = PartitionAddressSelected.template_id
-        const TemplateFace = vm.TemplateFaceSelected[Context]
-        const PartitionAddress = PartitionAddressSelected[TemplateFace]
-
-        const UpdateData = {
-          "port_format": {
-            "template_id": TemplateID,
-            "template_face": TemplateFace,
-            "template_partition": PartitionAddress,
-            "port_format_index": PortFormatIndex,
-            "port_format_attr": 'position',
-            "port_format_value": PortFormatIndexTo,
-          }
-        }
-
-        vm.TemplateEdited(UpdateData)
-      } else {
-
-        // Move field to new position
-        SelectedPortFormat.splice(PortFormatIndexTo, 0, SelectedPortFormat.splice(PortFormatIndex, 1)[0])
-      }
-
-      // Adjust port format index
-      vm.SelectedPortFormatIndex[Context] = (MoveDirection == 'left') ? PortFormatIndex - 1 : PortFormatIndex + 1
-
-    },
-    TemplatePartitionPortFormatFieldCreate: function(EmitData) {
-      
-      const vm = this
-      const Context = EmitData.context
-      const PortFormatIndex = vm.SelectedPortFormatIndex[Context]
-      const SelectedPortFormat = vm.SelectedPortFormat
-      const Position = EmitData.position
-      const InsertPosition = (Position == 'before') ? PortFormatIndex : PortFormatIndex + 1
-      const DefaultPortFormatField = {'type': 'static', 'value': 'Port', 'count': 0, 'order': 0}
-
-      // Limit number of fields to 5
-      if(SelectedPortFormat.length < 5) {
-
-        if(Context == 'template') {
-
-          const PartitionAddressSelected = vm.PartitionAddressSelected[Context]
-          const TemplateID = PartitionAddressSelected.template_id
-          const TemplateFace = vm.TemplateFaceSelected[Context]
-          const PartitionAddress = PartitionAddressSelected[TemplateFace]
-
-          const UpdateData = {
-            "port_format": {
-              "template_id": TemplateID,
-              "template_face": TemplateFace,
-              "template_partition": PartitionAddress,
-              "port_format_index": PortFormatIndex,
-              "port_format_attr": 'create',
-              "port_format_value": InsertPosition,
-            }
-          }
-
-          vm.TemplateEdited(UpdateData)
-        } else {
-
-          // Insert new field
-          SelectedPortFormat.splice(InsertPosition, 0, DefaultPortFormatField)
-        }
-
-        // Adjust port format index
-        vm.SelectedPortFormatIndex[Context] = (Position == 'before') ? PortFormatIndex + 1 : PortFormatIndex
-      }
-    },
-    TemplatePartitionPortFormatFieldDelete: function(EmitData) {
-      
-      const vm = this
-      const Context = EmitData.context
-      const PortFormatIndex = vm.SelectedPortFormatIndex[Context]
-      const SelectedPortFormatLength = vm.SelectedPortFormat.length
-      
-      if(Context == 'template') {
-
-        const PartitionAddressSelected = vm.PartitionAddressSelected[Context]
-        const TemplateID = PartitionAddressSelected.template_id
-        const TemplateFace = vm.TemplateFaceSelected[Context]
-        const PartitionAddress = PartitionAddressSelected[TemplateFace]
-
-        const UpdateData = {
-          "port_format": {
-            "template_id": TemplateID,
-            "template_face": TemplateFace,
-            "template_partition": PartitionAddress,
-            "port_format_index": PortFormatIndex,
-            "port_format_attr": 'delete',
-            "port_format_value": PortFormatIndex,
-          }
-        }
-
-        vm.TemplateEdited(UpdateData)
-      } else {
-
-        const SelectedPortFormat = vm.SelectedPortFormat
-        const FieldType = SelectedPortFormat[PortFormatIndex].type
-        const FieldOrder = SelectedPortFormat[PortFormatIndex].order
-
-        // Adjust incremental order
-        if(FieldType == 'series' || FieldType == 'incremental') {
-          SelectedPortFormat.forEach(function(PortFormatField){
-            const PortFormatFieldType = PortFormatField.type
-            if(PortFormatFieldType == 'series' || PortFormatFieldType == 'incremental') {
-              const PortFormatFieldOrder = PortFormatField.order
-              if(PortFormatFieldOrder > FieldOrder) {
-                PortFormatField.order = PortFormatFieldOrder - 1
-              }
-            }
-          })
-        }
-
-        // Delete selected field
-        if(SelectedPortFormat.length > 1) {
-          SelectedPortFormat.splice(PortFormatIndex, 1)
-        }
-      }
-
-      // Adjust port format index
-      if(PortFormatIndex >= (SelectedPortFormatLength - 1)) {
-        vm.SelectedPortFormatIndex[Context] = PortFormatIndex - 1
-      }
-
-    },
     TemplateObjectCloneClicked: function() {
 
       const vm = this
@@ -927,73 +498,6 @@ export default {
         vm.Objects.workspace[PreviewTemplateIndex].parent_id = PseudoObjectID
       }
     },
-    TemplateObjectDeleteClicked: function() {
-      
-			const vm = this
-			const TemplateID = vm.PartitionAddressSelected.template.template_id
-			const Context = 'template'
-			const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-			const TemplateName = vm.Templates[Context][TemplateIndex].name
-			
-      vm.$bvModal
-        .msgBoxConfirm('Delete '+TemplateName+'?', {
-          title: 'Confirm',
-          size: 'sm',
-          okVariant: 'primary',
-          okTitle: 'Yes',
-          cancelTitle: 'No',
-          cancelVariant: 'outline-secondary',
-          hideHeaderClose: false,
-          centered: true,
-        })
-        .then(value => {
-					
-					if(value) {
-						
-						// Store data
-						const url = '/api/templates/'+TemplateID
-
-						// DELETE template ID
-						this.$http.delete(url).then(function(response){
-
-							// Default selected template
-							vm.PartitionAddressSelected[Context].template_id = null
-
-              // Get template object data
-              let TemplateObjectIndex = vm.Objects[Context].findIndex((object) => object.template_id == TemplateID)
-              let TemplateObject = vm.Objects[Context][TemplateObjectIndex]
-              let TemplateObjectParentID = TemplateObject.parent_id
-
-              // Delete template and object
-              vm.Objects[Context].splice(TemplateObjectIndex,1)
-              vm.Templates[Context].splice(TemplateIndex,1)
-
-              // Delete parent template(s) and object(s) if necessary
-              while (TemplateObjectParentID != null) {
-
-                TemplateObjectIndex = vm.Objects[Context].findIndex((object) => object.id == TemplateObjectParentID)
-                TemplateObject = vm.Objects[Context][TemplateObjectIndex]
-                TemplateObjectParentID = TemplateObject.parent_id
-
-                let TemplateObjectTemplateID = TemplateObject.template_id
-                let TemplateObjectTemplateIndex = vm.GetTemplateIndex(TemplateObjectTemplateID, Context)
-
-                vm.Objects[Context].splice(TemplateObjectIndex,1)
-                vm.Templates[Context].splice(TemplateObjectTemplateIndex,1)
-              }
-
-						}).catch(error => {
-
-							// Display error to user via toast
-							vm.$bvToast.toast(JSON.stringify(error.response.data), {
-								title: 'Error',
-								variant: 'danger',
-							})
-
-						});
-					}
-        })
-		},
     GetGlobalPartitionMax: function(Template, PartitionAddress) {
 
       const vm = this
@@ -1153,12 +657,11 @@ export default {
       // Create actual/template templates
       vm.$http.get('/api/templates').then(response => {
 
+        vm.$store.commit('pcmTemplates/SET_Templates', {pcmContext: 'template', data: response.data})
         response.data.forEach(function(template) {
           vm.GeneratePseudoData('template', template)
         })
         vm.$store.commit('pcmObjects/SET_Ready', {pcmContext:'template', ReadyState:true})
-
-        vm.$store.commit('pcmTemplates/SET_Templates', {pcmContext: 'template', data: response.data})
         vm.$store.commit('pcmTemplates/SET_Ready', {pcmContext:'template', ReadyState:true})
       }).catch(error => {
         vm.DisplayError(error)
@@ -1202,30 +705,6 @@ export default {
       vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:StandardTemplateUpdated})
       vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:InsertTemplateUpdated})
 
-    },
-    mediumGET: function() {
-
-      const vm = this;
-
-      vm.$http.get('/api/medium').then(function(response){
-        vm.MediaData = response.data;
-      });
-    },
-    GETPortConnectors: function() {
-
-      const vm = this;
-
-      vm.$http.get('/api/port-connectors').then(function(response){
-        vm.PortConnectorData = response.data;
-      });
-    },
-    portOrientationGET: function() {
-
-      const vm = this;
-
-      vm.$http.get('/api/port-orientation').then(function(response){
-        vm.PortOrientationData = response.data;
-      });
     },
     GETLocations() {
 

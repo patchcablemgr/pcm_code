@@ -263,7 +263,7 @@
           </b-button>
         </dd>
         <dd class="col-sm-8 my-auto">
-          PreviewPortID
+          {{PortPreview}}
         </dd>
       </dl>
 
@@ -447,15 +447,6 @@
       :TemplateFaceSelected="TemplateFaceSelected"
       :PartitionAddressSelected="PartitionAddressSelected"
       :SelectedPortFormatIndex="SelectedPortFormatIndex"
-      PreviewPortID="PreviewPortID"
-      v-on:TemplatePartitionPortFormatFieldSelected="$emit('TemplatePartitionPortFormatFieldSelected', $event)"
-      v-on:TemplatePartitionPortFormatValueUpdated="$emit('TemplatePartitionPortFormatValueUpdated', $event)"
-      v-on:TemplatePartitionPortFormatTypeUpdated="$emit('TemplatePartitionPortFormatTypeUpdated', $event)"
-      v-on:TemplatePartitionPortFormatCountUpdated="$emit('TemplatePartitionPortFormatCountUpdated', $event)"
-      v-on:TemplatePartitionPortFormatOrderUpdated="$emit('TemplatePartitionPortFormatOrderUpdated', $event)"
-      v-on:TemplatePartitionPortFormatFieldMove="$emit('TemplatePartitionPortFormatFieldMove', $event)"
-      v-on:TemplatePartitionPortFormatFieldCreate="$emit('TemplatePartitionPortFormatFieldCreate', $event)"
-      v-on:TemplatePartitionPortFormatFieldDelete="$emit('TemplatePartitionPortFormatFieldDelete', $event)"
     />
 
   </b-row>
@@ -466,7 +457,7 @@ import { BContainer, BRow, BCol, BForm, BFormGroup, BFormInput, BFormSelect, BFo
 import Ripple from 'vue-ripple-directive'
 import ModalTemplatesCategory from './ModalTemplatesCategory.vue'
 import ModalEditTemplatePortId from './ModalEditTemplatePortId.vue'
-import { PCM } from '../../mixins/PCM.js'
+import { PCM } from '@/mixins/PCM.js'
 
 export default {
   mixins: [PCM],
@@ -948,9 +939,17 @@ export default {
       const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
 
       // Get Partition
-      const Partition = vm.GetPartitionSelected()
+      const Partition = vm.GetPartitionSelected(Context)
+      console.log('AddChildPartitionDisabled (Partition): '+JSON.stringify(Partition))
+      console.log('PartitionUnitsAvailable: '+vm.GetPartitionUnitsAvailable(PartitionAddress))
 
       return (!vm.GetPartitionUnitsAvailable(PartitionAddress) || Partition.type != 'generic')
+    },
+    PortPreview: function() {
+
+      const vm = this
+      const Context = vm.Context
+      return vm.GeneratePortPreview(Context)
     },
   },
   methods: {
@@ -1049,7 +1048,9 @@ export default {
       let UnitsAvailable = 0
       const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
 
-      if(TemplateIndex) {
+      console.log('GetPartitionUnitsAvailable (TemplateIndex): '+TemplateIndex)
+
+      if(TemplateIndex !== -1) {
         const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
 
         // Get Partition

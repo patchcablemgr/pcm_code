@@ -82,4 +82,32 @@ class PCM extends Controller
 		// Return entire blueprint with patched partition
 		return $workingBlueprint;
     }
+
+	/**
+     * Return patched blueprint
+     *
+     * @param  obj  $blueprint
+	 * @param  str  $face
+	 * @param  arr  $partitionAddress
+	 * @param  obj  $partitionPatched
+     * @return \Illuminate\View\View
+     */
+    public function patchBlueprint(&$templateBlueprint, $inputBlueprint)
+    {
+        foreach($templateBlueprint as $index => &$templateBlueprintPartition) {
+
+			$templateType = $templateBlueprintPartition['type'];
+
+			if($templateType == 'generic') {
+
+				$this->patchBlueprint($templateBlueprintPartition['children'], $inputBlueprint[$index]['children']);
+
+			} else if($templateType == 'connectable') {
+
+				$templateBlueprintPartition['port_format'] = $inputBlueprint[$index]['port_format'];
+			}
+		}
+
+		return true;
+    }
 }

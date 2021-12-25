@@ -1,5 +1,3 @@
-import axios from '@axios'
-
 const TemplatesReady = {
   'workspace': false,
   'actual': false,
@@ -10,10 +8,14 @@ const Templates = {
   'actual': [],
   'template': []
 }
+const DefaultStaticValue = 'Port'
+const DefaultIncrementalValue = '1'
+const DefaultSeriesValue = 'A,B,C'
+const DefaultCount = 1
 const DefaultPortFormat = [
-  {'type': 'static', 'value': 'Port', 'count': 0, 'order': 0},
-  {'type': 'incremental', 'value': '1', 'count': 0, 'order': 2},
-  {'type': 'series', 'value': 'A,B,C', 'count': 0, 'order': 1},
+  {'type': 'static', 'value': DefaultStaticValue, 'count': DefaultCount, 'order': 0},
+  {'type': 'incremental', 'value': DefaultIncrementalValue, 'count': 48, 'order': 2},
+  {'type': 'series', 'value': DefaultSeriesValue, 'count': DefaultCount, 'order': 1},
 ]
 const DefaultPortLayout = {
   'cols': 1,
@@ -29,6 +31,10 @@ export default {
   state: {
     TemplatesReady,
     Templates,
+    DefaultStaticValue,
+    DefaultIncrementalValue,
+    DefaultSeriesValue,
+    DefaultCount,
     DefaultPortFormat,
     DefaultPortLayout,
     DefaultEncLayout,

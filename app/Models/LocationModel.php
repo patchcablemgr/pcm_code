@@ -10,7 +10,7 @@ class LocationModel extends Model
     protected $table = 'location';
 
     /**
-    * Get the user's first name.
+    * Mutate floorplan image
     *
     * @param  string  $value
     * @return string

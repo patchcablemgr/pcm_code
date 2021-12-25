@@ -194,7 +194,7 @@ export default {
 
       const vm = this
       const Context = vm.Context
-      const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
+      const Face = vm.TemplateFaceSelected[Context]
       const FilteredCategoryTemplates = vm.Templates[Context].filter(function(template) {
 
         let match = false
@@ -202,7 +202,7 @@ export default {
 				// Include 'standard' templates only.  'Insert' templates will be rendered by pseudo parent objects
 				if(template.type == 'standard') {
 
-          if(TemplateFaceSelected == 'front' || template.mount_config == '4-post') {
+          if(Face == 'front' || template.mount_config == '4-post') {
 
             // Include if category ID matches
             if(template.category_id == CategoryID) {
@@ -227,6 +227,7 @@ export default {
 
         return match
       })
+      
       return FilteredCategoryTemplates
     },
   }

@@ -205,7 +205,6 @@ export default {
       const vm = this
       const CategoryID = vm.SelectedCategoryID
       const Category = vm.LocalCategoryData
-      console.log('Category: '+JSON.stringify(Category))
       Category.color = (Category.color.hasOwnProperty('hex8')) ? Category.color.hex8 : Category.color
       
       if(CategoryID) {
@@ -229,7 +228,7 @@ export default {
       vm.SelectedCategoryID = null
 
       vm.$http.delete('/api/categories/'+CategoryID).then(response => {
-        vm.$store.commit('pcmCategories/DELETE_Categories', response.data)
+        vm.$store.commit('pcmCategories/DELETE_Category', response.data)
       }).catch(error => {
         vm.DisplayError(error)
       })

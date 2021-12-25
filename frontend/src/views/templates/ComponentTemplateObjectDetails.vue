@@ -166,9 +166,35 @@
           Image:
         </td>
         <td>
+          <b-button
+            v-if="Context == 'template'"
+            v-ripple.400="'rgba(40, 199, 111, 0.15)'"
+            variant="flat-success"
+            class="btn-icon"
+            v-b-modal.modal-file-upload
+            :disabled="!ComputedObjectSelected"
+          >
+            <feather-icon icon="EditIcon" />
+          </b-button>
         </td>
-        <td>
-          {{ComputedCategoryName}}
+        <td
+          v-if="ComputedObjectSelected"
+        >
+          <img
+            v-if="TemplateImage"
+            :src="TemplateImage"
+            :style="{ width: '100%' }"
+          />
+          <div
+            v-else
+          >
+            N/A
+          </div>
+        </td>
+        <td
+          v-else
+        >
+          -
         </td>
       </tr>
     </table>
@@ -293,7 +319,6 @@
       :Context="Context"
       ModalTitle="Category"
       :PartitionAddressSelected="PartitionAddressSelected"
-      @TemplateCategoryEdited=" $emit('TemplateEdited', $event) "
     />
 
     <!-- Modal Edit Template Port ID -->
@@ -303,14 +328,14 @@
       :TemplateFaceSelected="TemplateFaceSelected"
       :PartitionAddressSelected="PartitionAddressSelected"
       PreviewPortID="temp"
-      v-on:TemplatePartitionPortFormatFieldSelected="$emit('TemplatePartitionPortFormatFieldSelected', $event)"
-      v-on:TemplatePartitionPortFormatValueUpdated="$emit('TemplatePartitionPortFormatValueUpdated', $event)"
-      v-on:TemplatePartitionPortFormatTypeUpdated="$emit('TemplatePartitionPortFormatTypeUpdated', $event)"
-      v-on:TemplatePartitionPortFormatCountUpdated="$emit('TemplatePartitionPortFormatCountUpdated', $event)"
-      v-on:TemplatePartitionPortFormatOrderUpdated="$emit('TemplatePartitionPortFormatOrderUpdated', $event)"
-      @TemplatePartitionPortFormatFieldMove="$emit('TemplatePartitionPortFormatFieldMove', $event)"
-      v-on:TemplatePartitionPortFormatFieldCreate="$emit('TemplatePartitionPortFormatFieldCreate', $event)"
-      v-on:TemplatePartitionPortFormatFieldDelete="$emit('TemplatePartitionPortFormatFieldDelete', $event)"
+    />
+
+    <!-- File Upload Modal -->
+    <modal-file-upload
+      Title="Template Image"
+      :Context="Context"
+      :TemplateFaceSelected="TemplateFaceSelected"
+      :PartitionAddressSelected="PartitionAddressSelected"
     />
 
   </div>
@@ -330,6 +355,7 @@ import ModalEditObjectName from './ModalEditObjectName.vue'
 import ModalEditTemplateName from './ModalEditTemplateName.vue'
 import ModalEditTemplateCategory from './ModalEditTemplateCategory.vue'
 import ModalEditTemplatePortId from './ModalEditTemplatePortId.vue'
+import ModalFileUpload from './ModalFileUpload.vue'
 import Ripple from 'vue-ripple-directive'
 import { PCM } from '@/mixins/PCM.js'
 
@@ -348,6 +374,7 @@ export default {
     ModalEditTemplateName,
     ModalEditTemplateCategory,
     ModalEditTemplatePortId,
+    ModalFileUpload,
   },
 	directives: {
 		Ripple,
@@ -461,7 +488,8 @@ export default {
         const Context = vm.Context
         const Template = vm.GetTemplateSelected(Context)
 
-        return (Template) ? Template.type : '-'
+        const TemplateType = (Template) ? Template.type : '-'
+        return TemplateType.charAt(0).toUpperCase() + TemplateType.slice(1)
       },
     },
     TemplateFunction: {
@@ -494,6 +522,20 @@ export default {
 
         return (Template) ? Template.mount_config : '-'
       },
+    },
+    TemplateImage: {
+      get() {
+
+        const vm = this
+        const Context = vm.Context
+        const Face = vm.TemplateFaceSelected[Context]
+        const Template = vm.GetTemplateSelected(Context)
+
+        return (Face == 'front') ? Template.image_front : Template.image_rear
+      },
+      set() {
+        return true
+      }
     },
     ComputedPartitionType: {
       get() {
@@ -678,6 +720,7 @@ export default {
 
       const vm = this
       const Context = vm.Context
+      const ObjectID = vm.PartitionAddressSelected[Context].object_id
       const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
       const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
       const TemplateID = Template.id
@@ -692,7 +735,19 @@ export default {
           rear: [0]
         }
         vm.$emit('SetPartitionAddressSelected', PartitionAddressSelected)
-        vm.$store.commit('pcmTemplates/REMOVE_Template', {pcmContext:'template', data:response.data})
+        vm.$store.commit('pcmTemplates/REMOVE_Template', {pcmContext:Context, data:response.data})
+
+        if(Template.type == 'insert') {
+          const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
+          const Object = vm.Objects[Context][ObjectIndex]
+          const ParentID = Object.parent_id
+          const ParentIndex = vm.GetObjectIndex(ParentID, Context)
+          const Parent = vm.Objects[Context][ParentIndex]
+          const ParentTemplateID = Parent.template_id
+          const ParentTemplateIndex = vm.GetTemplateIndex(ParentTemplateID, Context)
+          const ParentTemplate = vm.Templates[Context][ParentTemplateIndex]
+          vm.$store.commit('pcmTemplates/REMOVE_Template', {pcmContext:Context, data:ParentTemplate})
+        }
       }).catch(error => {
         vm.DisplayError(error)
       })

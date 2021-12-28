@@ -446,7 +446,6 @@
       Context="workspace"
       :TemplateFaceSelected="TemplateFaceSelected"
       :PartitionAddressSelected="PartitionAddressSelected"
-      :SelectedPortFormatIndex="SelectedPortFormatIndex"
     />
 
   </b-row>
@@ -484,15 +483,7 @@ export default {
     Context: {type: String},
     TemplateFaceSelected: {type: Object},
     PartitionAddressSelected: {type: Object},
-    SelectedPortFormatIndex: {type: Object},
-    SelectedCategoryID: {type: Number},
-    PortConnectorData: {type: Array},
-    PortOrientationData: {type: Array},
-    MediaData: {type: Array},
-    AddSiblingPartitionDisabled: {type: Boolean},
-    RemovePartitionDisabled: {type: Boolean},
     PartitionTypeDisabled: {type: Boolean},
-    SelectedPortFormat: {type: Array},
   },
   data() {
     return {
@@ -564,7 +555,7 @@ export default {
         const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
 
         Template.name = newValue
-        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
+        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template, src:'TemplateName'})
       }
     },
     TemplateCategory: {
@@ -584,7 +575,7 @@ export default {
         const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
 
         Template.category_id = newValue
-        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
+        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template, src:'TemplateCategory'})
       }
     },
     TemplateType: {
@@ -633,7 +624,7 @@ export default {
         const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
 
         Template.ru_size = newValue
-        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
+        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template, src:'TemplateRUSize'})
       }
     },
     TemplateFunction: {
@@ -653,7 +644,7 @@ export default {
         const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
 
         Template.function = newValue
-        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
+        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template, src:'TemplateFunction'})
       }
     },
     TemplateMountConfig: {
@@ -673,7 +664,7 @@ export default {
         const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
 
         Template.mount_config = newValue
-        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
+        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template, src:'TemplateMountConfig'})
 
         // Set TemplateFaceSelected
         if(newValue == '2-post') {
@@ -706,8 +697,12 @@ export default {
         Partition.type = newValue
 
         if(newValue == 'connectable') {
-          Partition.port_format = vm.$store.state.pcmTemplates.DefaultPortFormat
-          Partition.port_layout = vm.$store.state.pcmTemplates.DefaultPortLayout
+
+          // Default port data unless template cloned
+          if(!Template.hasOwnProperty('clone')) {
+            Partition.port_format = vm.$store.state.pcmTemplates.DefaultPortFormat
+            Partition.port_layout = vm.$store.state.pcmTemplates.DefaultPortLayout
+          }
 
           // Port media type
           const defaultMediaIndex = vm.$store.state.pcmProps.Medium.findIndex((media) => media.default)
@@ -728,7 +723,7 @@ export default {
           Partition.enc_layout = vm.$store.state.pcmTemplates.DefaultEncLayout
         }
 
-        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
+        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template, src:'PartitionType'})
 
       }
     },
@@ -753,7 +748,7 @@ export default {
         const Partition = vm.GetPartition(Blueprint, PartitionAddress)
         Partition.units = newValue
 
-        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
+        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template, src:'PartitionSize'})
       }
     },
     PortLayoutCols: {
@@ -777,7 +772,7 @@ export default {
         const Partition = vm.GetPartition(Blueprint, PartitionAddress)
         Partition.port_layout.cols = newValue
 
-        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
+        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template, src:'PortLayoutCols'})
 
       }
     },
@@ -802,7 +797,7 @@ export default {
         const Partition = vm.GetPartition(Blueprint, PartitionAddress)
         Partition.port_layout.rows = newValue
 
-        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
+        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template, src:'PortLayoutRows'})
 
       }
     },
@@ -821,13 +816,12 @@ export default {
         const Context = vm.Context
         const Face = vm.TemplateFaceSelected[Context]
         const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
-        const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
-        const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
+        const Template = vm.GetTemplateSelected(Context)
         const Blueprint = Template.blueprint[Face]
         const Partition = vm.GetPartition(Blueprint, PartitionAddress)
         Partition.media = newValue
 
-        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
+        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template, src:'PortMedia'})
 
       }
     },
@@ -852,7 +846,7 @@ export default {
         const Partition = vm.GetPartition(Blueprint, PartitionAddress)
         Partition.port_connector = newValue
 
-        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
+        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template, src:'PortConnector'})
 
       }
     },
@@ -877,7 +871,7 @@ export default {
         const Partition = vm.GetPartition(Blueprint, PartitionAddress)
         Partition.port_orientation = newValue
 
-        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
+        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template, src:'PortOrientation'})
 
       }
     },
@@ -902,7 +896,7 @@ export default {
         const Partition = vm.GetPartition(Blueprint, PartitionAddress)
         Partition.enc_layout.cols = newValue
 
-        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
+        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template, src:'EncLayoutCols'})
 
       }
     },
@@ -927,7 +921,7 @@ export default {
         const Partition = vm.GetPartition(Blueprint, PartitionAddress)
         Partition.enc_layout.rows = newValue
 
-        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
+        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template, src:'EncLayoutRows'})
 
       }
     },
@@ -940,10 +934,38 @@ export default {
 
       // Get Partition
       const Partition = vm.GetPartitionSelected(Context)
-      console.log('AddChildPartitionDisabled (Partition): '+JSON.stringify(Partition))
-      console.log('PartitionUnitsAvailable: '+vm.GetPartitionUnitsAvailable(PartitionAddress))
 
       return (!vm.GetPartitionUnitsAvailable(PartitionAddress) || Partition.type != 'generic')
+    },
+    AddSiblingPartitionDisabled: function() {
+      // Store variables
+      const vm = this
+      const Context = vm.Context
+      const Face = vm.TemplateFaceSelected[Context]
+      const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+      const PartitionParentAddress = PartitionAddress.slice(0, PartitionAddress.length - 1)
+
+      return !vm.GetPartitionUnitsAvailable(PartitionParentAddress)
+
+    },
+    RemovePartitionDisabled: function() {
+      
+      // Store variables
+      const vm = this
+      const Context = vm.Context
+      const Face = vm.TemplateFaceSelected[Context]
+      const PartitionAddressSelected = vm.PartitionAddressSelected.workspace[Face]
+      const Template = vm.GetTemplateSelected(Context)
+      const Layer1Partitions = Template.blueprint[Face]
+      let RemovePartitionDisabled = false
+
+      if(PartitionAddressSelected.length == 1) {
+        if(Layer1Partitions.length == 1) {
+          RemovePartitionDisabled = true
+        }
+      }
+
+      return RemovePartitionDisabled
     },
     PortPreview: function() {
 
@@ -1048,8 +1070,6 @@ export default {
       let UnitsAvailable = 0
       const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
 
-      console.log('GetPartitionUnitsAvailable (TemplateIndex): '+TemplateIndex)
-
       if(TemplateIndex !== -1) {
         const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
 
@@ -1150,6 +1170,7 @@ export default {
       const ObjectID = vm.PartitionAddressSelected[Context].object_id
       const TemplateID = vm.GetTemplateID(ObjectID, Context)
       const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+      console.log('TemplateIndex: '+TemplateIndex)
       const PreviewData = vm.Templates[Context][TemplateIndex]
       const TemplateFaceArray = ['front','rear']
       let RUSizeMin = 1

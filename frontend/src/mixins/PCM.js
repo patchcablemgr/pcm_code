@@ -35,6 +35,23 @@ export const PCM = {
         
             return ObjectSize
         },
+        GetSelectedObjectIndex: function(Context){
+
+            const vm = this
+            const ObjectID = vm.PartitionAddressSelected[Context].object_id
+            const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
+
+            return ObjectIndex
+        },
+        GetObjectSelected: function(Context) {
+
+            // Store variables
+            const vm = this
+            const ObjectIndex = vm.GetSelectedObjectIndex(Context)
+            const Object = (ObjectIndex !== -1) ? vm.Objects[Context][ObjectIndex] : false
+    
+            return Object
+        },
 
 // Template
         GetTemplateID: function(ObjectID, Context=false) {

@@ -20,7 +20,7 @@
 
             <b-dropdown-item
               v-if="Context == 'template'"
-              @click=" $emit('TemplateObjectCloneClicked') "
+              @click="CloneTemplate()"
               :disabled="!TemplateSelected"
             >Clone
             </b-dropdown-item>
@@ -686,35 +686,12 @@ export default {
       
       return MediaIndex
     },
-    GetObjectIndex: function(ObjectID) {
-
-      const vm = this
-      const Context = vm.Context
-      const ObjectIndex = vm.Objects[Context].findIndex((object) => object.id == ObjectID);
-      
-      return ObjectIndex
-    },
     GetCategoryIndex: function(CategoryID) {
 
       const vm = this
       const CategoryIndex = vm.Categories.findIndex((category) => category.id == CategoryID)
 
       return parseInt(CategoryIndex)
-    },
-    GetPartition: function(Blueprint, PartitionAddress) {
-
-      // Store variables
-      let WorkingPartitionChildren = Blueprint
-      let SelectedPartition = WorkingPartitionChildren
-
-      // Traverse blueprint until selected partition is reached
-      PartitionAddress.forEach(function(AddressIndex, Index) {
-        SelectedPartition = WorkingPartitionChildren[AddressIndex]
-        WorkingPartitionChildren = SelectedPartition.children
-      })
-
-      // Return selected partition
-      return SelectedPartition
     },
     DeleteTemplate: function() {
 
@@ -751,7 +728,125 @@ export default {
       }).catch(error => {
         vm.DisplayError(error)
       })
-    }
+    },
+    CloneTemplate: function() {
+
+      const vm = this
+      const TemplateContext = 'template'
+      const PreviewContext = 'workspace'
+      const StandardTemplateID = this.$store.state.pcmProps.WorkspaceStandardID
+      const InsertTemplateID = this.$store.state.pcmProps.WorkspaceInsertID
+      let PartitionSelectedData = {
+        Context: PreviewContext,
+        object_id: StandardTemplateID,
+        front: [0],
+        rear: [0]
+      }
+      let FaceSelectedData = {
+        Context: PreviewContext,
+        Face: 'front'
+      }
+
+      // Get cloned template
+      const Template = vm.GetTemplateSelected(TemplateContext)
+
+      // Set active preview template
+      const PreviewTemplateID = (Template.type == 'standard') ? StandardTemplateID : InsertTemplateID
+
+      // Create a copy of cloned template
+      const TemplateClone = JSON.parse(JSON.stringify(Template), function(TemplateKey, TemplateValue){
+        if (TemplateKey == 'id') {
+          return PreviewTemplateID
+        } else {
+          return TemplateValue
+        }
+      })
+      TemplateClone.clone = true
+
+      // Copy cloned template to active preview template
+      vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:PreviewContext, data:TemplateClone})
+
+      if(Template.type == 'insert') {
+
+        // Remove preview pseudo objects/templates
+        vm.RemovePreviewPseudoData()
+
+        // Create pseudo template clone parent
+        const PseudoTemplateID = "pseudo-" + (vm.Templates[PreviewContext].length)
+        const InsertConstraints = Template.insert_constraints
+        const GenericTemplate = vm.$store.state.pcmProps.GenericTemplate
+        const TemplateCloneParent = JSON.parse(JSON.stringify(GenericTemplate), function (Key, Value) {
+          if (Key == 'id') {
+            return PseudoTemplateID
+          } else if (Key == 'name') {
+            return Template.name
+          } else if (Key == 'category_id') {
+            return Template.category_id
+          } else if (Key == 'type') {
+            // Set pseudo template type, but avoid setting partition type
+            if (Value === null) {
+              return 'standard'
+            } else {
+              return Value
+            }
+          } else if (Key == 'ru_size') {
+            // Set pseudo template RU size if this is the insert constraint origin ('standard' template type)
+            return Math.ceil(InsertConstraints.part_layout.height / 2)
+          } else if (Key == 'blueprint') {
+
+            Value.front[0].units = InsertConstraints.part_layout.width
+
+            // Generate enclosure partition
+            let EnclosurePartition = {
+              'type': 'enclosure',
+              'units': InsertConstraints.part_layout.height,
+              'enc_layout': {
+                'cols': InsertConstraints.enc_layout.cols,
+                'rows': InsertConstraints.enc_layout.rows
+              },
+              'children': []
+            }
+
+            // Set pseudo template partition attributes
+            Value.front[0].units = InsertConstraints.part_layout.width
+            Value.front[0].children.push(EnclosurePartition)
+            
+            return Value
+
+          } else {
+              return Value
+          }
+        })
+        vm.$store.commit('pcmTemplates/ADD_Template', {pcmContext:PreviewContext, data:TemplateCloneParent})
+
+        // Generate pseudo object and constraining templates/objects if necessary
+        const PseudoObjectID = vm.GeneratePseudoData(PreviewContext, TemplateCloneParent)
+
+        // Update insert parent data
+        const InsertObjectIndex = vm.GetObjectIndex(InsertTemplateID, PreviewContext)
+        const InsertObject = vm.Objects[PreviewContext][InsertObjectIndex]
+        const WorkspaceObject = JSON.parse(JSON.stringify(InsertObject), function (Key, Value) {
+          if (Key == 'parent_id') {
+            return PseudoObjectID
+          } if (Key == 'parent_face') {
+            return 'front'
+          } if (Key == 'parent_partition_address') {
+            return [0]
+          } if (Key == 'parent_enclosure_address') {
+            return [0,0]
+          } else {
+            return Value
+          }
+        })
+        vm.$store.commit('pcmObjects/UPDATE_Object', {pcmContext:PreviewContext, data:WorkspaceObject})
+
+        // Update 
+        PartitionSelectedData.object_id = InsertTemplateID
+      }
+
+      vm.$emit('SetTemplateFaceSelected', FaceSelectedData)
+      vm.$emit('SetPartitionAddressSelected', PartitionSelectedData)
+    },
   }
 }
 </script>

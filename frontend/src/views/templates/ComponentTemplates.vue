@@ -128,7 +128,7 @@ export default {
 
         const vm = this
         const Context = vm.Context
-        vm.$emit('TemplateFaceChanged', {'Context': Context, 'TemplateFace': newValue})
+        vm.$emit('SetTemplateFaceSelected', {'Context': Context, 'Face': newValue})
 
       }
     }

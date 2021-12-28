@@ -46,8 +46,10 @@ export default {
     ADD_Template(state, {pcmContext, data}) {
       state.Templates[pcmContext].push(data)
     },
-    UPDATE_Template(state, {pcmContext, data}) {
+    UPDATE_Template(state, {pcmContext, data, src=false}) {
 
+      //console.log(src)
+      //console.log(JSON.stringify(data))
       const ID = data.id
       const Index = state.Templates[pcmContext].findIndex((item) => item.id == ID)
       state.Templates[pcmContext].splice(Index, 1, data)

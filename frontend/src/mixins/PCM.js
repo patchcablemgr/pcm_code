@@ -169,6 +169,7 @@ export const PCM = {
                 // Get selected template data
                 const TemplateFunction = Template.function
                 const TemplateCategoryID = Template.category_id
+                const TemplateInsertConstraints = Template.insert_constraints
         
                 // Remove preview pseudo objects/templates
                 vm.RemovePreviewPseudoData()
@@ -198,7 +199,7 @@ export const PCM = {
                 InsertTemplate.blueprint.front = [
                     JSON.parse(JSON.stringify(GenericBlueprint), function(Key, Value) {
                         if(Key == 'units') {
-                            return InsertConstraints.part_layout.width
+                            return InsertConstraints[0].part_layout.width
                         } else {
                             return Value
                         }
@@ -206,7 +207,7 @@ export const PCM = {
                 ]
                 InsertTemplate.category_id = TemplateCategoryID
                 InsertTemplate.function = TemplateFunction
-                InsertTemplate.insert_constraints = InsertConstraints
+                InsertTemplate.insert_constraints = (TemplateInsertConstraints !== null) ? TemplateInsertConstraints.concat(InsertConstraints) : InsertConstraints
                 vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:'workspace', data:InsertTemplate})
         
                 // Adjust insert object properties
@@ -504,71 +505,82 @@ export const PCM = {
                 PseudoObjectParentPartitionAddress = [0, 0]
                 PseudoObjectParentEnclosureAddress = [0, 0]
                 const InsertConstraints = Template.insert_constraints
-        
-                // Generate pseudo IDs
-                PseudoTemplateID = "pseudo-" + TemplateID
-                PseudoObjectID = "pseudo-" + TemplateID
-        
-                // Create pseudo object
-                WorkingObjectData.push(JSON.parse(JSON.stringify(GenericObject), function (Key, Value) {
-                    if (Key == 'id') {
-                        return PseudoObjectID
-                    } else if (Key == 'cabinet_front') {
-                        return 'front'
-                    } else if (Key == 'location_id') {
-                        return (Context == 'workspace') ? WorkspaceInsertID : null
-                    } else if (Key == 'cabinet_ru') {
-                        return 1
-                    } else if (Key == 'template_id') {
-                        return PseudoTemplateID
-                    } else if (Key == 'parent_id') {
-                        return PseudoObjectParentID
-                    } else {
-                        return Value
-                    }
-                }))
-        
-                // Create pseudo template
-                WorkingTemplateData.push(JSON.parse(JSON.stringify(GenericTemplate), function (Key, Value) {
-                    if (Key == 'id') {
-                        return PseudoTemplateID
-                    } else if (Key == 'name') {
-                        return Template.name
-                    } else if (Key == 'category_id') {
-                        return Template.category_id
-                    } else if (Key == 'type') {
-                        // Set pseudo template type, but avoid setting partition type
-                        if (Value === null) {
-                            return 'standard'
+
+                InsertConstraints.forEach(function(InsertConstraint){
+
+                    // Generate pseudo IDs
+                    PseudoTemplateID = "pseudo-" + (vm.$store.state.pcmTemplates.Templates[Context].length + WorkingTemplateData.length)
+                    PseudoObjectID = "pseudo-" + (vm.$store.state.pcmObjects.Objects[Context].length + WorkingObjectData.length)
+            
+                    // Create pseudo object
+                    WorkingObjectData.push(JSON.parse(JSON.stringify(GenericObject), function (Key, Value) {
+                        if (Key == 'id') {
+                            return PseudoObjectID
+                        } else if (Key == 'cabinet_front') {
+                            return 'front'
+                        } else if (Key == 'location_id') {
+                            return (Context == 'workspace') ? WorkspaceInsertID : null
+                        } else if (Key == 'cabinet_ru') {
+                            return 1
+                        } else if (Key == 'template_id') {
+                            return PseudoTemplateID
+                        } else if (Key == 'parent_id') {
+                            return PseudoObjectParentID
+                        } else if (Key == 'parent_face') {
+                            return PseudoObjectParentFace
+                        } else if (Key == 'parent_partition_address') {
+                            return PseudoObjectParentPartitionAddress
+                        } else if (Key == 'parent_enclosure_address') {
+                            return PseudoObjectParentEnclosureAddress
                         } else {
                             return Value
                         }
-                    } else if (Key == 'ru_size') {
-                        // Set pseudo template RU size if this is the insert constraint origin ('standard' template type)
-                        return Math.ceil(InsertConstraints.part_layout.height / 2)
-                    } else if (Key == 'blueprint') {
+                    }))
+            
+                    // Create pseudo template
+                    WorkingTemplateData.push(JSON.parse(JSON.stringify(GenericTemplate), function (Key, Value) {
+                        if (Key == 'id') {
+                            return PseudoTemplateID
+                        } else if (Key == 'name') {
+                            return Template.name
+                        } else if (Key == 'category_id') {
+                            return Template.category_id
+                        } else if (Key == 'type') {
+                            // Set pseudo template type, but avoid setting partition type
+                            if (Value === null) {
+                                return 'standard'
+                            } else {
+                                return Value
+                            }
+                        } else if (Key == 'ru_size') {
+                            // Set pseudo template RU size if this is the insert constraint origin ('standard' template type)
+                            return Math.ceil(InsertConstraint.part_layout.height / 2)
+                        } else if (Key == 'blueprint') {
 
-                        // Generate enclosure partition
-                        let EnclosurePartition = {
-                            'type': 'enclosure',
-                            'units': InsertConstraints.part_layout.height,
-                            'enc_layout': {
-                                'cols': InsertConstraints.enc_layout.cols,
-                                'rows': InsertConstraints.enc_layout.rows
-                            },
-                            'children': []
+                            // Generate enclosure partition
+                            let EnclosurePartition = {
+                                'type': 'enclosure',
+                                'units': InsertConstraint.part_layout.height,
+                                'enc_layout': {
+                                    'cols': InsertConstraint.enc_layout.cols,
+                                    'rows': InsertConstraint.enc_layout.rows
+                                },
+                                'children': []
+                            }
+
+                            // Set pseudo template partition attributes
+                            Value.front[0].units = InsertConstraint.part_layout.width
+                            Value.front[0].children.push(EnclosurePartition)
+                            return Value
+                
+                        } else {
+                
+                            return Value
                         }
+                    }))
 
-                        // Set pseudo template partition attributes
-                        Value.front[0].units = InsertConstraints.part_layout.width
-                        Value.front[0].children.push(EnclosurePartition)
-                        return Value
-            
-                    } else {
-            
-                        return Value
-                    }
-                }))
+                    PseudoObjectParentID = PseudoObjectID
+                })
             }
         
             // Create object
@@ -667,7 +679,7 @@ export const PCM = {
                 if (Template.insert_constraints !== null) {
       
                   // Get width from constraints if they exist
-                  Width = Template.insert_constraints.part_layout.width
+                  Width = Template.insert_constraints[Template.insert_constraints.length-1].part_layout.width
                 } else {
       
                   // Get width from template RU size
@@ -693,7 +705,7 @@ export const PCM = {
                 if (Template.insert_constraints !== null) {
       
                   // Get height from constraints if they exist
-                  Height = Template.insert_constraints.part_layout.height
+                  Height = Template.insert_constraints[Template.insert_constraints.length-1].part_layout.height
                 } else {
       
                   // Get height from template RU size
@@ -705,7 +717,7 @@ export const PCM = {
             InsertConstraints.part_layout.height = Height
             InsertConstraints.part_layout.width = Width
       
-            return InsertConstraints
+            return [InsertConstraints]
       
         },
         DisplayError: function(errData) {

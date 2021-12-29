@@ -283,7 +283,9 @@ export default {
         if (Template.insert_constraints !== null) {
 
           // Partition is an insert with constraints
-          WorkingMax = Template.insert_constraints.part_layout.width
+          const LastInsertConstraintIndex = Template.insert_constraints.length - 1
+          WorkingMax = Template.insert_constraints[LastInsertConstraintIndex].part_layout.width
+          //WorkingMax = Template.insert_constraints.part_layout.width
         } else {
 
           // Partition is standard
@@ -294,7 +296,9 @@ export default {
         if (Template.insert_constraints !== null) {
 
           // Partition is an insert with constraints
-          WorkingMax = Template.insert_constraints.part_layout.height
+          const LastInsertConstraintIndex = Template.insert_constraints.length - 1
+          WorkingMax = Template.insert_constraints[LastInsertConstraintIndex].part_layout.height
+          //WorkingMax = Template.insert_constraints.part_layout.height
         } else {
 
           // Partition is standard

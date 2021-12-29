@@ -301,7 +301,7 @@ export default {
           } else if(Key == 'mount_config') {
             return (Type == 'standard') ? '2-post' : Value
           } else if(Key == 'insert_constraints') {
-            return (Type == 'standard') ? Value : {part_layout:{height:2,width:24},enc_layout:{cols:1,rows:1}}
+            return (Type == 'standard') ? Value : [{part_layout:{height:2,width:24},enc_layout:{cols:1,rows:1}}]
           } else {
             return Value
           }

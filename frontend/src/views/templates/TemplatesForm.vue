@@ -1112,7 +1112,9 @@ export default {
         if (Template.insert_constraints !== null) {
 
           // Partition is an insert with constraints
-          WorkingMax = Template.insert_constraints.part_layout.width
+          const LastInsertConstraintIndex = Template.insert_constraints.length - 1
+          WorkingMax = Template.insert_constraints[LastInsertConstraintIndex].part_layout.width
+          //WorkingMax = Template.insert_constraints.part_layout.width
         } else {
 
           // Partition is standard
@@ -1123,7 +1125,9 @@ export default {
         if (Template.insert_constraints !== null) {
 
           // Partition is an insert with constraints
-          WorkingMax = Template.insert_constraints.part_layout.height
+          const LastInsertConstraintIndex = Template.insert_constraints.length - 1
+          WorkingMax = Template.insert_constraints[LastInsertConstraintIndex].part_layout.height
+          //WorkingMax = Template.insert_constraints.part_layout.height
         } else {
 
           // Partition is standard
@@ -1247,11 +1251,11 @@ export default {
         if(ParentPartitionAddress.length == 0) {
 
           // Parent partition is root partition.  Start with max template width
-          PartitionSizeMax = (TemplateType == 'insert') ? Template.insert_constraints.part_layout.width : 24
+          PartitionSizeMax = (TemplateType == 'insert') ? Template.insert_constraints[Template.insert_constraints.length-1].part_layout.width : 24
         } else if (ParentPartitionAddress.length == 1) {
 
           // Parent partition is first level partition.  Start with RU size
-          PartitionSizeMax = (TemplateType == 'insert') ? Template.insert_constraints.part_layout.height : Template.ru_size * 2
+          PartitionSizeMax = (TemplateType == 'insert') ? Template.insert_constraints[Template.insert_constraints.length-1].part_layout.height : Template.ru_size * 2
         } else {
 
           // Parent partition is deply nested.  Start with grand parent partition size

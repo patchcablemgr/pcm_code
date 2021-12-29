@@ -175,7 +175,7 @@ export const PCM = {
                 vm.RemovePreviewPseudoData()
         
                 // Copy selected template to insert parent template and correct id
-                const InsertParentTemplateID = 'pseudo-'+(vm.Templates.workspace.length)
+                const InsertParentTemplateID = 'pseudo-'+vm.$uuid.v4()
                 const InsertParentTemplate = JSON.parse(JSON.stringify(Template), function(key, value) {
                   if(key == 'id') {
                     return InsertParentTemplateID
@@ -506,11 +506,12 @@ export const PCM = {
                 PseudoObjectParentEnclosureAddress = [0, 0]
                 const InsertConstraints = Template.insert_constraints
 
-                InsertConstraints.forEach(function(InsertConstraint){
+                InsertConstraints.forEach(function(InsertConstraint, Index){
 
                     // Generate pseudo IDs
-                    PseudoTemplateID = "pseudo-" + (vm.$store.state.pcmTemplates.Templates[Context].length + WorkingTemplateData.length)
-                    PseudoObjectID = "pseudo-" + (vm.$store.state.pcmObjects.Objects[Context].length + WorkingObjectData.length)
+
+                    PseudoTemplateID = "pseudo-" + vm.$uuid.v4()
+                    PseudoObjectID = PseudoTemplateID
             
                     // Create pseudo object
                     WorkingObjectData.push(JSON.parse(JSON.stringify(GenericObject), function (Key, Value) {
@@ -548,13 +549,15 @@ export const PCM = {
                         } else if (Key == 'type') {
                             // Set pseudo template type, but avoid setting partition type
                             if (Value === null) {
-                                return 'standard'
+                                return (Index == 0) ? 'standard' : 'insert'
                             } else {
                                 return Value
                             }
                         } else if (Key == 'ru_size') {
                             // Set pseudo template RU size if this is the insert constraint origin ('standard' template type)
                             return Math.ceil(InsertConstraint.part_layout.height / 2)
+                        } else if (Key == 'insert_constraints') {
+                            return (Index == 0) ? null : [InsertConstraints[Index-1]]
                         } else if (Key == 'blueprint') {
 
                             // Generate enclosure partition

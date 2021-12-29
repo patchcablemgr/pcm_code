@@ -494,6 +494,8 @@ export default {
   mounted() {
 
     const vm = this
+
+    console.log('UUID: '+vm.$uuid.v4())
     
     vm.GETObjects()
     vm.GETLocations()

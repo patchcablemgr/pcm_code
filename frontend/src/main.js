@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import { ToastPlugin, ModalPlugin } from 'bootstrap-vue'
 import VueCompositionAPI from '@vue/composition-api'
+import UUID from 'vue-uuid'
 
 import router from './router'
 import store from './store'
@@ -20,6 +21,9 @@ Vue.use(ModalPlugin)
 
 // Composition API
 Vue.use(VueCompositionAPI)
+
+// UUID
+Vue.use(UUID)
 
 // import core styles
 require('@core/scss/core.scss')

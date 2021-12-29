@@ -277,33 +277,10 @@ export default {
       const PartitionDirection = vm.GetPartitionDirection(PartitionAddress)
 
       // Get working max
-      let WorkingMax
-      if (PartitionDirection == 'row') {
-
-        if (Template.insert_constraints !== null) {
-
-          // Partition is an insert with constraints
-          const LastInsertConstraintIndex = Template.insert_constraints.length - 1
-          WorkingMax = Template.insert_constraints[LastInsertConstraintIndex].part_layout.width
-          //WorkingMax = Template.insert_constraints.part_layout.width
-        } else {
-
-          // Partition is standard
-          WorkingMax = 24
-        }
-      } else {
-
-        if (Template.insert_constraints !== null) {
-
-          // Partition is an insert with constraints
-          const LastInsertConstraintIndex = Template.insert_constraints.length - 1
-          WorkingMax = Template.insert_constraints[LastInsertConstraintIndex].part_layout.height
-          //WorkingMax = Template.insert_constraints.part_layout.height
-        } else {
-
-          // Partition is standard
-          WorkingMax = Template.ru_size * 2
-        }
+      let WorkingMax = (PartitionDirection == 'row') ? 24 : Template.ru_size*2
+      if (Template.insert_constraints !== null) {
+        const InsertConstraintPartitionLayout = Template.insert_constraints[Template.insert_constraints.length-1].part_layout
+        WorkingMax = (PartitionDirection == 'row') ? InsertConstraintPartitionLayout.width : InsertConstraintPartitionLayout.height
       }
 
       return WorkingMax

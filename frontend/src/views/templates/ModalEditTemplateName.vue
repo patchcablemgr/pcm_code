@@ -83,6 +83,26 @@ export default {
         Template.name = newValue
         vm.$http.patch(URL, Template).then(response => {
           vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:'template', data:response.data})
+
+          // Update root template name if applicable
+          const Object = vm.GetObjectSelected(Context)
+          let ParentID = Object.parent_id
+          if(ParentID) {
+            let ParentIndex
+            let RootObject
+            while(ParentID !== null) {
+              ParentIndex = vm.GetObjectIndex(ParentID, Context)
+              RootObject = vm.Objects[Context][ParentIndex]
+              ParentID = RootObject.parent_id
+            }
+            
+            const RootTemplateID = RootObject.template_id
+            const RootTemplateIndex = vm.GetTemplateIndex(RootTemplateID, Context)
+            const RootTemplate = JSON.parse(JSON.stringify(vm.Templates[Context][RootTemplateIndex]))
+            RootTemplate.name = newValue
+            vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:'template', data:RootTemplate})
+          }
+
         }).catch(error => {
           vm.DisplayError(error)
         })

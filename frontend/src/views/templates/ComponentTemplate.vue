@@ -122,19 +122,55 @@ export default {
     Objects() {
       return this.$store.state.pcmObjects.Objects
     },
+    IsPseudo: function() {
+
+      const vm = this
+      const Context = vm.Context
+      const ObjectID = vm.ObjectID
+      const TemplateID = String(vm.GetTemplateID(ObjectID, Context))
+
+      return TemplateID.includes('pseudo')
+
+    },
+    IsPseudoParent: function() {
+
+      const vm = this
+      const Context = vm.Context
+      const ObjectID = vm.ObjectID
+      const ChildObjectIndex = vm.Objects[Context].findIndex((object) => object.parent_id == ObjectID )
+      
+      return (vm.IsPseudo && ChildObjectIndex !== -1) ? true : false
+
+    },
     TemplateClasses: function() {
 
       const vm = this
+      const Context = vm.Context
       const PartitionAddress = vm.GetPartitionAddress(0)
       const PartitionDirection = vm.GetPartitionDirection(PartitionAddress)
-      const Template = vm.GetTemplate()
-      const isPseudo = Template.hasOwnProperty("pseudo")
-      const isPseudoParentTemplate = Template.hasOwnProperty("pseudoParentTemplate")
+      let ClassLayered
+      let ClassBorder
+      
+      if(Context == 'workspace') {
+        ClassLayered = true
+      } else {
+        ClassLayered = false
+      }
+
+      if(Context == 'workspace') {
+        ClassBorder = true
+      } else {
+        if(vm.InitialPartitionAddress.length == 0 && !vm.IsPseudo) {
+          ClassBorder = true
+        } else {
+          ClassBorder = false
+        }
+      }
 
       return {
         "pcm_cabinet_object_container": true,
-        "pcm_template_partition_layered": (isPseudo && !isPseudoParentTemplate) ? false : true,
-        "pcm_template_partition_border": (isPseudo && !isPseudoParentTemplate) ? false : true,
+        "pcm_template_partition_layered": ClassLayered,
+        "pcm_template_partition_border": ClassBorder,
         "pcm_template_partition_row": PartitionDirection == 'row',
         "pcm_template_partition_col": PartitionDirection == 'col',
       }
@@ -142,25 +178,43 @@ export default {
     TemplateEnclosureClasses: function() {
 
       const vm = this
-      const Template = vm.GetTemplate()
-      const isPseudo = Template.hasOwnProperty("pseudo")
-      const isPseudoParentTemplate = Template.hasOwnProperty("pseudoParentTemplate")
+      const Context = vm.Context
+      let ClassBackground
+
+      if(Context == 'workspace') {
+        ClassBackground = true
+      } else {
+        if(vm.IsPseudo) {
+          ClassBackground = false
+        } else {
+          ClassBackground = true
+        }
+      }
 
       return {
         "pcm_template_enclosure_container": true,
-        "pcm_template_enclosure_container_background": (isPseudo && !isPseudoParentTemplate) ? false : true,
+        "pcm_template_enclosure_container_background": ClassBackground
       }
     },
     TemplateEnclosureAreaClasses: function() {
 
       const vm = this
-      const Template = vm.GetTemplate()
-      const isPseudo = Template.hasOwnProperty("pseudo")
-      const isPseudoParentTemplate = Template.hasOwnProperty("pseudoParentTemplate")
+      const Context = vm.Context
+      let ClassBorder
+
+      if(Context == 'workspace') {
+        ClassBorder = true
+      } else {
+        if(vm.IsPseudo) {
+          ClassBorder = false
+        } else {
+          ClassBorder = true
+        }
+      }
 
       return {
         "pcm_template_enclosure_area": true,
-        "pcm_template_enclosure_area_border": (isPseudo && !isPseudoParentTemplate) ? false : true,
+        "pcm_template_enclosure_area_border": ClassBorder
       }
     },
   },

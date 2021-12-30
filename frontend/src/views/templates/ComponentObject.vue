@@ -3,7 +3,6 @@
   <div
     :draggable="!IsPseudoObject"
     @dragstart.stop="StartDrag({ context: Context, object_id: ObjectID, template_id: GetTemplateID(ObjectID), template_face: TemplateFaceSelected[Context] }, $event)"
-    :templateID="GetTemplateID(ObjectID)"
     :class="{
       pcm_template_partition_selected: PartitionIsSelected(),
       pcm_template_partition_hovered: PartitionIsHovered(),

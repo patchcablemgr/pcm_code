@@ -1,5 +1,7 @@
 <template>
-  <div>
+  <div
+    v-if="DependenciesReady"
+  >
     <b-container class="bv-example-row" fluid="xs">
       <b-row>
         <b-col>
@@ -7,20 +9,10 @@
             title="Locations and Cabinets"
           >
             <b-card-body>
-              <liquor-tree
-                ref="LiquorTree"
-                :data="TreeData"
-                :options="TreeOptions"
-              >
-                <span class="tree-text" slot-scope="{ node }" style="width:100%;">
-                  <template>
-                    <div @contextmenu.prevent.stop="handleClick($event, {'node_id': node.id})">
-                      <feather-icon :icon="node.data.icon" />
-                      {{ node.text }}
-                    </div>
-                  </template>
-                </span>
-              </liquor-tree>
+              <component-location-tree
+                Context="actual"
+                @LocationNodeSelected="LocationNodeSelected($event)"
+              />
             </b-card-body>
           </b-card>
 
@@ -89,11 +81,8 @@
                 Rear
               </b-form-radio>
               <component-cabinet
-                :TemplateData="TemplateData"
-                :CabinetData="CabinetData"
-                :CategoryData="CategoryData"
-                :ObjectData="ObjectData"
-                Context="preview"
+                :LocationID="NodeIDSelected"
+                Context="actual"
                 :TemplateFaceSelected="TemplateFaceSelected"
                 :PartitionAddressSelected="PartitionAddressSelected"
                 :PartitionAddressHovered="PartitionAddressHovered"
@@ -112,16 +101,9 @@
 
           <component-template-Object-details
             CardTitle="Object Details"
-						:TemplateData="TemplateData"
-						:CategoryData="CategoryData"
-            :ObjectData="ObjectData"
-            :PortConnectorData="PortConnectorData"
-            :MediaData="MediaData"
-						Context="preview"
+						Context="actual"
 						:TemplateFaceSelected="TemplateFaceSelected"
 						:PartitionAddressSelected="PartitionAddressSelected"
-						:TemplatePartitionPortRange="TemplatePartitionPortRange"
-            :PortOrientationData="PortOrientationData"
             @TemplateObjectEditClicked="TemplateObjectEditClicked()"
             @TemplateObjectCloneClicked="TemplateObjectCloneClicked()"
 						@TemplateObjectDeleteClicked="TemplateObjectDeleteClicked()"
@@ -130,9 +112,6 @@
 					/>
 
           <component-templates
-            :TemplateData="TemplateData"
-            :CategoryData="CategoryData"
-            :ObjectData="ObjectData"
             Context="template"
             :TemplateFaceSelected="TemplateFaceSelected"
             :PartitionAddressSelected="PartitionAddressSelected"
@@ -148,26 +127,6 @@
 
     <!-- Toast -->
     <toast-general/>
-
-    <!-- Template Edit Modal -->
-    <modal-templates-edit
-      :TemplateData="TemplateData"
-      :CategoryData="CategoryData"
-      :ObjectData="ObjectData"
-      Context="preview"
-      :TemplateFaceSelected="TemplateFaceSelected"
-      :PartitionAddressSelected="PartitionAddressSelected"
-      :TemplatePartitionPortRange="TemplatePartitionPortRange"
-      PreviewPortID="test"
-      @ObjectEdited="ObjectEdited($event)"
-      @TemplatePartitionPortFormatValueUpdated="TemplatePartitionPortFormatValueUpdated($event)"
-      @TemplatePartitionPortFormatTypeUpdated="TemplatePartitionPortFormatTypeUpdated($event)"
-      @TemplatePartitionPortFormatCountUpdated="TemplatePartitionPortFormatCountUpdated($event)"
-      @TemplatePartitionPortFormatOrderUpdated="TemplatePartitionPortFormatOrderUpdated($event)"
-      @TemplatePartitionPortFormatFieldMove="TemplatePartitionPortFormatFieldMove($event)"
-      @TemplatePartitionPortFormatFieldCreate="TemplatePartitionPortFormatFieldCreate($event)"
-      @TemplatePartitionPortFormatFieldDelete="TemplatePartitionPortFormatFieldDelete($event)"
-    />
 
     <!-- Context Menu -->
     <vue-simple-context-menu
@@ -198,6 +157,7 @@ import {
   VBTooltip
 } from 'bootstrap-vue'
 import ToastGeneral from './templates/ToastGeneral.vue'
+import ComponentLocationTree from '@/views/templates/ComponentLocationTree.vue'
 import ComponentCabinet from './templates/ComponentCabinet.vue'
 import ComponentTemplateObjectDetails from './templates/ComponentTemplateObjectDetails.vue'
 import ComponentTemplates from './templates/ComponentTemplates.vue'
@@ -205,18 +165,10 @@ import ModalTemplatesEdit from './templates/ModalTemplatesEdit.vue'
 import LiquorTree from 'liquor-tree'
 import 'vue-simple-context-menu/dist/vue-simple-context-menu.css'
 import VueSimpleContextMenu from 'vue-simple-context-menu'
-import { PCM } from '../mixins/PCM.js'
+import { PCM } from '@/mixins/PCM.js'
 import ComponentFloorplan from './templates/ComponentFloorplan.vue'
 import ComponentFloorplanObjects from './templates/ComponentFloorplanObjects.vue'
 import ComponentFloorplanObjectDetails from './templates/ComponentFloorplanObjectDetails.vue'
-
-
-const TreeData = []
-
-const TreeOptions = {
-  "dnd": true,
-  "multiples": false,
-}
 
 const MenuOptions = [
   {
@@ -289,12 +241,12 @@ const TemplateData = {
 }
 
 const TemplateFaceSelected = {
-  'preview': 'front',
+  'actual': 'front',
   'template': 'front',
 }
 
 const PartitionAddressSelected = {
-  'preview': {
+  'actual': {
     'object_id': null,
     'template_id': null,
     'front': [0],
@@ -312,7 +264,7 @@ const PartitionAddressSelected = {
 }
 
 const PartitionAddressHovered = {
-  'preview': {
+  'actual': {
     'object_id': null,
     'template_id': null,
     'front': false,
@@ -413,6 +365,7 @@ export default {
     BButton,
 
     ToastGeneral,
+    ComponentLocationTree,
     ComponentCabinet,
     ComponentTemplateObjectDetails,
     ComponentTemplates,
@@ -428,8 +381,6 @@ export default {
 	},
   data() {
     return {
-      TreeData,
-      TreeOptions,
       MenuOptions,
       LocationData,
       CabinetData,
@@ -450,6 +401,38 @@ export default {
     }
   },
   computed: {
+    DependenciesReady: function() {
+
+      const vm = this
+      const Dependencies = [
+        vm.CategoriesReady,
+        vm.TemplatesReady.template,
+        vm.TemplatesReady.actual,
+        vm.ObjectsReady.template,
+        vm.LocationsReady
+      ]
+      
+      const DependenciesReady = Dependencies.every(function(element){ return element == true })
+      return DependenciesReady
+    },
+    Locations() {
+      return this.$store.state.pcmLocations.Locations
+    },
+    LocationsReady: function() {
+      return this.$store.state.pcmLocations.LocationsReady.actual
+    },
+    Categories() {
+      return this.$store.state.pcmCategories.Categories
+    },
+    CategoriesReady: function() {
+      return this.$store.state.pcmCategories.CategoriesReady
+    },
+    TemplatesReady: function() {
+      return this.$store.state.pcmTemplates.TemplatesReady
+    },
+    ObjectsReady: function() {
+      return this.$store.state.pcmObjects.ObjectsReady
+    },
     FloorplanImage: function() {
       
       const vm = this
@@ -471,16 +454,15 @@ export default {
     PreviewDisplay: function() {
 
       const vm = this
+      const Context = 'actual'
       const NodeID = vm.NodeIDSelected
       let PreviewDisplay = "none"
 
       if(NodeID) {
 
-        const Criteria = {
-          "id": NodeID.toString()
-        }
-        const SelectedNode = vm.$refs.LiquorTree.find(Criteria)[0]
-        const NodeType = SelectedNode.data.type
+        const LocationIndex = vm.GetLocationIndex(NodeID, Context)
+        const Location = vm.Locations[Context][LocationIndex]
+        const NodeType = Location.type
 
         if(NodeType == 'location') {
           PreviewDisplay = "none"
@@ -540,6 +522,11 @@ export default {
     },
   },
   methods: {
+    LocationNodeSelected: function(EmitData) {
+      const vm = this
+      const NodeID = EmitData.id
+      vm.NodeIDSelected = NodeID
+    },
     GetPartition: function(Blueprint, PartitionAddress) {
 			
 			// Locate template partition
@@ -997,243 +984,6 @@ export default {
 
       })
     },
-    BuildLocationTree: function(array, Parent){
-
-      const vm = this
-      Parent = typeof Parent !== 'undefined' ? Parent : { id: 0 }
-      const ParentID = Parent.id
-      const ChildrenFiltered = array.filter(location => location.parent_id == ParentID)
-      const ChildrenData = []
-
-      ChildrenFiltered.forEach(function(child) {
-        const ChildData = {
-          "id": child.id,
-          "text": child.name,
-          "data": {
-            "type": child.type,
-            "icon": vm.GetNodeIcon(child.type),
-            "parent_id": child.parent_id,
-            "img": child.img,
-          },
-        }
-        ChildrenData.push(ChildData)
-      })
-
-      if(ChildrenData.length) {
-        
-        ChildrenData.forEach(function(child) {
-
-          if(ParentID == 0) {
-
-            vm.$refs.LiquorTree.append(child)
-          } else {
-
-            let ParentNode = vm.GetLocationNode(ParentID)
-            ParentNode.append(child)
-          }
-        })
-
-        ChildrenData.forEach(child => vm.BuildLocationTree(array, child))                
-      }
-      
-      return
-    },
-    GeneratePseudoData: function (Template, Context) {
-
-      const vm = this
-      let WorkingObjectData = []
-      let WorkingTemplateData = []
-      let PseudoObjectParentID = null
-      let PseudoObjectParentFace = null
-      let PseudoObjectParentPartitionAddress = null
-      let PseudoObjectParentEnclosureAddress = null
-      const TemplateID = Template.id
-      const TemplateType = Template.type
-
-      if (TemplateType == 'insert') {
-        
-        PseudoObjectParentFace = 'front'
-        PseudoObjectParentPartitionAddress = [0, 0]
-        PseudoObjectParentEnclosureAddress = [0, 0]
-        const InsertConstraints = Template.insert_constraints
-
-        // Generate pseudo IDs
-        const PseudoTemplateID = "pseudo-" + (vm.TemplateData[Context].length + WorkingTemplateData.length)
-        const PseudoObjectID = "pseudo-" + (vm.ObjectData[Context].length + WorkingObjectData.length)
-
-        // Create pseudo object
-        WorkingObjectData.push(JSON.parse(JSON.stringify(vm.GenericObject), function (GenericObjectKey, GenericObjectValue) {
-          if (GenericObjectKey == 'id') {
-            return PseudoObjectID
-          } else if (GenericObjectKey == 'cabinet_front') {
-            return 'front'
-          } else if (GenericObjectKey == 'location_id') {
-            return (Context == 'preview') ? vm.InsertTemplateID : null
-          } else if (GenericObjectKey == 'cabinet_ru') {
-            return 1
-          } else if (GenericObjectKey == 'template_id') {
-            return PseudoTemplateID
-          } else if (GenericObjectKey == 'parent_id') {
-            return PseudoObjectParentID
-          } else {
-            return GenericObjectValue
-          }
-        }))
-
-        // Create pseudo template
-        WorkingTemplateData.push(JSON.parse(JSON.stringify(vm.GenericTemplate), function (GenericTemplateKey, GenericTemplateValue) {
-          if (GenericTemplateKey == 'id') {
-            return PseudoTemplateID
-          } else if (GenericTemplateKey == 'name') {
-            return Template.name
-          } else if (GenericTemplateKey == 'category_id') {
-            return Template.category_id
-          } else if (GenericTemplateKey == 'type') {
-            // Set pseudo template type, but avoid setting partition type
-            if (GenericTemplateValue === null) {
-                return 'standard'
-            } else {
-                return GenericTemplateValue
-            }
-          } else if (GenericTemplateKey == 'ru_size') {
-            // Set pseudo template RU size if this is the insert constraint origin ('standard' template type)
-            return Math.ceil(InsertConstraints.part_layout.height / 2)
-          } else if (GenericTemplateKey == 'blueprint') {
-            // Set pseudo template partition attributes
-            GenericTemplateValue.front[0].units = InsertConstraints.part_layout.width
-            GenericTemplateValue.front[0].children[0].units = InsertConstraints.part_layout.height
-            GenericTemplateValue.front[0].children[0].enc_layout.cols = InsertConstraints.enc_layout.cols
-            GenericTemplateValue.front[0].children[0].enc_layout.rows = InsertConstraints.enc_layout.rows
-            return GenericTemplateValue
-
-          } else {
-
-              return GenericTemplateValue
-          }
-        }))
-
-        PseudoObjectParentID = PseudoObjectID
-      }
-
-      // Create pseudo object for template
-      const PseudoObjectID = "pseudo-" + (vm.ObjectData[Context].length + WorkingObjectData.length)
-      WorkingObjectData.push(JSON.parse(JSON.stringify(vm.GenericObject), function (GenericObjectKey, GenericObjectValue) {
-        if (GenericObjectKey == 'id') {
-            return PseudoObjectID
-        } else if (GenericObjectKey == 'location_id') {
-            return (Context == 'preview' && TemplateType == 'standard') ? vm.InsertTemplateID : GenericObjectValue
-        } else if (GenericObjectKey == 'cabinet_front') {
-            return (Context == 'preview' && TemplateType == 'standard') ? 'front' : GenericObjectValue
-        } else if (GenericObjectKey == 'cabinet_ru') {
-            return (Context == 'preview' && TemplateType == 'standard') ? 1 : GenericObjectValue
-        } else if (GenericObjectKey == 'parent_id') {
-            return PseudoObjectParentID
-        } else if (GenericObjectKey == 'parent_face') {
-            return PseudoObjectParentFace
-        } else if (GenericObjectKey == 'parent_partition_address') {
-            return PseudoObjectParentPartitionAddress
-        } else if (GenericObjectKey == 'parent_enclosure_address') {
-            return PseudoObjectParentEnclosureAddress
-        } else if (GenericObjectKey == 'template_id') {
-            return TemplateID
-        } else {
-            return GenericObjectValue
-        }
-      }))
-
-      vm.TemplateData[Context] = vm.TemplateData[Context].concat(WorkingTemplateData)
-      vm.ObjectData[Context] = vm.ObjectData[Context].concat(WorkingObjectData)
-
-      return PseudoObjectID
-    },
-    GeneratePortID: function(Index, PortTotal, PortFormat){
-
-      // Store variables
-      const vm = this
-      let PreviewPortID = ''
-      let IncrementalCount = 0
-
-      // Create character arrays
-      let LowercaseArray = []
-      let UppercaseArray = []
-      for(let x=97; x<=122; x++) {
-        LowercaseArray.push(String.fromCharCode(x))
-      }
-      for(let x=65; x<=90; x++) {
-        UppercaseArray.push(String.fromCharCode(x))
-      }
-
-      // Account for infinite count incrementables
-      PortFormat.forEach(function(Field, FieldIndex){
-        const FieldType = Field.type
-        let FieldCount = Field.count
-
-        // Increment IncrementalCount
-        if(FieldType == 'incremental' || FieldType == 'series') {
-          IncrementalCount++
-
-          // Adjust field count
-          if(FieldType == 'incremental' && FieldCount == 0) {
-            PortFormat[FieldIndex].count = PortTotal
-          } else if(FieldType == 'series') {
-            let CurrentFieldValue = Field.value
-            PortFormat[FieldIndex].count = CurrentFieldValue.split(',').length
-          }
-        }
-      })
-
-      PortFormat.forEach(function(Field){
-        const FieldType = Field.type
-        const FieldValue = Field.value
-        const FieldOrder = Field.order
-        const FieldCount = Field.count
-        let HowMuchToIncrement
-        let RollOver
-        let Numerator = 1
-
-        if(FieldType == 'static') {
-          PreviewPortID = PreviewPortID + FieldValue
-        } else {
-
-          PortFormat.forEach(function(LoopField){
-            const LoopFieldType = LoopField.type
-            const LoopFieldOrder = LoopField.order
-            const LoopFieldCount = LoopField.count
-
-            if(LoopFieldType == 'incremental' || LoopFieldType == 'series') {
-              if(LoopFieldOrder < FieldOrder) {
-                Numerator *= LoopFieldCount
-              }
-            }
-          })
-
-          HowMuchToIncrement = Math.floor(Index / Numerator)
-
-          if(HowMuchToIncrement >= FieldCount) {
-            RollOver = Math.floor(HowMuchToIncrement / FieldCount)
-            HowMuchToIncrement = HowMuchToIncrement - (RollOver * FieldCount)
-            
-          }
-
-          if(FieldType == 'incremental') {
-
-            if(!isNaN(FieldValue)) {
-              PreviewPortID = PreviewPortID + (parseInt(FieldValue) + HowMuchToIncrement)
-            } else {
-              PreviewPortID = PreviewPortID + '-'
-            }
-
-          } else if(FieldType == 'series') {
-
-            const FieldValueArray = FieldValue.split(',')
-            PreviewPortID = PreviewPortID + FieldValueArray[HowMuchToIncrement]
-
-          }
-        }
-      })
-      
-      return PreviewPortID
-    },
     GetCookie(cname) {
       let name = cname + "="
       let decodedCookie = decodeURIComponent(document.cookie)
@@ -1249,55 +999,16 @@ export default {
       }
       return ""
     },
-    GetLocationNode(NodeID) {
-
-      const vm = this
-
-      const Criteria = {
-        "id": NodeID.toString()
-      }
-      let Node = vm.$refs.LiquorTree.find(Criteria)[0]
-
-      return Node
-    },
-    GETLocations: function () {
-
-      const vm = this
-      
-      this.$http.get('/api/locations').then(function(response){
-
-        vm.LocationData = response.data
-
-        vm.BuildLocationTree(response.data)
-        const SelectedNodeID = vm.GetCookie('environment_location_nodeID')
-
-        if(SelectedNodeID != "") {
-
-          // Select previously viewed node
-          let Node = vm.GetLocationNode(SelectedNodeID)
-          Node.select(true)
-
-          // Expand parent nodes
-          let NodeParentID = Node.data.parent_id
-          while(NodeParentID.toString() !== '0') {
-            let NodeParent = vm.GetLocationNode(NodeParentID)
-            NodeParent.expand()
-            NodeParentID = NodeParent.data.parent_id
-          }
-          
-        }
-
-      })
-    },
     GETCategories: function() {
 
       const vm = this
-
-      vm.$http.get('/api/categories').then(function(response){
-
-        vm.CategoryData = response.data
-
-      });
+      vm.$http.get('/api/categories')
+      .then(response => {
+        vm.$store.commit('pcmCategories/SET_Categories', response.data)
+        vm.$store.commit('pcmCategories/SET_Ready', true)
+      }).catch(error => {
+        vm.DisplayError(error)
+      })
     },
     GETMedia: function() {
 
@@ -1310,23 +1021,26 @@ export default {
     GETTemplates: function () {
 
       const vm = this
-			const Context = 'template'
+			const ContextTemplate = 'template'
+      const ContextActual = 'actual'
       
       vm.$http.get('/api/templates').then(function(response){
 
-        vm.TemplateData[Context] = response.data
-        vm.TemplateData.preview = response.data
+        vm.$store.commit('pcmTemplates/SET_Templates', {pcmContext: ContextTemplate, data: response.data})
+        vm.$store.commit('pcmTemplates/SET_Templates', {pcmContext: ContextActual, data: response.data})
 
-        response.data.forEach(function(Template){
-					
-					vm.GeneratePseudoData(Template, Context)
+        response.data.forEach(function(template) {
+          vm.GeneratePseudoData(ContextTemplate, template)
         })
-      })
+        vm.$store.commit('pcmObjects/SET_Ready', {pcmContext:ContextTemplate, ReadyState:true})
+        vm.$store.commit('pcmTemplates/SET_Ready', {pcmContext:ContextTemplate, ReadyState:true})
+        vm.$store.commit('pcmTemplates/SET_Ready', {pcmContext:ContextActual, ReadyState:true})
+      }).catch(error => { vm.DisplayError(error) })
     },
     GETObjects: function () {
 
       const vm = this
-			const Context = 'preview'
+			const Context = 'actual'
       
       vm.$http.get('/api/objects').then(function(response){
 
@@ -1357,6 +1071,21 @@ export default {
         vm.FloorplanTemplateData = response.data;
       });
     },
+    GETLocations() {
+
+      const vm = this
+      const Context = 'actual'
+
+      // GET locations
+      vm.$http.get('/api/locations').then(response => {
+        vm.$store.commit('pcmLocations/SET_Locations', {pcmContext:Context, data:response.data})
+        vm.$store.commit('pcmLocations/SET_Ready', {pcmContext:Context, ReadyState:true})
+      }).catch(error => {
+        vm.DisplayError(error)
+      })
+    },
+  },
+  watch: {
   },
   mounted() {
 
@@ -1371,81 +1100,6 @@ export default {
     vm.GETPortOrientations()
     vm.GETPortConnectors()
 
-    // Update selected node
-    vm.$refs.LiquorTree.$on('node:selected', (node) => {
-
-      const NodeID = node.id
-      vm.NodeIDSelected = NodeID
-      document.cookie = "environment_location_nodeID="+NodeID
-
-      // Store data
-      const url = '/api/locations/'+NodeID
-
-      // PATCH category form data
-      vm.$http.get(url).then(function(response){
-        vm.CabinetData = response.data
-      }).catch(error => {
-
-        // Display error to user via toast
-        vm.$bvToast.toast(JSON.stringify(error.response.data), {
-          title: 'Error',
-          variant: 'danger',
-        })
-
-      });
-    })
-    
-    // Update node text
-    vm.$refs.LiquorTree.$on('node:editing:stop', (node) => {
-
-      // Store data
-      const NodeID = node.id
-      const NodeText = node.text
-      const url = '/api/locations/'+NodeID
-      const data = {"text": NodeText}
-
-      // PATCH category form data
-      vm.$http.patch(url, data).then(function(response){
-        //
-      }).catch(error => {
-
-        // Display error to user via toast
-        vm.$bvToast.toast(JSON.stringify(error.response.data), {
-          title: 'Error',
-          variant: 'danger',
-        })
-
-      });
-    })
-
-    // Update node parent
-    vm.$refs.LiquorTree.$on('node:dragging:finish', (node) => {
-
-      const NodeID = node.id
-      const Parent = node.parent
-      let ParentID = 0
-
-      if(Parent !== null) {
-        ParentID = Parent.id
-      }
-
-      // Store data
-      const url = '/api/locations/'+NodeID
-      const data = {"parent": ParentID}
-
-      // PATCH category form data
-      vm.$http.patch(url, data).then(function(response){
-        //
-      }).catch(error => {
-
-        // Display error to user via toast
-        vm.$bvToast.toast(JSON.stringify(error.response.data), {
-          title: 'Error',
-          variant: 'danger',
-        })
-
-      });
-    })
   },
 }
 </script>

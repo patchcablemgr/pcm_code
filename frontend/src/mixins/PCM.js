@@ -96,6 +96,18 @@ export const PCM = {
             return Template
         },
 
+// Location
+        GetLocationIndex: function(LocationID, Context) {
+
+            // Initial variables
+            const vm = this
+
+            // Get object index
+            const LocationIndex = vm.Locations[Context].findIndex((location) => location.id == LocationID )
+
+            return LocationIndex
+        },
+
 // Partition
         PartitionHovered: function(EmitData) {
 

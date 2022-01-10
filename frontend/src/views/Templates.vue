@@ -101,7 +101,6 @@ import ComponentTemplates from './templates/ComponentTemplates.vue'
 import ModalTemplatesEdit from './templates/ModalTemplatesEdit.vue'
 import { PCM } from '@/mixins/PCM.js'
 
-const TemplatesWatcherActive = true
 const CategoriesWatcherActive = true
 const LocationID = 1
 const StandardTemplateID = 1
@@ -165,7 +164,6 @@ export default {
   },
   data() {
     return {
-      TemplatesWatcherActive,
       CategoriesWatcherActive,
       LocationID,
       TemplateFaceSelected,
@@ -190,23 +188,23 @@ export default {
       const DependenciesReady = Dependencies.every(function(element){ return element == true })
       return DependenciesReady
     },
-    CategoriesReady: function() {
-      return this.$store.state.pcmCategories.CategoriesReady
-    },
-    TemplatesReady: function() {
-      return this.$store.state.pcmTemplates.TemplatesReady
-    },
-    ObjectsReady: function() {
-      return this.$store.state.pcmObjects.ObjectsReady
-    },
     Categories() {
       return this.$store.state.pcmCategories.Categories
+    },
+    CategoriesReady: function() {
+      return this.$store.state.pcmCategories.CategoriesReady
     },
     Templates() {
       return this.$store.state.pcmTemplates.Templates
     },
+    TemplatesReady: function() {
+      return this.$store.state.pcmTemplates.TemplatesReady
+    },
     Objects() {
       return this.$store.state.pcmObjects.Objects
+    },
+    ObjectsReady: function() {
+      return this.$store.state.pcmObjects.ObjectsReady
     },
     PreviewDisplay: function(){
 
@@ -319,9 +317,7 @@ export default {
         })
         vm.$store.commit('pcmObjects/SET_Ready', {pcmContext:'template', ReadyState:true})
         vm.$store.commit('pcmTemplates/SET_Ready', {pcmContext:'template', ReadyState:true})
-      }).catch(error => {
-        vm.DisplayError(error)
-      })
+      }).catch(error => { vm.DisplayError(error) })
     },
     SetDefaultCategory: function() {
 
@@ -494,8 +490,6 @@ export default {
   mounted() {
 
     const vm = this
-
-    console.log('UUID: '+vm.$uuid.v4())
     
     vm.GETObjects()
     vm.GETLocations()

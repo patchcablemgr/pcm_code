@@ -122,7 +122,9 @@ export const PCM = {
                 
             // Hovered partition should not be highlighted if it is a preview insert parent
             const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-            const HonorHover = (vm.Templates[Context][TemplateIndex].id.toString().includes('pseudo')) ? false : true
+            let HonorHover
+            HonorHover = (vm.Templates[Context][TemplateIndex].id.toString().includes('pseudo')) ? false : true
+            HonorHover = (vm.$route.name == 'environment') ? false : HonorClick
 
             if(HonorHover) {
                 vm.PartitionAddressHovered[Context][TemplateFaceSelected] = (HoverState) ? PartitionAddress : false
@@ -169,6 +171,7 @@ export const PCM = {
             let HonorClick
             HonorClick = (vm.Templates[Context][TemplateIndex].id.toString().includes('pseudo')) ? false : true
             HonorClick = (Context == 'workspace' && PartitionAddress.length == 0) ? false : HonorClick
+            HonorClick = (vm.$route.name == 'environment') ? false : HonorClick
       
             if(HonorClick) {
                 vm.PartitionAddressSelected[Context][Face] = PartitionAddress

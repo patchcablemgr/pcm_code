@@ -16,8 +16,8 @@ export default {
     Objects,
   },
   mutations: {
-    SET_Objects(state, data) {
-      state.Objects.actual = data
+    SET_Objects(state, {pcmContext, data}) {
+      state.Objects[pcmContext] = data
     },
     ADD_Object(state, {pcmContext, data}) {
       state.Objects[pcmContext].push(data)

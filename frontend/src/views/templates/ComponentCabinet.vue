@@ -14,15 +14,15 @@
     >
       <td class="pcm_cabinet">{{ CabinetRU }}</td>
       <td
-        v-if=" RackObjectID(LocationID, CabinetRU) !== false "
+        v-if=" RackObjectID(CabinetRU) !== false "
         class="pcm_cabinet_ru"
-        :rowspan=" GetObjectSize( RackObjectID(LocationID, CabinetRU) ) "
+        :rowspan=" GetObjectSize( RackObjectID(CabinetRU) ) "
       >
         <component-object
-          :TemplateRUSize=" GetObjectSize( RackObjectID(LocationID, CabinetRU) ) "
+          :TemplateRUSize=" GetObjectSize( RackObjectID(CabinetRU) ) "
           :InitialPartitionAddress=[]
           :Context="Context"
-          :ObjectID="RackObjectID(LocationID, CabinetRU)"
+          :ObjectID="RackObjectID(CabinetRU)"
           :TemplateFaceSelected="TemplateFaceSelected"
           :PartitionAddressSelected="PartitionAddressSelected"
           :PartitionAddressHovered="PartitionAddressHovered"
@@ -31,7 +31,7 @@
       </td>
       <td
         v-else-if="!RUIsOccupied(LocationID, CabinetRU)"
-        @drop="HandleDrop(LocationID, TemplateFaceSelected.preview, CabinetRU, $event)"
+        @drop="HandleDrop(CabinetRU, $event)"
         @dragover.prevent
         @dragenter.prevent
         class="pcm_cabinet_ru"
@@ -94,15 +94,16 @@ export default {
     }
   },
   methods: {
-    RackObjectID: function(CabinetID, CabinetRU) {
+    RackObjectID: function(CabinetRU) {
       
       // Initial variables
       const vm = this
       const Context = vm.Context
+      const LocationID = vm.LocationID
       const TemplateFace = vm.TemplateFaceSelected[Context]
 
       const ObjectIndex = vm.Objects[Context].findIndex(function(Object, ObjectIndex) {
-        if(Object.location_id == CabinetID && Object.cabinet_ru == CabinetRU) {
+        if(Object.location_id == LocationID && Object.cabinet_ru == CabinetRU) {
           const ObjectCabinetFace = Object.cabinet_front
           const ObjectID = Object.id
           const TemplateID = vm.GetTemplateID(ObjectID, Context)
@@ -159,7 +160,7 @@ export default {
 
       return ObjectIsPresent
     },
-    HandleDrop: function(CabinetID, CabinetFace, CabinetRU, event) {
+    HandleDrop: function(CabinetRU, event) {
 
       const vm = this
       const Context = event.dataTransfer.getData('context')
@@ -172,19 +173,52 @@ export default {
       const TemplateType = Template.type
 
       if(TemplateType == 'standard') {
-      
-        const data = {
-          "drop_type": "cabinet",
-          "context": Context,
-          "location_id": CabinetID,
+        const LocationID = vm.LocationID
+        const CabinetFace = vm.TemplateFaceSelected[Context]
+        let data
+        let url
+
+        data = {
+          "location_id": LocationID,
           "cabinet_face": CabinetFace,
           "cabinet_ru": CabinetRU,
-          "object_id": ObjectID,
-          "template_id": TemplateID,
-          "template_face": TemplateFace,
         }
 
-        vm.$emit('StandardObjectDropped', data )
+        // POST new object
+        if(Context == 'template') {
+
+          data.template_id = TemplateID
+          data.template_face = TemplateFace
+
+          url = '/api/objects/standard'
+
+          // POST to objects
+          vm.$http.post(url, data).then(function(response){
+
+            const Object = response.data
+            
+            // Create cabinet object
+            vm.$store.commit('pcmObjects/ADD_Object', {pcmContext:Context, data:Object})
+
+          }).catch(error => { vm.DisplayError(error) })
+
+        // PATCH existing object
+        } else {
+
+          data.object_id = ObjectID
+
+          url = '/api/objects/'+ObjectID
+
+          // POST to objects
+          vm.$http.patch(url, data).then(function(response){
+
+            const Object = response.data
+            
+            // Update cabinet object
+            vm.$store.commit('pcmObjects/UPDATE_Object', {pcmContext:Context, data:Object})
+
+          }).catch(error => { vm.DisplayError(error) })
+        }
       }
     },
   }

@@ -1044,7 +1044,8 @@ export default {
       
       vm.$http.get('/api/objects').then(function(response){
 
-        vm.ObjectData[Context] = response.data
+        vm.$store.commit('pcmObjects/SET_Objects', {pcmContext: Context, data: response.data})
+        vm.$store.commit('pcmObjects/SET_Ready', {pcmContext:Context, ReadyState:true})
       })
     },
     GETPortOrientations: function() {

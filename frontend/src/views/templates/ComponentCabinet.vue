@@ -163,7 +163,8 @@ export default {
     HandleDrop: function(CabinetRU, event) {
 
       const vm = this
-      const Context = event.dataTransfer.getData('context')
+      const Context = vm.Context
+      const ObjectContext = event.dataTransfer.getData('context')
       const ObjectID = event.dataTransfer.getData('object_id')
       const TemplateID = event.dataTransfer.getData('template_id')
       const TemplateFace = event.dataTransfer.getData('template_face')
@@ -185,7 +186,7 @@ export default {
         }
 
         // POST new object
-        if(Context == 'template') {
+        if(ObjectContext == 'template') {
 
           data.template_id = TemplateID
           data.template_face = TemplateFace

@@ -48,6 +48,21 @@ export default {
     },
   },
   methods: {
+    GetCookie(cname) {
+      let name = cname + "="
+      let decodedCookie = decodeURIComponent(document.cookie)
+      let ca = decodedCookie.split(';')
+      for(let i = 0; i <ca.length; i++) {
+        let c = ca[i]
+        while (c.charAt(0) == ' ') {
+          c = c.substring(1)
+        }
+        if (c.indexOf(name) == 0) {
+          return c.substring(name.length, c.length)
+        }
+      }
+      return ""
+    },
     GetLocationNode(NodeID) {
 
       const vm = this
@@ -163,6 +178,21 @@ export default {
           //
         }).catch(error => { vm.DisplayError(error) })
       })
+
+      const SelectedNodeID = vm.GetCookie('environment_location_nodeID')
+      if(SelectedNodeID != "") {
+        // Select previously viewed node
+        let Node = vm.GetLocationNode(SelectedNodeID)
+        Node.select(true)
+        // Expand parent nodes
+        let NodeParentID = Node.data.parent_id
+        while(NodeParentID.toString() !== '0') {
+          let NodeParent = vm.GetLocationNode(NodeParentID)
+          NodeParent.expand()
+          NodeParentID = NodeParent.data.parent_id
+        }
+        
+      }
     })
   }
 }

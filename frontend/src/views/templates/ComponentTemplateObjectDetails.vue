@@ -425,16 +425,11 @@ export default {
 
         const vm = this
         const Context = vm.Context
-        const ObjectID = vm.PartitionAddressSelected[Context].object_id
+        const Object = vm.GetObjectSelected(Context)
         let ReturnString = '-'
 
-        if(Context == 'workspace') {
-          if(ObjectID) {
-            const ObjectIndex = vm.GetObjectIndex(ObjectID)
-            ReturnString = vm.Objects[Context][ObjectIndex].name
-          }
-        } else {
-          ReturnString = 'N/A'
+        if(Object) {
+          return (Context == 'actual') ? Object.name : 'N/A'
         }
 
         return ReturnString
@@ -697,36 +692,79 @@ export default {
 
       const vm = this
       const Context = vm.Context
-      const ObjectID = vm.PartitionAddressSelected[Context].object_id
-      const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
-      const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
-      const TemplateID = Template.id
-      const URL = '/api/templates/'+TemplateID
 
-      vm.$http.delete(URL).then(response => {
-        const PartitionAddressSelected = {
-          Context,
-          object_id: null,
-          template_id: null,
-          front: [0],
-          rear: [0]
-        }
-        vm.$emit('SetPartitionAddressSelected', PartitionAddressSelected)
-        vm.$store.commit('pcmTemplates/REMOVE_Template', {pcmContext:Context, data:response.data})
+      const Object = vm.GetObjectSelected(Context)
+      const ObjectID = Object.id
+      const ObjectName = (Context == 'actual') ? Object.name : 'N/A'
 
-        if(Template.type == 'insert') {
-          const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
-          const Object = vm.Objects[Context][ObjectIndex]
-          const ParentID = Object.parent_id
-          const ParentIndex = vm.GetObjectIndex(ParentID, Context)
-          const Parent = vm.Objects[Context][ParentIndex]
-          const ParentTemplateID = Parent.template_id
-          const ParentTemplateIndex = vm.GetTemplateIndex(ParentTemplateID, Context)
-          const ParentTemplate = vm.Templates[Context][ParentTemplateIndex]
-          vm.$store.commit('pcmTemplates/REMOVE_Template', {pcmContext:Context, data:ParentTemplate})
+      const Template = vm.GetTemplateSelected(Context)
+      const TemplateName = Template.name
+
+      const CategoryID = Template.category_id
+      const CategoryIndex = vm.Categories.findIndex((category) => category.id == CategoryID)
+      const Category = vm.Categories[CategoryIndex]
+      const CategoryName = Category.name
+
+      // Confirm Deletion
+      const DeleteObjectMsg = ObjectName+" ("+TemplateName+")"
+      const DeleteTemplateMsg = TemplateName+" ("+CategoryName+")"
+      const ConfirmMsg = (Context == 'actual') ? DeleteObjectMsg : DeleteTemplateMsg
+      const ConfirmOpts = {
+        title: "Delete?"
+      }
+      vm.$bvModal.msgBoxConfirm(ConfirmMsg, ConfirmOpts).then(result => {
+
+        if (result === true) {
+          // Delete Template
+          if(Context == 'template') {
+
+            const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
+            const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
+            const TemplateID = Template.id
+            const URL = '/api/templates/'+TemplateID
+
+            vm.$http.delete(URL).then(response => {
+              
+              vm.$store.commit('pcmTemplates/REMOVE_Template', {pcmContext:Context, data:response.data})
+
+              if(Template.type == 'insert') {
+                const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
+                const Object = vm.Objects[Context][ObjectIndex]
+                const ParentID = Object.parent_id
+                const ParentIndex = vm.GetObjectIndex(ParentID, Context)
+                const Parent = vm.Objects[Context][ParentIndex]
+                const ParentTemplateID = Parent.template_id
+                const ParentTemplateIndex = vm.GetTemplateIndex(ParentTemplateID, Context)
+                const ParentTemplate = vm.Templates[Context][ParentTemplateIndex]
+                vm.$store.commit('pcmTemplates/REMOVE_Template', {pcmContext:Context, data:ParentTemplate})
+              }
+            }).catch(error => {
+              vm.DisplayError(error)
+            })
+
+          // Delete Object
+          } else {
+
+            const URL = '/api/objects/'+ObjectID
+
+            vm.$http.delete(URL).then(response => {
+
+              vm.$store.commit('pcmObjects/REMOVE_Object', {pcmContext:Context, data:response.data})
+            }).catch(error => {
+              vm.DisplayError(error)
+            })
+          }
+
+          // Clear user selectiong
+          const PartitionAddressSelected = {
+            Context,
+            object_id: null,
+            template_id: null,
+            front: [0],
+            rear: [0]
+          }
+          vm.$emit('SetPartitionAddressSelected', PartitionAddressSelected)
         }
-      }).catch(error => {
-        vm.DisplayError(error)
       })
     },
     CloneTemplate: function() {

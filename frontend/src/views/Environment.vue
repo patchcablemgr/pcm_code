@@ -68,13 +68,13 @@
               v-if=" PreviewDisplay == 'cabinet' "
             >
               <b-form-radio
-                v-model="TemplateFaceSelected.preview"
+                v-model="TemplateFaceSelected.actual"
                 plain
                 value="front"
               >Front
               </b-form-radio>
               <b-form-radio
-                v-model="TemplateFaceSelected.preview"
+                v-model="TemplateFaceSelected.actual"
                 plain
                 value="rear"
               >
@@ -104,11 +104,8 @@
 						Context="actual"
 						:TemplateFaceSelected="TemplateFaceSelected"
 						:PartitionAddressSelected="PartitionAddressSelected"
-            @TemplateObjectEditClicked="TemplateObjectEditClicked()"
-            @TemplateObjectCloneClicked="TemplateObjectCloneClicked()"
-						@TemplateObjectDeleteClicked="TemplateObjectDeleteClicked()"
-            @ObjectEdited="ObjectEdited($event, 'preview')"
-            @TemplateEdited="TemplateEdited($event)"
+            @SetPartitionAddressSelected="SetPartitionAddressSelected($event)"
+            @SetTemplateFaceSelected="SetTemplateFaceSelected($event)"
 					/>
 
           <component-templates
@@ -526,6 +523,18 @@ export default {
       const vm = this
       const NodeID = EmitData.id
       vm.NodeIDSelected = NodeID
+    },
+    SetPartitionAddressSelected: function({Context, object_id, front, rear}) {
+
+      const vm = this
+      vm.PartitionAddressSelected[Context].object_id = object_id
+      vm.PartitionAddressSelected[Context].front = front
+      vm.PartitionAddressSelected[Context].rear = rear
+    },
+    SetTemplateFaceSelected: function({Context, Face}) {
+
+      const vm = this
+      vm.TemplateFaceSelected[Context] = Face
     },
     GetPartition: function(Blueprint, PartitionAddress) {
 			
@@ -984,21 +993,6 @@ export default {
 
       })
     },
-    GetCookie(cname) {
-      let name = cname + "="
-      let decodedCookie = decodeURIComponent(document.cookie)
-      let ca = decodedCookie.split(';')
-      for(let i = 0; i <ca.length; i++) {
-        let c = ca[i]
-        while (c.charAt(0) == ' ') {
-          c = c.substring(1)
-        }
-        if (c.indexOf(name) == 0) {
-          return c.substring(name.length, c.length)
-        }
-      }
-      return ""
-    },
     GETCategories: function() {
 
       const vm = this
@@ -1053,7 +1047,8 @@ export default {
       const vm = this;
 
       this.$http.get('/api/port-orientation').then(function(response){
-        vm.PortOrientationData = response.data
+        vm.$store.commit('pcmProps/SET_Orientations', response.data)
+        vm.$store.commit('pcmProps/SET_Ready', {Prop:'orientations', ReadyState:true})
       });
     },
     GETPortConnectors: function() {
@@ -1061,7 +1056,8 @@ export default {
       const vm = this;
 
       vm.$http.get('/api/port-connectors').then(function(response){
-        vm.PortConnectorData = response.data;
+        vm.$store.commit('pcmProps/SET_Connectors', response.data)
+        vm.$store.commit('pcmProps/SET_Ready', {Prop:'connectors', ReadyState:true})
       });
     },
     GETFloorplanTemplates: function() {

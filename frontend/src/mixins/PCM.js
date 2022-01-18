@@ -124,7 +124,7 @@ export const PCM = {
             const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
             let HonorHover
             HonorHover = (vm.Templates[Context][TemplateIndex].id.toString().includes('pseudo')) ? false : true
-            HonorHover = (vm.$route.name == 'environment') ? false : HonorClick
+            HonorHover = (vm.$route.name == 'environment' && Context == 'template') ? false : HonorHover
 
             if(HonorHover) {
                 vm.PartitionAddressHovered[Context][TemplateFaceSelected] = (HoverState) ? PartitionAddress : false
@@ -171,7 +171,7 @@ export const PCM = {
             let HonorClick
             HonorClick = (vm.Templates[Context][TemplateIndex].id.toString().includes('pseudo')) ? false : true
             HonorClick = (Context == 'workspace' && PartitionAddress.length == 0) ? false : HonorClick
-            HonorClick = (vm.$route.name == 'environment') ? false : HonorClick
+            HonorClick = (vm.$route.name == 'environment' && Context == 'template') ? false : HonorClick
       
             if(HonorClick) {
                 vm.PartitionAddressSelected[Context][Face] = PartitionAddress

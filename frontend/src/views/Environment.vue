@@ -59,11 +59,18 @@
           />
         </b-col>
         <b-col
-          v-if=" PreviewDisplay == 'cabinet' "
+          v-if=" PreviewDisplay == 'cabinet' || PreviewDisplay == 'none' "
         >
           <b-card
             title="Cabinet"
           >
+
+            <b-card-body
+              v-if=" PreviewDisplay == 'none' "
+            >
+              Please select a cabinet from the Locations and Cabinets tree.
+            </b-card-body>
+
             <b-card-body
               v-if=" PreviewDisplay == 'cabinet' "
             >
@@ -90,13 +97,14 @@
                 @PartitionHovered=" PartitionHovered($event) "
                 @StandardObjectDropped="StandardObjectDropped($event)"
                 @InsertObjectDropped="InsertObjectDropped($event)"
+                @LocationNodeSelected="LocationNodeSelected($event)"
               />
             </b-card-body>
           </b-card>
 
         </b-col>
         <b-col
-          v-if=" PreviewDisplay == 'cabinet' "
+          v-if=" PreviewDisplay == 'cabinet' || PreviewDisplay == 'none' "
         >
 
           <component-template-Object-details
@@ -115,7 +123,7 @@
             :PartitionAddressHovered="PartitionAddressHovered"
             @PartitionClicked="PartitionClicked($event)"
             @PartitionHovered="PartitionHovered($event)"
-            @TemplateFaceChanged="TemplateFaceChanged($event)"
+            @SetTemplateFaceSelected="SetTemplateFaceSelected($event)"
           />
 
         </b-col>
@@ -124,15 +132,6 @@
 
     <!-- Toast -->
     <toast-general/>
-
-    <!-- Context Menu -->
-    <vue-simple-context-menu
-      :elementId="'myUniqueId'"
-      :options="MenuOptions"
-      :ref="'vueSimpleContextMenu'"
-      @option-clicked="optionClicked"
-      class="context_menu_option"
-    />
 
   </div>
 </template>
@@ -159,49 +158,10 @@ import ComponentCabinet from './templates/ComponentCabinet.vue'
 import ComponentTemplateObjectDetails from './templates/ComponentTemplateObjectDetails.vue'
 import ComponentTemplates from './templates/ComponentTemplates.vue'
 import ModalTemplatesEdit from './templates/ModalTemplatesEdit.vue'
-import LiquorTree from 'liquor-tree'
-import 'vue-simple-context-menu/dist/vue-simple-context-menu.css'
-import VueSimpleContextMenu from 'vue-simple-context-menu'
 import { PCM } from '@/mixins/PCM.js'
 import ComponentFloorplan from './templates/ComponentFloorplan.vue'
 import ComponentFloorplanObjects from './templates/ComponentFloorplanObjects.vue'
 import ComponentFloorplanObjectDetails from './templates/ComponentFloorplanObjectDetails.vue'
-
-const MenuOptions = [
-  {
-    "name": "Rename",
-    "action": "rename",
-  },
-  {
-    "type": "divider",
-  },
-  {
-    "name": "New Location",
-    "action": "location",
-  },
-  {
-    "name": "New Pod",
-    "action": "pod",
-  },
-  {
-    "type": "divider",
-  },
-  {
-    "name": "New Cabinet",
-    "action": "cabinet",
-  },
-  {
-    "name": "New Floorplan",
-    "action": "floorplan",
-  },
-  {
-    "type": "divider",
-  },
-  {
-    "name": "Delete",
-    "action": "delete",
-  }
-]
 
 const LocationData = []
 
@@ -366,8 +326,6 @@ export default {
     ComponentCabinet,
     ComponentTemplateObjectDetails,
     ComponentTemplates,
-    LiquorTree,
-    VueSimpleContextMenu,
     ModalTemplatesEdit,
     ComponentFloorplan,
     ComponentFloorplanObjects,
@@ -378,7 +336,6 @@ export default {
 	},
   data() {
     return {
-      MenuOptions,
       LocationData,
       CabinetData,
       CategoryData,
@@ -433,17 +390,15 @@ export default {
     FloorplanImage: function() {
       
       const vm = this
+      const Context = 'actual'
       const NodeID = vm.NodeIDSelected
       let NodeFloorplanImage = null
 
       if(NodeID) {
 
-        const Criteria = {
-          "id": NodeID.toString()
-        }
-        const SelectedNode = vm.$refs.LiquorTree.find(Criteria)[0]
-        const NodeType = SelectedNode.data.type
-        NodeFloorplanImage = SelectedNode.data.img
+        const NodeIndex = vm.GetLocationIndex(NodeID, Context)
+        const Node = vm.Locations[Context][NodeIndex]
+        NodeFloorplanImage = Node.img
       }
 
       return NodeFloorplanImage
@@ -579,7 +534,7 @@ export default {
         const Criteria = {
           "id": LocationID.toString()
         }
-        const SelectedNode = vm.$refs.LiquorTree.find(Criteria)[0]
+        const SelectedNode = vm.$refs.LocationTree.find(Criteria)[0]
         SelectedNode.data.img = response.data.img
 
       }).catch(error => {
@@ -596,15 +551,6 @@ export default {
 
       const vm = this
       vm.$bvModal.show('modal-templates-edit')
-
-    },
-    TemplateFaceChanged: function(EmitData) {
-
-      // Store variables
-      const vm = this
-      const TemplateFace = EmitData.TemplateFace
-      const Context = EmitData.Context
-      vm.TemplateFaceSelected[Context] = TemplateFace
 
     },
     ObjectEdited: function(EmitData, Context='preview') {
@@ -897,102 +843,6 @@ export default {
 					}
         })
 		},
-    handleClick (event, node) {
-      this.$refs.vueSimpleContextMenu.showMenu(event, node)
-    },
-    optionClicked (event) {
-
-      const vm = this
-      const Action = event.option.action
-      const NodeID = event.item.node_id
-
-      if(Action == 'rename') {
-
-        // Rename location
-        const Criteria = {
-          "id": NodeID.toString()
-        }
-        Node = vm.$refs.LiquorTree.find(Criteria)[0]
-        Node.startEditing()
-      } else if(Action == 'delete') {
-
-        // Delete location
-        const url = '/api/locations/'+NodeID
-
-        // DELETE category form data
-        vm.$http.delete(url).then(function(response){
-
-          // Clear node selection
-          vm.NodeIDSelected = null
-
-          const ReturnedLocationID = response.data.id
-
-          // Delete node from tree
-          const Criteria = {
-            "id": ReturnedLocationID.toString()
-          }
-          let Node = vm.$refs.LiquorTree.find(Criteria)[0]
-          Node.remove()
-          
-        }).catch(error => {
-
-          // Display error to user via toast
-          vm.$bvToast.toast(JSON.stringify(error.response.data), {
-            title: 'Error',
-            variant: 'danger',
-          })
-
-        });
-      } else {
-
-        // Add location
-        vm.AddLocation(NodeID, Action)
-      }
-    },
-    AddLocation: function(ParentID, Type) {
-
-      // Store data
-      const vm = this
-      const url = '/api/locations'
-      const data = {
-        "parent_id": ParentID,
-        "type": Type
-      }
-
-      // POST to locations
-      vm.$http.post(url, data).then(function(response){
-
-        const Node = response.data
-        
-        // Create child node object
-        const Child = {
-          "id": Node.id,
-          "text": Node.name,
-          "data": {
-            "type": Node.type,
-            "icon": vm.GetNodeIcon(Node.type),
-            "parent_id": Node.parent_id,
-            "img": Node.img,
-          },
-        }
-
-        // Append child node object to parent
-        const Criteria = {
-          "id": ParentID.toString()
-        }
-        let ParentNode = vm.$refs.LiquorTree.find(Criteria)[0]
-        ParentNode.append(Child)
-
-      }).catch(error => {
-
-        // Display error to user via toast
-        vm.$bvToast.toast(JSON.stringify(error.response.data), {
-          title: 'Error',
-          variant: 'danger',
-        })
-
-      })
-    },
     GETCategories: function() {
 
       const vm = this

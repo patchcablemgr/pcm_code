@@ -94,7 +94,8 @@ import {
 } from 'bootstrap-vue'
 import Ripple from 'vue-ripple-directive'
 import { PCM } from '../../mixins/PCM.js'
-import ModalEditObjectName from './ModalEditObjectName.vue'
+import ModalEditObjectName from '@/views/templates/ModalEditObjectName.vue'
+import ModalPortSelect from '@/views/templates/ModalPortSelect.vue'
 
 export default {
   mixins: [PCM],
@@ -109,6 +110,7 @@ export default {
 
     VBModal,
     ModalEditObjectName,
+    ModalPortSelect,
   },
 	directives: {
 		Ripple,

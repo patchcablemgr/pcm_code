@@ -115,7 +115,7 @@ export default {
 
           // Get category index
           const ObjectCategoryID = Template.category_id
-          const ObjectCategoryIndex = vm.Categories.findIndex((category) => category.id == ObjectCategoryID);
+          const ObjectCategoryIndex = vm.Categories.findIndex((category) => category.id == ObjectCategoryID)
 
           // Get category
           const Category = vm.Categories[ObjectCategoryIndex]

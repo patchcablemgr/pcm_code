@@ -394,6 +394,7 @@ export default {
       vm.$http.get('/api/categories')
       .then(response => {
         vm.$store.commit('pcmCategories/SET_Categories', response.data)
+        vm.SetDefaultCategory()
         vm.$store.commit('pcmCategories/SET_Ready', true)
       }).catch(error => {
         vm.DisplayError(error)
@@ -473,23 +474,12 @@ export default {
     }
   },
   watch: {
-    Categories: {
-      handler() {
-
-        const vm = this
-
-        if(vm.CategoriesWatcherActive) {
-
-          vm.CategoriesWatcherActive = false
-          vm.SetDefaultCategory()
-          
-        }
-      }
-    },
   },
   mounted() {
 
     const vm = this
+
+    vm.$store.commit('pcmCategories/SET_Ready', false)
     
     vm.GETObjects()
     vm.GETLocations()

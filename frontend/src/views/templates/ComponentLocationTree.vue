@@ -1,29 +1,78 @@
 <template>
-  <liquor-tree
-    ref="LocationTree"
-    :data="[]"
-    :options="LocationTreeOptions"
-  >
-    <span class="tree-text" slot-scope="{ node }" style="width:100%;">
-      <template>
-        <div @contextmenu.prevent.stop="handleClick($event, {'node_id': node.id})">
-          <feather-icon :icon="node.data.icon" />
-          {{ node.text }}
-        </div>
-      </template>
-    </span>
-  </liquor-tree>
+  <div>
+    <liquor-tree
+      ref="LocationTree"
+      :data="[]"
+      :options="LocationTreeOptions"
+    >
+      <span class="tree-text" slot-scope="{ node }" style="width:100%;">
+        <template>
+          <div @contextmenu.prevent.stop="handleClick($event, {'node_id': node.id})">
+            <feather-icon :icon="node.data.icon" />
+            {{ node.text }}
+          </div>
+        </template>
+      </span>
+    </liquor-tree>
+
+    <!-- Context Menu -->
+    <vue-simple-context-menu
+      :elementId="'myUniqueId'"
+      :options="MenuOptions"
+      :ref="'vueSimpleContextMenu'"
+      @option-clicked="optionClicked"
+      class="context_menu_option"
+    />
+  </div>
 </template>
 
 <script>
 import { BContainer, BRow, BCol, } from 'bootstrap-vue'
 import LiquorTree from 'liquor-tree'
+import 'vue-simple-context-menu/dist/vue-simple-context-menu.css'
+import VueSimpleContextMenu from 'vue-simple-context-menu'
 import { PCM } from '@/mixins/PCM.js'
 
 const LocationTreeOptions = {
   "dnd": true,
   "multiples": false,
 }
+
+const MenuOptions = [
+  {
+    "name": "Rename",
+    "action": "rename",
+  },
+  {
+    "type": "divider",
+  },
+  {
+    "name": "New Location",
+    "action": "location",
+  },
+  {
+    "name": "New Pod",
+    "action": "pod",
+  },
+  {
+    "type": "divider",
+  },
+  {
+    "name": "New Cabinet",
+    "action": "cabinet",
+  },
+  {
+    "name": "New Floorplan",
+    "action": "floorplan",
+  },
+  {
+    "type": "divider",
+  },
+  {
+    "name": "Delete",
+    "action": "delete",
+  }
+]
 
 export default {
   mixins: [PCM],
@@ -33,6 +82,7 @@ export default {
     BCol,
 
     LiquorTree,
+    VueSimpleContextMenu,
   },
   props: {
     Context: {type: String},
@@ -40,6 +90,7 @@ export default {
   data() {
     return {
       LocationTreeOptions,
+      MenuOptions
     }
   },
   computed: {
@@ -116,6 +167,89 @@ export default {
       
       return
     },
+    optionClicked (event) {
+
+      const vm = this
+      const Context = vm.Context
+      const Action = event.option.action
+      const NodeID = event.item.node_id
+
+      if(Action == 'rename') {
+
+        // Rename location
+        const Criteria = {
+          "id": NodeID.toString()
+        }
+        Node = vm.$refs.LocationTree.find(Criteria)[0]
+        Node.startEditing()
+
+      } else if(Action == 'delete') {
+
+        // Delete location
+        const url = '/api/locations/'+NodeID
+
+        // DELETE category form data
+        vm.$http.delete(url).then(function(response){
+
+          // Remove node from store
+          vm.$store.commit('pcmLocations/REMOVE_Location', response.data)
+
+          // Clear node selection
+          vm.$emit('LocationNodeSelected', {id:null})
+
+          const ReturnedLocationID = response.data.id
+
+          // Delete node from tree
+          const Criteria = {
+            "id": ReturnedLocationID.toString()
+          }
+          let Node = vm.$refs.LocationTree.find(Criteria)[0]
+          Node.remove()
+          
+        }).catch(error => {vm.DisplayError(error)})
+
+      } else {
+
+        // Add location
+        const url = '/api/locations'
+        const data = {
+          "parent_id": NodeID,
+          "type": Action
+        }
+
+        // POST to locations
+        vm.$http.post(url, data).then(function(response){
+
+          const Node = response.data
+
+          // Add node to store
+          vm.$store.commit('pcmLocations/ADD_Location', {pcmContext:Context, data:Node})
+          
+          // Create child node object
+          const Child = {
+            "id": Node.id,
+            "text": Node.name,
+            "data": {
+              "type": Node.type,
+              "icon": vm.GetNodeIcon(Node.type),
+              "parent_id": Node.parent_id,
+              "img": Node.img,
+            },
+          }
+
+          // Append child node object to parent
+          const Criteria = {
+            "id": NodeID.toString()
+          }
+          let ParentNode = vm.$refs.LocationTree.find(Criteria)[0]
+          ParentNode.append(Child)
+
+        }).catch(error => {vm.DisplayError(error)})
+      }
+    },
+    handleClick (event, node) {
+      this.$refs.vueSimpleContextMenu.showMenu(event, node)
+    },
   },
   mounted() {
 
@@ -154,7 +288,10 @@ export default {
 
         // PATCH category form data
         vm.$http.patch(url, data).then(function(response){
-          //
+          
+          // Update node from store
+          vm.$store.commit('pcmLocations/UPDATE_Location', {pcmContext:Context, data:response.data})
+
         }).catch(error => { vm.DisplayError(error) })
       })
 

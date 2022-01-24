@@ -107,6 +107,61 @@ export const PCM = {
 
             return LocationIndex
         },
+        GetLocationNode(NodeID) {
+
+            const vm = this
+            const TreeRef = vm.TreeRef
+        
+            const Criteria = {
+                "id": NodeID.toString()
+            }
+            let Node = vm.$refs[TreeRef].find(Criteria)[0]
+        
+            return Node
+        },
+        BuildLocationTree: function(Parent){
+
+            const vm = this
+            const TreeRef = vm.TreeRef
+            const Context = vm.Context
+            Parent = (Parent !== undefined) ? Parent : { id: 0 }
+            const ParentID = Parent.id
+            const ChildrenFiltered = vm.Locations[Context].filter(location => location.parent_id == ParentID)
+            const ChildrenData = []
+        
+            ChildrenFiltered.forEach(function(child) {
+                const ChildData = {
+                "id": child.id,
+                "text": child.name,
+                "data": {
+                    "type": child.type,
+                    "icon": vm.GetNodeIcon(child.type),
+                    "parent_id": child.parent_id,
+                    "img": child.img,
+                },
+                }
+                ChildrenData.push(ChildData)
+            })
+        
+            if(ChildrenData.length) {
+                
+                ChildrenData.forEach(function(child) {
+        
+                if(ParentID == 0) {
+        
+                    vm.$refs[TreeRef].append(child)
+                } else {
+        
+                    let ParentNode = vm.GetLocationNode(ParentID)
+                    ParentNode.append(child)
+                }
+                })
+        
+                ChildrenData.forEach(child => vm.BuildLocationTree(child))                
+            }
+            
+            return
+        },
 
 // Partition
         PartitionHovered: function(EmitData) {

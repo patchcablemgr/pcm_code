@@ -25,7 +25,7 @@
               </b-button>
             </td>
             <td>
-              {{ComputedObjectName}}
+              {{ObjectName}}
             </td>
           </tr>
           <tr>
@@ -35,7 +35,7 @@
             <td>
             </td>
             <td>
-              {{ComputedTemplateName}}
+              {{TemplateName}}
             </td>
           </tr>
           <tr>
@@ -66,16 +66,13 @@
     <!-- Modal Edit Object Name -->
     <modal-edit-object-name
       ModalTitle="Object Name"
-      :NameValue="ComputedObjectName"
+      :NameValue="ObjectName"
       @NameEdited=" $emit('ObjectEdited', $event) "
     />
 
     <!-- Modal Port Select -->
     <modal-port-select
       ModalTitle="ObjectName"
-      :ObjectData="ObjectData"
-      :TemplateData="TemplateData"
-      :LocationData="LocationData"
     />
 
   </div>
@@ -93,7 +90,7 @@ import {
   VBModal,
 } from 'bootstrap-vue'
 import Ripple from 'vue-ripple-directive'
-import { PCM } from '../../mixins/PCM.js'
+import { PCM } from '@/mixins/PCM.js'
 import ModalEditObjectName from '@/views/templates/ModalEditObjectName.vue'
 import ModalPortSelect from '@/views/templates/ModalPortSelect.vue'
 
@@ -117,10 +114,8 @@ export default {
     'b-modal': VBModal,
 	},
   props: {
+    Context: {type: String},
     FloorplanTemplateData: {type: Array},
-    ObjectData: {type: Object},
-    TemplateData: {type: Object},
-    LocationData: {type: Array},
     PartitionAddressSelected: {type: Object},
   },
   data() {
@@ -128,36 +123,48 @@ export default {
     }
   },
   computed: {
+    FloorplanTemplates() {
+      return this.$store.state.pcmFloorplanTemplates.FloorplanTemplates
+    },
+    Objects() {
+      return this.$store.state.pcmObjects.Objects
+    },
+    Locations() {
+      return this.$store.state.pcmLocations.Locations
+    },
     ComputedObjectSelected: function() {
 
       const vm = this
       return (vm.PartitionAddressSelected.floorplan.object_id) ? true : false
     },
-    ComputedObjectName: function() {
+    ObjectName: function() {
 
       const vm = this
+      const Context = vm.Context
       const ObjectID = vm.PartitionAddressSelected.floorplan.object_id
       let ObjectName = '-'
 
       if(ObjectID) {
-        const ObjectIndex = vm.GetObjectIndex(ObjectID, 'preview')
-        const Object = vm.ObjectData.preview[ObjectIndex]
+        const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
+        const Object = vm.Objects[Context][ObjectIndex]
         ObjectName = Object.name
       }
 
       return ObjectName
     },
-    ComputedTemplateName: function() {
+    TemplateName: function() {
 
       const vm = this
+      const Context = vm.Context
       const ObjectID = vm.PartitionAddressSelected.floorplan.object_id
       let TemplateName = '-'
 
       if(ObjectID) {
-        const ObjectIndex = vm.GetObjectIndex(ObjectID, 'preview')
-        const Object = vm.ObjectData.preview[ObjectIndex]
-        const ObjectTemplateType = Object.floorplan_object_type
-        const FloorplanTemplate = vm.FloorplanTemplateData.find((template) => template.type == ObjectTemplateType)
+        const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
+        const Object = vm.Objects[Context][ObjectIndex]
+        const FloorplanObjectType = Object.floorplan_object_type
+        const FloorplanTemplateIndex = vm.FloorplanTemplates.findIndex((floorplanTemplate) => floorplanTemplate.type == FloorplanObjectType)
+        const FloorplanTemplate = vm.FloorplanTemplates[FloorplanTemplateIndex]
 
         TemplateName = FloorplanTemplate.name
       }

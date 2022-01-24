@@ -16,8 +16,8 @@
 
               <liquor-tree
                 ref="PortSelectTree"
-                :data="TreeData"
-                :options="TreeOptions"
+                :data="[]"
+                :options="LocationTreeOptions"
               >
                 <span class="tree-text" slot-scope="{ node }" style="width:100%;">
                   <template>
@@ -43,13 +43,10 @@ import {
   BCard,
   BCardBody,
 } from 'bootstrap-vue'
-import { PCM } from '../../mixins/PCM.js'
+import { PCM } from '@/mixins/PCM.js'
 import LiquorTree from 'liquor-tree'
 
-const TreeData = []
-
-const TreeOptions = {
-  "dnd": true,
+const LocationTreeOptions = {
   "multiples": false,
 }
 
@@ -65,64 +62,24 @@ export default {
   directives: {},
   props: {
     ModalTitle: {type: String},
-    ObjectData: {type: Object},
-    TemplateData: {type: Object},
-    LocationData: {type: Array},
   },
   data () {
     return {
-      TreeData,
-      TreeOptions
+      LocationTreeOptions
     }
   },
   computed: {
+    Templates() {
+      return this.$store.state.pcmTemplates.Templates
+    },
+    Objects() {
+      return this.$store.state.pcmObjects.Objects
+    },
+    Locations() {
+      return this.$store.state.pcmLocations.Locations
+    },
   },
   methods: {
-    BuildLocationTree: function(array, Parent){
-
-      const vm = this
-      Parent = typeof Parent !== 'undefined' ? Parent : { id: 0 }
-      const ParentID = Parent.id
-      const ChildrenFiltered = array.filter(location => location.parent_id == ParentID)
-      const ChildrenData = []
-
-      ChildrenFiltered.forEach(function(child) {
-        const ChildData = {
-          "id": child.id,
-          "text": child.name,
-          "data": {
-            "type": child.type,
-            "icon": vm.GetNodeIcon(child.type),
-            "parent_id": child.parent_id,
-            "img": child.img,
-          },
-        }
-        ChildrenData.push(ChildData)
-      })
-
-      if(ChildrenData.length) {
-        
-        ChildrenData.forEach(function(child) {
-
-          if(ParentID == 0) {
-
-            vm.TreeData.push(child)
-          } else {
-
-            let ParentNode = vm.GetLocationNode(ParentID)
-            if(ParentNode.hasOwnProperty('children')) {
-              ParentNode.children.push(child)
-            } else {
-              ParentNode.children = [child]
-            }
-          }
-        })
-
-        ChildrenData.forEach(child => vm.BuildLocationTree(array, child))                
-      }
-      
-      return
-    },
     GetLocationNode(NodeID, Tree=false) {
 
       const vm = this
@@ -139,21 +96,10 @@ export default {
         return Node
       }
     },
-    GETLocations: function () {
-
-      const vm = this
-      
-      vm.$http.get('/api/locations').then(function(response){
-
-        vm.BuildLocationTree(response.data)
-
-      })
-    },
   },
   mounted() {
 
     const vm = this
-    vm.GETLocations()
   },
 }
 </script>

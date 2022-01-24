@@ -17,7 +17,7 @@
       <!-- Templates -->
       <app-collapse>
         <app-collapse-item
-          v-for="FloorplanTemplate in FloorplanTemplateData"
+          v-for="FloorplanTemplate in FloorplanTemplates"
           :key="FloorplanTemplate.id"
           :title="FloorplanTemplate.name+' ('+FloorplanObjectsCount(FloorplanTemplate.type)+')'"
         >
@@ -60,8 +60,8 @@ export default {
     BListGroupItem,
   },
   props: {
-    FloorplanTemplateData: {type: Array},
-    ObjectData: {type: Object},
+    Context: {type: String},
+    NodeIDSelected: {type: Number},
     PartitionAddressSelected: {type: Object},
   },
   data() {
@@ -70,6 +70,21 @@ export default {
     }
   },
   computed: {
+    FloorplanTemplates() {
+      return this.$store.state.pcmFloorplanTemplates.FloorplanTemplates
+    },
+    Objects() {
+      return this.$store.state.pcmObjects.Objects
+    },
+    FloorplanObjects: function() {
+
+      const vm = this
+      const Context = vm.Context
+      const LocationID = vm.NodeIDSelected
+      const FloorplanObjects = vm.Objects[Context].filter((object) => object.location_id == LocationID )
+
+      return FloorplanObjects
+    },
     SelectedFloorplanObjectID: function() {
 
       const vm = this
@@ -81,9 +96,8 @@ export default {
 
       // Store data
       const vm = this
-      const Context = 'preview'
 
-      const FilteredFloorplanObjects = vm.ObjectData[Context].filter(object => object.floorplan_object_type == FloorplanTemplateType)
+      const FilteredFloorplanObjects = vm.FloorplanObjects.filter(object => object.floorplan_object_type == FloorplanTemplateType)
 
       return FilteredFloorplanObjects.length
 
@@ -91,8 +105,8 @@ export default {
     FilteredFloorplanObjects: function(FloorplanTemplateType){
 
       const vm = this
-      const Context = 'preview'
-      const FilteredFloorplanObjects = vm.ObjectData[Context].filter(function(object) {
+      const Context = vm.Context
+      const FilteredFloorplanObjects = vm.FloorplanObjects.filter(function(object) {
 
         let match = false
 

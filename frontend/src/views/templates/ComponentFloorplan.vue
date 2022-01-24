@@ -9,7 +9,7 @@
           <div class="demo-inline-spacing">
 
             <div
-              v-for="FloorplanTemplate in FloorplanTemplateData"
+              v-for="FloorplanTemplate in FloorplanTemplates"
               :key="FloorplanTemplate.id"
               style="display: flex;"
             >
@@ -60,7 +60,7 @@
               pcm_template_partition_selected: FloorplanIsSelected(FloorplanObject.id),
               pcm_template_partition_hovered: FloorplanIsHovered(FloorplanObject.id),
             }"
-            @dragstart.stop="StartDrag({ 'context': 'floorplan', 'floorplan_object_id': FloorplanObject.id }, $event)"
+            @dragstart.stop="StartDrag({ 'context': 'actual', 'floorplan_object_id': FloorplanObject.id }, $event)"
             @click.stop=" $emit('FloorplanClicked', {'object_id': FloorplanObject.id}) "
             @mouseover.stop=" $emit('FloorplanHovered', {'object_id': FloorplanObject.id, 'hover_state': true}) "
             @mouseleave.stop=" $emit('FloorplanHovered', {'object_id': FloorplanObject.id, 'hover_state': false}) "
@@ -117,12 +117,11 @@ export default {
     ModalFileUpload,
   },
   props: {
+    Context: {type: String},
     FloorplanImage: {type: String},
     File: {type: File},
-    CabinetData: {type: Object},
+    NodeIDSelected: {type: Number},
     ObjectData: {type: Object},
-    Context: {type: String},
-    FloorplanTemplateData: {type: Array},
     PartitionAddressSelected: {type: Object},
     PartitionAddressHovered: {type: Object},
   },
@@ -134,12 +133,18 @@ export default {
     }
   },
   computed: {
+    FloorplanTemplates() {
+      return this.$store.state.pcmFloorplanTemplates.FloorplanTemplates
+    },
+    Objects() {
+      return this.$store.state.pcmObjects.Objects
+    },
     FloorplanObjects: function() {
 
       const vm = this
-      const LocationID = vm.CabinetData.id
-      const ObjectData = vm.ObjectData.preview
-      const FloorplanObjects = ObjectData.filter((object) => object.location_id == LocationID )
+      const Context = vm.Context
+      const LocationID = vm.NodeIDSelected
+      const FloorplanObjects = vm.Objects[Context].filter((object) => object.location_id == LocationID )
 
       return FloorplanObjects
     }
@@ -148,10 +153,13 @@ export default {
     GetFloorplanIcon: function(FloorplanObjectID) {
 
       const vm = this
-      const ObjectData = vm.ObjectData.preview
-      const FloorplanObject = ObjectData.find((object) => object.id == FloorplanObjectID )
-      const FloorplanObjectType = FloorplanObject.floorplan_object_type
-      const FloorplanTemplate = vm.FloorplanTemplateData.find((template) => template.type == FloorplanObjectType )
+      const Context = vm.Context
+
+      const ObjectIndex = vm.GetObjectIndex(FloorplanObjectID, Context)
+      const Object = vm.Objects[Context][ObjectIndex]
+      const FloorplanObjectType = Object.floorplan_object_type
+      const FloorplanTemplateIndex = vm.FloorplanTemplates.findIndex((floorplanTemplate) => floorplanTemplate.type == FloorplanObjectType)
+      const FloorplanTemplate = vm.FloorplanTemplates[FloorplanTemplateIndex]
       const FloorplanTemplateIcon = FloorplanTemplate.icon
 
       return FloorplanTemplateIcon
@@ -176,7 +184,7 @@ export default {
 
         e.dataTransfer.setData('floorplan_object_type', TransferData.floorplan_object_type)
 
-      } else if(Context == 'floorplan') {
+      } else if(Context == 'actual') {
 
         e.dataTransfer.setData('floorplan_object_id', TransferData.floorplan_object_id)
 
@@ -193,7 +201,8 @@ export default {
 
       // Store data
       const vm = this
-      const Context = event.dataTransfer.getData('context')
+      const Context = vm.Context
+      const TemplateContext = event.dataTransfer.getData('context')
       const CursorOffsetX = event.dataTransfer.getData('cursor_offset_x')
       const CursorOffsetY = event.dataTransfer.getData('cursor_offset_y')
       const ElemOffsetX = event.offsetX
@@ -202,28 +211,46 @@ export default {
       const PosY = parseInt(ElemOffsetY) - parseInt(CursorOffsetY)
       const FloorplanAddress = [PosX, PosY]
       
+      let url
       let data = {
-        "context": Context,
         "floorplan_address": FloorplanAddress,
       }
 
-      if(Context == 'template') {
+      if(TemplateContext == 'template') {
 
-        const LocationID = vm.CabinetData.id
+        const LocationID = vm.NodeIDSelected
         const FloorplanObjectType = event.dataTransfer.getData('floorplan_object_type')
 
         data.location_id = LocationID
         data.floorplan_object_type = FloorplanObjectType
 
-      } else if(Context == 'floorplan') {
+        url = '/api/objects/floorplan'
+
+        // POST to objects
+        vm.$http.post(url, data).then(function(response){
+          
+          // Add floorplan object
+          vm.$store.commit('pcmObjects/ADD_Object', {pcmContext:Context, data:response.data})
+
+        }).catch(error => { vm.DisplayError(error) })
+
+      } else if(TemplateContext == 'actual') {
 
         const FloorplanObjectID = event.dataTransfer.getData('floorplan_object_id')
 
         data.floorplan_object_id = FloorplanObjectID
 
-      }
+        url = '/api/objects/'+FloorplanObjectID
 
-      vm.$emit('FloorplanObjectDropped', data )
+        // PATCH to objects
+        vm.$http.patch(url, data).then(function(response){
+          
+          // Update floorplan object
+          vm.$store.commit('pcmObjects/UPDATE_Object', {pcmContext:Context, data:response.data})
+
+        }).catch(error => { vm.DisplayError(error) })
+
+      }
     },
   }
 }

@@ -11,6 +11,7 @@
             <b-card-body>
               <component-location-tree
                 Context="actual"
+                TreeRef="LocationsAndCabinetsTree"
                 @LocationNodeSelected="LocationNodeSelected($event)"
               />
             </b-card-body>
@@ -18,10 +19,7 @@
 
           <component-floorplan-object-details
             v-if=" PreviewDisplay == 'floorplan' "
-            :FloorplanTemplateData="FloorplanTemplateData"
-            :ObjectData="ObjectData"
-            :TemplateData="TemplateData"
-            :LocationData="LocationData"
+            Context="actual"
             :PartitionAddressSelected="PartitionAddressSelected"
             @FloorplanClicked=" FloorplanClicked($event) "
             @FloorplanHovered=" FloorplanHovered($event) "
@@ -30,8 +28,8 @@
 
           <component-floorplan-objects
             v-if=" PreviewDisplay == 'floorplan' "
-            :FloorplanTemplateData="FloorplanTemplateData"
-            :ObjectData="ObjectData"
+            Context="actual"
+            :NodeIDSelected="NodeIDSelected"
             :PartitionAddressSelected="PartitionAddressSelected"
             @FloorplanClicked=" FloorplanClicked($event) "
             @FloorplanHovered=" FloorplanHovered($event) "
@@ -43,17 +41,15 @@
           v-if=" PreviewDisplay == 'floorplan' "
         >
           <component-floorplan
+            Context="actual"
             :FloorplanImage="FloorplanImage"
             :File="File"
-            :CabinetData="CabinetData"
+            :NodeIDSelected="NodeIDSelected"
             :ObjectData="ObjectData"
-            Context="preview"
-            :FloorplanTemplateData="FloorplanTemplateData"
             :PartitionAddressSelected="PartitionAddressSelected"
             :PartitionAddressHovered="PartitionAddressHovered"
             @FloorplanClicked=" FloorplanClicked($event) "
             @FloorplanHovered=" FloorplanHovered($event) "
-            @FloorplanObjectDropped="FloorplanObjectDropped($event)"
             @FileSelected="FileSelected($event)"
             @FileSubmitted="FileSubmitted()"
           />
@@ -163,25 +159,10 @@ import ComponentFloorplan from './templates/ComponentFloorplan.vue'
 import ComponentFloorplanObjects from './templates/ComponentFloorplanObjects.vue'
 import ComponentFloorplanObjectDetails from './templates/ComponentFloorplanObjectDetails.vue'
 
-const LocationData = []
-
-const CabinetData = {
-  "id": 0,
-  "size": 25,
-  "name": "Cabinet",
-}
-
 const ObjectData = {
   'preview': [],
   'template': [],
 }
-
-const CategoryData = [
-  {
-    "id": 0,
-    "color": "#FFFFFFFF",
-  }
-]
 
 const PortConnectorData = [
   {
@@ -301,8 +282,6 @@ const MediaData = [
   }
 ]
 
-const FloorplanTemplateData = []
-
 const NodeIDSelected = null
 
 export default {
@@ -336,9 +315,6 @@ export default {
 	},
   data() {
     return {
-      LocationData,
-      CabinetData,
-      CategoryData,
       ObjectData,
       TemplateData,
       TemplateFaceSelected,
@@ -349,7 +325,6 @@ export default {
       NodeIDSelected,
       PortOrientationData,
       MediaData,
-      FloorplanTemplateData,
       PortConnectorData,
       File: null,
     }
@@ -381,8 +356,14 @@ export default {
     CategoriesReady: function() {
       return this.$store.state.pcmCategories.CategoriesReady
     },
+    Templates() {
+      return this.$store.state.pcmTemplates.Templates
+    },
     TemplatesReady: function() {
       return this.$store.state.pcmTemplates.TemplatesReady
+    },
+    Objects() {
+      return this.$store.state.pcmObjects.Objects
     },
     ObjectsReady: function() {
       return this.$store.state.pcmObjects.ObjectsReady
@@ -579,70 +560,6 @@ export default {
         })
 
       });
-    },
-    FloorplanObjectDropped: function(EmitData) {
-
-      const vm = this
-      const Context = EmitData.context
-      const FloorplanAddress = EmitData.floorplan_address
-      let data = {}
-      let url
-
-      data.floorplan_address = FloorplanAddress
-
-      // POST new object
-      if(Context == 'template') {
-
-        const LocationID = EmitData.location_id
-        const FloorplanObjectType = EmitData.floorplan_object_type
-
-        data.location_id = LocationID
-        data.floorplan_object_type = FloorplanObjectType
-
-        url = '/api/objects/floorplan'
-
-        // POST to objects
-        vm.$http.post(url, data).then(function(response){
-
-          const Object = response.data
-          
-          // Create child node object
-          vm.ObjectData.preview.push(Object)
-
-        }).catch(error => {
-
-          // Display error to user via toast
-          vm.$bvToast.toast(JSON.stringify(error.response), {
-            title: 'Error',
-            variant: 'danger',
-          })
-
-        })
-      } else if(Context == 'floorplan') {
-
-        const FloorplanObjectID = EmitData.floorplan_object_id
-
-        url = '/api/objects/'+FloorplanObjectID
-
-        // PATCH to objects
-        vm.$http.patch(url, data).then(function(response){
-
-          const Object = response.data
-          const ObjectIndex = vm.GetObjectIndex(FloorplanObjectID, 'preview')
-          
-          // Create child node object
-          vm.$set(vm.ObjectData.preview, ObjectIndex, Object)
-
-        }).catch(error => {
-
-          // Display error to user via toast
-          vm.$bvToast.toast(JSON.stringify(error.response), {
-            title: 'Error',
-            variant: 'danger',
-          })
-
-        })
-      }
     },
     InsertObjectDropped: function(EmitData) {
 
@@ -894,29 +811,30 @@ export default {
     },
     GETPortOrientations: function() {
 
-      const vm = this;
+      const vm = this
 
       this.$http.get('/api/port-orientation').then(function(response){
         vm.$store.commit('pcmProps/SET_Orientations', response.data)
         vm.$store.commit('pcmProps/SET_Ready', {Prop:'orientations', ReadyState:true})
-      });
+      })
     },
     GETPortConnectors: function() {
 
-      const vm = this;
+      const vm = this
 
       vm.$http.get('/api/port-connectors').then(function(response){
         vm.$store.commit('pcmProps/SET_Connectors', response.data)
         vm.$store.commit('pcmProps/SET_Ready', {Prop:'connectors', ReadyState:true})
-      });
+      })
     },
     GETFloorplanTemplates: function() {
 
-      const vm = this;
+      const vm = this
 
       vm.$http.get('/api/floorplan-templates').then(function(response){
-        vm.FloorplanTemplateData = response.data;
-      });
+        vm.$store.commit('pcmFloorplanTemplates/SET_FloorplanTemplates', {data: response.data})
+        vm.$store.commit('pcmFloorplanTemplates/SET_Ready', {ReadyState:true})
+      })
     },
     GETLocations() {
 

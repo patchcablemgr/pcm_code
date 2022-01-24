@@ -8,6 +8,7 @@ import verticalMenu from './vertical-menu'
 import pcmLocations from './pcm-locations'
 import pcmCategories from './pcm-categories'
 import pcmTemplates from './pcm-templates'
+import pcmFloorplanTemplates from './pcm-floorplan-templates'
 import pcmObjects from './pcm-objects'
 import pcmProps from './pcm-props'
 
@@ -21,6 +22,7 @@ export default new Vuex.Store({
     pcmLocations,
     pcmCategories,
     pcmTemplates,
+    pcmFloorplanTemplates,
     pcmObjects,
     pcmProps,
   },

@@ -1,7 +1,7 @@
 <template>
   <div>
     <liquor-tree
-      ref="LocationTree"
+      :ref="TreeRef"
       :data="[]"
       :options="LocationTreeOptions"
     >
@@ -86,6 +86,7 @@ export default {
   },
   props: {
     Context: {type: String},
+    TreeRef: {type: String},
   },
   data() {
     return {
@@ -114,63 +115,11 @@ export default {
       }
       return ""
     },
-    GetLocationNode(NodeID) {
-
-      const vm = this
-
-      const Criteria = {
-        "id": NodeID.toString()
-      }
-      let Node = vm.$refs.LocationTree.find(Criteria)[0]
-
-      return Node
-    },
-    BuildLocationTree: function(Parent=false){
-
-      const vm = this
-      const Context = vm.Context
-      Parent = (Parent) ? Parent : { id: 0 }
-      const ParentID = Parent.id
-      const ChildrenFiltered = vm.Locations[Context].filter(location => location.parent_id == ParentID)
-      const ChildrenData = []
-
-      ChildrenFiltered.forEach(function(child) {
-        const ChildData = {
-          "id": child.id,
-          "text": child.name,
-          "data": {
-            "type": child.type,
-            "icon": vm.GetNodeIcon(child.type),
-            "parent_id": child.parent_id,
-            "img": child.img,
-          },
-        }
-        ChildrenData.push(ChildData)
-      })
-
-      if(ChildrenData.length) {
-        
-        ChildrenData.forEach(function(child) {
-
-          if(ParentID == 0) {
-
-            vm.$refs.LocationTree.append(child)
-          } else {
-
-            let ParentNode = vm.GetLocationNode(ParentID)
-            ParentNode.append(child)
-          }
-        })
-
-        ChildrenData.forEach(child => vm.BuildLocationTree(child))                
-      }
-      
-      return
-    },
     optionClicked (event) {
 
       const vm = this
       const Context = vm.Context
+      const TreeRef = vm.TreeRef
       const Action = event.option.action
       const NodeID = event.item.node_id
 
@@ -180,7 +129,7 @@ export default {
         const Criteria = {
           "id": NodeID.toString()
         }
-        Node = vm.$refs.LocationTree.find(Criteria)[0]
+        Node = vm.$refs[TreeRef].find(Criteria)[0]
         Node.startEditing()
 
       } else if(Action == 'delete') {
@@ -203,7 +152,7 @@ export default {
           const Criteria = {
             "id": ReturnedLocationID.toString()
           }
-          let Node = vm.$refs.LocationTree.find(Criteria)[0]
+          let Node = vm.$refs[TreeRef].find(Criteria)[0]
           Node.remove()
           
         }).catch(error => {vm.DisplayError(error)})
@@ -241,7 +190,7 @@ export default {
           const Criteria = {
             "id": NodeID.toString()
           }
-          let ParentNode = vm.$refs.LocationTree.find(Criteria)[0]
+          let ParentNode = vm.$refs[TreeRef].find(Criteria)[0]
           ParentNode.append(Child)
 
         }).catch(error => {vm.DisplayError(error)})
@@ -255,6 +204,7 @@ export default {
 
     const vm = this
     const Context = vm.Context
+    const TreeRef = vm.TreeRef
 
     vm.$nextTick(function () {
 
@@ -262,23 +212,15 @@ export default {
       vm.BuildLocationTree()
 
       // Update selected node
-      vm.$refs.LocationTree.$on('node:selected', (node) => {
+      vm.$refs[TreeRef].$on('node:selected', (node) => {
 
         const NodeID = node.id
         vm.$emit('LocationNodeSelected', {"id":NodeID})
         document.cookie = "environment_location_nodeID="+NodeID
-
-        // Store data
-        const url = '/api/locations/'+NodeID
-
-        // PATCH category form data
-        vm.$http.get(url).then(function(response){
-          vm.CabinetData = response.data
-        }).catch(error => { vm.DisplayError(error) })
       })
       
       // Update node text
-      vm.$refs.LocationTree.$on('node:editing:stop', (node) => {
+      vm.$refs[TreeRef].$on('node:editing:stop', (node) => {
 
         // Store data
         const NodeID = node.id
@@ -296,7 +238,7 @@ export default {
       })
 
       // Update node parent
-      vm.$refs.LocationTree.$on('node:dragging:finish', (node) => {
+      vm.$refs[TreeRef].$on('node:dragging:finish', (node) => {
 
         const NodeID = node.id
         const Parent = node.parent
@@ -318,13 +260,15 @@ export default {
 
       const SelectedNodeID = vm.GetCookie('environment_location_nodeID')
       if(SelectedNodeID != "") {
+
         // Select previously viewed node
-        let Node = vm.GetLocationNode(SelectedNodeID)
+        let Node = vm.GetLocationNode(SelectedNodeID, TreeRef)
         Node.select(true)
+
         // Expand parent nodes
         let NodeParentID = Node.data.parent_id
         while(NodeParentID.toString() !== '0') {
-          let NodeParent = vm.GetLocationNode(NodeParentID)
+          let NodeParent = vm.GetLocationNode(NodeParentID, TreeRef)
           NodeParent.expand()
           NodeParentID = NodeParent.data.parent_id
         }

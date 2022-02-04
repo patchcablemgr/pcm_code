@@ -13,9 +13,8 @@
             :title="ModalTitle"
           >
             <b-card-body>
-
               <liquor-tree
-                ref="PortSelectTree"
+                :ref="TreeRef"
                 :data="[]"
                 :options="LocationTreeOptions"
               >
@@ -24,6 +23,7 @@
                     <div>
                       <feather-icon :icon="node.data.icon" />
                       {{ node.text }}
+                      
                     </div>
                   </template>
                 </span>
@@ -47,7 +47,7 @@ import { PCM } from '@/mixins/PCM.js'
 import LiquorTree from 'liquor-tree'
 
 const LocationTreeOptions = {
-  "multiples": false,
+  "multiples": true,
 }
 
 export default {
@@ -62,6 +62,9 @@ export default {
   directives: {},
   props: {
     ModalTitle: {type: String},
+    TreeRef: {type: String},
+    Context: {type: String},
+    PartitionAddressSelected: {type: Object},
   },
   data () {
     return {
@@ -78,28 +81,63 @@ export default {
     Locations() {
       return this.$store.state.pcmLocations.Locations
     },
-  },
-  methods: {
-    GetLocationNode(NodeID, Tree=false) {
+    TemplateType: function() {
 
       const vm = this
-      Tree = (Tree) ? Tree : vm.TreeData
-      const Node = Tree.find(element => element.id == NodeID)
+      const Context = vm.Context
+      const ObjectID = vm.PartitionAddressSelected[Context].object_id
+      let TemplateType = null
 
-      if(Node === 'undefined') {
-        Tree.forEach(function(element){
-          if(element.hasOwnProperty('children')) {
-            vm.GetLocationNode(NodeID, element.children)
-          }
-        })
+      if(ObjectID) {
+        const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
+        const Object = vm.Objects[Context][ObjectIndex]
+        TemplateType = Object.floorplan_object_type
+      }
+
+      return TemplateType
+    },
+    MultiSelect: function() {
+
+      const vm = this
+      if(vm.TemplateType == 'walljack') {
+        return true
       } else {
-        return Node
+        return false
       }
     },
+  },
+  methods: {
   },
   mounted() {
 
     const vm = this
+    const Context = vm.Context
+    const TreeRef = vm.TreeRef
+
+    this.$root.$on('bv::modal::shown', (bvEvent, modalId) => {
+
+      // Build tree
+      // $nextTick is required to allow time for the $refs[TreeRef] to be rendered
+      vm.$nextTick(function () {
+        const Scope = 'port'
+        vm.BuildLocationTree({Scope})
+
+        // Set tree options
+        vm.$refs[TreeRef].options.multiples = vm.MultiSelect
+
+        // Prevent nodes from being selected
+        vm.$refs[TreeRef].$on('node:selected', function(node){
+          const AllowedNodeTypes = [
+            'partition',
+            'port'
+          ]
+          const NodeType = node.data.type
+          if(!AllowedNodeTypes.includes(NodeType)) {
+            node.unselect()
+          }
+        })
+      })
+    })
   },
 }
 </script>

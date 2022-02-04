@@ -60,7 +60,7 @@
         </td>
         <td>
           <b-button
-            v-if="Context == 'preview'"
+            v-if="Context == 'actual'"
             v-ripple.400="'rgba(40, 199, 111, 0.15)'"
             variant="flat-success"
             class="btn-icon"
@@ -303,9 +303,9 @@
 
     <!-- Modal Edit Object Name -->
     <modal-edit-object-name
+      :Context="Context"
+      :PartitionAddressSelected="PartitionAddressSelected"
       ModalTitle="Object Name"
-      :NameValue="ComputedObjectName"
-      @ObjectNameEdited=" $emit('ObjectEdited', $event) "
     />
 
     <!-- Modal Edit Template Name -->

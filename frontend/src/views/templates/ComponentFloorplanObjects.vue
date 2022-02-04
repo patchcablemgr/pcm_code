@@ -25,9 +25,9 @@
             <b-list-group-item
               v-for="FloorplanObject in FilteredFloorplanObjects(FloorplanTemplate.type)"
               :key="FloorplanObject.id"
-              @click.stop=" $emit('FloorplanClicked', {'object_id': FloorplanObject.id}) "
-              @mouseover.stop=" $emit('FloorplanHovered', {'object_id': FloorplanObject.id, 'hover_state': true}) "
-              @mouseleave.stop=" $emit('FloorplanHovered', {'object_id': FloorplanObject.id, 'hover_state': false}) "
+              @click.stop=" FloorplanClicked({'ObjectID': FloorplanObject.id, Context}) "
+              @mouseover.stop=" FloorplanHovered({'ObjectID': FloorplanObject.id, 'HoverState': true, Context}) "
+              @mouseleave.stop=" FloorplanHovered({'ObjectID': FloorplanObject.id, 'HoverState': false, Context}) "
               :variant="(SelectedFloorplanObjectID == FloorplanObject.id) ? 'primary' : null "
               style="cursor:pointer;"
             >
@@ -45,10 +45,12 @@
 import { BCard, BCardBody, BFormTags, BFormRadio, BListGroup, BListGroupItem } from 'bootstrap-vue'
 import AppCollapse from '@core/components/app-collapse/AppCollapse.vue'
 import AppCollapseItem from '@core/components/app-collapse/AppCollapseItem.vue'
+import { PCM } from '@/mixins/PCM.js'
 
 const FilterArray = []
 
 export default {
+  mixins: [PCM],
   components: {
     BCard,
     BCardBody,
@@ -63,6 +65,7 @@ export default {
     Context: {type: String},
     NodeIDSelected: {type: Number},
     PartitionAddressSelected: {type: Object},
+    PartitionAddressHovered: {type: Object},
   },
   data() {
     return {
@@ -88,7 +91,8 @@ export default {
     SelectedFloorplanObjectID: function() {
 
       const vm = this
-      return vm.PartitionAddressSelected.floorplan.object_id
+      const Context = vm.Context
+      return vm.PartitionAddressSelected[Context].object_id
     }
   },
   methods: {

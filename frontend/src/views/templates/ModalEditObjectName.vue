@@ -16,7 +16,7 @@
 
               <b-form-input
                 v-model="ComputedNameValue"
-                @change=" $emit('ObjectNameEdited', {'name': $event}) "
+                debounce="500"
               />
             </b-card-text>
           </b-card>
@@ -28,8 +28,10 @@
 
 <script>
 import { BContainer, BRow, BCol, BCard, BForm, BButton, BFormInput, BFormSelect, BFormCheckbox, BCardText, } from 'bootstrap-vue'
+import { PCM } from '@/mixins/PCM.js'
 
 export default {
+  mixins: [PCM],
   components: {
     BContainer,
     BRow,
@@ -44,23 +46,40 @@ export default {
   },
   directives: {},
   props: {
+    Context: {type: String},
     ModalTitle: {type: String},
-    NameValue: {type: String},
+    PartitionAddressSelected: {type: Object},
   },
   data () {
     return {
     }
   },
   computed: {
+    Objects() {
+      return this.$store.state.pcmObjects.Objects
+    },
     ComputedNameValue: {
       get() {
 
         const vm = this
-        return vm.NameValue
-      },
-      set() {
+        const Context = vm.Context
+        const Object = vm.GetObjectSelected(Context)
 
-        return true
+        return Object.name
+      },
+      set(newValue) {
+
+        const vm = this
+        const Context = vm.Context
+        const Object = vm.GetObjectSelected(Context)
+        Object.name = newValue
+        const ObjectID = Object.id
+        const URL = '/api/objects/'+ObjectID
+
+        vm.$http.patch(URL, Object).then(response => {
+          vm.$store.commit('pcmObjects/UPDATE_Object', {pcmContext:Context, data:response.data})
+
+        }).catch(error => { vm.DisplayError(error) })
       }
     },
   },

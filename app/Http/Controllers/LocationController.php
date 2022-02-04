@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use App\Models\LocationModel;
 use App\Http\Controllers\PCM;
 use Illuminate\Support\Facades\Log;
@@ -112,27 +113,87 @@ class LocationController extends Controller
         $validatorMessages = [];
         Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
 
+        // Retrieve location record
+        $location = LocationModel::where('id', $id)->first();
+        $locationType = $location['type'];
+
+
+
         // Store request data
         $data = $request->all();
 
-        // Retrieve location record
-        $location = LocationModel::where('id', $id)->first();
+        
 
         // Update template record
         foreach($data as $key => $value) {
 
             // Node text
-            if($key == 'text') {
+            if($key == 'name') {
+
+                $validatorInput = [
+                    'name' => $value
+                ];
+                $validatorRules = [
+                    'name' => [
+                        'alpha_dash',
+                        'min:1',
+                        'max:255'
+                    ]
+                ];
+                $validatorMessages = [];
+                Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
 
                 // Update location name
                 $location->name = $value;
             }
 
             // Node parent
-            if($key == 'parent') {
+            if($key == 'parent_id') {
+
+                if($value !== 0) {
+                    $validatorInput = [
+                        'parent_id' => $value,
+                    ];
+                    $validatorRules = [
+                        'parent_id' => [
+                            'integer',
+                            'exists:location,id'
+                        ]
+                    ];
+                    $validatorMessages = [];
+                    Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
+
+                    $parentLocation = LocationModel::where('id', $value)->first();
+                    $parentLocationType = $parentLocation['type'];
+
+                    $typeCompatibility = array(
+                        'location' => array(
+                            'location',
+                            'pod',
+                            'cabinet',
+                            'floorplan'
+                        ),
+                        'pod' => array(
+                            'cabinet'
+                        ),
+                        'floorplan' => array(),
+                        'cabinet' => array()
+                    );
+                    if(!in_array($locationType, $typeCompatibility[$parentLocationType])) {
+                        throw ValidationException::withMessages([$key => 'Parent type is incompatible.']);
+                    }
+
+                }
 
                 // Update location name
                 $location->parent_id = $value;
+            }
+
+            // Node order
+            if($key == 'order') {
+
+                // Update location name
+                $location->order = $value;
             }
         }
 

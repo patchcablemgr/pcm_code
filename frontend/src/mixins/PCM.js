@@ -119,45 +119,133 @@ export const PCM = {
         
             return Node
         },
-        BuildLocationTree: function(Parent){
+        RebuildLocationTree: function({Scope}){
+
+            const vm = this
+            const TreeRef = vm.TreeRef
+
+            // Find expanded nodes
+            const ExpandedNodes = vm.$refs[TreeRef].findAll({state: {expanded: true}})
+            let ExpandedNodeIDs = []
+            ExpandedNodes.forEach(function(ExpandedNode){
+                ExpandedNodeIDs.push(ExpandedNode.id)
+            })
+            
+            // Delete all nodes
+            const ChildNodeCriteria = {
+                text: /.*/
+            }
+            vm.$refs[TreeRef].remove(ChildNodeCriteria, true)
+            
+            // Rebuild tree
+            vm.BuildLocationTree({Scope})
+
+            // Expand expanded nodes
+            ExpandedNodeIDs.forEach(function(ExpandedNodeID){
+                let ExpandedNode = vm.GetLocationNode(ExpandedNodeID)
+                ExpandedNode.expand()
+            })
+
+            // Select selected node
+            if(vm.NodeIDSelected !== null) {
+                const SelectedNode = vm.GetLocationNode(vm.NodeIDSelected)
+                SelectedNode.select()
+            }
+        },
+        BuildLocationTree: function({Parent,Scope}){
 
             const vm = this
             const TreeRef = vm.TreeRef
             const Context = vm.Context
-            Parent = (Parent !== undefined) ? Parent : { id: 0 }
-            const ParentID = Parent.id
-            const ChildrenFiltered = vm.Locations[Context].filter(location => location.parent_id == ParentID)
+            Parent = (Parent !== undefined) ? Parent : { id: 0, data: {id: 0, type: 'root'}}
+            const ParentTreeID = Parent.id
+            const ParentID = Parent.data.id
+            const ParentType = Parent.data.type
+            let ChildrenFiltered = []
+
+            if(ParentType == 'root' || ParentType == 'location') {
+                ChildrenFiltered = vm.Locations[Context].filter(location => location.parent_id == ParentID)
+            } else if(ParentType == 'cabinet') {
+                if(Scope == 'partition' || Scope == 'port') {
+                    ChildrenFiltered = vm.Objects[Context].filter(object => object.location_id == ParentID && object.parent_id == null)
+                }
+            } else if(ParentType == 'object') {
+                if(Scope == 'partition' || Scope == 'port') {
+                    const ParentObjectIndex = vm.GetObjectIndex(ParentID, Context)
+                    const ParentObject = vm.Objects[Context][ParentObjectIndex]
+                    const ParentTemplateID = ParentObject.template_id
+                    const ParentTemplateIndex = vm.GetTemplateIndex(ParentTemplateID, Context)
+                    const ParentTemplate = vm.Templates[Context][ParentTemplateIndex]
+                    const FaceArray = ['front','rear']
+                    FaceArray.forEach(function(Face){
+                        ChildrenFiltered = ChildrenFiltered.concat(vm.GetConnectablePartitions(ParentID, Face, ParentTemplate.blueprint[Face]))
+                    })
+                    ChildrenFiltered = ChildrenFiltered.concat(vm.GetInsertConnectablePartitions(ParentID))
+                }
+            }
+            
             const ChildrenData = []
-        
             ChildrenFiltered.forEach(function(child) {
+
+                let ChildID, ChildName, ChildType, ChildIcon, ChildParentID, ChildImg, ChildOrder
+                if(ParentType == 'cabinet') {
+                    ChildID = child.id
+                    ChildName = child.name
+                    ChildType = 'object'
+                    ChildParentID = child.location_id
+                    ChildImg = ''
+                    ChildOrder = child.cabinet_ru
+                } else if(ParentType == 'object') {
+                    const PortTotal = child.port_layout.rows * child.port_layout.cols
+                    const FirstPort = vm.GeneratePortID(0, PortTotal, child.port_format)
+                    const LastPort = vm.GeneratePortID(PortTotal - 1, PortTotal, child.port_format)
+                    ChildID = child.id+'-'+child.face+'-'+child.partition_address.join('-')
+                    ChildName = (PortTotal > 1) ? child.prefix + FirstPort + ' - ' + LastPort : child.prefix + FirstPort
+                    ChildType = 'partition'
+                    ChildParentID = child.location_id
+                    ChildImg = ''
+                    ChildOrder = child.partition_address.length + child.partition_address[child.partition_address.length - 1]
+                } else {
+                    ChildID = child.id
+                    ChildName = child.name
+                    ChildType = child.type
+                    ChildParentID = child.parent_id
+                    ChildImg = child.img
+                    ChildOrder = child.order
+                }
+                ChildIcon = vm.GetNodeIcon(ChildType)
+
                 const ChildData = {
-                "id": child.id,
-                "text": child.name,
-                "data": {
-                    "type": child.type,
-                    "icon": vm.GetNodeIcon(child.type),
-                    "parent_id": child.parent_id,
-                    "img": child.img,
-                },
+                    "id": ChildType+'-'+ChildID,
+                    "text": ChildName,
+                    "data": {
+                        "id": ChildID,
+                        "type": ChildType,
+                        "icon": ChildIcon,
+                        "parent_id": ChildParentID,
+                        "img": ChildImg,
+                        "order": ChildOrder,
+                    },
                 }
                 ChildrenData.push(ChildData)
             })
         
             if(ChildrenData.length) {
+
+                ChildrenData.sort((a,b) => (a.data.order > b.data.order) ? 1 : -1)
                 
                 ChildrenData.forEach(function(child) {
         
-                if(ParentID == 0) {
-        
-                    vm.$refs[TreeRef].append(child)
-                } else {
-        
-                    let ParentNode = vm.GetLocationNode(ParentID)
-                    ParentNode.append(child)
-                }
+                    if(ParentTreeID == 0) {
+                        vm.$refs[TreeRef].append(child)
+                    } else {
+            
+                        let ParentNode = vm.GetLocationNode(ParentTreeID)
+                        ParentNode.append(child)
+                    }
                 })
         
-                ChildrenData.forEach(child => vm.BuildLocationTree(child))                
+                ChildrenData.forEach(child => vm.BuildLocationTree({Parent:child,Scope}))
             }
             
             return
@@ -385,38 +473,87 @@ export const PCM = {
         
             return AreasString
         },
+        GetConnectablePartitions: function(ObjectID, Face, Blueprint, ConnectablePartitions=[], BasePartAddr=[]) {
+
+            const vm = this
+
+            Blueprint.forEach(function(partition, index){
+                const PartAddr = BasePartAddr.concat([index])
+                if(partition.type == 'connectable') {
+                    const ConnectablePartition = JSON.parse(JSON.stringify(partition))
+                    ConnectablePartition.id = ObjectID
+                    ConnectablePartition.face = Face
+                    ConnectablePartition.partition_address = PartAddr
+                    ConnectablePartition.prefix = ''
+                    ConnectablePartitions.push(ConnectablePartition)
+                } else if(partition.type == 'generic') {
+                    vm.GetConnectablePartitions(ObjectID, Face, partition.children, ConnectablePartitions, PartAddr)
+                }
+            })
+
+            return ConnectablePartitions
+        },
+        GetInsertConnectablePartitions: function(ObjectID, NameArray=[]) {
+
+            const vm = this
+            const Context = vm.Context
+            let ConnectablePartitions = []
+            let PrefixSeparator
+            let TempNameArray
+
+            const InsertObjects = vm.Objects[Context].filter(object => object.parent_id == ObjectID)
+            InsertObjects.forEach(function(InsertObject){
+                const InsertObjectID = InsertObject.id
+                const InsertObjectName = InsertObject.name
+                const TemplateID = InsertObject.template_id
+                const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+                const Template = vm.Templates[Context][TemplateIndex]
+                const TemplateFunction = Template.function
+                PrefixSeparator = (TemplateFunction == 'endpoint') ? '' : '.'
+                const FaceArray = ['front','rear']
+                FaceArray.forEach(function(Face){
+                    ConnectablePartitions = ConnectablePartitions.concat(vm.GetConnectablePartitions(InsertObjectID, Face, Template.blueprint[Face]))
+                })
+                NameArray.push(InsertObjectName)
+
+                ConnectablePartitions.forEach(function(Partition){
+                    TempNameArray = NameArray.concat([''])
+                    Partition.prefix = TempNameArray.join(PrefixSeparator)
+                })
+                ConnectablePartitions = ConnectablePartitions.concat(vm.GetInsertConnectablePartitions(InsertObjectID, NameArray))
+            })
+
+            return ConnectablePartitions
+        },
 
 // Floorplan
-        FloorplanHovered: function(EmitData) {
+        FloorplanHovered: function({ObjectID, HoverState, Context}) {
 
             // Store variables
             const vm = this
-            const ObjectID = EmitData.object_id
-            const HoverState = EmitData.hover_state
-                
-            vm.PartitionAddressHovered.floorplan.object_id = (HoverState) ? ObjectID : false
+            vm.PartitionAddressHovered[Context].object_id = (HoverState) ? ObjectID : false
 
         },
         FloorplanIsHovered: function(ObjectID) {
 
             // Store variables
             const vm = this
-            return vm.PartitionAddressHovered.floorplan.object_id == ObjectID
+            const Context = vm.Context
+            return vm.PartitionAddressHovered[Context].object_id == ObjectID
         },
-        FloorplanClicked: function(EmitData) {
+        FloorplanClicked: function({ObjectID, Context}) {
 
             // Store variables
-            const vm = this
-            const ObjectID = EmitData.object_id
-                
-            vm.PartitionAddressSelected.floorplan.object_id = ObjectID
+            const vm = this                
+            vm.PartitionAddressSelected[Context].object_id = ObjectID
 
         },
         FloorplanIsSelected: function(ObjectID) {
 
             // Store variables
             const vm = this
-            return vm.PartitionAddressSelected.floorplan.object_id == ObjectID
+            const Context = vm.Context
+            return vm.PartitionAddressSelected[Context].object_id == ObjectID
         },
 
 // Misc
@@ -546,6 +683,8 @@ export const PCM = {
                 Icon = "ServerIcon"
             } else if(NodeType == 'floorplan') {
                 Icon = "MapIcon"
+            } else if(NodeType == 'object') {
+                Icon = "HardDriveIcon"
             }
         
             return Icon

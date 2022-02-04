@@ -61,9 +61,9 @@
               pcm_template_partition_hovered: FloorplanIsHovered(FloorplanObject.id),
             }"
             @dragstart.stop="StartDrag({ 'context': 'actual', 'floorplan_object_id': FloorplanObject.id }, $event)"
-            @click.stop=" $emit('FloorplanClicked', {'object_id': FloorplanObject.id}) "
-            @mouseover.stop=" $emit('FloorplanHovered', {'object_id': FloorplanObject.id, 'hover_state': true}) "
-            @mouseleave.stop=" $emit('FloorplanHovered', {'object_id': FloorplanObject.id, 'hover_state': false}) "
+            @click.stop=" FloorplanClicked({'ObjectID': FloorplanObject.id, Context}) "
+            @mouseover.stop=" FloorplanHovered({'ObjectID': FloorplanObject.id, 'HoverState': true, Context}) "
+            @mouseleave.stop=" FloorplanHovered({'ObjectID': FloorplanObject.id, 'HoverState': false, Context}) "
             :style="{position: 'absolute', left: FloorplanObject.floorplan_address[0]+'px', top: FloorplanObject.floorplan_address[1]+'px'}"
             style="cursor:grab;"
           >
@@ -100,7 +100,7 @@ import {
 } from 'bootstrap-vue'
 import PinchZoom from 'vue-pinch-zoom'
 import ModalFileUpload from './ModalFileUpload.vue'
-import { PCM } from '../../mixins/PCM.js'
+import { PCM } from '@/mixins/PCM.js'
 import Ripple from 'vue-ripple-directive'
 
 export default {

@@ -87,6 +87,7 @@ export default {
   props: {
     Context: {type: String},
     TreeRef: {type: String},
+    NodeIDSelected: {type: Number},
   },
   data() {
     return {
@@ -206,16 +207,19 @@ export default {
     const Context = vm.Context
     const TreeRef = vm.TreeRef
 
+    // $nextTick is required to allow time for the $refs[TreeRef] to be rendered
     vm.$nextTick(function () {
 
       // Build the location tree data
-      vm.BuildLocationTree()
+      const Scope = 'location'
+      vm.BuildLocationTree({Scope})
 
       // Update selected node
       vm.$refs[TreeRef].$on('node:selected', (node) => {
 
+        const LocationID = node.data.id
         const NodeID = node.id
-        vm.$emit('LocationNodeSelected', {"id":NodeID})
+        vm.$emit('LocationNodeSelected', {"id":LocationID})
         document.cookie = "environment_location_nodeID="+NodeID
       })
       
@@ -223,10 +227,10 @@ export default {
       vm.$refs[TreeRef].$on('node:editing:stop', (node) => {
 
         // Store data
-        const NodeID = node.id
+        const NodeID = node.data.id
         const NodeText = node.text
         const url = '/api/locations/'+NodeID
-        const data = {"text": NodeText}
+        const data = {"name": NodeText}
 
         // PATCH category form data
         vm.$http.patch(url, data).then(function(response){
@@ -240,22 +244,35 @@ export default {
       // Update node parent
       vm.$refs[TreeRef].$on('node:dragging:finish', (node) => {
 
-        const NodeID = node.id
-        const Parent = node.parent
-        let ParentID = 0
+        const NodeID = node.data.id
+        const ParentID = (node.parent) ? node.parent.data.id : 0
 
-        if(Parent !== null) {
-          ParentID = Parent.id
+        // Determine node order
+        let NodeOrder
+        if(node.parent) {
+          NodeOrder = node.parent.children.findIndex(child => child.id == NodeID)
+        } else {
+          console.log(vm.$refs[TreeRef].tree.model)
+          NodeOrder = vm.$refs[TreeRef].tree.model.findIndex(child => child.id == NodeID)
         }
 
         // Store data
         const url = '/api/locations/'+NodeID
-        const data = {"parent": ParentID}
+        const data = {"parent_id": ParentID}
+        const Scope = 'location'
 
         // PATCH category form data
         vm.$http.patch(url, data).then(function(response){
-          //
-        }).catch(error => { vm.DisplayError(error) })
+          
+          // Update node from store
+          vm.$store.commit('pcmLocations/UPDATE_Location', {pcmContext:Context, data:response.data})
+
+          vm.RebuildLocationTree({Scope})
+          
+        }).catch(error => {
+          vm.DisplayError(error)
+          vm.RebuildLocationTree({Scope})
+        })
       })
 
       const SelectedNodeID = vm.GetCookie('environment_location_nodeID')
@@ -266,7 +283,7 @@ export default {
         Node.select(true)
 
         // Expand parent nodes
-        let NodeParentID = Node.data.parent_id
+        let NodeParentID = Node.parent.id
         while(NodeParentID.toString() !== '0') {
           let NodeParent = vm.GetLocationNode(NodeParentID, TreeRef)
           NodeParent.expand()

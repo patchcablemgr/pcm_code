@@ -240,31 +240,55 @@ class ObjectController extends Controller
 
         // Validate request data
         $request->validate([
-            'cabinet_ru' => [
-                'numeric',
-                'unique:App\Models\TemplateModel,name',
-                'between:1,52'
-            ],
             'name' => [
-                'alpha_dash',
+                'regex:/^[A-Za-z0-9\/]+$/',
                 'min:1',
                 'max:255'
             ],
-            'parent_id' => [
-                'required_with_all: parent_id, parent_face, parent_partition_address, parent_enclosure_address',
-                'numeric',
-                'exists:object,id'
-            ],'parent_face' => [
-                'required_with_all: parent_id, parent_face, parent_partition_address, parent_enclosure_address',
-                Rule::in($faceArray)
-            ],'parent_partition_address' => [
-                'required_with_all: parent_id, parent_face, parent_partition_address, parent_enclosure_address',
-                'array'
-            ],'parent_enclosure_address' => [
-                'required_with_all: parent_id, parent_face, parent_partition_address, parent_enclosure_address',
-                'array'
-            ],
         ]);
+
+        // Retrieve object record
+        $object = ObjectModel::where('id', $id)->first();
+
+        // Determine object type
+        if($object['floorplan_object_type'] !== null) {
+            $objectType = 'floorplan';
+        } else if($object['parent_id'] !== null) {
+            $objectType = 'insert';
+        } else {
+            $objectType = 'standard';
+        }
+
+        if($objectType == 'floorplan') {
+
+        } else if($objectType == 'insert') {
+            
+            // Validate insert data
+            $request->validate([
+                'parent_id' => [
+                    'numeric',
+                    'exists:object,id'
+                ],'parent_face' => [
+                    Rule::in($faceArray)
+                ],'parent_partition_address' => [
+                    'array'
+                ],'parent_enclosure_address' => [
+                    'array'
+                ],
+            ]);
+        } else if($objectType == 'standard') {
+
+            // Validate standard data
+            $request->validate([
+                'cabinet_ru' => [
+                    'numeric',
+                    'unique:App\Models\TemplateModel,name',
+                    'between:1,52'
+                ],
+            ]);
+        }
+
+        
 
         // ToDo
         // Deep validation of:
@@ -276,9 +300,6 @@ class ObjectController extends Controller
 
         // Store request data
         $data = $request->all();
-
-        // Retrieve object record
-        $object = ObjectModel::where('id', $id)->first();
 
         // Update object record
         foreach($data as $key => $value) {

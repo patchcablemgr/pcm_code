@@ -64,7 +64,7 @@
         </b-col>
         <b-col>
 
-          <component-template-Object-details
+          <component-template-object-details
             CardTitle="Template Details"
 						Context="template"
 						:TemplateFaceSelected="TemplateFaceSelected"

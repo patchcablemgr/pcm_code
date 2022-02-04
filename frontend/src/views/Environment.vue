@@ -12,6 +12,7 @@
               <component-location-tree
                 Context="actual"
                 TreeRef="LocationsAndCabinetsTree"
+                :NodeIDSelected="NodeIDSelected"
                 @LocationNodeSelected="LocationNodeSelected($event)"
               />
             </b-card-body>
@@ -21,8 +22,7 @@
             v-if=" PreviewDisplay == 'floorplan' "
             Context="actual"
             :PartitionAddressSelected="PartitionAddressSelected"
-            @FloorplanClicked=" FloorplanClicked($event) "
-            @FloorplanHovered=" FloorplanHovered($event) "
+            @SetPartitionAddressSelected="SetPartitionAddressSelected($event)"
             @ObjectEdited="ObjectEdited($event, 'floorplan')"
           />
 
@@ -31,8 +31,7 @@
             Context="actual"
             :NodeIDSelected="NodeIDSelected"
             :PartitionAddressSelected="PartitionAddressSelected"
-            @FloorplanClicked=" FloorplanClicked($event) "
-            @FloorplanHovered=" FloorplanHovered($event) "
+            :PartitionAddressHovered="PartitionAddressHovered"
           />
 
         </b-col>
@@ -48,8 +47,6 @@
             :ObjectData="ObjectData"
             :PartitionAddressSelected="PartitionAddressSelected"
             :PartitionAddressHovered="PartitionAddressHovered"
-            @FloorplanClicked=" FloorplanClicked($event) "
-            @FloorplanHovered=" FloorplanHovered($event) "
             @FileSelected="FileSelected($event)"
             @FileSubmitted="FileSubmitted()"
           />
@@ -195,9 +192,6 @@ const PartitionAddressSelected = {
     'template_id': null,
     'front': [0],
     'rear': [0]
-  },
-  'floorplan': {
-    'object_id': null
   }
 }
 
@@ -213,9 +207,6 @@ const PartitionAddressHovered = {
     'template_id': null,
     'front': false,
     'rear': false
-  },
-  'floorplan': {
-    'object_id': null
   }
 }
 
@@ -591,20 +582,9 @@ export default {
         // POST to objects
         vm.$http.post(url, data).then(function(response){
 
-          const Object = response.data
-          
-          // Create child node object
-          vm.ObjectData.preview.push(Object)
+          vm.$store.commit('pcmObjects/ADD_Object', {pcmContext:'actual', data:response.data})
 
-        }).catch(error => {
-
-          // Display error to user via toast
-          vm.$bvToast.toast(JSON.stringify(error.response), {
-            title: 'Error',
-            variant: 'danger',
-          })
-
-        })
+        }).catch(error => {vm.DisplayError(error)})
       } else {
 
         const ObjectID = EmitData.object_id
@@ -616,21 +596,9 @@ export default {
         // POST to objects
         vm.$http.patch(url, data).then(function(response){
 
-          const Object = response.data
-          const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
-          
-          // Create child node object
-          vm.$set(vm.ObjectData.preview, ObjectIndex, Object)
+          vm.$store.commit('pcmObjects/UPDATE_Object', {pcmContext:'actual', data:response.data})
 
-        }).catch(error => {
-
-          // Display error to user via toast
-          vm.$bvToast.toast(JSON.stringify(error.response), {
-            title: 'Error',
-            variant: 'danger',
-          })
-
-        })
+        }).catch(error => {vm.DisplayError(error)})
       }
     },
     StandardObjectDropped: function(EmitData) {
@@ -663,20 +631,9 @@ export default {
         // POST to objects
         vm.$http.post(url, data).then(function(response){
 
-          const Object = response.data
-          
-          // Create child node object
-          vm.ObjectData.preview.push(Object)
+          vm.$store.commit('pcmObjects/ADD_Object', {pcmContext:'actual', data:response.data})
 
-        }).catch(error => {
-
-          // Display error to user via toast
-          vm.$bvToast.toast(JSON.stringify(error.response), {
-            title: 'Error',
-            variant: 'danger',
-          })
-
-        })
+        }).catch(error => {vm.DisplayError(error)})
 
       // PATCH existing object
       } else {
@@ -690,21 +647,9 @@ export default {
         // POST to objects
         vm.$http.patch(url, data).then(function(response){
 
-          const Object = response.data
-          const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
-          
-          // Create child node object
-          vm.$set(vm.ObjectData.preview, ObjectIndex, Object)
+          vm.$store.commit('pcmObjects/UPDATE_Object', {pcmContext:'actual', data:response.data})
 
-        }).catch(error => {
-
-          // Display error to user via toast
-          vm.$bvToast.toast(JSON.stringify(error.response), {
-            title: 'Error',
-            variant: 'danger',
-          })
-
-        })
+        }).catch(error => {vm.DisplayError(error)})
       }
     },
     TemplateObjectDeleteClicked: function() {

@@ -1,11 +1,13 @@
 <template>
     <!-- Template port select modal -->
     <b-modal
-      id="modal-port-select"
+      :id="TreeID"
       title="Edit"
       size="lg"
-      ok-only
       ok-title="OK"
+      @ok="Submit"
+      cancel-title="Clear"
+      @cancel="Clear"
     >
       <b-row>
         <b-col>
@@ -32,7 +34,6 @@
           </b-card>
         </b-col>
       </b-row>
-
     </b-modal>
 </template>
 
@@ -47,8 +48,9 @@ import { PCM } from '@/mixins/PCM.js'
 import LiquorTree from 'liquor-tree'
 
 const LocationTreeOptions = {
-  "multiples": true,
+  "multiple": true,
 }
+const TreeID = "modal-port-select"
 
 export default {
   mixins: [PCM],
@@ -65,10 +67,12 @@ export default {
     TreeRef: {type: String},
     Context: {type: String},
     PartitionAddressSelected: {type: Object},
+    PortSelectFunction: {type: String},
   },
   data () {
     return {
-      LocationTreeOptions
+      LocationTreeOptions,
+      TreeID
     }
   },
   computed: {
@@ -81,6 +85,15 @@ export default {
     Locations() {
       return this.$store.state.pcmLocations.Locations
     },
+    Trunks() {
+      return this.$store.state.pcmTrunks.Trunks
+    },
+    Medium() {
+      return this.$store.state.pcmProps.Medium
+    },
+    Connectors() {
+      return this.$store.state.pcmProps.Connectors
+    },
     TemplateType: function() {
 
       const vm = this
@@ -91,7 +104,14 @@ export default {
       if(ObjectID) {
         const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
         const Object = vm.Objects[Context][ObjectIndex]
-        TemplateType = Object.floorplan_object_type
+        if(Object.floorplan_object_type != null) {
+          TemplateType = Object.floorplan_object_type
+        } else {
+          const TemplateID = Object.template_id
+          const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+          const Template = vm.Templates[Context][TemplateIndex]
+          TemplateType = Template.type
+        }
       }
 
       return TemplateType
@@ -99,6 +119,7 @@ export default {
     MultiSelect: function() {
 
       const vm = this
+      
       if(vm.TemplateType == 'walljack') {
         return true
       } else {
@@ -107,6 +128,75 @@ export default {
     },
   },
   methods: {
+    Submit: function() {
+
+      const vm = this
+      const Context = vm.Context
+      const TreeRef = vm.TreeRef
+      const PortSelectFunction = vm.PortSelectFunction
+      const Criteria = function(node){
+        return node.states.selected == true
+      }
+      const TreeSelection = vm.$refs[TreeRef].findAll(Criteria)
+
+      const SelectedObjectID = vm.PartitionAddressSelected[Context].object_id
+      const SelectedObjectFace = vm.PartitionAddressSelected[Context].object_face
+      const SelectedObjectPartition = vm.PartitionAddressSelected[Context][SelectedObjectFace]
+
+      let PeerData = []
+      TreeSelection.forEach(function(node){
+        console.log(node)
+        const PeerObjectID = node.data.object_id
+        const PeerObjectFace = node.data.face
+        const PeerObjectPartition = node.data.partition_address
+        PeerData.push({'id':PeerObjectID, 'face':PeerObjectFace, 'partition':PeerObjectPartition})
+      })
+
+      // Compile POST data
+      const data = {'id':SelectedObjectID, 'face':SelectedObjectFace, 'partition':SelectedObjectPartition, PeerData}
+
+      if(PortSelectFunction == 'trunk') {
+
+        // POST Trunk
+        const URL = '/api/trunks/'
+        vm.$http.post(URL, data).then(response => {
+
+          // Add trunk to store
+          response.data.add.forEach(add => vm.$store.commit('pcmTrunks/ADD_Trunk', {data:add}))
+          response.data.remove.forEach(remove => vm.$store.commit('pcmTrunks/REMOVE_Trunk', {data:remove}))
+
+        }).catch(error => {vm.DisplayError(error)})
+      }
+    },
+    Clear: function() {
+
+      const vm = this
+      const Context = vm.Context
+      const TreeRef = vm.TreeRef
+      const PortSelectFunction = vm.PortSelectFunction
+
+      const SelectedObjectID = vm.PartitionAddressSelected[Context].object_id
+      const SelectedObjectFace = vm.PartitionAddressSelected[Context].object_face
+      const SelectedObjectPartition = vm.PartitionAddressSelected[Context][SelectedObjectFace]
+
+      if(PortSelectFunction == 'trunk') {
+
+        const Trunks = vm.GetTrunks(SelectedObjectID, SelectedObjectFace, SelectedObjectPartition)
+
+        Trunks.forEach(function(trunk){
+
+          const TrunkID = trunk.id
+          // Delete Trunk
+          const URL = '/api/trunks/'+TrunkID
+          vm.$http.delete(URL).then(response => {
+
+            // Remove trunk from store
+            vm.$store.commit('pcmTrunks/REMOVE_Trunk', {data:response.data})
+
+          }).catch(error => {vm.DisplayError(error)})
+        })
+      }
+    }
   },
   mounted() {
 
@@ -116,27 +206,27 @@ export default {
 
     this.$root.$on('bv::modal::shown', (bvEvent, modalId) => {
 
-      // Build tree
-      // $nextTick is required to allow time for the $refs[TreeRef] to be rendered
-      vm.$nextTick(function () {
-        const Scope = 'port'
-        vm.BuildLocationTree({Scope})
+      if(modalId == vm.TreeID) {
 
-        // Set tree options
-        vm.$refs[TreeRef].options.multiples = vm.MultiSelect
+        // Build tree
+        // setTimeout is required to wait until liquor tree is rendered before manipulating it (https://www.hesselinkwebdesign.nl/2019/nexttick-vs-settimeout-in-vue/)
+        setTimeout(function(){
+          const Scope = (vm.TemplateType == 'standard' || vm.TemplateType == 'insert') ? 'partition' : 'port'
+          vm.BuildLocationTree({Scope})
 
-        // Prevent nodes from being selected
-        vm.$refs[TreeRef].$on('node:selected', function(node){
-          const AllowedNodeTypes = [
-            'partition',
-            'port'
-          ]
-          const NodeType = node.data.type
-          if(!AllowedNodeTypes.includes(NodeType)) {
-            node.unselect()
-          }
-        })
-      })
+          // Prevent nodes from being selected
+          vm.$refs[TreeRef].$on('node:selected', function(node){
+            const AllowedNodeTypes = [
+              'partition',
+              'port'
+            ]
+            const NodeType = node.data.type
+            if(!AllowedNodeTypes.includes(NodeType)) {
+              node.unselect()
+            }
+          })
+        }, 0)
+      }
     })
   },
 }

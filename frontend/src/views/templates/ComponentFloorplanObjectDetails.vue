@@ -100,6 +100,7 @@
       TreeRef="PortSelect"
       :Context="Context"
       :PartitionAddressSelected="PartitionAddressSelected"
+      PortSelectFunction="trunk"
     />
 
   </div>

@@ -2,7 +2,7 @@
 
   <div
     :draggable="!IsPseudoObject"
-    @dragstart.stop="StartDrag({ context: Context, object_id: ObjectID, template_id: GetTemplateID(ObjectID), template_face: TemplateFaceSelected[Context] }, $event)"
+    @dragstart.stop="StartDrag({ context: Context, object_id: ObjectID, template_id: GetTemplateID(ObjectID), template_face: CabinetFace, object_face: ObjectFace }, $event)"
     :class="{
       pcm_template_partition_selected: PartitionIsSelected(),
       pcm_template_partition_hovered: PartitionIsHovered(),
@@ -11,9 +11,9 @@
       'background-color': TemplateColor(ObjectID),
       'height': '100%',
     }"
-    @click.stop=" PartitionClicked({'Context': Context, 'ObjectID': ObjectID, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': InitialPartitionAddress}) "
-    @mouseover.stop=" PartitionHovered({'Context': Context, 'ObjectID': ObjectID, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': InitialPartitionAddress, 'HoverState': true}) "
-    @mouseleave.stop=" PartitionHovered({'Context': Context, 'ObjectID': ObjectID, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': InitialPartitionAddress, 'HoverState': false}) "
+    @click.stop=" PartitionClicked({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': InitialPartitionAddress}) "
+    @mouseover.stop=" PartitionHovered({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': InitialPartitionAddress, 'HoverState': true}) "
+    @mouseleave.stop=" PartitionHovered({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': InitialPartitionAddress, 'HoverState': false}) "
   >
     <component-template
       :TemplateRUSize="TemplateRUSize"
@@ -70,6 +70,20 @@ export default {
       return TemplateID.includes('pseudo')
 
     },
+    CabinetFace: function() {
+
+      const vm = this
+      const Context = vm.Context
+      const CabinetFace = vm.TemplateFaceSelected[Context]
+      return CabinetFace
+    },
+    ObjectFace: function() {
+
+      const vm = this
+      const ObjectFace = vm.GetObjectFace(vm.ObjectID, vm.CabinetFace)
+      
+      return ObjectFace
+    },
   },
   methods: {
     StartDrag: function(TransferData, e) {
@@ -77,25 +91,7 @@ export default {
       e.dataTransfer.setData('object_id', TransferData.object_id)
       e.dataTransfer.setData('template_id', TransferData.template_id)
       e.dataTransfer.setData('template_face', TransferData.template_face)
-    },
-    GetPreviewData: function(ObjectID) {
-
-      // Initial variables
-      const vm = this
-      const Context = vm.Context
-
-      // Get object index
-      const ObjectIndex = vm.GetObjectIndex(ObjectID)
-
-      // Get template index
-      const TemplateID = vm.Objects[Context][ObjectIndex].template_id
-      const TemplateIndex = vm.GetTemplateIndex(TemplateID)
-
-      // Get template
-      const ObjectPreviewData = vm.Templates[Context][TemplateIndex]
-
-      // Return template
-      return ObjectPreviewData
+      e.dataTransfer.setData('object_face', TransferData.object_face)
     },
     TemplateColor: function(ObjectID) {
 

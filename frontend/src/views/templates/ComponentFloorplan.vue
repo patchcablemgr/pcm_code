@@ -121,7 +121,6 @@ export default {
     FloorplanImage: {type: String},
     File: {type: File},
     NodeIDSelected: {type: Number},
-    ObjectData: {type: Object},
     PartitionAddressSelected: {type: Object},
     PartitionAddressHovered: {type: Object},
   },

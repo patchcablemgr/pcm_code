@@ -52,6 +52,34 @@ export const PCM = {
     
             return Object
         },
+        GetObjectFace: function(ObjectID, CabinetFace) {
+
+            const vm = this
+            const Context = vm.Context
+
+            // Get Object
+            const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
+            const Object = vm.Objects[Context][ObjectIndex]
+
+            // Get Template
+            const TemplateID = Object.template_id
+            const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+            const Template = vm.Templates[Context][TemplateIndex]
+
+            // Get Object Face
+            let ObjectFace
+            if(Template.type == 'standard') {
+                if(CabinetFace == 'front') {
+                ObjectFace = Object.cabinet_front
+                } else {
+                ObjectFace = (Object.cabinet_front == 'front') ? 'rear' : 'front'
+                }
+            } else {
+                ObjectFace = 'front'
+            }
+
+            return ObjectFace
+        },
 
 // Template
         GetTemplateID: function(ObjectID, Context=false) {
@@ -157,77 +185,130 @@ export const PCM = {
             const vm = this
             const TreeRef = vm.TreeRef
             const Context = vm.Context
+
+            // Gather parent data
             Parent = (Parent !== undefined) ? Parent : { id: 0, data: {id: 0, type: 'root'}}
             const ParentTreeID = Parent.id
             const ParentID = Parent.data.id
             const ParentType = Parent.data.type
+
             let ChildrenFiltered = []
 
             if(ParentType == 'root' || ParentType == 'location') {
+
                 ChildrenFiltered = vm.Locations[Context].filter(location => location.parent_id == ParentID)
             } else if(ParentType == 'cabinet') {
+
                 if(Scope == 'partition' || Scope == 'port') {
                     ChildrenFiltered = vm.Objects[Context].filter(object => object.location_id == ParentID && object.parent_id == null)
                 }
             } else if(ParentType == 'object') {
+
                 if(Scope == 'partition' || Scope == 'port') {
-                    const ParentObjectIndex = vm.GetObjectIndex(ParentID, Context)
-                    const ParentObject = vm.Objects[Context][ParentObjectIndex]
-                    const ParentTemplateID = ParentObject.template_id
-                    const ParentTemplateIndex = vm.GetTemplateIndex(ParentTemplateID, Context)
-                    const ParentTemplate = vm.Templates[Context][ParentTemplateIndex]
-                    const FaceArray = ['front','rear']
-                    FaceArray.forEach(function(Face){
-                        ChildrenFiltered = ChildrenFiltered.concat(vm.GetConnectablePartitions(ParentID, Face, ParentTemplate.blueprint[Face]))
-                    })
-                    ChildrenFiltered = ChildrenFiltered.concat(vm.GetInsertConnectablePartitions(ParentID))
+
+                    // Cannot trunk to self
+                    const SelectedObjectID = vm.PartitionAddressSelected[Context].object_id
+                    if(ParentID != SelectedObjectID) {
+
+                        // Collect connectable partitions
+                        const ParentObjectIndex = vm.GetObjectIndex(ParentID, Context)
+                        const ParentObject = vm.Objects[Context][ParentObjectIndex]
+                        const ParentTemplateID = ParentObject.template_id
+                        const ParentTemplateIndex = vm.GetTemplateIndex(ParentTemplateID, Context)
+                        const ParentTemplate = vm.Templates[Context][ParentTemplateIndex]
+                        const FaceArray = ['front','rear']
+                        FaceArray.forEach(function(Face){
+                            ChildrenFiltered = ChildrenFiltered.concat(vm.GetConnectablePartitions(ParentID, Face, ParentTemplate.blueprint[Face]))
+                        })
+                        ChildrenFiltered = ChildrenFiltered.concat(vm.GetInsertConnectablePartitions(ParentID))
+                    }
                 }
             }
             
+            // Prepare child data
             const ChildrenData = []
             ChildrenFiltered.forEach(function(child) {
 
-                let ChildID, ChildName, ChildType, ChildIcon, ChildParentID, ChildImg, ChildOrder
+                const ChildData = []
                 if(ParentType == 'cabinet') {
-                    ChildID = child.id
-                    ChildName = child.name
-                    ChildType = 'object'
-                    ChildParentID = child.location_id
-                    ChildImg = ''
-                    ChildOrder = child.cabinet_ru
+                    ChildData.push({
+                        id: child.id,
+                        object_id: child.id,
+                        face: null,
+                        partition_address: null,
+                        name: child.name,
+                        type: 'object',
+                        parent_id: child.location_id,
+                        img: '',
+                        order: child.cabinet_ru,
+                    })
                 } else if(ParentType == 'object') {
                     const PortTotal = child.port_layout.rows * child.port_layout.cols
-                    const FirstPort = vm.GeneratePortID(0, PortTotal, child.port_format)
-                    const LastPort = vm.GeneratePortID(PortTotal - 1, PortTotal, child.port_format)
-                    ChildID = child.id+'-'+child.face+'-'+child.partition_address.join('-')
-                    ChildName = (PortTotal > 1) ? child.prefix + FirstPort + ' - ' + LastPort : child.prefix + FirstPort
-                    ChildType = 'partition'
-                    ChildParentID = child.location_id
-                    ChildImg = ''
-                    ChildOrder = child.partition_address.length + child.partition_address[child.partition_address.length - 1]
-                } else {
-                    ChildID = child.id
-                    ChildName = child.name
-                    ChildType = child.type
-                    ChildParentID = child.parent_id
-                    ChildImg = child.img
-                    ChildOrder = child.order
-                }
-                ChildIcon = vm.GetNodeIcon(ChildType)
 
-                const ChildData = {
-                    "id": ChildType+'-'+ChildID,
-                    "text": ChildName,
-                    "data": {
-                        "id": ChildID,
-                        "type": ChildType,
-                        "icon": ChildIcon,
-                        "parent_id": ChildParentID,
-                        "img": ChildImg,
-                        "order": ChildOrder,
-                    },
+                    if(Scope == 'partition') {
+                        const FirstPort = vm.GeneratePortID(0, PortTotal, child.port_format)
+                        const LastPort = vm.GeneratePortID(PortTotal - 1, PortTotal, child.port_format)
+                        ChildData.push({
+                            id: child.id+'-'+child.face+'-'+child.partition_address.join('-'),
+                            object_id: child.id,
+                            face: child.face,
+                            partition_address: child.partition_address,
+                            name: (PortTotal > 1) ? child.prefix + FirstPort + ' - ' + child.prefix + LastPort : child.prefix + FirstPort,
+                            type: 'partition',
+                            parent_id: child.location_id,
+                            img: '',
+                            order: child.partition_address.length + child.partition_address[child.partition_address.length - 1],
+                        })
+                    } else {
+                        for (let i = 0; i < PortTotal; i++) {
+                            const Port = vm.GeneratePortID(i, PortTotal, child.port_format)
+                            ChildData.push({
+                                id: child.id+'-'+child.face+'-'+child.partition_address.join('-')+'-'+i,
+                                object_id: child.id,
+                                face: child.face,
+                                partition_address: child.partition_address,
+                                port_id: i,
+                                name: child.prefix + Port,
+                                type: 'port',
+                                parent_id: child.location_id,
+                                img: '',
+                                order: child.partition_address.length + child.partition_address[child.partition_address.length - 1],
+                            })
+                        }
+                    }
+                } else {
+                    ChildData.push({
+                        id: child.id,
+                        object_id: child.id,
+                        face: null,
+                        partition_address: null,
+                        name: child.name,
+                        type: child.type,
+                        parent_id: child.parent_id,
+                        img: child.img,
+                        order: child.order,
+                    })
                 }
-                ChildrenData.push(ChildData)
+
+                ChildData.forEach(function(child){
+
+                    const ChildData = {
+                        "id": child.type+'-'+child.id,
+                        "text": child.name,
+                        "data": {
+                            "id": child.id,
+                            "object_id": child.object_id,
+                            "partition_address": child.partition_address,
+                            "face": child.face,
+                            "type": child.type,
+                            "icon": vm.GetNodeIcon(child.type),
+                            "parent_id": child.parent_id,
+                            "img": child.img,
+                            "order": child.order,
+                        },
+                    }
+                    ChildrenData.push(ChildData)
+                })
             })
         
             if(ChildrenData.length) {
@@ -257,7 +338,7 @@ export const PCM = {
             // Store variables
             const vm = this
             const Context = EmitData.Context
-            const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
+            const Face = EmitData.ObjectFace
             const PartitionAddress = EmitData.PartitionAddress
             const HoverState = EmitData.HoverState
             const TemplateID = EmitData.TemplateID
@@ -270,24 +351,25 @@ export const PCM = {
             HonorHover = (vm.$route.name == 'environment' && Context == 'template') ? false : HonorHover
 
             if(HonorHover) {
-                vm.PartitionAddressHovered[Context][TemplateFaceSelected] = (HoverState) ? PartitionAddress : false
                 vm.PartitionAddressHovered[Context].template_id = TemplateID
                 vm.PartitionAddressHovered[Context].object_id = ObjectID
+                vm.PartitionAddressHovered[Context].object_face = Face
+                vm.PartitionAddressHovered[Context][Face] = (HoverState) ? PartitionAddress : false
             }
 
         },
         PartitionIsHovered: function(PartitionIndex) {
             const vm = this
             const Context = vm.Context
-            const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
-            const ObjectIDHovered = vm.PartitionAddressHovered[Context].object_id
-            const PartitionAddressHovered = vm.PartitionAddressHovered[Context][TemplateFaceSelected]
-
-            const PartitionAddress = vm.GetPartitionAddress(PartitionIndex)
             const ObjectID = vm.ObjectID
+            const CabinetFace = vm.TemplateFaceSelected[Context]
+
+            const ObjectFace = vm.GetObjectFace(ObjectID, CabinetFace)
+            const ObjectIDHovered = vm.PartitionAddressHovered[Context].object_id
+            const PartitionAddressHovered = vm.PartitionAddressHovered[Context][ObjectFace]
+            const PartitionAddress = vm.GetPartitionAddress(PartitionIndex)
             
             let PartitionIsHovered = false
-
             if(PartitionAddressHovered.length === PartitionAddress.length && PartitionAddressHovered.every(function(value, index) { return value === PartitionAddress[index]}) && ObjectID == ObjectIDHovered) {
                 PartitionIsHovered = true
             }
@@ -298,7 +380,7 @@ export const PCM = {
             // Store variables
             const vm = this
             const Context = EmitData.Context
-            const Face = vm.TemplateFaceSelected[Context]
+            const Face = EmitData.ObjectFace
             const PartitionAddress = EmitData.PartitionAddress
             const TemplateID = EmitData.TemplateID
             const ObjectID = EmitData.ObjectID
@@ -317,9 +399,10 @@ export const PCM = {
             HonorClick = (vm.$route.name == 'environment' && Context == 'template') ? false : HonorClick
       
             if(HonorClick) {
+                vm.PartitionAddressSelected[Context].object_id = ObjectID
+                vm.PartitionAddressSelected[Context].object_face = Face
                 vm.PartitionAddressSelected[Context][Face] = PartitionAddress
                 vm.PartitionAddressSelected[Context].template_id = TemplateID
-                vm.PartitionAddressSelected[Context].object_id = ObjectID
             }
 
             if(HonorClick && Context == 'template' && PartitionType == 'enclosure') {
@@ -416,7 +499,7 @@ export const PCM = {
             // Store variables
             const vm = this
             Context = (Context) ? Context : vm.Context
-            const Face = vm.TemplateFaceSelected[Context]
+            const Face = vm.PartitionAddressSelected[Context].object_face
             const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
             let Partition = false
 
@@ -476,16 +559,98 @@ export const PCM = {
         GetConnectablePartitions: function(ObjectID, Face, Blueprint, ConnectablePartitions=[], BasePartAddr=[]) {
 
             const vm = this
+            const Context = vm.Context
+            
+            // Gather selected compatibility data
+            let SelectedTemplateFunction
+            let SelectedMediaID
+            let SelectedConnectorID
+            let SelectedPortTotal
+            const SelectedObject = vm.GetObjectSelected(Context)
+            const FloorplanType = SelectedObject.floorplan_object_type
+            if(FloorplanType === null) {
+                const SelectedTemplate = vm.GetTemplateSelected(Context)
+                const SelectedPartition = vm.GetPartitionSelected(Context)
+                SelectedTemplateFunction = SelectedTemplate.function
+                SelectedMediaID = SelectedPartition.media
+                SelectedConnectorID = SelectedPartition.port_connector
+                SelectedPortTotal = SelectedPartition.port_layout.cols * SelectedPartition.port_layout.rows
+            } else if(FloorplanType == 'walljack') {
+                SelectedTemplateFunction = 'passive'
+                SelectedMediaID = 1
+                SelectedConnectorID = 1
+                SelectedPortTotal = 0
+            } else if(FloorplanType == 'wap' || FloorplanType == 'camera') {
+                SelectedTemplateFunction = 'endpoint'
+                SelectedMediaID = 1
+                SelectedConnectorID = 1
+                SelectedPortTotal = 0
+            }
 
             Blueprint.forEach(function(partition, index){
                 const PartAddr = BasePartAddr.concat([index])
                 if(partition.type == 'connectable') {
-                    const ConnectablePartition = JSON.parse(JSON.stringify(partition))
-                    ConnectablePartition.id = ObjectID
-                    ConnectablePartition.face = Face
-                    ConnectablePartition.partition_address = PartAddr
-                    ConnectablePartition.prefix = ''
-                    ConnectablePartitions.push(ConnectablePartition)
+
+                    // Gather node compatibility data
+                    const NodeIndex = vm.GetObjectIndex(ObjectID, Context)
+                    const Node = vm.Objects[Context][NodeIndex]
+                    const NodeTemplateID = vm.GetTemplateID(ObjectID, Context)
+                    const NodeTemplateIndex = vm.GetTemplateIndex(NodeTemplateID, Context)
+                    const NodeTemplate = vm.Templates[Context][NodeTemplateIndex]
+                    const NodeTemplateFunction = NodeTemplate.function
+                    const NodeMediaID = partition.media
+                    const NodeConnectorID = partition.port_connector
+                    const NodePortTotal = partition.port_layout.cols * partition.port_layout.rows
+                    let Compatible = true
+
+                    // Cannot trunk endpoint to endpoint
+                    if(SelectedTemplateFunction == 'endpoint' && NodeTemplateFunction == 'endpoint') {
+                        Compatible = false
+                    }
+
+                    // Must have same number of ports
+                    if((SelectedPortTotal != NodePortTotal) && (SelectedPortTotal != 0)) {
+                        Compatible = false
+                    }
+
+                    // Media types must be compatible
+                    if(SelectedTemplateFunction == 'endpoint') {
+                        // Selected template is endpoint
+                        const SelectedConnector = vm.Connectors.find(connector => connector.value == SelectedConnectorID)
+                        const SelectedMediaTypeID = SelectedConnector.type_id
+                        const NodeMedia = vm.Medium.find(medium => medium.value == NodeMediaID)
+                        const NodeMediaTypeID = NodeMedia.type_id
+                        if(SelectedMediaTypeID != 4 && (SelectedMediaTypeID != NodeMediaTypeID)) {
+                            Compatible = false
+                        }
+                    } else if(NodeTemplateFunction == 'endpoint') {
+                        // Node template is endpoint
+                        const SelectedMedia = vm.Medium.find(medium => medium.value == SelectedMediaID)
+                        const SelectedMediaCategoryID = SelectedMedia.category_id
+                        const NodeConnector = vm.Connectors.find(connector => connector.value == NodeConnectorID)
+                        const NodeMediaCategoryID = NodeConnector.category_id
+                        if(NodeMediaCategoryID != 4 && (SelectedMediaCategoryID != NodeMediaCategoryID)) {
+                            Compatible = false
+                        }
+                    } else {
+                        // Node and Selected templates are passive
+                        const SelectedMedia = vm.Medium.find(medium => medium.value == SelectedMediaID)
+                        const SelectedMediaCategoryID = SelectedMedia.category_id
+                        const NodeMedia = vm.Medium.find(medium => medium.value == NodeMediaID)
+                        const NodeMediaCategoryID = NodeMedia.category_id
+                        if(SelectedMediaCategoryID != NodeMediaCategoryID) {
+                            Compatible = false
+                        }
+                    }
+
+                    if(Compatible) {
+                        const ConnectablePartition = JSON.parse(JSON.stringify(partition))
+                        ConnectablePartition.id = ObjectID
+                        ConnectablePartition.face = Face
+                        ConnectablePartition.partition_address = PartAddr
+                        ConnectablePartition.prefix = ''
+                        ConnectablePartitions.push(ConnectablePartition)
+                    }
                 } else if(partition.type == 'generic') {
                     vm.GetConnectablePartitions(ObjectID, Face, partition.children, ConnectablePartitions, PartAddr)
                 }
@@ -500,30 +665,87 @@ export const PCM = {
             let ConnectablePartitions = []
             let PrefixSeparator
             let TempNameArray
+            const Face = 'front'
+            NameArray.push('')
+            const SelectedObjectID = vm.PartitionAddressSelected[Context].object_id
 
+            // Retrieve child inserts
             const InsertObjects = vm.Objects[Context].filter(object => object.parent_id == ObjectID)
             InsertObjects.forEach(function(InsertObject){
-                const InsertObjectID = InsertObject.id
-                const InsertObjectName = InsertObject.name
-                const TemplateID = InsertObject.template_id
-                const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-                const Template = vm.Templates[Context][TemplateIndex]
-                const TemplateFunction = Template.function
-                PrefixSeparator = (TemplateFunction == 'endpoint') ? '' : '.'
-                const FaceArray = ['front','rear']
-                FaceArray.forEach(function(Face){
-                    ConnectablePartitions = ConnectablePartitions.concat(vm.GetConnectablePartitions(InsertObjectID, Face, Template.blueprint[Face]))
-                })
-                NameArray.push(InsertObjectName)
 
-                ConnectablePartitions.forEach(function(Partition){
-                    TempNameArray = NameArray.concat([''])
-                    Partition.prefix = TempNameArray.join(PrefixSeparator)
-                })
-                ConnectablePartitions = ConnectablePartitions.concat(vm.GetInsertConnectablePartitions(InsertObjectID, NameArray))
+                // Cannot trunk to self
+                const InsertObjectID = InsertObject.id
+                if(InsertObjectID != SelectedObjectID) {
+
+                    // Gather insert object details
+                    const InsertObjectName = InsertObject.name
+                    const TemplateID = InsertObject.template_id
+                    const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+                    const Template = vm.Templates[Context][TemplateIndex]
+                    const TemplateFunction = Template.function
+
+                    // Determine nested insert separator
+                    PrefixSeparator = (TemplateFunction == 'endpoint') ? '' : '.'
+
+                    // Retrieve connectable partitions
+                    let InsertConnectablePartitions = vm.GetConnectablePartitions(InsertObjectID, Face, Template.blueprint[Face])
+
+                    // Compile insert object names to be used for prefix
+                    NameArray.splice(NameArray.length-1, 1, InsertObjectName)
+
+                    // Compile prefix
+                    InsertConnectablePartitions.forEach(function(Partition){
+
+                        // Add an empty element to NameArray so passive prefix ends in '.' 
+                        TempNameArray = NameArray.concat([''])
+                        Partition.prefix = TempNameArray.join(PrefixSeparator)
+                    })
+
+                    ConnectablePartitions = ConnectablePartitions.concat(InsertConnectablePartitions)
+                    ConnectablePartitions = ConnectablePartitions.concat(vm.GetInsertConnectablePartitions(InsertObjectID, JSON.parse(JSON.stringify(NameArray))))  
+                }
             })
 
             return ConnectablePartitions
+        },
+
+// Trunks
+        GetTrunks: function(ObjectID, ObjectFace, ObjectPartition){
+
+            const vm = this
+
+            const TrunkEntries = vm.Trunks.filter(function(trunk){
+
+                let match = false
+
+                if(trunk.a_id == ObjectID) {
+                    if(trunk.a_face == ObjectFace) {
+                        let i = trunk.a_partition.length
+                        let PartitionMatch = true
+                        while (i--) {
+                            if (trunk.a_partition[i] !== ObjectPartition[i]) {
+                                PartitionMatch = false
+                            }
+                        }
+                        match = PartitionMatch
+                    }
+                }
+                
+                if(trunk.b_id == ObjectID) {
+                    if(trunk.b_face == ObjectFace) {
+                        let i = trunk.b_partition.length
+                        let PartitionMatch = true
+                        while (i--) {
+                            if (trunk.b_partition[i] !== ObjectPartition[i]) {
+                                PartitionMatch = false
+                            }
+                        }
+                        match = PartitionMatch
+                    }
+                }
+                return match
+            })
+            return TrunkEntries
         },
 
 // Floorplan
@@ -557,6 +779,76 @@ export const PCM = {
         },
 
 // Misc
+        GenerateDN: function(ObjectID, Face, PartitionAddress, PortIndex=0){
+
+            const vm = this
+            const Context = 'actual'
+            let DNArray = []
+
+            // Get object
+            const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
+            const Object = vm.Objects[Context][ObjectIndex]
+            const ObjectName = Object.name
+
+            // Get template
+            const TemplateID = Object.template_id
+            const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+            const Template = vm.Templates[Context][TemplateIndex]
+            const TemplateFunction = Template.function
+
+            // Get template partition
+            const Blueprint = Template.blueprint[Face]
+            const Partition = vm.GetPartition(Blueprint, PartitionAddress)
+
+            // Retrieve port data
+            const PortFormat = Partition.port_format
+            const PortTotal = Partition.port_layout.cols * Partition.port_layout.rows
+            const FirstPort = vm.GeneratePortID(0, PortTotal, PortFormat)
+            const LastPort = vm.GeneratePortID(PortTotal-1, PortTotal, PortFormat)
+
+            let ObjectParentID = Object.parent_id
+            let LocationID = Object.location_id
+            let ObjectArray = [ObjectName]
+            while(ObjectParentID !== null) {
+
+                // Retrieve parent data
+                const ObjectParentIndex = vm.GetObjectIndex(ObjectParentID, Context)
+                const ObjectParent = vm.Objects[Context][ObjectParentIndex]
+                const ObjectParentName = ObjectParent.name
+
+                // Prepend DNArray with parent object
+                ObjectArray.unshift(ObjectParentName)
+
+                // Update parent ID and location ID
+                ObjectParentID = ObjectParent.parent_id
+                LocationID = ObjectParent.location_id
+            }
+
+            if(TemplateFunction == 'endpoint') {
+                const InsertObjectArray = ObjectArray.filter((element, index) => {return (index == 0) ? false : true})
+                const InsertObjectName = InsertObjectArray.join('')
+                DNArray.unshift(InsertObjectName+FirstPort+'-'+InsertObjectName+LastPort)
+                DNArray.unshift(ObjectArray[0])
+            } else {
+                DNArray = ObjectArray.concat([FirstPort+'-'+LastPort])
+            }
+
+            while(LocationID !== 0) {
+
+                // Retrieve location data
+                const LocationIndex = vm.GetLocationIndex(LocationID, Context)
+                const Location = vm.Locations[Context][LocationIndex]
+                const LocationName = Location.name
+
+                // Prepend DNArray with parent object
+                DNArray.unshift(LocationName)
+
+                // Updata location ID
+                LocationID = Location.parent_id
+            }
+
+            return DNArray.join('.')
+        },
         GeneratePortID: function(Index, PortTotal, PortFormat){
 
             // Store variables
@@ -805,7 +1097,7 @@ export const PCM = {
                 } else if (Key == 'location_id') {
                     return (Context == 'workspace' && TemplateType == 'standard') ? WorkspaceInsertID : Value
                 } else if (Key == 'cabinet_front') {
-                    return (Context == 'workspace' && TemplateType == 'standard') ? 'front' : Value
+                    return (TemplateType == 'standard') ? 'front' : Value
                 } else if (Key == 'cabinet_ru') {
                     return (Context == 'workspace' && TemplateType == 'standard') ? 1 : Value
                 } else if (Key == 'parent_id') {

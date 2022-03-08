@@ -7,7 +7,7 @@
     >
       <span class="tree-text" slot-scope="{ node }" style="width:100%;">
         <template>
-          <div @contextmenu.prevent.stop="handleClick($event, {'node_id': node.id})">
+          <div @contextmenu.prevent.stop="handleClick($event, {'node_id': node.data.id})">
             <feather-icon :icon="node.data.icon" />
             {{ node.text }}
           </div>
@@ -127,8 +127,8 @@ export default {
       if(Action == 'rename') {
 
         // Rename location
-        const Criteria = {
-          "id": NodeID.toString()
+        const Criteria = function(node){
+          return node.data.id == NodeID
         }
         Node = vm.$refs[TreeRef].find(Criteria)[0]
         Node.startEditing()
@@ -150,13 +150,13 @@ export default {
           const ReturnedLocationID = response.data.id
 
           // Delete node from tree
-          const Criteria = {
-            "id": ReturnedLocationID.toString()
+          const Criteria = function(node){
+            return node.data.id == ReturnedLocationID
           }
           let Node = vm.$refs[TreeRef].find(Criteria)[0]
           Node.remove()
           
-        }).catch(error => {vm.DisplayError(error)})
+        }).catch(error => {console.log(error); vm.DisplayError(error)})
 
       } else {
 
@@ -188,8 +188,8 @@ export default {
           }
 
           // Append child node object to parent
-          const Criteria = {
-            "id": NodeID.toString()
+          const Criteria = function(node){
+            return node.data.id == NodeID
           }
           let ParentNode = vm.$refs[TreeRef].find(Criteria)[0]
           ParentNode.append(Child)
@@ -208,7 +208,7 @@ export default {
     const TreeRef = vm.TreeRef
 
     // $nextTick is required to allow time for the $refs[TreeRef] to be rendered
-    vm.$nextTick(function () {
+    setTimeout(function(){
 
       // Build the location tree data
       const Scope = 'location'
@@ -219,6 +219,7 @@ export default {
 
         const LocationID = node.data.id
         const NodeID = node.id
+        vm.$emit('SetPartitionAddressSelected', {Context, object_id:null, front:[0], rear:[0]})
         vm.$emit('LocationNodeSelected', {"id":LocationID})
         document.cookie = "environment_location_nodeID="+NodeID
       })
@@ -227,6 +228,7 @@ export default {
       vm.$refs[TreeRef].$on('node:editing:stop', (node) => {
 
         // Store data
+        console.log(node)
         const NodeID = node.data.id
         const NodeText = node.text
         const url = '/api/locations/'+NodeID
@@ -252,7 +254,6 @@ export default {
         if(node.parent) {
           NodeOrder = node.parent.children.findIndex(child => child.id == NodeID)
         } else {
-          console.log(vm.$refs[TreeRef].tree.model)
           NodeOrder = vm.$refs[TreeRef].tree.model.findIndex(child => child.id == NodeID)
         }
 
@@ -280,18 +281,22 @@ export default {
 
         // Select previously viewed node
         let Node = vm.GetLocationNode(SelectedNodeID, TreeRef)
-        Node.select(true)
+        if(Node) {
+          Node.select(true)
 
-        // Expand parent nodes
-        let NodeParentID = Node.parent.id
-        while(NodeParentID.toString() !== '0') {
-          let NodeParent = vm.GetLocationNode(NodeParentID, TreeRef)
-          NodeParent.expand()
-          NodeParentID = NodeParent.data.parent_id
+          // Expand parent nodes
+          if(Node.parent) {
+            let NodeParentID = Node.parent.id
+            while(NodeParentID.toString() !== '0') {
+              let NodeParent = vm.GetLocationNode(NodeParentID, TreeRef)
+              NodeParent.expand()
+              NodeParentID = NodeParent.data.parent_id
+            }
+          }
         }
         
       }
-    })
+    }, 0)
   }
 }
 </script>

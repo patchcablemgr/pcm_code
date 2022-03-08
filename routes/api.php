@@ -12,6 +12,7 @@ use App\Http\Controllers\AttributesPortOrientation;
 use App\Http\Controllers\AttributesPortConnector;
 use App\Http\Controllers\FloorplanTemplateController;
 use App\Http\Controllers\ImageController;
+use App\Http\Controllers\TrunkController;
 
 /*
 |--------------------------------------------------------------------------
@@ -66,6 +67,7 @@ Route::group(['middleware' => 'auth:sanctum'], function(){
     'locations' => LocationController::class,
     'categories' => CategoryController::class,
     'templates' => TemplateController::class,
+    'trunks' => TrunkController::class,
   ],[
     'only' =>[
       'index',

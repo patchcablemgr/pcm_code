@@ -16,13 +16,13 @@ class DatabaseSeeder extends Seeder
     {
         // attributes_port_connector
         $portConnectorArray = [
-            [ 'value' => 1, 'name' => 'RJ45', 'category_type_id' => 1, 'default' => 1],
-            [ 'value' => 2, 'name' => 'LC', 'category_type_id' => 2, 'default' => 0],
-            [ 'value' => 3, 'name' => 'SC', 'category_type_id' => 2, 'default' => 0],
-            [ 'value' => 4, 'name' => 'SFP', 'category_type_id' => 4, 'default' => 0],
-            [ 'value' => 5, 'name' => 'QSFP', 'category_type_id' => 4, 'default' => 0],
-            [ 'value' => 6, 'name' => 'MPO-12', 'category_type_id' => 2, 'default' => 0],
-            [ 'value' => 7, 'name' => 'MPO-24', 'category_type_id' => 2, 'default' => 0]
+            [ 'value' => 1, 'name' => 'RJ45', 'type_id' => 1, 'default' => 1],
+            [ 'value' => 2, 'name' => 'LC', 'type_id' => 2, 'default' => 0],
+            [ 'value' => 3, 'name' => 'SC', 'type_id' => 2, 'default' => 0],
+            [ 'value' => 4, 'name' => 'SFP', 'type_id' => 4, 'default' => 0],
+            [ 'value' => 5, 'name' => 'QSFP', 'type_id' => 4, 'default' => 0],
+            [ 'value' => 6, 'name' => 'MPO-12', 'type_id' => 2, 'default' => 0],
+            [ 'value' => 7, 'name' => 'MPO-24', 'type_id' => 2, 'default' => 0]
         ];
 
         foreach($portConnectorArray as $portConnector) {
@@ -71,11 +71,11 @@ class DatabaseSeeder extends Seeder
 
         // attributes_media_category
         $mediaCategoryArray = [
-            [ 'value' => 1, 'name' => 'Copper', 'category_type_id' => 1],
-            [ 'value' => 2, 'name' => 'MultimodeFiber', 'category_type_id' => 2],
-            [ 'value' => 3, 'name' => 'Label', 'category_type_id' => 3],
-            [ 'value' => 4, 'name' => 'Singlemode Fiber', 'category_type_id' => 2],
-            [ 'value' => 5, 'name' => 'Unspecified', 'category_type_id' => 4]
+            [ 'value' => 1, 'name' => 'Copper', 'type_id' => 1],
+            [ 'value' => 2, 'name' => 'Multimode Fiber', 'type_id' => 2],
+            [ 'value' => 3, 'name' => 'Label', 'type_id' => 3],
+            [ 'value' => 4, 'name' => 'Singlemode Fiber', 'type_id' => 2],
+            [ 'value' => 5, 'name' => 'Unspecified', 'type_id' => 4]
         ];
 
         foreach($mediaCategoryArray as $mediaCategory) {

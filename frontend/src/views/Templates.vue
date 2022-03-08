@@ -112,18 +112,21 @@ const TemplateFaceSelected = {
 const PartitionAddressSelected = {
   'workspace': {
     'object_id': StandardTemplateID,
+    'object_face': 'front',
     'template_id': StandardTemplateID,
     'front': [0],
     'rear': [0]
   },
   'template': {
     'object_id': null,
+    'object_face': null,
     'template_id': null,
     'front': [0],
     'rear': [0]
   },
   'object': {
     'object_id': null,
+    'object_face': null,
     'template_id': null,
     'front': [0],
     'rear': [0]
@@ -132,12 +135,14 @@ const PartitionAddressSelected = {
 const PartitionAddressHovered = {
   'workspace': {
     'object_id': null,
+    'object_face': null,
     'template_id': null,
     'front': false,
     'rear': false
   },
   'template': {
     'object_id': null,
+    'object_face': null,
     'template_id': null,
     'front': false,
     'rear': false

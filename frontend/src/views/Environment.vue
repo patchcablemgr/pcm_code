@@ -13,6 +13,7 @@
                 Context="actual"
                 TreeRef="LocationsAndCabinetsTree"
                 :NodeIDSelected="NodeIDSelected"
+                @SetPartitionAddressSelected="SetPartitionAddressSelected($event)"
                 @LocationNodeSelected="LocationNodeSelected($event)"
               />
             </b-card-body>
@@ -23,7 +24,6 @@
             Context="actual"
             :PartitionAddressSelected="PartitionAddressSelected"
             @SetPartitionAddressSelected="SetPartitionAddressSelected($event)"
-            @ObjectEdited="ObjectEdited($event, 'floorplan')"
           />
 
           <component-floorplan-objects
@@ -44,7 +44,6 @@
             :FloorplanImage="FloorplanImage"
             :File="File"
             :NodeIDSelected="NodeIDSelected"
-            :ObjectData="ObjectData"
             :PartitionAddressSelected="PartitionAddressSelected"
             :PartitionAddressHovered="PartitionAddressHovered"
             @FileSelected="FileSelected($event)"
@@ -156,25 +155,6 @@ import ComponentFloorplan from './templates/ComponentFloorplan.vue'
 import ComponentFloorplanObjects from './templates/ComponentFloorplanObjects.vue'
 import ComponentFloorplanObjectDetails from './templates/ComponentFloorplanObjectDetails.vue'
 
-const ObjectData = {
-  'preview': [],
-  'template': [],
-}
-
-const PortConnectorData = [
-  {
-    "value": 1,
-    "name": "RJ45",
-    "category_type_id": 1,
-    "default": 1,
-  },
-]
-
-const TemplateData = {
-  'preview': [],
-  'template': [],
-}
-
 const TemplateFaceSelected = {
   'actual': 'front',
   'template': 'front',
@@ -183,12 +163,14 @@ const TemplateFaceSelected = {
 const PartitionAddressSelected = {
   'actual': {
     'object_id': null,
+    'object_face': null,
     'template_id': null,
     'front': [0],
     'rear': [0]
   },
   'template': {
     'object_id': null,
+    'object_face': null,
     'template_id': null,
     'front': [0],
     'rear': [0]
@@ -198,80 +180,19 @@ const PartitionAddressSelected = {
 const PartitionAddressHovered = {
   'actual': {
     'object_id': null,
+    'object_face': null,
     'template_id': null,
     'front': false,
     'rear': false
   },
   'template': {
     'object_id': null,
+    'object_face': null,
     'template_id': null,
     'front': false,
     'rear': false
   }
 }
-
-const GenericObject = {
-    "id": null,
-    "pseudo": true,
-    "name": null,
-    "template_id": null,
-    "location_id": null,
-    "cabinet_ru": null,
-    "cabinet_front": null,
-    "parent_id": null,
-    "parent_face": null,
-    "parent_partition_address": null,
-    "parent_enclosure_address": null,
-}
-
-const GenericTemplate = {
-    "id": null,
-    "pseudo": true,
-    "name": "PseudoTemplate",
-    "category_id": null,
-    "type": null,
-    "ru_size": null,
-    "function": null,
-    "mount_config": "2-post",
-    "insert_constraints": null,
-    "blueprint": {
-        "front": [{
-                "type": "generic",
-                "units": null,
-                "children": [{
-                        "type": "enclosure",
-                        "units": null,
-                        "children": [],
-                        "enc_layout": {
-                            "cols": null,
-                            "rows": null,
-                        },
-                    },
-                ],
-            },
-        ],
-        "rear": []
-    },
-}
-
-const PortOrientationData = [
-  {
-    "value": 1,
-    "name": "Top-Left to Right",
-    "default": 1,
-  },
-]
-
-const MediaData = [
-  {
-    "value": 1,
-    "name": "placeholder",
-    "category_id": 1,
-    "type_id": 1,
-    "display": 1,
-    "default": 1,
-  }
-]
 
 const NodeIDSelected = null
 
@@ -306,17 +227,10 @@ export default {
 	},
   data() {
     return {
-      ObjectData,
-      TemplateData,
       TemplateFaceSelected,
       PartitionAddressSelected,
       PartitionAddressHovered,
-      GenericObject,
-      GenericTemplate,
       NodeIDSelected,
-      PortOrientationData,
-      MediaData,
-      PortConnectorData,
       File: null,
     }
   },
@@ -329,7 +243,8 @@ export default {
         vm.TemplatesReady.template,
         vm.TemplatesReady.actual,
         vm.ObjectsReady.template,
-        vm.LocationsReady
+        vm.LocationsReady,
+        vm.TrunksReady
       ]
       
       const DependenciesReady = Dependencies.every(function(element){ return element == true })
@@ -358,6 +273,12 @@ export default {
     },
     ObjectsReady: function() {
       return this.$store.state.pcmObjects.ObjectsReady
+    },
+    Trunks() {
+      return this.$store.state.pcmTrunks.Trunks
+    },
+    TrunksReady: function() {
+      return this.$store.state.pcmTrunks.TrunksReady
     },
     FloorplanImage: function() {
       
@@ -401,49 +322,6 @@ export default {
 
       return PreviewDisplay
     },
-    TemplatePartitionPortRange: function(){
-      
-      // Initialize some variables
-      const vm = this
-      const Context = 'preview'
-      const TemplateID = vm.PartitionAddressSelected[Context].template_id
-      let PortRangeString = '-'
-
-      if(TemplateID) {
-
-        // Get template partition address
-        const TemplateFace = vm.TemplateFaceSelected[Context]
-        const TemplatePartition = vm.PartitionAddressSelected[Context][TemplateFace]
-
-        // Get template blueprint
-        const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-        const Template = vm.TemplateData[Context][TemplateIndex]
-        const TemplateBlueprint = Template.blueprint[TemplateFace]
-
-        // Get template partition
-        const Partition = vm.GetPartition(TemplateBlueprint, TemplatePartition)
-        const PartitionType = Partition.type
-
-        if(PartitionType == 'connectable') {
-
-          // Calculate port numbers
-          const PortFormat = Partition.port_format
-          const PortLayoutCols = Partition.port_layout.cols
-          const PortLayoutRows = Partition.port_layout.rows
-          const PortTotal = PortLayoutCols * PortLayoutRows
-          const FirstPortID = 0
-          const LastPortID = PortTotal - 1
-
-          const FirstPortIDString = vm.GeneratePortID(FirstPortID, PortTotal, PortFormat)
-          const LastPortIDString = vm.GeneratePortID(LastPortID, PortTotal, PortFormat)
-
-          PortRangeString = FirstPortIDString+' - '+LastPortIDString
-        }
-      }
-
-      return PortRangeString
-
-    },
   },
   methods: {
     LocationNodeSelected: function(EmitData) {
@@ -462,23 +340,6 @@ export default {
 
       const vm = this
       vm.TemplateFaceSelected[Context] = Face
-    },
-    GetPartition: function(Blueprint, PartitionAddress) {
-			
-			// Locate template partition
-			let Partition = Blueprint;
-			let PartitionCollection = Blueprint
-			PartitionAddress.forEach(function(PartitionIndex) {
-				if(typeof PartitionCollection[PartitionIndex] !== 'undefined') {
-					Partition = PartitionCollection[PartitionIndex]
-					PartitionCollection = PartitionCollection[PartitionIndex]['children']
-				} else {
-					return false
-				}
-			})
-			
-			return Partition
-      
     },
     FileSelected: function(EmitData) {
 
@@ -508,39 +369,6 @@ export default {
         }
         const SelectedNode = vm.$refs.LocationTree.find(Criteria)[0]
         SelectedNode.data.img = response.data.img
-
-      }).catch(error => {
-
-        // Display error to user via toast
-        vm.$bvToast.toast(JSON.stringify(error.response.data), {
-          title: 'Error',
-          variant: 'danger',
-        })
-
-      });
-    },
-    TemplateObjectEditClicked: function() {
-
-      const vm = this
-      vm.$bvModal.show('modal-templates-edit')
-
-    },
-    ObjectEdited: function(EmitData, Context='preview') {
-
-      // Store data
-      const vm = this
-      const ObjectID = vm.PartitionAddressSelected[Context].object_id
-      const url = '/api/objects/'+ObjectID
-      const data = EmitData
-
-      // PATCH object
-      this.$http.patch(url, data).then(function(response){
-        
-        const Object = response.data
-        const ObjectIndex = vm.GetObjectIndex(ObjectID, 'preview')
-				
-        // Append new object to object array
-        vm.$set(vm.ObjectData.preview, ObjectIndex, Object)
 
       }).catch(error => {
 
@@ -652,59 +480,6 @@ export default {
         }).catch(error => {vm.DisplayError(error)})
       }
     },
-    TemplateObjectDeleteClicked: function() {
-      
-			const vm = this
-      const Context = 'preview'
-			const ObjectID = vm.PartitionAddressSelected[Context].object_id
-			
-			const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
-			const ObjectName = vm.ObjectData[Context][ObjectIndex].name
-			
-      vm.$bvModal
-        .msgBoxConfirm('Delete '+ObjectName+'?', {
-          title: 'Confirm',
-          size: 'sm',
-          okVariant: 'primary',
-          okTitle: 'Yes',
-          cancelTitle: 'No',
-          cancelVariant: 'outline-secondary',
-          hideHeaderClose: false,
-          centered: true,
-        })
-        .then(value => {
-					
-					if(value) {
-						
-						// Store data
-						const url = '/api/objects/'+ObjectID
-
-						// DELETE object ID
-						this.$http.delete(url).then(function(response){
-
-							// Default selected
-							vm.PartitionAddressSelected[Context].object_id = null
-              vm.PartitionAddressSelected[Context].template_id = null
-
-              // Get template object data
-              const DeletedObjectID = response.data.id
-              const DeletedObjectIndex = vm.GetObjectIndex(DeletedObjectID, Context)
-
-              // Delete template and object
-              vm.ObjectData[Context].splice(DeletedObjectIndex,1)
-
-						}).catch(error => {
-
-							// Display error to user via toast
-							vm.$bvToast.toast(JSON.stringify(error.response.data), {
-								title: 'Error',
-								variant: 'danger',
-							})
-
-						});
-					}
-        })
-		},
     GETCategories: function() {
 
       const vm = this
@@ -721,7 +496,8 @@ export default {
       const vm = this;
 
       vm.$http.get('/api/medium').then(function(response){
-        vm.MediaData = response.data;
+        vm.$store.commit('pcmProps/SET_Medium', response.data)
+        vm.$store.commit('pcmProps/SET_Ready', {Prop:'medium', ReadyState:true})
       });
     },
     GETTemplates: function () {
@@ -794,6 +570,18 @@ export default {
         vm.DisplayError(error)
       })
     },
+    GETTrunks() {
+
+      const vm = this
+
+      // GET locations
+      vm.$http.get('/api/trunks').then(response => {
+        vm.$store.commit('pcmTrunks/SET_Trunks', {data:response.data})
+        vm.$store.commit('pcmTrunks/SET_Ready', {ReadyState:true})
+      }).catch(error => {
+        vm.DisplayError(error)
+      })
+    },
   },
   watch: {
   },
@@ -809,6 +597,7 @@ export default {
     vm.GETObjects()
     vm.GETPortOrientations()
     vm.GETPortConnectors()
+    vm.GETTrunks()
 
   },
 }

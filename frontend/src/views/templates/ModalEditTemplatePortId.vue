@@ -697,23 +697,6 @@ export default {
 
       return TemplateIndex
     },
-    GetPartition: function(Blueprint, PartitionAddress) {
-			
-			// Locate template partition
-			let Partition = Blueprint
-			let PartitionCollection = Blueprint
-			PartitionAddress.forEach(function(PartitionIndex) {
-				if(typeof PartitionCollection[PartitionIndex] !== 'undefined') {
-					Partition = PartitionCollection[PartitionIndex]
-					PartitionCollection = PartitionCollection[PartitionIndex]['children']
-				} else {
-					return false
-				}
-			})
-			
-			return Partition
-      
-    },
     ComputedPortFieldValidate: function(PortFormatFieldType) {
 
       if(PortFormatFieldType == 'static') {
@@ -908,29 +891,25 @@ export default {
       const Blueprint = Template.blueprint[Face]
       const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
       const Partition = vm.GetPartition(Blueprint, PartitionAddress)
-      const ValueOrig = Partition.port_format[FieldIndex].value
 
-      if(Value != ValueOrig) {
+      Partition.port_format[FieldIndex].value = Value
 
-        Partition.port_format[FieldIndex].value = Value
+      if(Context == 'template') {
 
-        if(Context == 'template') {
-
-          vm.$http.patch(URL, Template).then(response => {
-
-            // Insert new field
-            vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:response.data})
-
-          }).catch(error => {
-
-            vm.DisplayError(error)
-          })
-        } else {
+        vm.$http.patch(URL, Template).then(response => {
 
           // Insert new field
-          vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
+          vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:response.data})
 
-        }
+        }).catch(error => {
+
+          vm.DisplayError(error)
+        })
+      } else {
+
+        // Insert new field
+        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
+
       }
     },
     CastToInteger: function(value) {

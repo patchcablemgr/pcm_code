@@ -17,7 +17,7 @@ class CreateAttributesPortConnectorTable extends Migration
             $table->integer('id', true);
             $table->integer('value');
             $table->string('name');
-            $table->integer('category_type_id')->nullable();
+            $table->integer('type_id');
             $table->boolean('default');
         });
     }

@@ -225,6 +225,15 @@
           Trunked To:
         </td>
         <td>
+          <b-button
+            v-ripple.400="'rgba(40, 199, 111, 0.15)'"
+            variant="flat-success"
+            class="btn-icon"
+            v-b-modal.modal-port-select
+            :disabled="!ComputedObjectSelected"
+          >
+            <feather-icon icon="EditIcon" />
+          </b-button>
         </td>
         <td>
           {{ComputedTrunkedTo}}
@@ -338,6 +347,15 @@
       :PartitionAddressSelected="PartitionAddressSelected"
     />
 
+    <!-- Modal Port Select -->
+    <modal-port-select
+      ModalTitle="Trunk"
+      TreeRef="PortSelect"
+      :Context="Context"
+      :PartitionAddressSelected="PartitionAddressSelected"
+      PortSelectFunction="trunk"
+    />
+
   </div>
 </template>
 
@@ -355,6 +373,7 @@ import ModalEditObjectName from './ModalEditObjectName.vue'
 import ModalEditTemplateName from './ModalEditTemplateName.vue'
 import ModalEditTemplateCategory from './ModalEditTemplateCategory.vue'
 import ModalEditTemplatePortId from './ModalEditTemplatePortId.vue'
+import ModalPortSelect from '@/views/templates/ModalPortSelect.vue'
 import ModalFileUpload from './ModalFileUpload.vue'
 import Ripple from 'vue-ripple-directive'
 import { PCM } from '@/mixins/PCM.js'
@@ -374,6 +393,7 @@ export default {
     ModalEditTemplateName,
     ModalEditTemplateCategory,
     ModalEditTemplatePortId,
+    ModalPortSelect,
     ModalFileUpload,
   },
 	directives: {
@@ -390,6 +410,9 @@ export default {
     }
   },
   computed: {
+    Locations() {
+      return this.$store.state.pcmLocations.Locations
+    },
     Medium() {
       return this.$store.state.pcmProps.Medium
     },
@@ -407,6 +430,9 @@ export default {
     },
     Objects() {
       return this.$store.state.pcmObjects.Objects
+    },
+    Trunks() {
+      return this.$store.state.pcmTrunks.Trunks
     },
     ComputedObjectSelected: function() {
 
@@ -466,14 +492,40 @@ export default {
 
         const vm = this
         const Context = vm.Context
-        const ObjectID = vm.PartitionAddressSelected[Context].object_id
-        let ReturnString = '-'
+        const Partition = vm.GetPartitionSelected(Context)
+        let TrunkedTo = '-'
 
-        if(ObjectID) {
-          ReturnString = 'Trunked To'
+        if(Partition) {
+
+          const ObjectID = vm.PartitionAddressSelected[Context].object_id
+          const ObjectFace = vm.PartitionAddressSelected[Context].object_face
+          const ObjectPartition = vm.PartitionAddressSelected[Context][ObjectFace]
+
+          const Trunks = vm.GetTrunks(ObjectID, ObjectFace, ObjectPartition)
+
+          Trunks.forEach(function(Trunk){
+
+            const LocalTrunkSide = (Trunk.a_id == ObjectID) ? 'a' : 'b'
+            let RemoteObjectID
+            let RemoteObjectFace
+            let RemoteObjectPartition
+            if(LocalTrunkSide == 'a') {
+              RemoteObjectID = Trunk.b_id
+              RemoteObjectFace = Trunk.b_face
+              RemoteObjectPartition = Trunk.b_partition
+            } else {
+              RemoteObjectID = Trunk.a_id
+              RemoteObjectFace = Trunk.a_face
+              RemoteObjectPartition = Trunk.a_partition
+            }
+
+            TrunkedTo = vm.GenerateDN(RemoteObjectID, RemoteObjectFace, RemoteObjectPartition)
+
+          })
+          
         }
 
-        return ReturnString
+        return TrunkedTo
       },
     },
     TemplateType: {
@@ -504,8 +556,13 @@ export default {
         const vm = this
         const Context = vm.Context
         const Template = vm.GetTemplateSelected(Context)
+        const TemplateType = Template.type
 
-        return (Template) ? Template.ru_size : '-'
+        if(TemplateType == 'insert') {
+          return 'N/A'
+        } else {
+          return (Template) ? Template.ru_size : '-'
+        }
       },
     },
     ComputedMountConfig: {
@@ -514,8 +571,13 @@ export default {
         const vm = this
         const Context = vm.Context
         const Template = vm.GetTemplateSelected(Context)
+        const TemplateType = Template.type
 
-        return (Template) ? Template.mount_config : '-'
+        if(TemplateType == 'insert') {
+          return 'N/A'
+        } else {
+          return (Template) ? Template.mount_config : '-'
+        }
       },
     },
     TemplateImage: {
@@ -755,7 +817,7 @@ export default {
             })
           }
 
-          // Clear user selectiong
+          // Clear user selection
           const PartitionAddressSelected = {
             Context,
             object_id: null,

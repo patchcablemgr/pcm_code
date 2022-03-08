@@ -13,9 +13,9 @@
         pcm_template_partition_hovered: PartitionIsHovered(PartitionIndex),
       }"
       :style="{ 'flex-grow': GetPartitionFlexGrow(Partition.units, PartitionIndex) }"
-      @click.stop=" PartitionClicked({'Context': Context, 'ObjectID': ObjectID, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': GetPartitionAddress(PartitionIndex)}) "
-      @mouseover.stop=" PartitionHovered({'Context': Context, 'ObjectID': ObjectID, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': GetPartitionAddress(PartitionIndex), 'HoverState': true}) "
-      @mouseleave.stop=" PartitionHovered({'Context': Context, 'ObjectID': ObjectID, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': GetPartitionAddress(PartitionIndex), 'HoverState': false}) "
+      @click.stop=" PartitionClicked({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': GetPartitionAddress(PartitionIndex)}) "
+      @mouseover.stop=" PartitionHovered({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': GetPartitionAddress(PartitionIndex), 'HoverState': true}) "
+      @mouseleave.stop=" PartitionHovered({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': GetPartitionAddress(PartitionIndex), 'HoverState': false}) "
     >
       <!-- Generic partition -->
       <ComponentTemplate
@@ -121,6 +121,20 @@ export default {
     },
     Objects() {
       return this.$store.state.pcmObjects.Objects
+    },
+    CabinetFace: function() {
+
+      const vm = this
+      const Context = vm.Context
+      const CabinetFace = vm.TemplateFaceSelected[Context]
+      return CabinetFace
+    },
+    ObjectFace: function() {
+
+      const vm = this
+      const ObjectFace = vm.GetObjectFace(vm.ObjectID, vm.CabinetFace)
+      
+      return ObjectFace
     },
     IsPseudo: function() {
 
@@ -237,12 +251,21 @@ export default {
 
       // Initial variables
       const vm = this
-      const Template = vm.GetTemplate()
-      const TemplateFaceSelected = vm.TemplateFaceSelected
       const Context = vm.Context
-      const PartitionAddress = vm.InitialPartitionAddress
 
-      let PartitionCollection = Template.blueprint[TemplateFaceSelected[Context]]
+      // Get Template
+      const ObjectIndex = vm.GetObjectIndex(vm.ObjectID, Context)
+      const Object = vm.Objects[Context][ObjectIndex]
+      const TemplateID = Object.template_id
+      const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+      const Template = vm.Templates[Context][TemplateIndex]
+
+      // Get Object Face
+      const ObjectFace = vm.GetObjectFace(vm.ObjectID, vm.CabinetFace)
+
+      // Get Partition Collection
+      const PartitionAddress = vm.InitialPartitionAddress
+      let PartitionCollection = Template.blueprint[ObjectFace]
       PartitionAddress.forEach(function(PartitionAddressIndex, Depth){
         PartitionCollection = PartitionCollection[PartitionAddressIndex].children
       })
@@ -273,17 +296,14 @@ export default {
       const vm = this
       const Context = vm.Context
       const ObjectID = vm.ObjectID
-      const InsertIndex = vm.Objects[Context].findIndex((object) => object.parent_id == ObjectID)
+      const EnclosureAddress = vm.GetEnclosureAddress(encIndex, encCols)
+      const InsertIndex = vm.Objects[Context].findIndex((object) => object.parent_id == ObjectID && object.parent_enclosure_address[0] == EnclosureAddress[0] && object.parent_enclosure_address[1] == EnclosureAddress[1])
       let EnclosureInsertID = false
 			
       if(InsertIndex !== -1) {
-        const Insert = vm.Objects[Context][InsertIndex]
-        const InsertParentEnclosureAddress = Insert.parent_enclosure_address
-        const EnclosureAddress = vm.GetEnclosureAddress(encIndex, encCols)
 
-        if(InsertParentEnclosureAddress[0] == EnclosureAddress[0] && InsertParentEnclosureAddress[1] == EnclosureAddress[1]) {
-          EnclosureInsertID = Insert.id
-        }
+        const Insert = vm.Objects[Context][InsertIndex]
+        EnclosureInsertID = Insert.id
       }
 
       return EnclosureInsertID

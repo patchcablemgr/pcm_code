@@ -39,6 +39,10 @@ class TrunkController extends Controller
         // Store request data
         $data = $request->all();
 
+        // Collect object
+        $object = ObjectModel::where('id', $data['id'])->first();
+
+        // Find trunks associated with selected object to be removed
         $filteredTrunks = TrunkModel::where(
             [
                 ['a_id', $data['id']],
@@ -54,23 +58,52 @@ class TrunkController extends Controller
         )->get();
         $trunkDeleteArray = $filteredTrunks->all();
 
-        // Update object record
+        // Find trunks associated with selected node(s) to be removed
         foreach($data['PeerData'] as $key => $value) {
 
-            $filteredTrunks = TrunkModel::where(
-                [
+            if($object['floorplan_object_type'] !== null) {
+                $aAttributes = array(
+                    ['a_id', $value['id']],
+                    ['a_face', $value['face']],
+                    ['a_partition', json_encode($value['partition'])],
+                    ['a_port', json_encode($value['port_id'])]
+                );
+                $bAttributes = array(
+                    ['b_id', $value['id']],
+                    ['b_face', $value['face']],
+                    ['b_partition', json_encode($value['partition'])],
+                    ['b_port', json_encode($value['port_id'])]
+                );
+            } else {
+                $aAttributes = array(
                     ['a_id', $value['id']],
                     ['a_face', $value['face']],
                     ['a_partition', json_encode($value['partition'])]
-                ]
-            )->orwhere(
-                [
+                );
+                $bAttributes = array(
                     ['b_id', $value['id']],
                     ['b_face', $value['face']],
                     ['b_partition', json_encode($value['partition'])]
-                ]
+                );
+            }
+
+            $filteredTrunks = TrunkModel::where(
+                $aAttributes
+            )->orwhere(
+                $bAttributes
             )->get();
             $trunkDeleteArray = array_merge($trunkDeleteArray, $filteredTrunks->all());
+
+        }
+
+        // Delete any existing trunk records
+        foreach($trunkDeleteArray as $trunkDelete) {
+            array_push($returnData['remove'], $trunkDelete);
+            TrunkModel::where('id', $trunkDelete['id'])->delete();
+        }
+
+        // Create new trunk record(s)
+        foreach($data['PeerData'] as $key => $value) {
 
             // Create new trunk object
             $trunk = new TrunkModel;
@@ -79,22 +112,18 @@ class TrunkController extends Controller
             $trunk->a_id = $data['id'];
             $trunk->a_face = $data['face'];
             $trunk->a_partition = $data['partition'];
+            $trunk->a_port = $data['port_id'];
 
             // Store B side
             $trunk->b_id = $value['id'];
             $trunk->b_face = $value['face'];
             $trunk->b_partition = $value['partition'];
+            $trunk->b_port = $value['port_id'];
 
             // Save new trunk object
             $trunk->save();
 
             array_push($returnData['add'], $trunk->toArray());
-        }
-
-        foreach($trunkDeleteArray as $trunkDelete) {
-            array_push($returnData['remove'], $trunkDelete);
-            TrunkModel::where('id', $trunkDelete['id'])->delete();
-            //$trunk->delete();
         }
 
         return $returnData;

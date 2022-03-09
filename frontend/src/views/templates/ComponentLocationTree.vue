@@ -228,7 +228,6 @@ export default {
       vm.$refs[TreeRef].$on('node:editing:stop', (node) => {
 
         // Store data
-        console.log(node)
         const NodeID = node.data.id
         const NodeText = node.text
         const url = '/api/locations/'+NodeID

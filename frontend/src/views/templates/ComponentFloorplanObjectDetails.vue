@@ -157,6 +157,9 @@ export default {
     Objects() {
       return this.$store.state.pcmObjects.Objects
     },
+    Trunks() {
+      return this.$store.state.pcmTrunks.Trunks
+    },
     Locations() {
       return this.$store.state.pcmLocations.Locations
     },
@@ -231,10 +234,13 @@ export default {
     ComputedTrunked: function() {
 
       const vm = this
+      const Context = vm.Context
       let Trunked = '-'
 
       if(vm.TemplateType == 'wap' || vm.TemplateType == 'walljack' || vm.TemplateType == 'camera') {
-        Trunked = 'maybe'
+        const ObjectID = vm.PartitionAddressSelected[Context].object_id
+        const Trunks = vm.GetTrunks(ObjectID, 'front', [0])
+        Trunked = (Trunks.length) ? 'Yes' : 'No'
       } else {
         Trunked = 'N/A'
       }

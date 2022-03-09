@@ -236,6 +236,7 @@ export const PCM = {
                         object_id: child.id,
                         face: null,
                         partition_address: null,
+                        port_id: null,
                         name: child.name,
                         type: 'object',
                         parent_id: child.location_id,
@@ -253,7 +254,8 @@ export const PCM = {
                             object_id: child.id,
                             face: child.face,
                             partition_address: child.partition_address,
-                            name: (PortTotal > 1) ? child.prefix + FirstPort + ' - ' + child.prefix + LastPort : child.prefix + FirstPort,
+                            port_id: null,
+                            name: (PortTotal > 1) ? child.prefix + FirstPort + ' - ' + LastPort : child.prefix + FirstPort,
                             type: 'partition',
                             parent_id: child.location_id,
                             img: '',
@@ -282,6 +284,7 @@ export const PCM = {
                         object_id: child.id,
                         face: null,
                         partition_address: null,
+                        port_id: null,
                         name: child.name,
                         type: child.type,
                         parent_id: child.parent_id,
@@ -299,6 +302,7 @@ export const PCM = {
                             "id": child.id,
                             "object_id": child.object_id,
                             "partition_address": child.partition_address,
+                            "port_id": child.port_id,
                             "face": child.face,
                             "type": child.type,
                             "icon": vm.GetNodeIcon(child.type),
@@ -768,6 +772,9 @@ export const PCM = {
             // Store variables
             const vm = this                
             vm.PartitionAddressSelected[Context].object_id = ObjectID
+            vm.PartitionAddressSelected[Context].object_face = 'front'
+            vm.PartitionAddressSelected[Context].front = [0]
+            vm.PartitionAddressSelected[Context].rear = [0]
 
         },
         FloorplanIsSelected: function(ObjectID) {
@@ -794,6 +801,12 @@ export const PCM = {
             const TemplateID = Object.template_id
             const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
             const Template = vm.Templates[Context][TemplateIndex]
+            console.log('ObjectID: '+ObjectID)
+            console.log('Face: '+Face)
+            console.log('PartitionAddress: '+JSON.stringify(PartitionAddress))
+            console.log('Object: '+JSON.stringify(Object))
+            console.log('TemplateID: '+TemplateID)
+            console.log('TemplateIndex: '+TemplateIndex)
             const TemplateFunction = Template.function
 
             // Get template partition

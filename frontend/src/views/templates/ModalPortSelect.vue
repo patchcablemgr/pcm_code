@@ -116,16 +116,6 @@ export default {
 
       return TemplateType
     },
-    MultiSelect: function() {
-
-      const vm = this
-      
-      if(vm.TemplateType == 'walljack') {
-        return true
-      } else {
-        return false
-      }
-    },
   },
   methods: {
     Submit: function() {
@@ -140,20 +130,28 @@ export default {
       const TreeSelection = vm.$refs[TreeRef].findAll(Criteria)
 
       const SelectedObjectID = vm.PartitionAddressSelected[Context].object_id
-      const SelectedObjectFace = vm.PartitionAddressSelected[Context].object_face
-      const SelectedObjectPartition = vm.PartitionAddressSelected[Context][SelectedObjectFace]
+
+      let FloorplanObjectType
+      if(SelectedObjectID) {
+        const ObjectIndex = vm.GetObjectIndex(SelectedObjectID, Context)
+        const Object = vm.Objects[Context][ObjectIndex]
+        FloorplanObjectType = Object.floorplan_object_type
+      }
+      const SelectedObjectIsFloorplan = (FloorplanObjectType == 'camera' || FloorplanObjectType == 'wap' || FloorplanObjectType == 'walljack') ? true : false
+      const SelectedObjectFace = (SelectedObjectIsFloorplan) ? 'front' : vm.PartitionAddressSelected[Context].object_face
+      const SelectedObjectPartition = (SelectedObjectIsFloorplan) ? [0] : vm.PartitionAddressSelected[Context][SelectedObjectFace]
 
       let PeerData = []
       TreeSelection.forEach(function(node){
-        console.log(node)
         const PeerObjectID = node.data.object_id
         const PeerObjectFace = node.data.face
         const PeerObjectPartition = node.data.partition_address
-        PeerData.push({'id':PeerObjectID, 'face':PeerObjectFace, 'partition':PeerObjectPartition})
+        const PeerObjectPortID = node.data.port_id
+        PeerData.push({'id':PeerObjectID, 'face':PeerObjectFace, 'partition':PeerObjectPartition, 'port_id':PeerObjectPortID})
       })
 
       // Compile POST data
-      const data = {'id':SelectedObjectID, 'face':SelectedObjectFace, 'partition':SelectedObjectPartition, PeerData}
+      const data = {'id':SelectedObjectID, 'face':SelectedObjectFace, 'partition':SelectedObjectPartition, 'port_id':null, PeerData}
 
       if(PortSelectFunction == 'trunk') {
 
@@ -202,6 +200,7 @@ export default {
 
     const vm = this
     const Context = vm.Context
+    const PortSelectFunction = vm.PortSelectFunction
     const TreeRef = vm.TreeRef
 
     this.$root.$on('bv::modal::shown', (bvEvent, modalId) => {
@@ -212,7 +211,64 @@ export default {
         // setTimeout is required to wait until liquor tree is rendered before manipulating it (https://www.hesselinkwebdesign.nl/2019/nexttick-vs-settimeout-in-vue/)
         setTimeout(function(){
           const Scope = (vm.TemplateType == 'standard' || vm.TemplateType == 'insert') ? 'partition' : 'port'
+
           vm.BuildLocationTree({Scope})
+
+          const SelectedObjectID = vm.PartitionAddressSelected[Context].object_id
+          const SelectedObjectFace = vm.PartitionAddressSelected[Context].object_face
+          const SelectedObjectPartition = vm.PartitionAddressSelected[Context][SelectedObjectFace]
+          if(PortSelectFunction == 'trunk') {
+
+            const Trunks = vm.GetTrunks(SelectedObjectID, SelectedObjectFace, SelectedObjectPartition)
+            Trunks.forEach(function(trunk){
+
+              const peerID = (trunk.a_id == SelectedObjectID) ? trunk.b_id : trunk.a_id
+              const peerFace = (trunk.a_id == SelectedObjectID) ? trunk.b_face : trunk.a_face
+              const peerPartition = (trunk.a_id == SelectedObjectID) ? trunk.b_partition : trunk.a_partition
+              const peerPortID = (trunk.a_id == SelectedObjectID) ? trunk.b_port : trunk.a_port
+
+              const Criteria = function(node){
+                let match = false
+
+                if(node.data.object_id == peerID) {
+                  if(node.data.face == peerFace) {
+                    let i = node.data.partition_address.length
+                    let PartitionMatch = true
+                    while (i--) {
+                      if (node.data.partition_address[i] !== peerPartition[i]) {
+                        PartitionMatch = false
+                      }
+                    }
+                    if(PartitionMatch) {
+                      if(node.data.port_id == peerPortID) {
+                        match = true
+                      }
+                    }
+                  }
+                }
+
+                return match
+              }
+              let Nodes = vm.$refs[TreeRef].findAll(Criteria)
+              //Nodes.select(true)
+              Nodes.forEach(function(Node){
+                Node.select(true)
+                // Expand parent nodes
+                if(Node.parent) {
+                  let NodeParentID = Node.parent.id
+                  while(NodeParentID.toString() !== '0') {
+                    let NodeParent = vm.GetLocationNode(NodeParentID)
+                    NodeParent.expand()
+                    if(NodeParent.parent) {
+                      NodeParentID = NodeParent.parent.id
+                    } else {
+                      NodeParentID = 0
+                    }
+                  }
+                }
+              })
+            })
+          }
 
           // Prevent nodes from being selected
           vm.$refs[TreeRef].$on('node:selected', function(node){

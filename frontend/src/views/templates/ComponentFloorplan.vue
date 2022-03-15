@@ -6,7 +6,9 @@
           <div class="demo-inline-spacing">
             Floorplan
           </div>
-          <div class="demo-inline-spacing">
+          <div class="demo-inline-spacing"
+            v-if="ObjectsAreDraggable"
+          >
 
             <div
               v-for="FloorplanTemplate in FloorplanTemplates"
@@ -54,7 +56,7 @@
           <div
             v-for="FloorplanObject in FloorplanObjects"
             :key="FloorplanObject.id"
-            draggable="true"
+            :draggable="ObjectsAreDraggable"
             class="pcm_floorplan_object"
             :class="{
               pcm_template_partition_selected: FloorplanIsSelected(FloorplanObject.id),
@@ -123,6 +125,7 @@ export default {
     NodeIDSelected: {type: Number},
     PartitionAddressSelected: {type: Object},
     PartitionAddressHovered: {type: Object},
+    ObjectsAreDraggable: {type: Boolean},
   },
   directives: {
 		Ripple,

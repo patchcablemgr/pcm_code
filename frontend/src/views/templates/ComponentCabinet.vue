@@ -26,6 +26,7 @@
           :TemplateFaceSelected="TemplateFaceSelected"
           :PartitionAddressSelected="PartitionAddressSelected"
           :PartitionAddressHovered="PartitionAddressHovered"
+          :ObjectsAreDraggable="ObjectsAreDraggable"
           @InsertObjectDropped=" $emit('InsertObjectDropped', $event) "
         />
       </td>
@@ -68,6 +69,7 @@ export default {
     TemplateFaceSelected: {type: Object},
     PartitionAddressSelected: {type: Object},
     PartitionAddressHovered: {type: Object},
+    ObjectsAreDraggable: {type: Boolean},
   },
   data() {
     return {

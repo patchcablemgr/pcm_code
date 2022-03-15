@@ -26,4 +26,11 @@ export default [
 		},
 	]
   },
+  {
+	title: 'Explore',
+	route: 'explore',
+	icon: 'HomeIcon',
+	resource: 'User',
+	action:'read',
+  },
 ]

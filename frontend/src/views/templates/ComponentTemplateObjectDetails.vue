@@ -9,7 +9,9 @@
 				<div class="demo-inline-spacing">
           {{CardTitle}}
         </div>
-        <div class="demo-inline-spacing">
+        <div class="demo-inline-spacing"
+          v-if="DetailsAreEditable"
+        >
           <b-dropdown
             v-ripple.400="'rgba(255, 255, 255, 0.15)'"
             right
@@ -60,7 +62,7 @@
         </td>
         <td>
           <b-button
-            v-if="Context == 'actual'"
+            v-if="Context == 'actual' && DetailsAreEditable"
             v-ripple.400="'rgba(40, 199, 111, 0.15)'"
             variant="flat-success"
             class="btn-icon"
@@ -81,7 +83,7 @@
         </td>
         <td>
           <b-button
-            v-if="Context == 'template'"
+            v-if="Context == 'template'  && DetailsAreEditable"
             v-ripple.400="'rgba(40, 199, 111, 0.15)'"
             variant="flat-success"
             class="btn-icon"
@@ -102,7 +104,7 @@
         </td>
         <td>
           <b-button
-            v-if="Context == 'template'"
+            v-if="Context == 'template'  && DetailsAreEditable"
             v-ripple.400="'rgba(40, 199, 111, 0.15)'"
             variant="flat-success"
             class="btn-icon"
@@ -167,7 +169,7 @@
         </td>
         <td>
           <b-button
-            v-if="Context == 'template'"
+            v-if="Context == 'template'  && DetailsAreEditable"
             v-ripple.400="'rgba(40, 199, 111, 0.15)'"
             variant="flat-success"
             class="btn-icon"
@@ -226,6 +228,7 @@
         </td>
         <td>
           <b-button
+            v-if="DetailsAreEditable"
             v-ripple.400="'rgba(40, 199, 111, 0.15)'"
             variant="flat-success"
             class="btn-icon"
@@ -246,7 +249,7 @@
         </td>
         <td>
           <b-button
-            v-if="Context == 'template'"
+            v-if="Context == 'template' && DetailsAreEditable"
             v-ripple.400="'rgba(40, 199, 111, 0.15)'"
             variant="flat-success"
             class="btn-icon"
@@ -404,6 +407,7 @@ export default {
     Context: {type: String},
     TemplateFaceSelected: {type: Object},
     PartitionAddressSelected: {type: Object},
+    DetailsAreEditable: {type: Boolean},
   },
   data() {
     return {
@@ -502,27 +506,31 @@ export default {
           const ObjectPartition = vm.PartitionAddressSelected[Context][ObjectFace]
 
           const Trunks = vm.GetTrunks(ObjectID, ObjectFace, ObjectPartition)
+          const TrunksWithPortSet = Trunks.findIndex((trunk) => trunk.b_port !== null)
 
-          Trunks.forEach(function(Trunk){
+          if(TrunksWithPortSet != -1) {
+            TrunkedTo = "[Floorplan Object]"
+          } else if(Trunks.length == 1) {
+            Trunks.forEach(function(Trunk){
 
-            const LocalTrunkSide = (Trunk.a_id == ObjectID) ? 'a' : 'b'
-            let RemoteObjectID
-            let RemoteObjectFace
-            let RemoteObjectPartition
-            if(LocalTrunkSide == 'a') {
-              RemoteObjectID = Trunk.b_id
-              RemoteObjectFace = Trunk.b_face
-              RemoteObjectPartition = Trunk.b_partition
-            } else {
-              RemoteObjectID = Trunk.a_id
-              RemoteObjectFace = Trunk.a_face
-              RemoteObjectPartition = Trunk.a_partition
-            }
+              const LocalTrunkSide = (Trunk.a_id == ObjectID) ? 'a' : 'b'
+              let RemoteObjectID
+              let RemoteObjectFace
+              let RemoteObjectPartition
+              if(LocalTrunkSide == 'a') {
+                RemoteObjectID = Trunk.b_id
+                RemoteObjectFace = Trunk.b_face
+                RemoteObjectPartition = Trunk.b_partition
+              } else {
+                RemoteObjectID = Trunk.a_id
+                RemoteObjectFace = Trunk.a_face
+                RemoteObjectPartition = Trunk.a_partition
+              }
 
-            TrunkedTo = vm.GenerateDN(RemoteObjectID, RemoteObjectFace, RemoteObjectPartition)
+              TrunkedTo = vm.GenerateDN(RemoteObjectID, RemoteObjectFace, RemoteObjectPartition)
 
-          })
-          
+            })
+          }
         }
 
         return TrunkedTo

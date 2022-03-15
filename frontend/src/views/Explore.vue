@@ -113,16 +113,6 @@
             @SetTemplateFaceSelected="SetTemplateFaceSelected($event)"
 					/>
 
-          <component-templates
-            Context="template"
-            :TemplateFaceSelected="TemplateFaceSelected"
-            :PartitionAddressSelected="PartitionAddressSelected"
-            :PartitionAddressHovered="PartitionAddressHovered"
-            @PartitionClicked="PartitionClicked($event)"
-            @PartitionHovered="PartitionHovered($event)"
-            @SetTemplateFaceSelected="SetTemplateFaceSelected($event)"
-          />
-
         </b-col>
       </b-row>
     </b-container>
@@ -201,11 +191,11 @@ const PartitionAddressHovered = {
 
 const NodeIDSelected = null
 
-const TreeIsContextual = true
+const TreeIsContextual = false
 
-const DetailsAreEditable = true
+const DetailsAreEditable = false
 
-const ObjectsAreDraggable = true
+const ObjectsAreDraggable = false
 
 export default {
   mixins: [PCM],

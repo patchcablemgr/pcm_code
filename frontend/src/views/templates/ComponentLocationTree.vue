@@ -17,6 +17,7 @@
 
     <!-- Context Menu -->
     <vue-simple-context-menu
+      v-if="TreeIsContextual"
       :elementId="'myUniqueId'"
       :options="MenuOptions"
       :ref="'vueSimpleContextMenu'"
@@ -88,6 +89,7 @@ export default {
     Context: {type: String},
     TreeRef: {type: String},
     NodeIDSelected: {type: Number},
+    TreeIsContextual: {type: Boolean},
   },
   data() {
     return {
@@ -198,7 +200,11 @@ export default {
       }
     },
     handleClick (event, node) {
-      this.$refs.vueSimpleContextMenu.showMenu(event, node)
+      const vm = this
+
+      if (vm.TreeIsContextual) {
+        vm.$refs.vueSimpleContextMenu.showMenu(event, node)
+      }
     },
   },
   mounted() {

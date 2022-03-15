@@ -49,6 +49,16 @@ const router = new VueRouter({
     },
   },
   {
+    path: '/explore',
+    name: 'explore',
+    component: () => import('@/views/Explore.vue'),
+    meta: {
+      pageTitle: 'Explore',
+      resource: 'User',
+      action: 'read',
+    },
+  },
+  {
     path: '/profile',
     name: 'profile',
     component: () => import('@/views/Profile.vue'),

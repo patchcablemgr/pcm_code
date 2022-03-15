@@ -217,70 +217,33 @@ export default {
           const SelectedObjectID = vm.PartitionAddressSelected[Context].object_id
           const SelectedObjectFace = vm.PartitionAddressSelected[Context].object_face
           const SelectedObjectPartition = vm.PartitionAddressSelected[Context][SelectedObjectFace]
+
+          const Object = vm.GetObjectSelected(Context)
+          const FloorplanObjectType = Object.floorplan_object_type
+
+          // Prevent users from selecting multiple partitions
+          // Allow users to select multiple ports
+          let MultipleSelect
+          if (Scope == 'partition') {
+            MultipleSelect = false
+          } else {
+            if (FloorplanObjectType == 'walljack') {
+              MultipleSelect = true
+            } else {
+              MultipleSelect = false
+            }
+          }
+          vm.$refs[TreeRef].setMultiple(MultipleSelect)
+          
           if(PortSelectFunction == 'trunk') {
 
             const Trunks = vm.GetTrunks(SelectedObjectID, SelectedObjectFace, SelectedObjectPartition)
-            Trunks.forEach(function(trunk){
+            const TrunksWithPortSet = Trunks.findIndex((trunk) => trunk.b_port !== null)
 
-              const peerID = (trunk.a_id == SelectedObjectID) ? trunk.b_id : trunk.a_id
-              const peerFace = (trunk.a_id == SelectedObjectID) ? trunk.b_face : trunk.a_face
-              const peerPartition = (trunk.a_id == SelectedObjectID) ? trunk.b_partition : trunk.a_partition
-              const peerPortID = (trunk.a_id == SelectedObjectID) ? trunk.b_port : trunk.a_port
-
-              const Criteria = function(node){
-                let match = false
-
-                if(node.data.object_id == peerID) {
-                  if(node.data.face == peerFace) {
-                    let i = node.data.partition_address.length
-                    let PartitionMatch = true
-                    while (i--) {
-                      if (node.data.partition_address[i] !== peerPartition[i]) {
-                        PartitionMatch = false
-                      }
-                    }
-                    if(PartitionMatch) {
-                      if(node.data.port_id == peerPortID) {
-                        match = true
-                      }
-                    }
-                  }
-                }
-
-                return match
-              }
-              let Nodes = vm.$refs[TreeRef].findAll(Criteria)
-              //Nodes.select(true)
-              Nodes.forEach(function(Node){
-                Node.select(true)
-                // Expand parent nodes
-                if(Node.parent) {
-                  let NodeParentID = Node.parent.id
-                  while(NodeParentID.toString() !== '0') {
-                    let NodeParent = vm.GetLocationNode(NodeParentID)
-                    NodeParent.expand()
-                    if(NodeParent.parent) {
-                      NodeParentID = NodeParent.parent.id
-                    } else {
-                      NodeParentID = 0
-                    }
-                  }
-                }
-              })
-            })
-          }
-
-          // Prevent nodes from being selected
-          vm.$refs[TreeRef].$on('node:selected', function(node){
-            const AllowedNodeTypes = [
-              'partition',
-              'port'
-            ]
-            const NodeType = node.data.type
-            if(!AllowedNodeTypes.includes(NodeType)) {
-              node.unselect()
+            if(TrunksWithPortSet == -1 || FloorplanObjectType != null) {
+              vm.SelectTrunkNodes(SelectedObjectID, Trunks)
             }
-          })
+          }
         }, 0)
       }
     })

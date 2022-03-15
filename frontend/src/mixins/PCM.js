@@ -295,9 +295,20 @@ export const PCM = {
 
                 ChildData.forEach(function(child){
 
+                    // Prevent irrelevant nodes from being selected
+                    let Selectable = true
+                    if(Scope == 'partition' || Scope == 'port') {
+                        if(child.type != 'partition' && child.type != 'port') {
+                            Selectable = false
+                        }
+                    }
+
                     const ChildData = {
                         "id": child.type+'-'+child.id,
                         "text": child.name,
+                        "state": {
+                            "selectable": Selectable
+                        },
                         "data": {
                             "id": child.id,
                             "object_id": child.object_id,
@@ -334,6 +345,64 @@ export const PCM = {
             }
             
             return
+        },
+        SelectTrunkNodes: function(ObjectID, Trunks){
+
+            const vm = this
+            const TreeRef = vm.TreeRef
+
+            Trunks.forEach(function(trunk){
+
+                const peerID = (trunk.a_id == ObjectID) ? trunk.b_id : trunk.a_id
+                const peerFace = (trunk.a_id == ObjectID) ? trunk.b_face : trunk.a_face
+                const peerPartition = (trunk.a_id == ObjectID) ? trunk.b_partition : trunk.a_partition
+                const peerPortID = (trunk.a_id == ObjectID) ? trunk.b_port : trunk.a_port
+
+                const Criteria = function(node){
+                  let match = false
+
+                  if(node.data.object_id == peerID) {
+                    if(node.data.face == peerFace) {
+                      let i = node.data.partition_address.length
+                      let PartitionMatch = true
+                      while (i--) {
+                        if (node.data.partition_address[i] !== peerPartition[i]) {
+                          PartitionMatch = false
+                        }
+                      }
+                      if(PartitionMatch) {
+                        if(node.data.port_id == peerPortID) {
+                          match = true
+                        }
+                      }
+                    }
+                  }
+
+                  return match
+                }
+
+                // Select and expand trunked nodes
+                let Nodes = vm.$refs[TreeRef].findAll(Criteria)
+                Nodes.forEach(function(Node){
+
+                  // Select node
+                  Node.select(true)
+
+                  // Expand parent nodes
+                  if(Node.parent) {
+                    let NodeParentID = Node.parent.id
+                    while(NodeParentID.toString() !== '0') {
+                      let NodeParent = vm.GetLocationNode(NodeParentID)
+                      NodeParent.expand()
+                      if(NodeParent.parent) {
+                        NodeParentID = NodeParent.parent.id
+                      } else {
+                        NodeParentID = 0
+                      }
+                    }
+                  }
+                })
+            })
         },
 
 // Partition

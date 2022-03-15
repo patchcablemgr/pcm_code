@@ -9,7 +9,9 @@
           <div class="demo-inline-spacing">
             Floorplan Object Details
           </div>
-          <div class="demo-inline-spacing">
+          <div class="demo-inline-spacing"
+            v-if="DetailsAreEditable"
+          >
             <b-dropdown
               v-ripple.400="'rgba(255, 255, 255, 0.15)'"
               right
@@ -39,6 +41,7 @@
             </td>
             <td>
               <b-button
+                v-if="DetailsAreEditable"
                 v-ripple.400="'rgba(40, 199, 111, 0.15)'"
                 variant="flat-success"
                 class="btn-icon"
@@ -68,6 +71,7 @@
             </td>
             <td>
               <b-button
+                v-if="DetailsAreEditable"
                 v-ripple.400="'rgba(40, 199, 111, 0.15)'"
                 variant="flat-success"
                 class="btn-icon"
@@ -145,6 +149,7 @@ export default {
     Context: {type: String},
     FloorplanTemplateData: {type: Array},
     PartitionAddressSelected: {type: Object},
+    DetailsAreEditable: {type: Boolean},
   },
   data() {
     return {

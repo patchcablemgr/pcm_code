@@ -1,7 +1,7 @@
 <template>
 
   <div
-    :draggable="!IsPseudoObject"
+    :draggable="!IsPseudoObject && ObjectsAreDraggable"
     @dragstart.stop="StartDrag({ context: Context, object_id: ObjectID, template_id: GetTemplateID(ObjectID), template_face: CabinetFace, object_face: ObjectFace }, $event)"
     :class="{
       pcm_template_partition_selected: PartitionIsSelected(),
@@ -50,6 +50,7 @@ export default {
     TemplateFaceSelected: {type: Object},
     PartitionAddressSelected: {type: Object},
     PartitionAddressHovered: {type: Object},
+    ObjectsAreDraggable: {type: Boolean},
   },
   computed: {
     Categories() {

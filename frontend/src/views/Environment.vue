@@ -89,8 +89,6 @@
                 :PartitionAddressSelected="PartitionAddressSelected"
                 :PartitionAddressHovered="PartitionAddressHovered"
                 :ObjectsAreDraggable="ObjectsAreDraggable"
-                @PartitionClicked=" PartitionClicked($event) "
-                @PartitionHovered=" PartitionHovered($event) "
                 @StandardObjectDropped="StandardObjectDropped($event)"
                 @InsertObjectDropped="InsertObjectDropped($event)"
                 @LocationNodeSelected="LocationNodeSelected($event)"
@@ -118,8 +116,6 @@
             :TemplateFaceSelected="TemplateFaceSelected"
             :PartitionAddressSelected="PartitionAddressSelected"
             :PartitionAddressHovered="PartitionAddressHovered"
-            @PartitionClicked="PartitionClicked($event)"
-            @PartitionHovered="PartitionHovered($event)"
             @SetTemplateFaceSelected="SetTemplateFaceSelected($event)"
           />
 
@@ -171,14 +167,16 @@ const PartitionAddressSelected = {
     'object_face': null,
     'template_id': null,
     'front': [0],
-    'rear': [0]
+    'rear': [0],
+    'port_id': null,
   },
   'template': {
     'object_id': null,
     'object_face': null,
     'template_id': null,
     'front': [0],
-    'rear': [0]
+    'rear': [0],
+    'port_id': null,
   }
 }
 

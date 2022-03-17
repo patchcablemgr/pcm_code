@@ -89,8 +89,6 @@
                 :PartitionAddressSelected="PartitionAddressSelected"
                 :PartitionAddressHovered="PartitionAddressHovered"
                 :ObjectsAreDraggable="ObjectsAreDraggable"
-                @PartitionClicked=" PartitionClicked($event) "
-                @PartitionHovered=" PartitionHovered($event) "
                 @StandardObjectDropped="StandardObjectDropped($event)"
                 @InsertObjectDropped="InsertObjectDropped($event)"
                 @LocationNodeSelected="LocationNodeSelected($event)"
@@ -111,6 +109,12 @@
             :DetailsAreEditable="DetailsAreEditable"
             @SetPartitionAddressSelected="SetPartitionAddressSelected($event)"
             @SetTemplateFaceSelected="SetTemplateFaceSelected($event)"
+					/>
+
+          <component-port
+            CardTitle="Port Details"
+						Context="actual"
+						:PartitionAddressSelected="PartitionAddressSelected"
 					/>
 
         </b-col>
@@ -149,6 +153,7 @@ import { PCM } from '@/mixins/PCM.js'
 import ComponentFloorplan from './templates/ComponentFloorplan.vue'
 import ComponentFloorplanObjects from './templates/ComponentFloorplanObjects.vue'
 import ComponentFloorplanObjectDetails from './templates/ComponentFloorplanObjectDetails.vue'
+import ComponentPort from './templates/ComponentPort.vue'
 
 const TemplateFaceSelected = {
   'actual': 'front',
@@ -161,14 +166,8 @@ const PartitionAddressSelected = {
     'object_face': null,
     'template_id': null,
     'front': [0],
-    'rear': [0]
-  },
-  'template': {
-    'object_id': null,
-    'object_face': null,
-    'template_id': null,
-    'front': [0],
-    'rear': [0]
+    'rear': [0],
+    'port_id': null,
   }
 }
 
@@ -178,14 +177,8 @@ const PartitionAddressHovered = {
     'object_face': null,
     'template_id': null,
     'front': false,
-    'rear': false
-  },
-  'template': {
-    'object_id': null,
-    'object_face': null,
-    'template_id': null,
-    'front': false,
-    'rear': false
+    'rear': false,
+    'port_id': null,
   }
 }
 
@@ -222,6 +215,7 @@ export default {
     ComponentFloorplan,
     ComponentFloorplanObjects,
     ComponentFloorplanObjectDetails,
+    ComponentPort,
   },
   directives: {
     'b-tooltip': VBTooltip,

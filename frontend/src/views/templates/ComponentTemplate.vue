@@ -44,6 +44,7 @@
           :key=" portIndex "
           class=" pcm_template_connectable_port_unk "
           :style="{ 'grid-area': 'area'+(portIndex-1) }"
+          @click.stop=" PartitionClicked({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': GetPartitionAddress(PartitionIndex), 'PortID': portIndex}) "
         >
         </div>
       </div>

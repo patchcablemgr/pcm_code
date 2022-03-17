@@ -456,6 +456,7 @@ export const PCM = {
             const Face = EmitData.ObjectFace
             const PartitionAddress = EmitData.PartitionAddress
             const TemplateID = EmitData.TemplateID
+            const PortID = EmitData.PortID
             const ObjectID = EmitData.ObjectID
             const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
 
@@ -476,6 +477,7 @@ export const PCM = {
                 vm.PartitionAddressSelected[Context].object_face = Face
                 vm.PartitionAddressSelected[Context][Face] = PartitionAddress
                 vm.PartitionAddressSelected[Context].template_id = TemplateID
+                vm.PartitionAddressSelected[Context].port_id = PortID
             }
 
             if(HonorClick && Context == 'template' && PartitionType == 'enclosure') {

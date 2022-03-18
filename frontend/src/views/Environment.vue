@@ -168,7 +168,10 @@ const PartitionAddressSelected = {
     'template_id': null,
     'front': [0],
     'rear': [0],
-    'port_id': null,
+    'port_id': {
+      'front': null,
+      'rear': null,
+    },
   },
   'template': {
     'object_id': null,
@@ -176,7 +179,10 @@ const PartitionAddressSelected = {
     'template_id': null,
     'front': [0],
     'rear': [0],
-    'port_id': null,
+    'port_id': {
+      'front': null,
+      'rear': null,
+    },
   }
 }
 

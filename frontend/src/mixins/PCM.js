@@ -471,13 +471,23 @@ export const PCM = {
             HonorClick = (vm.Templates[Context][TemplateIndex].id.toString().includes('pseudo')) ? false : true
             HonorClick = (Context == 'workspace' && PartitionAddress.length == 0) ? false : HonorClick
             HonorClick = (vm.$route.name == 'environment' && Context == 'template') ? false : HonorClick
+
+            // Determine port index
+            let PortIndex = null
+            if(PartitionType == 'connectable') {
+                if(PortID !== null) {
+                    PortIndex = PortID - 1
+                } else {
+                    PortIndex = 0
+                }
+            }
       
             if(HonorClick) {
                 vm.PartitionAddressSelected[Context].object_id = ObjectID
                 vm.PartitionAddressSelected[Context].object_face = Face
                 vm.PartitionAddressSelected[Context][Face] = PartitionAddress
                 vm.PartitionAddressSelected[Context].template_id = TemplateID
-                vm.PartitionAddressSelected[Context].port_id = PortID
+                vm.PartitionAddressSelected[Context].port_id[Face] = PortIndex
             }
 
             if(HonorClick && Context == 'template' && PartitionType == 'enclosure') {

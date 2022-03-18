@@ -1,7 +1,7 @@
 <template>
     <!-- Template port select modal -->
     <b-modal
-      :id="TreeID"
+      :id="ModalID"
       title="Edit"
       size="lg"
       ok-title="OK"
@@ -63,6 +63,7 @@ export default {
   },
   directives: {},
   props: {
+    ModalID: {type: String},
     ModalTitle: {type: String},
     TreeRef: {type: String},
     Context: {type: String},
@@ -140,6 +141,7 @@ export default {
       const SelectedObjectIsFloorplan = (FloorplanObjectType == 'camera' || FloorplanObjectType == 'wap' || FloorplanObjectType == 'walljack') ? true : false
       const SelectedObjectFace = (SelectedObjectIsFloorplan) ? 'front' : vm.PartitionAddressSelected[Context].object_face
       const SelectedObjectPartition = (SelectedObjectIsFloorplan) ? [0] : vm.PartitionAddressSelected[Context][SelectedObjectFace]
+      const SelectedObjectPortID = (SelectedObjectIsFloorplan) ? [0] : vm.PartitionAddressSelected[Context].port_id[SelectedObjectFace]
 
       let PeerData = []
       TreeSelection.forEach(function(node){
@@ -151,7 +153,7 @@ export default {
       })
 
       // Compile POST data
-      const data = {'id':SelectedObjectID, 'face':SelectedObjectFace, 'partition':SelectedObjectPartition, 'port_id':null, PeerData}
+      const data = {'id':SelectedObjectID, 'face':SelectedObjectFace, 'partition':SelectedObjectPartition, 'port_id':SelectedObjectPortID, PeerData}
 
       if(PortSelectFunction == 'trunk') {
 
@@ -164,6 +166,19 @@ export default {
           response.data.remove.forEach(remove => vm.$store.commit('pcmTrunks/REMOVE_Trunk', {data:remove}))
 
         }).catch(error => {vm.DisplayError(error)})
+
+      } else if(PortSelectFunction == 'port') {
+
+        // POST Connection
+        const URL = '/api/Connections/'
+        vm.$http.post(URL, data).then(response => {
+
+          // Add connection to store
+          response.data.add.forEach(add => vm.$store.commit('pcmConnections/ADD_Connection', {data:add}))
+          response.data.remove.forEach(remove => vm.$store.commit('pcmConnections/REMOVE_Connection', {data:remove}))
+
+        }).catch(error => {vm.DisplayError(error)})
+
       }
     },
     Clear: function() {
@@ -205,47 +220,51 @@ export default {
 
     this.$root.$on('bv::modal::shown', (bvEvent, modalId) => {
 
-      if(modalId == vm.TreeID) {
+      // Build tree
+      // setTimeout is required to wait until liquor tree is rendered before manipulating it (https://www.hesselinkwebdesign.nl/2019/nexttick-vs-settimeout-in-vue/)
+      setTimeout(function(){
+        
+        // Determine if tree will display partitions or ports
+        let Scope
+        if(PortSelectFunction == 'trunk') {
+          Scope = (vm.TemplateType == 'standard' || vm.TemplateType == 'insert') ? 'partition' : 'port'
+        } else {
+          Scope = 'port'
+        }
 
-        // Build tree
-        // setTimeout is required to wait until liquor tree is rendered before manipulating it (https://www.hesselinkwebdesign.nl/2019/nexttick-vs-settimeout-in-vue/)
-        setTimeout(function(){
-          const Scope = (vm.TemplateType == 'standard' || vm.TemplateType == 'insert') ? 'partition' : 'port'
+        vm.BuildLocationTree({Scope})
 
-          vm.BuildLocationTree({Scope})
+        const SelectedObjectID = vm.PartitionAddressSelected[Context].object_id
+        const SelectedObjectFace = vm.PartitionAddressSelected[Context].object_face
+        const SelectedObjectPartition = vm.PartitionAddressSelected[Context][SelectedObjectFace]
 
-          const SelectedObjectID = vm.PartitionAddressSelected[Context].object_id
-          const SelectedObjectFace = vm.PartitionAddressSelected[Context].object_face
-          const SelectedObjectPartition = vm.PartitionAddressSelected[Context][SelectedObjectFace]
+        const Object = vm.GetObjectSelected(Context)
+        const FloorplanObjectType = Object.floorplan_object_type
 
-          const Object = vm.GetObjectSelected(Context)
-          const FloorplanObjectType = Object.floorplan_object_type
-
-          // Prevent users from selecting multiple partitions
-          // Allow users to select multiple ports
-          let MultipleSelect
-          if (Scope == 'partition') {
-            MultipleSelect = false
+        // Prevent users from selecting multiple partitions
+        // Allow users to select multiple ports
+        let MultipleSelect
+        if (Scope == 'partition') {
+          MultipleSelect = false
+        } else {
+          if (FloorplanObjectType == 'walljack') {
+            MultipleSelect = true
           } else {
-            if (FloorplanObjectType == 'walljack') {
-              MultipleSelect = true
-            } else {
-              MultipleSelect = false
-            }
+            MultipleSelect = false
           }
-          vm.$refs[TreeRef].setMultiple(MultipleSelect)
-          
-          if(PortSelectFunction == 'trunk') {
+        }
+        vm.$refs[TreeRef].setMultiple(MultipleSelect)
+        
+        if(PortSelectFunction == 'trunk') {
 
-            const Trunks = vm.GetTrunks(SelectedObjectID, SelectedObjectFace, SelectedObjectPartition)
-            const TrunksWithPortSet = Trunks.findIndex((trunk) => trunk.b_port !== null)
+          const Trunks = vm.GetTrunks(SelectedObjectID, SelectedObjectFace, SelectedObjectPartition)
+          const TrunksWithPortSet = Trunks.findIndex((trunk) => trunk.b_port !== null)
 
-            if(TrunksWithPortSet == -1 || FloorplanObjectType != null) {
-              vm.SelectTrunkNodes(SelectedObjectID, Trunks)
-            }
+          if(TrunksWithPortSet == -1 || FloorplanObjectType != null) {
+            vm.SelectTrunkNodes(SelectedObjectID, Trunks)
           }
-        }, 0)
-      }
+        }
+      }, 0)
     })
   },
 }

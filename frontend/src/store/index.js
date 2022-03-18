@@ -12,6 +12,7 @@ import pcmFloorplanTemplates from './pcm-floorplan-templates'
 import pcmObjects from './pcm-objects'
 import pcmProps from './pcm-props'
 import pcmTrunks from './pcm-trunks'
+import pcmConnections from './pcm-connections'
 
 Vue.use(Vuex)
 
@@ -27,6 +28,7 @@ export default new Vuex.Store({
     pcmObjects,
     pcmProps,
     pcmTrunks,
+    pcmConnections,
   },
   strict: process.env.DEV,
 })

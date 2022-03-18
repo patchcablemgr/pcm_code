@@ -19,8 +19,8 @@
           >
 
             <b-dropdown-item
-              @click="Connect()"
-              :disabled="!PortSelected"
+              v-b-modal.port-select-port
+              :disabled="!PortIsSelected"
             >Connect
             </b-dropdown-item>
 
@@ -40,7 +40,7 @@
         <td>
           <b-form-select
             name="Port"
-            v-model="PortSelected"
+            v-model="SelectedPortIndex"
             :options="PortOptions"
           />
         </td>
@@ -55,7 +55,7 @@
             variant="flat-success"
             class="btn-icon"
             v-b-modal.modal-edit-object-name
-            :disabled="!PortSelected"
+            :disabled="!PortIsSelected"
           >
             <feather-icon icon="EditIcon" />
           </b-button>
@@ -70,10 +70,13 @@
           Populated:
         </td>
         <td>
+        </td>
+        <td>
           <b-form-checkbox
             v-model="Populated"
             value="yes"
             plain
+            :disabled="!PortIsSelected"
           >
           </b-form-checkbox>
         </td>
@@ -88,7 +91,17 @@
     <modal-edit-object-name
       :Context="Context"
       :PartitionAddressSelected="PartitionAddressSelected"
-      ModalTitle="Object Name"
+      ModalTitle="Port Description"
+    />
+
+    <!-- Modal Port Select -->
+    <modal-port-select
+      ModalID="port-select-port"
+      ModalTitle="Port Connect"
+      TreeRef="PortSelectPort"
+      :Context="Context"
+      :PartitionAddressSelected="PartitionAddressSelected"
+      PortSelectFunction="port"
     />
 
   </div>
@@ -107,6 +120,7 @@ import {
   BFormSelect,
 } from 'bootstrap-vue'
 import ModalEditObjectName from './ModalEditObjectName.vue'
+import ModalPortSelect from './ModalPortSelect.vue'
 import Ripple from 'vue-ripple-directive'
 import { PCM } from '@/mixins/PCM.js'
 
@@ -124,6 +138,7 @@ export default {
     BFormSelect,
 
     ModalEditObjectName,
+    ModalPortSelect,
   },
 	directives: {
 		Ripple,
@@ -162,12 +177,18 @@ export default {
     Trunks() {
       return this.$store.state.pcmTrunks.Trunks
     },
-    PortSelected: {
+    PortIsSelected: {
+      get() {
+        return (this.SelectedPortIndex !== null) ? true : false
+      }
+    },
+    SelectedPortIndex: {
       get() {
 
         const vm = this
         const Context = vm.Context
-        const PortID = vm.PartitionAddressSelected[Context].port_id
+        const Face = vm.PartitionAddressSelected[Context].object_face
+        const PortID = vm.PartitionAddressSelected[Context].port_id[Face]
 
         return PortID
       },
@@ -198,7 +219,7 @@ export default {
         const Context = vm.Context
         let WorkingArray = []
 
-        if(vm.PortSelected) {
+        if(vm.PortIsSelected) {
           const Partition = vm.GetPartitionSelected(Context)
           const PortFormat = Partition.port_format
           const PortTotal = Partition.port_layout.cols * Partition.port_layout.rows
@@ -216,11 +237,6 @@ export default {
     },
   },
   methods: {
-    Connect: function() {
-
-      const vm = this
-      console.log('connect')
-    },
   }
 }
 </script>

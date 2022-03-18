@@ -232,7 +232,7 @@
             v-ripple.400="'rgba(40, 199, 111, 0.15)'"
             variant="flat-success"
             class="btn-icon"
-            v-b-modal.modal-port-select
+            v-b-modal.port-select-trunk
             :disabled="!ComputedObjectSelected"
           >
             <feather-icon icon="EditIcon" />
@@ -352,8 +352,9 @@
 
     <!-- Modal Port Select -->
     <modal-port-select
+      ModalID="port-select-trunk"
       ModalTitle="Trunk"
-      TreeRef="PortSelect"
+      TreeRef="PortSelectTrunk"
       :Context="Context"
       :PartitionAddressSelected="PartitionAddressSelected"
       PortSelectFunction="trunk"

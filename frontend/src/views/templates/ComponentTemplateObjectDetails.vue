@@ -528,7 +528,8 @@ export default {
                 RemoteObjectPartition = Trunk.a_partition
               }
 
-              TrunkedTo = vm.GenerateDN(RemoteObjectID, RemoteObjectFace, RemoteObjectPartition)
+              const Scope = 'trunk'
+              TrunkedTo = vm.GenerateDN(Scope, RemoteObjectID, RemoteObjectFace, RemoteObjectPartition)
 
             })
           }

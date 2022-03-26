@@ -59,9 +59,10 @@
                     :InitialPartitionAddress=[]
                     :Context="Context"
                     :ObjectID="GetObjectID(Template.id)"
-                    :TemplateFaceSelected="TemplateFaceSelected"
+                    :CabinetFace="TemplateFaceSelected[Context]"
                     :PartitionAddressSelected="PartitionAddressSelected"
                     :PartitionAddressHovered="PartitionAddressHovered"
+                    :ObjectsAreDraggable="ObjectsAreDraggable"
                     @PartitionClicked=" $emit('PartitionClicked', $event) "
                     @PartitionHovered=" $emit('PartitionHovered', $event) "
                   />
@@ -99,6 +100,7 @@ export default {
     TemplateFaceSelected: {type: Object},
     PartitionAddressSelected: {type: Object},
     PartitionAddressHovered: {type: Object},
+    ObjectsAreDraggable: {type: Boolean},
   },
   data() {
     return {
@@ -153,32 +155,6 @@ export default {
       
       return ObjectID
 
-    },
-    PartitionIsSelected: function(TemplateID) {
-      const vm = this
-      const Context = vm.Context
-      const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
-      const PartitionAddressSelected = vm.PartitionAddressSelected[Context][TemplateFaceSelected]
-      const TemplateIDSelected = vm.PartitionAddressSelected[Context].template_id
-      let PartitionIsSelected = false
-
-      if(PartitionAddressSelected.length === 0 && TemplateIDSelected == TemplateID) {
-        PartitionIsSelected = true
-      }
-      return PartitionIsSelected
-    },
-    PartitionIsHovered: function(TemplateID) {
-      const vm = this
-      const Context = vm.Context
-      const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
-      const PartitionAddressHovered = vm.PartitionAddressHovered[Context][TemplateFaceSelected]
-      const TemplateIDSelected = vm.PartitionAddressHovered[Context].template_id
-      let PartitionIsHovered = false
-
-      if(PartitionAddressHovered.length === 0 && TemplateIDSelected == TemplateID) {
-        PartitionIsHovered = true
-      }
-      return PartitionIsHovered
     },
     CategoryTemplateCount: function(CategoryID) {
 

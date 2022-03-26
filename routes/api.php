@@ -13,6 +13,7 @@ use App\Http\Controllers\AttributesPortConnector;
 use App\Http\Controllers\FloorplanTemplateController;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\TrunkController;
+use App\Http\Controllers\ConnectionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -68,6 +69,7 @@ Route::group(['middleware' => 'auth:sanctum'], function(){
     'categories' => CategoryController::class,
     'templates' => TemplateController::class,
     'trunks' => TrunkController::class,
+    'connections' => ConnectionController::class,
   ],[
     'only' =>[
       'index',

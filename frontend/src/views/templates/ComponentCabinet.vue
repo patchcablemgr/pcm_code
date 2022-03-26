@@ -23,7 +23,7 @@
           :InitialPartitionAddress=[]
           :Context="Context"
           :ObjectID="RackObjectID(CabinetRU)"
-          :TemplateFaceSelected="TemplateFaceSelected"
+          :CabinetFace="TemplateFaceSelected[Context]"
           :PartitionAddressSelected="PartitionAddressSelected"
           :PartitionAddressHovered="PartitionAddressHovered"
           :ObjectsAreDraggable="ObjectsAreDraggable"

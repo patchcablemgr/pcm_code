@@ -9,8 +9,8 @@
       :key=" GetPartitionAddress(PartitionIndex).join('-') "
       class=" pcm_template_partition_box "
       :class="{
-        pcm_template_partition_selected: PartitionIsSelected(PartitionIndex),
-        pcm_template_partition_hovered: PartitionIsHovered(PartitionIndex),
+        pcm_template_partition_selected: PartitionIsSelected({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'PartitionAddress': GetPartitionAddress(PartitionIndex)}),
+        pcm_template_partition_hovered: PartitionIsHovered({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'PartitionAddress': GetPartitionAddress(PartitionIndex)}),
       }"
       :style="{ 'flex-grow': GetPartitionFlexGrow(Partition.units, PartitionIndex) }"
       @click.stop=" PartitionClicked({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': GetPartitionAddress(PartitionIndex), 'PortID': null}) "
@@ -24,9 +24,11 @@
         :InitialPartitionAddress="GetPartitionAddress(PartitionIndex)"
         :Context="Context"
         :ObjectID="ObjectID"
-        :TemplateFaceSelected="TemplateFaceSelected"
+        :CabinetFace="CabinetFace"
+        :ObjectFace="ObjectFace"
         :PartitionAddressSelected="PartitionAddressSelected"
         :PartitionAddressHovered="PartitionAddressHovered"
+        :ObjectsAreDraggable="ObjectsAreDraggable"
       />
 
       <!-- Connectable partition -->
@@ -71,9 +73,10 @@
             :InitialPartitionAddress=[]
             :Context="Context"
             :ObjectID="GetEnclosureInsertID(encIndex-1, Partition.enc_layout.cols)"
-            :TemplateFaceSelected="TemplateFaceSelected"
+            :CabinetFace="CabinetFace"
             :PartitionAddressSelected="PartitionAddressSelected"
             :PartitionAddressHovered="PartitionAddressHovered"
+            :ObjectsAreDraggable="ObjectsAreDraggable"
             @InsertObjectDropped=" $emit('InsertObjectDropped', $event) "
           />
           <div
@@ -107,9 +110,12 @@ export default {
     InitialPartitionAddress: {type: Array},
     Context: {type: String},
     ObjectID: {},
+    CabinetFace: {type: String},
+    ObjectFace: {type: String},
     TemplateFaceSelected: {type: Object},
     PartitionAddressSelected: {type: Object},
     PartitionAddressHovered: {type: Object},
+    ObjectsAreDraggable: {type: Boolean},
   },
   computed: {
     Categories() {
@@ -120,20 +126,6 @@ export default {
     },
     Objects() {
       return this.$store.state.pcmObjects.Objects
-    },
-    CabinetFace: function() {
-
-      const vm = this
-      const Context = vm.Context
-      const CabinetFace = vm.TemplateFaceSelected[Context]
-      return CabinetFace
-    },
-    ObjectFace: function() {
-
-      const vm = this
-      const ObjectFace = vm.GetObjectFace(vm.ObjectID, vm.CabinetFace)
-      
-      return ObjectFace
     },
     IsPseudo: function() {
 
@@ -232,20 +224,6 @@ export default {
     },
   },
   methods: {
-    GetVisibleObjectFace: function() {
-
-      // Initial variables
-      const vm = this
-      const Context = vm.Context
-      const VisibleCabinetFace = vm.TemplateFaceSelected[Context]
-      const ObjectID = vm.ObjectID
-      const ObjectIndex = PCM.GetObjectIndex()
-
-      const VisibleObjectFace = ObjectID
-
-      return VisibleObjectFace
-
-    },
     GetPartitionCollection: function() {
 
       // Initial variables
@@ -260,7 +238,7 @@ export default {
       const Template = vm.Templates[Context][TemplateIndex]
 
       // Get Object Face
-      const ObjectFace = vm.GetObjectFace(vm.ObjectID, vm.CabinetFace)
+      const ObjectFace = vm.ObjectFace
 
       // Get Partition Collection
       const PartitionAddress = vm.InitialPartitionAddress
@@ -364,7 +342,7 @@ export default {
       // Store variables
       const vm = this
       const Context = vm.Context
-      const Face = vm.TemplateFaceSelected[Context]
+      const Face = vm.ObjectFace
       const Template = vm.GetTemplate()
       const PartitionDirection = vm.GetPartitionDirection(PartitionAddress)
       let WorkingMax = vm.GetGlobalPartitionMax(Template, PartitionAddress)

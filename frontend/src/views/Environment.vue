@@ -116,6 +116,7 @@
             :TemplateFaceSelected="TemplateFaceSelected"
             :PartitionAddressSelected="PartitionAddressSelected"
             :PartitionAddressHovered="PartitionAddressHovered"
+            :ObjectsAreDraggable="ObjectsAreDraggable"
             @SetTemplateFaceSelected="SetTemplateFaceSelected($event)"
           />
 

@@ -5,11 +5,11 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use App\Http\Controllers\PCM;
+use Illuminate\Support\Facades\Log;
 use App\Models\TemplateModel;
 use App\Models\ObjectModel;
 use App\Models\TrunkModel;
-use App\Http\Controllers\PCM;
-use Illuminate\Support\Facades\Log;
 
 class TrunkController extends Controller
 {

@@ -115,21 +115,33 @@ const PartitionAddressSelected = {
     'object_face': 'front',
     'template_id': StandardTemplateID,
     'front': [0],
-    'rear': [0]
+    'rear': [0],
+    'port_id': {
+      'front': null,
+      'rear': null,
+    }
   },
   'template': {
     'object_id': null,
     'object_face': null,
     'template_id': null,
     'front': [0],
-    'rear': [0]
+    'rear': [0],
+    'port_id': {
+      'front': null,
+      'rear': null,
+    }
   },
   'object': {
     'object_id': null,
     'object_face': null,
     'template_id': null,
     'front': [0],
-    'rear': [0]
+    'rear': [0],
+    'port_id': {
+      'front': null,
+      'rear': null,
+    }
   }
 }
 const PartitionAddressHovered = {
@@ -138,14 +150,22 @@ const PartitionAddressHovered = {
     'object_face': null,
     'template_id': null,
     'front': false,
-    'rear': false
+    'rear': false,
+    'port_id': {
+      'front': null,
+      'rear': null,
+    }
   },
   'template': {
     'object_id': null,
     'object_face': null,
     'template_id': null,
     'front': false,
-    'rear': false
+    'rear': false,
+    'port_id': {
+      'front': null,
+      'rear': null,
+    }
   }
 }
 

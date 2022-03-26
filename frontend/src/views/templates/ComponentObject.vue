@@ -4,8 +4,8 @@
     :draggable="!IsPseudoObject && ObjectsAreDraggable"
     @dragstart.stop="StartDrag({ context: Context, object_id: ObjectID, template_id: GetTemplateID(ObjectID), template_face: CabinetFace, object_face: ObjectFace }, $event)"
     :class="{
-      pcm_template_partition_selected: PartitionIsSelected(),
-      pcm_template_partition_hovered: PartitionIsHovered(),
+      pcm_template_partition_selected: PartitionIsSelected({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'PartitionAddress': InitialPartitionAddress}),
+      pcm_template_partition_hovered: PartitionIsHovered({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'PartitionAddress': InitialPartitionAddress}),
     }"
     :style="{
       'background-color': TemplateColor(ObjectID),
@@ -20,9 +20,11 @@
       :InitialPartitionAddress=" InitialPartitionAddress "
       :Context="Context"
       :ObjectID="ObjectID"
-      :TemplateFaceSelected="TemplateFaceSelected"
+      :CabinetFace="CabinetFace"
+      :ObjectFace="ObjectFace"
       :PartitionAddressSelected="PartitionAddressSelected"
       :PartitionAddressHovered="PartitionAddressHovered"
+      :ObjectsAreDraggable="ObjectsAreDraggable"
       @InsertObjectDropped=" $emit('InsertObjectDropped', $event) "
     />
   </div>
@@ -47,7 +49,7 @@ export default {
     InitialPartitionAddress: {type: Array},
     Context: {type: String},
     ObjectID: {},
-    TemplateFaceSelected: {type: Object},
+    CabinetFace: {type: String},
     PartitionAddressSelected: {type: Object},
     PartitionAddressHovered: {type: Object},
     ObjectsAreDraggable: {type: Boolean},
@@ -70,13 +72,6 @@ export default {
 
       return TemplateID.includes('pseudo')
 
-    },
-    CabinetFace: function() {
-
-      const vm = this
-      const Context = vm.Context
-      const CabinetFace = vm.TemplateFaceSelected[Context]
-      return CabinetFace
     },
     ObjectFace: function() {
 
@@ -125,6 +120,7 @@ export default {
     },
   },
   mounted() {
+    console.log('ObjectsAreDraggable: '+this.ObjectsAreDraggable)
   }
 }
 </script>

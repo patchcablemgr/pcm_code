@@ -117,6 +117,13 @@
 						:PartitionAddressSelected="PartitionAddressSelected"
 					/>
 
+          <component-connection-path
+            CardTitle="Connection Path"
+						Context="actual"
+						:PartitionAddressSelected="PartitionAddressSelected"
+            :PartitionAddressHovered="PartitionAddressHovered"
+					/>
+
         </b-col>
       </b-row>
     </b-container>
@@ -154,6 +161,7 @@ import ComponentFloorplan from './templates/ComponentFloorplan.vue'
 import ComponentFloorplanObjects from './templates/ComponentFloorplanObjects.vue'
 import ComponentFloorplanObjectDetails from './templates/ComponentFloorplanObjectDetails.vue'
 import ComponentPort from './templates/ComponentPort.vue'
+import ComponentConnectionPath from './templates/ComponentConnectionPath.vue'
 
 const TemplateFaceSelected = {
   'actual': 'front',
@@ -222,6 +230,7 @@ export default {
     ComponentFloorplanObjects,
     ComponentFloorplanObjectDetails,
     ComponentPort,
+    ComponentConnectionPath,
   },
   directives: {
     'b-tooltip': VBTooltip,
@@ -578,10 +587,22 @@ export default {
 
       const vm = this
 
-      // GET locations
+      // GET trunks
       vm.$http.get('/api/trunks').then(response => {
         vm.$store.commit('pcmTrunks/SET_Trunks', {data:response.data})
         vm.$store.commit('pcmTrunks/SET_Ready', {ReadyState:true})
+      }).catch(error => {
+        vm.DisplayError(error)
+      })
+    },
+    GETConnections() {
+
+      const vm = this
+
+      // GET connections
+      vm.$http.get('/api/connections').then(response => {
+        vm.$store.commit('pcmConnections/SET_Connections', {data:response.data})
+        vm.$store.commit('pcmConnections/SET_Ready', {ReadyState:true})
       }).catch(error => {
         vm.DisplayError(error)
       })
@@ -602,6 +623,7 @@ export default {
     vm.GETPortOrientations()
     vm.GETPortConnectors()
     vm.GETTrunks()
+    vm.GETConnections()
 
   },
 }

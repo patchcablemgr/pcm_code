@@ -29,28 +29,40 @@
         v-if="Mounted"
         :CanvasHeight="ConnectionCanvasHeight"
         :CanvasWidth="ConnectionCanvasWidth"
+        :ConnectionLineData="ConnectionLineData"
       ></component-canvas>
 
-      <div
-        v-for="(Element) in ConnectionPath"
-        v-bind:key="Element.id"
-      >
-        <div
-          v-if="Element.id"
+      <table>
+        <tr
+          v-for="(Element) in ConnectionPath"
           v-bind:key="Element.id"
-          class="pcm_box"
-          :class="{
-            pcm_template_partition_selected: PartitionIsSelected({'Context': Context, 'ObjectID': Element.id, 'ObjectFace': Element.face, 'PartitionAddress': Element.partition}),
-            pcm_template_partition_hovered: PartitionIsHovered({'Context': Context, 'ObjectID': Element.id, 'ObjectFace': Element.face, 'PartitionAddress': Element.partition}),
-          }"
-          :style="{ background: GetCategory(Element.id).color}"
-          @click.stop=" PartitionClicked({'Context': Context, 'ObjectID': Element.id, 'ObjectFace': Element.face, 'TemplateID': GetTemplateID(Element.id), 'PartitionAddress': Element.partition, 'PortID': null}) "
-          @mouseover.stop="PartitionHovered({'Context': Context, 'ObjectID': Element.id, 'ObjectFace': Element.face, 'TemplateID': GetTemplateID(Element.id), 'PartitionAddress': Element.partition, 'HoverState': true})"
-          @mouseleave.stop="PartitionHovered({'Context': Context, 'ObjectID': Element.id, 'ObjectFace': Element.face, 'TemplateID': GetTemplateID(Element.id), 'PartitionAddress': Element.partition, 'HoverState': false})"
         >
-          {{GenerateDN('port', Element.id, Element.face, Element.partition, Element.port_id)}}
-        </div>
-      </div>
+          <td>
+            <div
+              v-if="Element.id"
+              v-bind:key="Element.id"
+              class="pcm_box"
+              :class="{
+                pcm_template_partition_selected: PartitionIsSelected({'Context': Context, 'ObjectID': Element.id, 'ObjectFace': Element.face, 'PartitionAddress': Element.partition}),
+                pcm_template_partition_hovered: PartitionIsHovered({'Context': Context, 'ObjectID': Element.id, 'ObjectFace': Element.face, 'PartitionAddress': Element.partition}),
+              }"
+              :style="{ background: GetCategory(Element.id).color}"
+              @click.stop=" PartitionClicked({'Context': Context, 'ObjectID': Element.id, 'ObjectFace': Element.face, 'TemplateID': GetTemplateID(Element.id), 'PartitionAddress': Element.partition, 'PortID': null}) "
+              @mouseover.stop="PartitionHovered({'Context': Context, 'ObjectID': Element.id, 'ObjectFace': Element.face, 'TemplateID': GetTemplateID(Element.id), 'PartitionAddress': Element.partition, 'HoverState': true})"
+              @mouseleave.stop="PartitionHovered({'Context': Context, 'ObjectID': Element.id, 'ObjectFace': Element.face, 'TemplateID': GetTemplateID(Element.id), 'PartitionAddress': Element.partition, 'HoverState': false})"
+            >
+              {{GenerateDN('port', Element.id, Element.face, Element.partition, Element.port_id)}}
+            </div>
+          </td>
+          <td>
+            <component-port-r
+              :data-port-pair="Element.port_pair"
+              class="ConnectionPathPort"
+            >
+            </component-port-r>
+          </td>
+        </tr>
+      </table>
 
     </b-card-body>
   
@@ -71,15 +83,15 @@ import {
   BFormCheckbox,
   BFormSelect,
 } from 'bootstrap-vue'
-import ModalEditObjectName from './ModalEditObjectName.vue'
-import ModalPortSelect from './ModalPortSelect.vue'
 import ComponentCanvas from './ComponentCanvas.vue'
+import ComponentPortR from '@/views/templates/ComponentPortR.vue'
 import Ripple from 'vue-ripple-directive'
 import { PCM } from '@/mixins/PCM.js'
 
 const Mounted = false
 const ConnectionCanvasHeight = 0
 const ConnectionCanvasWidth = 0
+const ConnectionLineData = []
 
 export default {
   mixins: [PCM],
@@ -94,9 +106,8 @@ export default {
     BFormCheckbox,
     BFormSelect,
 
-    ModalEditObjectName,
-    ModalPortSelect,
     ComponentCanvas,
+    ComponentPortR,
   },
 	directives: {
 		Ripple,
@@ -112,6 +123,7 @@ export default {
       Mounted,
       ConnectionCanvasHeight,
       ConnectionCanvasWidth,
+      ConnectionLineData,
     }
   },
   computed: {
@@ -195,14 +207,42 @@ export default {
   },
   watch: {
     ConnectionPath: {
-     immediate: true,
-     handler: function (newVal, oldVal) {
-       // Required to push handling of this to end of queue stack
-       // Otherwise you will get the height before text replacement
-       setTimeout(() => {
-         this.ConnectionCanvasHeight = this.$refs.ConnectionCanvasParent.clientHeight
-         this.ConnectionCanvasWidth = this.$refs.ConnectionCanvasParent.clientWidth
-       }, 0);
+      immediate: true,
+      handler: function (newVal, oldVal) {
+
+        // Required to push handling of this to end of queue stack
+        // Otherwise you will get the height before text replacement
+        setTimeout(() => {
+
+          const vm = this
+
+          vm.ConnectionLineData = []
+
+          const Matches = document.querySelectorAll(".ConnectionPathPort")
+
+          Matches.forEach(function(Match){
+
+            const ElementLeft = Match.getBoundingClientRect().left
+            const ElementTop = Match.getBoundingClientRect().top
+            const ScrollLeft = document.documentElement.scrollLeft
+            const ScrollTop = document.documentElement.scrollTop
+
+            const PosX = ElementLeft + ScrollLeft
+            const PosY = ElementTop + ScrollTop
+
+            const PortPair = Match.dataset.portPair
+
+            const ConnectionLineIndex = vm.ConnectionLineData.findIndex(connection => connection.port_pair == PortPair)
+            if(ConnectionLineIndex !== -1) {
+              vm.ConnectionLineData[ConnectionLineIndex].line_coords.push([PosX, PosY])
+            } else {
+              vm.ConnectionLineData.push({'line_coords': [[PosX, PosY]], 'port_pair': PortPair})
+            }
+          })
+
+          this.ConnectionCanvasHeight = this.$refs.ConnectionCanvasParent.clientHeight
+          this.ConnectionCanvasWidth = this.$refs.ConnectionCanvasParent.clientWidth
+        }, 0);
       }
     }
   },

@@ -41,14 +41,30 @@
           'grid-template-areas': GetPartitionAreas(Partition.port_layout.rows, Partition.port_layout.cols),
         }"
       >
-        <div
+
+        <component-port-r
+          v-for=" portIndex in (Partition.port_layout.rows * Partition.port_layout.cols) "
+          :key=" portIndex "
+          :style="{ 'grid-area': 'area'+(portIndex-1)}"
+          :Context="Context"
+          :ObjectID="ObjectID"
+          :ObjectFace="ObjectFace"
+          :TemplateID="GetTemplateID(ObjectID)"
+          :PartitionAddress="GetPartitionAddress(PartitionIndex)"
+          :PortID="portIndex"
+          :PartitionAddressSelected="PartitionAddressSelected"
+        >
+        </component-port-r>
+        <!--div
           v-for=" portIndex in (Partition.port_layout.rows * Partition.port_layout.cols) "
           :key=" portIndex "
           class=" pcm_template_connectable_port_unk "
           :style="{ 'grid-area': 'area'+(portIndex-1) }"
           @click.stop=" PartitionClicked({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': GetPartitionAddress(PartitionIndex), 'PortID': portIndex}) "
         >
-        </div>
+          <component-port-r>
+          </component-port-r>
+        </div-->
       </div>
 
       <!-- Enclosure partition -->
@@ -94,6 +110,7 @@
 
 <script>
 import { BContainer, BRow, BCol, } from 'bootstrap-vue'
+import ComponentPortR from '@/views/templates/ComponentPortR.vue'
 import { PCM } from '../../mixins/PCM.js'
 
 export default {
@@ -103,6 +120,7 @@ export default {
     BContainer,
     BRow,
     BCol,
+    ComponentPortR,
     ComponentObject: () => import('./ComponentObject.vue'),
   },
   props: {

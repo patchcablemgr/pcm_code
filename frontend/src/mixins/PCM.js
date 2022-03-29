@@ -881,12 +881,11 @@ export const PCM = {
             let LocalFace = Face
             let LocalPartition = Partition
             let LocalPortID = PortID
+            let PortPair = 0
             const ConnectionPath = []
 
             // Look forward
             while(LocalObjectID && LocalFace && LocalPartition) {
-
-                console.log('here1')
 
                 ConnectionPath.push(
                     {
@@ -894,6 +893,7 @@ export const PCM = {
                         'face': LocalFace,
                         'partition': LocalPartition,
                         'port_id': LocalPortID,
+                        'port_pair': PortPair,
                     }
                 )
 
@@ -913,11 +913,11 @@ export const PCM = {
                             'face': RemoteFace,
                             'partition': RemotePartition,
                             'port_id': RemotePortID,
+                            'port_pair': PortPair,
                         }
                     )
 
                     const RemoteTrunk = vm.GetTrunk(RemoteObjectID, RemoteFace, RemotePartition, RemotePortID)
-                    console.log('RemoteTrunk: '+JSON.stringify(RemoteTrunk))
 
                     if(RemoteTrunk) {
 
@@ -934,6 +934,9 @@ export const PCM = {
                 } else {
                     LocalObjectID = LocalFace = LocalPartition = LocalPortID = null
                 }
+
+                // Increment pair index
+                PortPair = PortPair + 1
             }
 
             LocalObjectID = ObjectID
@@ -946,7 +949,6 @@ export const PCM = {
 
                 const Trunk = vm.GetTrunk(LocalObjectID, LocalFace, LocalPartition, LocalPortID)
                 if(Trunk) {
-                    console.log('backwared-trunk-1')
 
                     RemoteSide = Trunk.remote_side
 
@@ -961,6 +963,7 @@ export const PCM = {
                             'face': RemoteTrunkFace,
                             'partition': RemoteTrunkPartition,
                             'port_id': RemoteTrunkPortID,
+                            'port_pair': PortPair,
                         }
                     )
 
@@ -980,6 +983,7 @@ export const PCM = {
                                 'face': RemoteConnectionFace,
                                 'partition': RemoteConnectionPartition,
                                 'port_id': RemoteConnectionPortID,
+                                'port_pair': PortPair,
                             }
                         )
 
@@ -995,9 +999,11 @@ export const PCM = {
                 } else {
                     LocalObjectID = LocalFace = LocalPartition = LocalPortID = null
                 }
+
+                // Increment pair index
+                PortPair = PortPair + 1
             }
 
-            console.log('ConnectionPath: '+JSON.stringify(ConnectionPath))
             return ConnectionPath
         },
         GetConnection: function(LocalObjectID, LocalFace, LocalPartition, LocalPortID){

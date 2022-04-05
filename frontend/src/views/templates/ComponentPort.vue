@@ -42,6 +42,7 @@
             name="Port"
             v-model="SelectedPortIndex"
             :options="PortOptions"
+            :disabled="!PortIsSelected"
           />
         </td>
       </tr>
@@ -179,7 +180,8 @@ export default {
     },
     PortIsSelected: {
       get() {
-        return (this.SelectedPortIndex !== null) ? true : false
+        console.log('SelectedPortIndex: '+this.SelectedPortIndex)
+        return (this.SelectedPortIndex == null || typeof this.SelectedPortIndex == 'undefined') ? false : true
       }
     },
     SelectedPortIndex: {
@@ -192,7 +194,17 @@ export default {
 
         return PortID
       },
-      set() {}
+      set(PortID) {
+
+        const vm = this
+        const Context = vm.Context
+        const ObjectFace = vm.PartitionAddressSelected[Context].object_face
+        const ObjectID = vm.PartitionAddressSelected[Context].object_id
+        const TemplateID = vm.PartitionAddressSelected[Context].template_id
+        const PartitionAddress = vm.PartitionAddressSelected[Context][ObjectFace]
+        console.log(PortID)
+        vm.PartitionClicked({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'TemplateID': TemplateID, 'PartitionAddress': PartitionAddress, 'PortID': PortID})
+      }
     },
     Description: {
       get() {

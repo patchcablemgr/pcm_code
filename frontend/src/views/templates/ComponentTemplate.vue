@@ -51,7 +51,7 @@
           :ObjectFace="ObjectFace"
           :TemplateID="GetTemplateID(ObjectID)"
           :PartitionAddress="GetPartitionAddress(PartitionIndex)"
-          :PortID="portIndex"
+          :PortID="(portIndex-1)"
           :PartitionAddressSelected="PartitionAddressSelected"
         >
         </component-port-r>

@@ -141,7 +141,8 @@ export default {
       const SelectedObjectIsFloorplan = (FloorplanObjectType == 'camera' || FloorplanObjectType == 'wap' || FloorplanObjectType == 'walljack') ? true : false
       const SelectedObjectFace = (SelectedObjectIsFloorplan) ? 'front' : vm.PartitionAddressSelected[Context].object_face
       const SelectedObjectPartition = (SelectedObjectIsFloorplan) ? [0] : vm.PartitionAddressSelected[Context][SelectedObjectFace]
-      const SelectedObjectPortID = (SelectedObjectIsFloorplan) ? null : vm.PartitionAddressSelected[Context].port_id[SelectedObjectFace]
+      //const SelectedObjectPortID = (SelectedObjectIsFloorplan) ? null : vm.PartitionAddressSelected[Context].port_id[SelectedObjectFace]
+      const SelectedObjectPortID = null
 
       let PeerData = []
       TreeSelection.forEach(function(node){

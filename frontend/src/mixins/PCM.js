@@ -478,7 +478,7 @@ export const PCM = {
             let PortIndex = null
             if(PartitionType == 'connectable') {
                 if(PortID !== null) {
-                    PortIndex = PortID - 1
+                    PortIndex = PortID
                 } else {
                     PortIndex = 0
                 }
@@ -882,6 +882,8 @@ export const PCM = {
             let LocalPartition = Partition
             let LocalPortID = PortID
             let PortPair = 0
+            let FwdTrunkPair = 0
+            let BwdTrunkPair = 0
             const ConnectionPath = []
 
             // Look forward
@@ -894,6 +896,7 @@ export const PCM = {
                         'partition': LocalPartition,
                         'port_id': LocalPortID,
                         'port_pair': PortPair,
+                        'trunk_pair': FwdTrunkPair,
                     }
                 )
 
@@ -907,6 +910,9 @@ export const PCM = {
                     const RemotePartition = PortConnection.data[RemoteSide + '_partition']
                     const RemotePortID = PortConnection.data[RemoteSide + '_port']
 
+                    // Increment trunk pair ID
+                    FwdTrunkPair = FwdTrunkPair + 1
+
                     ConnectionPath.push(
                         {
                             'id': RemoteObjectID,
@@ -914,6 +920,7 @@ export const PCM = {
                             'partition': RemotePartition,
                             'port_id': RemotePortID,
                             'port_pair': PortPair,
+                            'trunk_pair': FwdTrunkPair,
                         }
                     )
 
@@ -964,6 +971,7 @@ export const PCM = {
                             'partition': RemoteTrunkPartition,
                             'port_id': RemoteTrunkPortID,
                             'port_pair': PortPair,
+                            'trunk_pair': BwdTrunkPair,
                         }
                     )
 
@@ -977,6 +985,9 @@ export const PCM = {
                         const RemoteConnectionPartition = Connection.data[RemoteSide + '_partition']
                         const RemoteConnectionPortID = Connection.data[RemoteSide + '_port']
 
+                        // Increment trunk pair ID
+                        BwdTrunkPair = BwdTrunkPair + 1
+
                         ConnectionPath.unshift(
                             {
                                 'id': RemoteConnectionObjectID,
@@ -984,6 +995,7 @@ export const PCM = {
                                 'partition': RemoteConnectionPartition,
                                 'port_id': RemoteConnectionPortID,
                                 'port_pair': PortPair,
+                                'trunk_pair': BwdTrunkPair,
                             }
                         )
 
@@ -1055,7 +1067,7 @@ export const PCM = {
                     const ColumnLocalPartition = TrunkSide + '_partition'
                     const ColumnLocalPort = TrunkSide + '_port'
 
-                    if(trunk[ColumnLocalID] == LocalObjectID && trunk[ColumnLocalFace] == LocalFace && JSON.stringify(trunk[ColumnLocalPartition]) == JSON.stringify(LocalPartition) && trunk[ColumnLocalPort] == LocalPortID) {
+                    if(trunk[ColumnLocalID] == LocalObjectID && trunk[ColumnLocalFace] == LocalFace && JSON.stringify(trunk[ColumnLocalPartition]) == JSON.stringify(LocalPartition)) {
                         LocalTrunkSide = TrunkSide
                         RemoteTrunkSide = (LocalTrunkSide == 'a') ? 'b' : 'a'
                         Found =  true
@@ -1185,6 +1197,26 @@ export const PCM = {
             }
 
             return PreviewPortIDArray.join(', ')
+        },
+        GetPortDisposition: function(Context, ObjectID, ObjectFace, ObjectPartition, PortID){
+
+            const vm = this
+
+            const Red = 'rgb(255,0,0)'
+            const Black = 'rgb(0,0,0)'
+            const Gray = 'rgb(128,128,128)'
+
+            const IsTrunked = (vm.GetTrunks(ObjectID, ObjectFace, ObjectPartition).length) ? true : false
+
+            if(Context == 'actual') {
+                if(IsTrunked) {
+                    return Gray
+                } else {
+                    return Black
+                }
+            } else {
+                return Black
+            }
         },
 
 // Misc

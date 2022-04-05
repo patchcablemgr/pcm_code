@@ -30,6 +30,7 @@
         :CanvasHeight="ConnectionCanvasHeight"
         :CanvasWidth="ConnectionCanvasWidth"
         :ConnectionLineData="ConnectionLineData"
+        :TrunkLineData="TrunkLineData"
       ></component-canvas>
 
       <table>
@@ -41,7 +42,8 @@
             <div
               v-if="Element.id"
               v-bind:key="Element.id"
-              class="pcm_box"
+              :data-trunk-pair="Element.trunk_pair"
+              class="pcm_box ConnectionPathObject"
               :class="{
                 pcm_template_partition_selected: PartitionIsSelected({'Context': Context, 'ObjectID': Element.id, 'ObjectFace': Element.face, 'PartitionAddress': Element.partition}),
                 pcm_template_partition_hovered: PartitionIsHovered({'Context': Context, 'ObjectID': Element.id, 'ObjectFace': Element.face, 'PartitionAddress': Element.partition}),
@@ -58,6 +60,13 @@
             <component-port-r
               :data-port-pair="Element.port_pair"
               class="ConnectionPathPort"
+              :Context="Context"
+              :ObjectID="Element.id"
+              :ObjectFace="Element.face"
+              :TemplateID="GetTemplateID(Element.id)"
+              :PartitionAddress="Element.partition"
+              :PortID="Element.port_id"
+              :PartitionAddressSelected="PartitionAddressSelected"
             >
             </component-port-r>
           </td>
@@ -92,6 +101,7 @@ const Mounted = false
 const ConnectionCanvasHeight = 0
 const ConnectionCanvasWidth = 0
 const ConnectionLineData = []
+const TrunkLineData = []
 
 export default {
   mixins: [PCM],
@@ -124,6 +134,7 @@ export default {
       ConnectionCanvasHeight,
       ConnectionCanvasWidth,
       ConnectionLineData,
+      TrunkLineData,
     }
   },
   computed: {
@@ -217,31 +228,69 @@ export default {
           const vm = this
 
           vm.ConnectionLineData = []
+          vm.TrunkLineData = []
 
-          const Matches = document.querySelectorAll(".ConnectionPathPort")
+          const ScrollLeft = document.documentElement.scrollLeft
+          const ScrollTop = document.documentElement.scrollTop
 
-          Matches.forEach(function(Match){
+          // Gather connection line data
+          const PathPorts = document.querySelectorAll(".ConnectionPathPort")
+          PathPorts.forEach(function(PathPort){
 
-            const ElementLeft = Match.getBoundingClientRect().left
-            const ElementTop = Match.getBoundingClientRect().top
-            const ScrollLeft = document.documentElement.scrollLeft
-            const ScrollTop = document.documentElement.scrollTop
-
+            const ElementLeft = PathPort.getBoundingClientRect().left
+            const ElementTop = PathPort.getBoundingClientRect().top
+            
             const PosX = ElementLeft + ScrollLeft
             const PosY = ElementTop + ScrollTop
 
-            const PortPair = Match.dataset.portPair
+            const PortPair = PathPort.dataset.portPair
 
-            const ConnectionLineIndex = vm.ConnectionLineData.findIndex(connection => connection.port_pair == PortPair)
-            if(ConnectionLineIndex !== -1) {
-              vm.ConnectionLineData[ConnectionLineIndex].line_coords.push([PosX, PosY])
+            const LineIndex = vm.ConnectionLineData.findIndex(line => line.port_pair == PortPair)
+            if(LineIndex !== -1) {
+              vm.ConnectionLineData[LineIndex].line_coords.push([PosX, PosY])
             } else {
               vm.ConnectionLineData.push({'line_coords': [[PosX, PosY]], 'port_pair': PortPair})
             }
           })
 
+          // Gather trunk line data
+          const PathObjects = document.querySelectorAll(".ConnectionPathObject")
+          PathObjects.forEach(function(PathObject){
+
+            const ElementWidth = PathObject.offsetWidth
+            const ElementHeight = PathObject.offsetHeight
+
+            const ElementLeftOffset = ElementWidth/2
+
+            const ElementLeft = PathObject.getBoundingClientRect().left
+            const ElementTop = PathObject.getBoundingClientRect().top
+            
+            const PosX = ElementLeft + ScrollLeft + ElementLeftOffset
+            const PosY = ElementTop + ScrollTop
+
+            const TrunkPair = PathObject.dataset.trunkPair
+
+            const LineIndex = vm.TrunkLineData.findIndex(line => line.trunk_pair == TrunkPair)
+            if(LineIndex !== -1) {
+              const ExistingElementTop = vm.TrunkLineData[LineIndex].element_top
+              const ExistingElementHeight = vm.TrunkLineData[LineIndex].element_height
+              if(ExistingElementTop < ElementTop) {
+                vm.TrunkLineData[LineIndex].line_coords[0][1] = vm.TrunkLineData[LineIndex].line_coords[0][1] + ExistingElementHeight
+              } else {
+                PosY = PosY + ElementHeight
+              }
+              vm.TrunkLineData[LineIndex].line_coords.push([PosX, PosY])
+            } else {
+              vm.TrunkLineData.push({'line_coords': [[PosX, PosY]], 'trunk_pair': TrunkPair, 'element_top': ElementTop, 'element_height': ElementHeight})
+            }
+          })
+
+          // Resize canvas
           this.ConnectionCanvasHeight = this.$refs.ConnectionCanvasParent.clientHeight
           this.ConnectionCanvasWidth = this.$refs.ConnectionCanvasParent.clientWidth
+
+          console.log(JSON.stringify(vm.ConnectionLineData))
+          console.log(JSON.stringify(vm.TrunkLineData))
         }, 0);
       }
     }

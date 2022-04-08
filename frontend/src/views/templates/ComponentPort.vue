@@ -75,9 +75,8 @@
         <td>
           <b-form-checkbox
             v-model="Populated"
-            value="yes"
             plain
-            :disabled="!PortIsSelected"
+            :disabled="!PortIsSelected || PortIsConnected"
           >
           </b-form-checkbox>
         </td>
@@ -178,10 +177,30 @@ export default {
     Trunks() {
       return this.$store.state.pcmTrunks.Trunks
     },
+    Connections() {
+      return this.$store.state.pcmConnections.Connections
+    },
     PortIsSelected: {
       get() {
-        console.log('SelectedPortIndex: '+this.SelectedPortIndex)
         return (this.SelectedPortIndex == null || typeof this.SelectedPortIndex == 'undefined') ? false : true
+      }
+    },
+    PortIsConnected: {
+      get() {
+        const vm = this
+        const Context = vm.Context
+        const ObjectID = vm.PartitionAddressSelected[Context].object_id
+        const Face = vm.PartitionAddressSelected[Context].object_face
+        const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+        const PortID = vm.PartitionAddressSelected[Context].port_id[Face]
+
+        const Connection = vm.GetConnection(ObjectID, Face, PartitionAddress, PortID)
+
+        if(Connection) {
+          return (Connection.data.a_id !== null && Connection.data.b_id !== null) ? true : false
+        } else {
+          return false
+        }
       }
     },
     SelectedPortIndex: {
@@ -202,7 +221,6 @@ export default {
         const ObjectID = vm.PartitionAddressSelected[Context].object_id
         const TemplateID = vm.PartitionAddressSelected[Context].template_id
         const PartitionAddress = vm.PartitionAddressSelected[Context][ObjectFace]
-        console.log(PortID)
         vm.PartitionClicked({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'TemplateID': TemplateID, 'PartitionAddress': PartitionAddress, 'PortID': PortID})
       }
     },
@@ -219,9 +237,61 @@ export default {
 
         const vm = this
         const Context = vm.Context
+        const ObjectID = vm.PartitionAddressSelected[Context].object_id
+        const Face = vm.PartitionAddressSelected[Context].object_face
+        const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+        const PortID = vm.PartitionAddressSelected[Context].port_id[Face]
 
-        return ['yes']
+        const Connection = vm.GetConnection(ObjectID, Face, PartitionAddress, PortID)
+
+        return (Connection) ? true : false
       },
+      set(NewValue) {
+
+        const vm = this
+        if(NewValue !== vm.Populated) {
+
+          const Context = vm.Context
+          const ObjectID = vm.PartitionAddressSelected[Context].object_id
+          const Face = vm.PartitionAddressSelected[Context].object_face
+          const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+          const PortID = vm.PartitionAddressSelected[Context].port_id[Face]
+
+          const Connection = vm.GetConnection(ObjectID, Face, PartitionAddress, PortID)
+
+          if(NewValue) {
+            const PeerData = [{'id':null, 'face':null, 'partition':null, 'port_id':null}]
+
+            // Compile POST data
+            const data = {'id':ObjectID, 'face':Face, 'partition':PartitionAddress, 'port_id':PortID, PeerData}
+
+            // POST Connection
+            const URL = '/api/connections/'
+            vm.$http.post(URL, data).then(response => {
+
+              // Add connection to store
+              response.data.add.forEach(add => vm.$store.commit('pcmConnections/ADD_Connection', {data:add}))
+              response.data.remove.forEach(remove => vm.$store.commit('pcmConnections/REMOVE_Connection', {data:remove}))
+
+            }).catch(error => {vm.DisplayError(error)})
+          } else {
+
+            const Connection = vm.GetConnection(ObjectID, Face, PartitionAddress, PortID)
+
+            if(Connection) {
+              const ConnectionID = Connection.data.id
+              // Delete Connection
+              const URL = '/api/connections/'+ConnectionID
+              vm.$http.delete(URL).then(response => {
+
+                // Remove trunk from store
+                vm.$store.commit('pcmConnections/REMOVE_Connection', {data:response.data})
+
+              }).catch(error => {vm.DisplayError(error)})
+            }
+          }
+        }
+      }
     },
     PortOptions: {
       get() {

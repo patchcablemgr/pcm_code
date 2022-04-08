@@ -59,6 +59,16 @@ const router = new VueRouter({
     },
   },
   {
+    path: '/admin',
+    name: 'admin',
+    component: () => import('@/views/Admin.vue'),
+    meta: {
+      pageTitle: 'Admin',
+      resource: 'User',
+      action: 'read',
+    },
+  },
+  {
     path: '/profile',
     name: 'profile',
     component: () => import('@/views/Profile.vue'),

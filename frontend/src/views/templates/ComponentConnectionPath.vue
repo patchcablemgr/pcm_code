@@ -192,7 +192,7 @@ export default {
         const Partition = vm.PartitionAddressSelected[Context][Face]
         const PortID = vm.PartitionAddressSelected[Context].port_id[Face]
 
-        return vm.GetConnectionPath(ObjectID, Face, Partition, PortID)
+        return vm.GetConnectionPath(ObjectID, Face, Partition, PortID, Context)
         
       },
       set(){

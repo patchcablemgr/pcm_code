@@ -27,4 +27,11 @@ export default [
 	resource: 'User',
 	action:'read',
   },
+  {
+    title: 'Admin',
+    route: 'admin',
+    icon: 'HomeIcon',
+    resource: 'User',
+    action:'read',
+  },
 ]

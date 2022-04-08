@@ -13,6 +13,7 @@ import pcmObjects from './pcm-objects'
 import pcmProps from './pcm-props'
 import pcmTrunks from './pcm-trunks'
 import pcmConnections from './pcm-connections'
+import pcmUsers from './pcm-users'
 
 Vue.use(Vuex)
 
@@ -29,6 +30,7 @@ export default new Vuex.Store({
     pcmProps,
     pcmTrunks,
     pcmConnections,
+    pcmUsers,
   },
   strict: process.env.DEV,
 })

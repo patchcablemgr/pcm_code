@@ -14,6 +14,7 @@ use App\Http\Controllers\FloorplanTemplateController;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\TrunkController;
 use App\Http\Controllers\ConnectionController;
+use App\Http\Controllers\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -54,6 +55,7 @@ Route::group(['middleware' => 'auth:sanctum'], function(){
   // No POST
   Route::apiResources([
     'objects' => ObjectController::class,
+    'users' => UserController::class,
   ],[
     'only' =>[
       'index',

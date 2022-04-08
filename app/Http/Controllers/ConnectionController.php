@@ -143,6 +143,23 @@ class ConnectionController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $validatorInput = [
+            'id' => $id
+        ];
+        $validatorRules = [
+            'id' => [
+                'required',
+                'exists:connection'
+            ]
+        ];
+        $validatorMessages = [
+        ];
+        Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
+				
+		$object = ConnectionModel::where('id', $id)->first();
+
+        $object->delete();
+
+        return array('id' => $id);
     }
 }

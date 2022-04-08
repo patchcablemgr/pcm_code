@@ -873,147 +873,162 @@ export const PCM = {
         },
 
 // Port
-        GetConnectionPath: function(ObjectID, Face, Partition, PortID){
+        GetConnectionPath: function(ObjectID, Face, PartitionAddress, PortID, Context){
             
             const vm = this
             let RemoteSide
             let LocalObjectID = ObjectID
             let LocalFace = Face
-            let LocalPartition = Partition
+            let LocalPartition = PartitionAddress
             let LocalPortID = PortID
             let PortPair = 0
             let FwdTrunkPair = 0
             let BwdTrunkPair = 0
             const ConnectionPath = []
 
-            // Look forward
-            while(LocalObjectID && LocalFace && LocalPartition) {
+            
 
-                ConnectionPath.push(
-                    {
-                        'id': LocalObjectID,
-                        'face': LocalFace,
-                        'partition': LocalPartition,
-                        'port_id': LocalPortID,
-                        'port_pair': PortPair,
-                        'trunk_pair': FwdTrunkPair,
-                    }
-                )
+            const TemplateID = vm.GetTemplateID(ObjectID, Context)
+            const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+            const Template = vm.Templates[Context][TemplateIndex]
+            
+            if(typeof Template !== 'undefined') {
 
-                const PortConnection = vm.GetConnection(LocalObjectID, LocalFace, LocalPartition, LocalPortID)
-                if(PortConnection) {
+                const Blueprint = Template.blueprint[LocalFace]
+                const Partition = vm.GetPartition(Blueprint, LocalPartition)
 
-                    RemoteSide = PortConnection.remote_side
+                if(Partition.type == 'connectable') {
 
-                    const RemoteObjectID = PortConnection.data[RemoteSide + '_id']
-                    const RemoteFace = PortConnection.data[RemoteSide + '_face']
-                    const RemotePartition = PortConnection.data[RemoteSide + '_partition']
-                    const RemotePortID = PortConnection.data[RemoteSide + '_port']
+                    // Look forward
+                    while(LocalObjectID && LocalFace && LocalPartition) {
 
-                    // Increment trunk pair ID
-                    FwdTrunkPair = FwdTrunkPair + 1
-
-                    ConnectionPath.push(
-                        {
-                            'id': RemoteObjectID,
-                            'face': RemoteFace,
-                            'partition': RemotePartition,
-                            'port_id': RemotePortID,
-                            'port_pair': PortPair,
-                            'trunk_pair': FwdTrunkPair,
-                        }
-                    )
-
-                    const RemoteTrunk = vm.GetTrunk(RemoteObjectID, RemoteFace, RemotePartition, RemotePortID)
-
-                    if(RemoteTrunk) {
-
-                        RemoteSide = RemoteTrunk.remote_side
-
-                        LocalObjectID = RemoteTrunk.data[RemoteSide + '_id']
-                        LocalFace = RemoteTrunk.data[RemoteSide + '_face']
-                        LocalPartition = RemoteTrunk.data[RemoteSide + '_partition']
-                        LocalPortID = RemoteTrunk.data[RemoteSide + '_port']
-
-                    } else {
-                        LocalObjectID = LocalFace = LocalPartition = LocalPortID = null
-                    }
-                } else {
-                    LocalObjectID = LocalFace = LocalPartition = LocalPortID = null
-                }
-
-                // Increment pair index
-                PortPair = PortPair + 1
-            }
-
-            LocalObjectID = ObjectID
-            LocalFace = Face
-            LocalPartition = Partition
-            LocalPortID = PortID
-
-            // Look backward
-            while(LocalObjectID && LocalFace && LocalPartition) {
-
-                const Trunk = vm.GetTrunk(LocalObjectID, LocalFace, LocalPartition, LocalPortID)
-                if(Trunk) {
-
-                    RemoteSide = Trunk.remote_side
-
-                    const RemoteTrunkObjectID = Trunk.data[RemoteSide + '_id']
-                    const RemoteTrunkFace = Trunk.data[RemoteSide + '_face']
-                    const RemoteTrunkPartition = Trunk.data[RemoteSide + '_partition']
-                    const RemoteTrunkPortID = Trunk.data[RemoteSide + '_port']
-
-                    ConnectionPath.unshift(
-                        {
-                            'id': RemoteTrunkObjectID,
-                            'face': RemoteTrunkFace,
-                            'partition': RemoteTrunkPartition,
-                            'port_id': RemoteTrunkPortID,
-                            'port_pair': PortPair,
-                            'trunk_pair': BwdTrunkPair,
-                        }
-                    )
-
-                    const Connection = vm.GetConnection(RemoteTrunkObjectID, RemoteTrunkFace, RemoteTrunkPartition, RemoteTrunkPortID)
-                    if(Connection) {
-
-                        RemoteSide = Connection.remote_side
-
-                        const RemoteConnectionObjectID = Connection.data[RemoteSide + '_id']
-                        const RemoteConnectionFace = Connection.data[RemoteSide + '_face']
-                        const RemoteConnectionPartition = Connection.data[RemoteSide + '_partition']
-                        const RemoteConnectionPortID = Connection.data[RemoteSide + '_port']
-
-                        // Increment trunk pair ID
-                        BwdTrunkPair = BwdTrunkPair + 1
-
-                        ConnectionPath.unshift(
+                        ConnectionPath.push(
                             {
-                                'id': RemoteConnectionObjectID,
-                                'face': RemoteConnectionFace,
-                                'partition': RemoteConnectionPartition,
-                                'port_id': RemoteConnectionPortID,
+                                'id': LocalObjectID,
+                                'face': LocalFace,
+                                'partition': LocalPartition,
+                                'port_id': LocalPortID,
                                 'port_pair': PortPair,
-                                'trunk_pair': BwdTrunkPair,
+                                'trunk_pair': FwdTrunkPair,
                             }
                         )
 
-                        LocalObjectID = RemoteConnectionObjectID
-                        LocalFace = RemoteConnectionFace
-                        LocalPartition = RemoteConnectionPartition
-                        LocalPortID = RemoteConnectionPortID
+                        const PortConnection = vm.GetConnection(LocalObjectID, LocalFace, LocalPartition, LocalPortID)
+                        if(PortConnection) {
 
-                    } else {
-                        LocalObjectID = LocalFace = LocalPartition = LocalPortID = null
+                            RemoteSide = PortConnection.remote_side
+
+                            const RemoteObjectID = PortConnection.data[RemoteSide + '_id']
+                            const RemoteFace = PortConnection.data[RemoteSide + '_face']
+                            const RemotePartition = PortConnection.data[RemoteSide + '_partition']
+                            const RemotePortID = PortConnection.data[RemoteSide + '_port']
+
+                            // Increment trunk pair ID
+                            FwdTrunkPair = FwdTrunkPair + 1
+
+                            ConnectionPath.push(
+                                {
+                                    'id': RemoteObjectID,
+                                    'face': RemoteFace,
+                                    'partition': RemotePartition,
+                                    'port_id': RemotePortID,
+                                    'port_pair': PortPair,
+                                    'trunk_pair': FwdTrunkPair,
+                                }
+                            )
+
+                            const RemoteTrunk = vm.GetTrunk(RemoteObjectID, RemoteFace, RemotePartition, RemotePortID)
+
+                            if(RemoteTrunk) {
+
+                                RemoteSide = RemoteTrunk.remote_side
+
+                                LocalObjectID = RemoteTrunk.data[RemoteSide + '_id']
+                                LocalFace = RemoteTrunk.data[RemoteSide + '_face']
+                                LocalPartition = RemoteTrunk.data[RemoteSide + '_partition']
+                                LocalPortID = RemoteTrunk.data[RemoteSide + '_port']
+
+                            } else {
+                                LocalObjectID = LocalFace = LocalPartition = LocalPortID = null
+                            }
+                        } else {
+                            LocalObjectID = LocalFace = LocalPartition = LocalPortID = null
+                        }
+
+                        // Increment pair index
+                        PortPair = PortPair + 1
                     }
 
-                } else {
-                    LocalObjectID = LocalFace = LocalPartition = LocalPortID = null
-                }
+                    LocalObjectID = ObjectID
+                    LocalFace = Face
+                    LocalPartition = PartitionAddress
+                    LocalPortID = PortID
 
-                // Increment pair index
-                PortPair = PortPair + 1
+                    // Look backward
+                    while(LocalObjectID && LocalFace && LocalPartition) {
+
+                        const Trunk = vm.GetTrunk(LocalObjectID, LocalFace, LocalPartition, LocalPortID)
+                        if(Trunk) {
+
+                            RemoteSide = Trunk.remote_side
+
+                            const RemoteTrunkObjectID = Trunk.data[RemoteSide + '_id']
+                            const RemoteTrunkFace = Trunk.data[RemoteSide + '_face']
+                            const RemoteTrunkPartition = Trunk.data[RemoteSide + '_partition']
+                            const RemoteTrunkPortID = Trunk.data[RemoteSide + '_port']
+
+                            ConnectionPath.unshift(
+                                {
+                                    'id': RemoteTrunkObjectID,
+                                    'face': RemoteTrunkFace,
+                                    'partition': RemoteTrunkPartition,
+                                    'port_id': RemoteTrunkPortID,
+                                    'port_pair': PortPair,
+                                    'trunk_pair': BwdTrunkPair,
+                                }
+                            )
+
+                            const Connection = vm.GetConnection(RemoteTrunkObjectID, RemoteTrunkFace, RemoteTrunkPartition, RemoteTrunkPortID)
+                            if(Connection) {
+
+                                RemoteSide = Connection.remote_side
+
+                                const RemoteConnectionObjectID = Connection.data[RemoteSide + '_id']
+                                const RemoteConnectionFace = Connection.data[RemoteSide + '_face']
+                                const RemoteConnectionPartition = Connection.data[RemoteSide + '_partition']
+                                const RemoteConnectionPortID = Connection.data[RemoteSide + '_port']
+
+                                // Increment trunk pair ID
+                                BwdTrunkPair = BwdTrunkPair + 1
+
+                                ConnectionPath.unshift(
+                                    {
+                                        'id': RemoteConnectionObjectID,
+                                        'face': RemoteConnectionFace,
+                                        'partition': RemoteConnectionPartition,
+                                        'port_id': RemoteConnectionPortID,
+                                        'port_pair': PortPair,
+                                        'trunk_pair': BwdTrunkPair,
+                                    }
+                                )
+
+                                LocalObjectID = RemoteConnectionObjectID
+                                LocalFace = RemoteConnectionFace
+                                LocalPartition = RemoteConnectionPartition
+                                LocalPortID = RemoteConnectionPortID
+
+                            } else {
+                                LocalObjectID = LocalFace = LocalPartition = LocalPortID = null
+                            }
+
+                        } else {
+                            LocalObjectID = LocalFace = LocalPartition = LocalPortID = null
+                        }
+
+                        // Increment pair index
+                        PortPair = PortPair + 1
+                    }
+                }
             }
 
             return ConnectionPath
@@ -1205,11 +1220,18 @@ export const PCM = {
             const Red = 'rgb(255,0,0)'
             const Black = 'rgb(0,0,0)'
             const Gray = 'rgb(128,128,128)'
-
-            const IsTrunked = (vm.GetTrunks(ObjectID, ObjectFace, ObjectPartition).length) ? true : false
+            const Orange = 'rgb(255,215,0)'
 
             if(Context == 'actual') {
-                if(IsTrunked) {
+                const IsTrunked = (vm.GetTrunks(ObjectID, ObjectFace, ObjectPartition).length) ? true : false
+                const Connection = vm.GetConnection(ObjectID, ObjectFace, ObjectPartition, PortID)
+                if(Connection) {
+                    if(Connection.data.a_id == null || Connection.data.b_id == null) {
+                        return Orange
+                    } else {
+                        return Red
+                    }
+                } else if(IsTrunked) {
                     return Gray
                 } else {
                     return Black

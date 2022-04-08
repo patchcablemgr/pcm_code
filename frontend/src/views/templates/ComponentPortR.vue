@@ -65,6 +65,9 @@ export default {
     Trunks() {
       return this.$store.state.pcmTrunks.Trunks
     },
+    Connections() {
+      return this.$store.state.pcmConnections.Connections
+    },
     PortIsSelected: {
       get() {
         return (this.SelectedPortIndex !== null) ? true : false

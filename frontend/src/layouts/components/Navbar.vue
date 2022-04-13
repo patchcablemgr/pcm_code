@@ -30,15 +30,15 @@
         <template #button-content>
           <div class="d-sm-flex d-none user-nav">
             <p class="user-name font-weight-bolder mb-0">
-              John Doe
+              {{UserData.username}}
             </p>
-            <span class="user-status">Admin</span>
+            <span class="user-status">{{UserData.role}}</span>
           </div>
           <b-avatar
             size="40"
             variant="light-primary"
             badge
-            :src="require('@/assets/images/avatars/13-small.png')"
+            :src="require('@/assets/images/avatars/DefaultUserIcon.png')"
             class="badge-minimal"
             badge-variant="success"
           />
@@ -53,24 +53,24 @@
           <span>About</span>
         </b-dropdown-item>
 
-        <b-dropdown-item link-class="d-flex align-items-center">
+        <b-dropdown-item link-class="d-flex align-items-center" @click="profile">
           <feather-icon
             size="16"
             icon="UserIcon"
             class="mr-50"
           />
-          <span @click="profile">Profile</span>
+          <span>Profile</span>
         </b-dropdown-item>
 
         <b-dropdown-divider />
 
-        <b-dropdown-item link-class="d-flex align-items-center">
+        <b-dropdown-item link-class="d-flex align-items-center" @click="logout">
           <feather-icon
             size="16"
             icon="LogOutIcon"
             class="mr-50"
           />
-          <span @click="logout">Logout</span>
+          <span>Logout</span>
         </b-dropdown-item>
       </b-nav-item-dropdown>
     </b-navbar-nav>
@@ -87,8 +87,12 @@ import {
 } from 'bootstrap-vue'
 import DarkToggler from '@core/layouts/components/app-navbar/components/DarkToggler.vue'
 import ModalNavbarAbout from './ModalNavbarAbout.vue'
+import { PCM } from '@/mixins/PCM.js'
+
+const UserData = {}
 
 export default {
+  mixins: [PCM],
   components: {
     BLink,
     BNavbarNav,
@@ -105,6 +109,11 @@ export default {
   directives: {
     'b-modal': VBModal,
   },
+  data() {
+    return {
+      UserData,
+    }
+  },
   props: {
     toggleVerticalMenuActive: {
       type: Function,
@@ -116,11 +125,17 @@ export default {
 	    this.$http.get('/api/auth/logout').then(
         localStorage.clear(),
         this.$router.push({name: 'login'})
-      )
+      ).catch(error => {
+        vm.DisplayError(error)
+      })
     },
     profile() {
       this.$router.push({name: 'profile'})
     },
   },
+  mounted() {
+
+    this.UserData = JSON.parse(localStorage.getItem('userData'))
+  }
 }
 </script>

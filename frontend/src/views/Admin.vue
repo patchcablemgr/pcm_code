@@ -7,64 +7,6 @@
         <b-col>
 
           <b-card
-            title="Global Settings"
-          >
-            <b-card-body>
-              <b-form
-                @submit.prevent="onSubmit"
-                @reset="onReset"
-                style="width:100%"
-              >
-
-                <div
-                  class="h5 font-weight-bolder m-0"
-                >
-                  General:</div>
-                <hr
-                  class="separator mt-0"
-                >
-
-                <!-- Name -->
-                <dl class="row">
-                  <dt class="col-sm-4">
-                    OrganizationName
-                  </dt>
-                  <dd class="col-sm-8">
-                    <b-form-input
-                      name="name"
-                      v-model="OrganizationName"
-                      placeholder="New_Template"
-                    />
-                  </dd>
-                </dl>
-
-                <!-- Submit and Reset -->
-                <div offset-md="4">
-                  <b-button
-                      v-ripple.400="'rgba(255, 255, 255, 0.15)'"
-                      type="submit"
-                      variant="primary"
-                      class="mr-1"
-                  >
-                      Submit
-                  </b-button>
-                  <b-button
-                      v-ripple.400="'rgba(186, 191, 199, 0.15)'"
-                      type="reset"
-                      variant="outline-secondary"
-                  >
-                      Reset
-                  </b-button>
-                </div>
-
-              </b-form>
-            </b-card-body>
-          </b-card>
-
-        </b-col>
-        <b-col>
-
-          <b-card
             title="Users"
           >
             <b-card-body>

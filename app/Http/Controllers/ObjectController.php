@@ -9,6 +9,7 @@ use App\Models\TemplateModel;
 use App\Models\ObjectModel;
 use App\Http\Controllers\PCM;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Gate;
 
 class ObjectController extends Controller
 {
@@ -217,6 +218,10 @@ class ObjectController extends Controller
      */
     public function update(Request $request, $id)
     {
+
+        if (! Gate::allows('update-object')) {
+            abort(403);
+        }
 
         // Prepare variables
         $faceArray = [

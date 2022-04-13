@@ -132,6 +132,12 @@
               >
                 Sign in
               </b-button>
+              <validation-provider
+                #default="{ errors }"
+                name="Submit"
+              >
+                <small class="text-danger">{{ errors[0] }}</small>
+              </validation-provider>
             </b-form>
           </validation-observer>
 
@@ -210,6 +216,7 @@ export default {
     validationForm() {
       this.$refs.loginValidation.validate().then(success => {
         if (success) {
+          console.log('login')
           this.$http.post('/api/auth/login', {
             email: this.userEmail,
             password: this.password
@@ -241,7 +248,8 @@ export default {
             this.$router.replace({name: 'dashboard'})
           })
           .catch(error => {
-            this.$refs.loginValidation.setErrors(error.response.data.error)
+            console.log(error.response.data.message)
+            this.$refs.loginValidation.setErrors({'Submit':[error.response.data.message]})
           })
         }
       })

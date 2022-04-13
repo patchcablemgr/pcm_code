@@ -37,7 +37,7 @@ export default [
 	title: 'Admin',
 	route: 'admin',
 	icon: 'HomeIcon',
-	resource: 'User',
+	resource: 'Administrator',
 	action:'read',
   },
 ]

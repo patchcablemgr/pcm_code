@@ -1698,13 +1698,18 @@ export const PCM = {
         },
         DisplayError: function(errData) {
 
-            const errMsg = errData.response.data
+            console.log(errData.response.status)
+            if(errData.response.status == 401) {
+                this.$router.push('login')
+            } else {
+                const errMsg = errData.response.data
 
-            // Display error to user via toast
-            this.$bvToast.toast(JSON.stringify(errMsg), {
-                title: 'Error',
-                variant: 'danger',
-            })
+                // Display error to user via toast
+                this.$bvToast.toast(JSON.stringify(errMsg), {
+                    title: 'Error',
+                    variant: 'danger',
+                })
+            }
         },
     }
 }

@@ -26,10 +26,20 @@ class AuthController extends Controller
             'c_password' => 'required|same:password'
         ]);
 
+		if(User::count() === 0) {
+			$status = true;
+			$role = 'admin';
+		} else {
+			$status = false;
+			$role = 'operator';
+		}
+
         $user = new User([
             'name'  => $request->name,
             'email' => $request->email,
             'password' => bcrypt($request->password),
+			'status' => $status,
+			'role' => $role,
         ]);
 
         if($user->save()){
@@ -63,25 +73,52 @@ class AuthController extends Controller
 		]);
 
 		$credentials = request(['email','password']);
-		if(!Auth::attempt($credentials))
-		{
-		return response()->json([
-			'message' => 'Unauthorized'
-		],401);
+		if(!Auth::attempt($credentials)) {
+			return response()->json([
+				'message' => 'Unauthorized'
+			],401);
 		}
 
 		$user = $request->user();
+
+		if(!$user['status']) {
+			return response()->json([
+				'message' => 'Account is inactive.  Please contact your administrator.'
+			],401);
+		}
+
 		$tokenResult = $user->createToken('Personal Access Token');
 		$token = $tokenResult->plainTextToken;
 
+		if($user->role == 'user') {
+			$role = 'User';
+			$ability = array(
+				array('action' => 'read', 'subject' => 'Public'),
+				array('action' => 'read', 'subject' => 'User')
+			);
+		} else if($user->role == 'operator') {
+			$role = 'Operator';
+			$ability = array(
+				array('action' => 'read', 'subject' => 'Public'),
+				array('action' => 'read', 'subject' => 'User'),
+				array('action' => 'read', 'subject' => 'Operator')
+			);
+		} else if($user->role == 'admin') {
+			$role = 'Administrator';
+			$ability = array(
+				array('action' => 'read', 'subject' => 'Public'),
+				array('action' => 'read', 'subject' => 'User'),
+				array('action' => 'read', 'subject' => 'Operator'),
+				array('action' => 'read', 'subject' => 'Administrator'),
+			);
+		}
+
 		return response()->json([
-		'accessToken' => $token,
-		'token_type' => 'Bearer',
-		'ability' => array(
-			array('action' => 'read', 'subject' => 'Public'),
-			array('action' => 'read', 'subject' => 'User'),
-			array('action' => 'read', 'subject' => 'Operator'),
-		),
+			'accessToken' => $token,
+			'token_type' => 'Bearer',
+			'ability' => $ability,
+			'role' => $role,
+			'username' => $user->name,
 		]);
 	}
 	

@@ -41,6 +41,7 @@ export default class JwtService {
         const { config, response } = error
         const originalRequest = config
 
+        /*
         // if (status === 401) {
         if (response && response.status === 401) {
           if (!this.isAlreadyFetchingAccessToken) {
@@ -66,6 +67,7 @@ export default class JwtService {
           })
           return retryOriginalRequest
         }
+        */
         return Promise.reject(error)
       },
     )

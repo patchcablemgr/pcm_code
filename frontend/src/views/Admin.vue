@@ -15,6 +15,34 @@
           </b-card>
 
         </b-col>
+        <b-col>
+
+          <b-card
+            title="Network Config"
+          >
+            <b-card-body>
+              <component-network-config
+                :NetworkConfig="NetworkConfig"
+              />
+            </b-card-body>
+          </b-card>
+
+        </b-col>
+      </b-row>
+      <b-row>
+        <b-col>
+
+          <b-card
+            title="SSL Config"
+          >
+            <b-card-body>
+              <component-s-s-l-config
+                :CSRList="CSRList"
+              />
+            </b-card-body>
+          </b-card>
+
+        </b-col>
       </b-row>
     </b-container>
 
@@ -46,6 +74,17 @@ import Ripple from 'vue-ripple-directive'
 import ToastGeneral from './templates/ToastGeneral.vue'
 import { PCM } from '@/mixins/PCM.js'
 import ComponentUsers from '@/views/templates/ComponentUsers.vue'
+import ComponentNetworkConfig from '@/views/templates/ComponentNetworkConfig.vue'
+import ComponentSSLConfig from '@/views/templates/ComponentSSLConfig.vue'
+
+const NetworkConfig = {
+  'dhcp': false,
+  'host_address': '',
+  'gateway': '',
+  'dns': '',
+}
+
+const CSRList = []
 
 export default {
   mixins: [PCM],
@@ -67,13 +106,18 @@ export default {
 
     ToastGeneral,
     ComponentUsers,
+    ComponentNetworkConfig,
+    ComponentSSLConfig,
   },
   directives: {
     Ripple,
     'b-tooltip': VBTooltip,
 	},
   data() {
-    return {}
+    return {
+      NetworkConfig,
+      CSRList,
+    }
   },
   computed: {
     DependenciesReady: function() {
@@ -92,22 +136,8 @@ export default {
     Users: function() {
       return this.$store.state.pcmUsers.Users
     },
-    OrganizationName: {
-      get() {
-        return 'test'
-      },
-      set() {
-        return true
-      }
-    }
   },
   methods: {
-    onSubmit: function(){
-      console.log('Submit')
-    },
-    onReset: function(){
-      console.log('Reset')
-    },
     GETUsers() {
 
       const vm = this
@@ -120,6 +150,17 @@ export default {
         vm.DisplayError(error)
       })
     },
+    GETNetworkConfig() {
+
+      const vm = this
+
+      // GET network config
+      vm.$http.get('/api/config/network').then(response => {
+        vm.NetworkConfig = response.data
+      }).catch(error => {
+        vm.DisplayError(error)
+      })
+    },
   },
   watch: {},
   mounted() {
@@ -127,6 +168,7 @@ export default {
     const vm = this
 
     vm.GETUsers()
+    vm.GETNetworkConfig()
   },
 }
 </script>

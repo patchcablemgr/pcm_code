@@ -15,6 +15,7 @@ use App\Http\Controllers\ImageController;
 use App\Http\Controllers\TrunkController;
 use App\Http\Controllers\ConnectionController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ConfigController;
 
 /*
 |--------------------------------------------------------------------------
@@ -45,12 +46,15 @@ Route::group(['middleware' => 'auth:sanctum'], function(){
   Route::post('objects/floorplan', [ObjectController::class, 'storeFloorplan']);
   Route::post('locations/{id}/image', [ImageController::class, 'storeLocationImage']);
   Route::post('templates/{id}/image', [ImageController::class, 'storeTemplateImage']);
+  Route::post('config/network', [ConfigController::class, 'networkConfig']);
+  Route::post('config/csr', [ConfigController::class, 'generateCSR']);
 
   // Only GET
   Route::get('medium', [AttributesMedia::class, 'index']);
   Route::get('port-orientation', [AttributesPortOrientation::class, 'index']);
   Route::get('port-connectors', [AttributesPortConnector::class, 'index']);
   Route::get('floorplan-templates', [FloorplanTemplateController::class, 'index']);
+  Route::get('config/network', [ConfigController::class, 'index']);
 
   // No POST
   Route::apiResources([

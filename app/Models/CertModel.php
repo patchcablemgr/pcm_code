@@ -5,12 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class TrunkModel extends Model
+class CertModel extends Model
 {
     use HasFactory;
-    protected $table = 'trunk';
+    protected $table = 'cert';
     protected $casts = [
-      'a_partition' => 'array',
-      'b_partition' => 'array',
+        'valid_from' => 'datetime:Y-m-d',
+        'valid_to' => 'datetime:Y-m-d',
     ];
 }

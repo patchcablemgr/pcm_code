@@ -5,12 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class TrunkModel extends Model
+class CSRModel extends Model
 {
     use HasFactory;
-    protected $table = 'trunk';
+    protected $table = 'csr';
     protected $casts = [
-      'a_partition' => 'array',
-      'b_partition' => 'array',
+        'created_at' => 'datetime:Y-m-d',
     ];
 }

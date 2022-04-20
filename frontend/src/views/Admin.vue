@@ -36,9 +36,18 @@
             title="SSL Config"
           >
             <b-card-body>
-              <component-s-s-l-config
-                :CSRList="CSRList"
-              />
+              <component-s-s-l-config/>
+            </b-card-body>
+          </b-card>
+
+        </b-col>
+        <b-col>
+
+          <b-card
+            title="App Control"
+          >
+            <b-card-body>
+              <component-app-control/>
             </b-card-body>
           </b-card>
 
@@ -76,6 +85,7 @@ import { PCM } from '@/mixins/PCM.js'
 import ComponentUsers from '@/views/templates/ComponentUsers.vue'
 import ComponentNetworkConfig from '@/views/templates/ComponentNetworkConfig.vue'
 import ComponentSSLConfig from '@/views/templates/ComponentSSLConfig.vue'
+import ComponentAppControl from '@/views/templates/ComponentAppControl.vue'
 
 const NetworkConfig = {
   'dhcp': false,
@@ -83,8 +93,6 @@ const NetworkConfig = {
   'gateway': '',
   'dns': '',
 }
-
-const CSRList = []
 
 export default {
   mixins: [PCM],
@@ -108,6 +116,7 @@ export default {
     ComponentUsers,
     ComponentNetworkConfig,
     ComponentSSLConfig,
+    ComponentAppControl,
   },
   directives: {
     Ripple,
@@ -116,7 +125,6 @@ export default {
   data() {
     return {
       NetworkConfig,
-      CSRList,
     }
   },
   computed: {
@@ -161,6 +169,30 @@ export default {
         vm.DisplayError(error)
       })
     },
+    GETCSRList() {
+
+      const vm = this
+
+      // GET network config
+      vm.$http.get('/api/config/csr').then(response => {
+        vm.$store.commit('pcmSSL/SET_CSR', {data:response.data})
+        vm.$store.commit('pcmSSL/SET_CSR_Ready', {ReadyState:true})
+      }).catch(error => {
+        vm.DisplayError(error)
+      })
+    },
+    GETCertList() {
+
+      const vm = this
+
+      // GET network config
+      vm.$http.get('/api/config/cert').then(response => {
+        vm.$store.commit('pcmSSL/SET_Cert', {data:response.data})
+        vm.$store.commit('pcmSSL/SET_Cert_Ready', {ReadyState:true})
+      }).catch(error => {
+        vm.DisplayError(error)
+      })
+    },
   },
   watch: {},
   mounted() {
@@ -169,6 +201,8 @@ export default {
 
     vm.GETUsers()
     vm.GETNetworkConfig()
+    vm.GETCSRList()
+    vm.GETCertList()
   },
 }
 </script>

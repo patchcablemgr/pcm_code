@@ -48,13 +48,20 @@ Route::group(['middleware' => 'auth:sanctum'], function(){
   Route::post('templates/{id}/image', [ImageController::class, 'storeTemplateImage']);
   Route::post('config/network', [ConfigController::class, 'networkConfig']);
   Route::post('config/csr', [ConfigController::class, 'generateCSR']);
+  Route::post('config/csr/{id}/cert', [ConfigController::class, 'storeCert']);
 
   // Only GET
   Route::get('medium', [AttributesMedia::class, 'index']);
   Route::get('port-orientation', [AttributesPortOrientation::class, 'index']);
   Route::get('port-connectors', [AttributesPortConnector::class, 'index']);
   Route::get('floorplan-templates', [FloorplanTemplateController::class, 'index']);
-  Route::get('config/network', [ConfigController::class, 'index']);
+  Route::get('config/network', [ConfigController::class, 'indexNetwork']);
+  Route::get('config/csr', [ConfigController::class, 'indexCSR']);
+  Route::get('config/cert', [ConfigController::class, 'indexCert']);
+
+  // Only DELETE
+  Route::delete('config/csr/{id}', [ConfigController::class, 'destroyCSR']);
+  Route::delete('config/cert/{id}', [ConfigController::class, 'destroyCert']);
 
   // No POST
   Route::apiResources([

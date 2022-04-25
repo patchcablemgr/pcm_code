@@ -10,6 +10,6 @@ class CSRModel extends Model
     use HasFactory;
     protected $table = 'csr';
     protected $casts = [
-        'created_at' => 'datetime:Y-m-d',
+        'created_at' => 'datetime:Y-m-d H:i e',
     ];
 }

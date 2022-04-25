@@ -10,7 +10,8 @@ class CertModel extends Model
     use HasFactory;
     protected $table = 'cert';
     protected $casts = [
-        'valid_from' => 'datetime:Y-m-d',
-        'valid_to' => 'datetime:Y-m-d',
+        'valid_from' => 'datetime:Y-m-d H:i e',
+        'valid_to' => 'datetime:Y-m-d H:i e',
+        'active' => 'boolean',
     ];
 }

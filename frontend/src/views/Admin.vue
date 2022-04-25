@@ -32,13 +32,7 @@
       <b-row>
         <b-col>
 
-          <b-card
-            title="SSL Config"
-          >
-            <b-card-body>
-              <component-s-s-l-config/>
-            </b-card-body>
-          </b-card>
+          <component-s-s-l-config/>
 
         </b-col>
         <b-col>

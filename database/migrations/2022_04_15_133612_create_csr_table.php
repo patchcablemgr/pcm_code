@@ -20,6 +20,11 @@ class CreateCsrTable extends Migration
             $table->integer('user_id');
             $table->integer('key_id');
             $table->integer('cert_id')->nullable();
+            $table->string('country');
+            $table->string('state');
+            $table->string('city');
+            $table->string('organization');
+            $table->string('cn');
         });
     }
 

@@ -63,6 +63,9 @@ Route::group(['middleware' => 'auth:sanctum'], function(){
   Route::delete('config/csr/{id}', [ConfigController::class, 'destroyCSR']);
   Route::delete('config/cert/{id}', [ConfigController::class, 'destroyCert']);
 
+  // Only PATCH
+  Route::patch('config/cert/{id}/activate', [ConfigController::class, 'activateCert']);
+
   // No POST
   Route::apiResources([
     'objects' => ObjectController::class,

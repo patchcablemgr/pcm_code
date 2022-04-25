@@ -129,15 +129,51 @@ class ConfigController extends Controller
     public function generateCSR(Request $request)
     {
 
+        $validatorInput = [
+            'country' => $request->country,
+            'state' => $request->state,
+            'city' => $request->city,
+            'organization' => $request->organization,
+            'cn' => $request->cn,
+        ];
+        $validatorRules = [
+            'country' => [
+                'required',
+                'regex:/^[A-Z]{2}$/',
+                'size:2'
+            ],
+            'state' => [
+                'required',
+                'regex:/^[a-zA-Z\s\-]*$/',
+                'max:255'
+            ],
+            'city' => [
+                'required',
+                'regex:/^[a-zA-Z\s\-]*$/',
+                'max:255'
+            ],
+            'organization' => [
+                'required',
+                'regex:/^[a-zA-Z\s\-]*$/',
+                'max:255'
+            ],
+            'cn' => [
+                'required',
+                'regex:/(?=^.{4,253}$)(^((?!-)[a-zA-Z0-9-]{0,62}[a-zA-Z0-9]\.)+[a-zA-Z]{2,63}$)/',
+                'max:255'
+            ]
+        ];
+        $validatorMessages = [
+        ];
+        Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
+
         // Configure certificate fields
         $dn = array(
-            "countryName" => "US",
-            "stateOrProvinceName" => "Washington",
-            "localityName" => "Seattle",
-            "organizationName" => "PatchCableMgr",
-            "organizationalUnitName" => "IT",
-            "commonName" => "PCM",
-            "emailAddress" => "support@patchcablemgr.com"
+            "countryName" => $request->country,
+            "stateOrProvinceName" => $request->state,
+            "localityName" => $request->city,
+            "organizationName" => $request->organization,
+            "commonName" => $request->cn,
         );
 
         // Generate private key object
@@ -162,6 +198,11 @@ class ConfigController extends Controller
         $csr->csr = $csr_string;
         $csr->user_id = $userID;
         $csr->key_id = $key['id'];
+        $csr->country = $request->country;
+        $csr->state = $request->state;
+        $csr->city = $request->city;
+        $csr->organization = $request->organization;
+        $csr->cn = $request->cn;
         $csr->save();
 
         return $csr->toArray();
@@ -252,6 +293,11 @@ class ConfigController extends Controller
 				
 		$cert = CertModel::where('id', $id)->first();
 
+        // Ensure certificate is not active
+        if($cert['active']) {
+            throw ValidationException::withMessages(['certificate_validation' => 'Cannot delete active certificate.']);
+        }
+
         $cert->delete();
 
         return array('id' => $id);
@@ -305,28 +351,61 @@ class ConfigController extends Controller
         $cert->filename = end($pathArray);
         $cert->valid_from = date('Y-m-d H:i:s', $certDetails['validFrom_time_t']);
         $cert->valid_to = date('Y-m-d H:i:s', $certDetails['validTo_time_t']);
+        $cert->key_id = $keyID;
+        $cert->country = $certDetails['subject']['C'];
+        $cert->state = $certDetails['subject']['ST'];
+        $cert->city = $certDetails['subject']['L'];
+        $cert->organization = $certDetails['subject']['O'];
+        $cert->cn = $certDetails['subject']['CN'];
         $cert->save();
 
         // Update CSR record with cert ID
         $CSR->cert_id = $cert->id;
 
+        return $certDetails;
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function activateCert(Request $request, $id)
+    {
+        // Prepare variables
+        $validatorInput = [
+            'id' => $id,
+        ];
+        $validatorRules = [
+            'id' => [
+                'integer',
+                'exists:cert,id'
+            ]
+        ];
+        $validatorMessages = [];
+        Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
+
+        // Get certificate
+        $cert = CertModel::where('id', $id)->first();
+
+        // Reset any currently active certificate
+        $activeCerts = CertModel::where('active', true)->update(['active' => false]);
+
+        // Mark cert as active
+        $cert->active = true;
+        $cert->save();
+
+        // Get key entry
+        $keyID = $cert['key_id'];
+        $key = KeyModel::where('id', $keyID)->first();
+
+        $config = "CERT=".$cert['filename'].PHP_EOL;
+        $config .= "KEY=".$key['filename'].PHP_EOL;
+
+        file_put_contents('/shared/ssl_config', $config);
+
         return $cert;
-        /*
 
-        // Store floorplan image
-        $path = $request->file('file')->store('images');
-
-        // Update location floorplan image
-        $pathArray = explode('/', $path);
-        $location->img = end($pathArray);
-            
-        // Save location record
-        $location->save();
-
-        // Return location record
-        return $location->toArray();
-        
-        return true;
-        */
     }
 }

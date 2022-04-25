@@ -2,122 +2,171 @@
 
 <template>
 <div>
-  <div class="demo-inline-spacing">
+  <b-card>
+    <b-card-title>
+      <div class="d-flex flex-wrap justify-content-between">
+				<div class="demo-inline-spacing">
+          SSL Config
+        </div>
+        <div class="demo-inline-spacing">
+          <b-dropdown
+            v-ripple.400="'rgba(255, 255, 255, 0.15)'"
+            right
+            size="sm"
+            text="Actions"
+            variant="primary"
+          >
 
-    <b-button
-      v-ripple.400="'rgba(255, 255, 255, 0.15)'"
-      variant="primary"
-      class="mr-1"
-      @click="GenerateCSR"
-    >
-      Generate CSR
-    </b-button>
+            <b-dropdown-item
+              v-b-modal.modal-ssl-subject-csr
+            >
+              Generate CSR
+            </b-dropdown-item>
 
-    <b-button
-      v-ripple.400="'rgba(255, 255, 255, 0.15)'"
-      variant="primary"
-      class="mr-1"
-    >
-      Generate Self-signed
-    </b-button>
+            <b-dropdown-item
+              v-b-modal.modal-ssl-subject-self-signed
+            >
+              Generate Self-Signed
+            </b-dropdown-item>
 
-  </div>
+          </b-dropdown>
+        </div>
+      </div>
+    </b-card-title>
 
-  <b-table
-      small
-      :fields="CSRFields"
-      :items="CSRList"
-      responsive="sm"
-    >
-      <template #cell(created)="data">
-        {{ data.item.created_at }}
-      </template>
+    <b-card-body>
 
-      <template #cell(user)="data">
-        {{ data.item.user_id }}
-      </template>
+      <h4>CSR List</h4>
+      <b-table
+        small
+        :fields="CSRFields"
+        :items="CSRList"
+        responsive="sm"
+      >
 
-      <template #cell(actions)="data">
+        <template #cell(common_name)="data">
+          {{ data.item.cn }}
+        </template>
 
-        <b-button
-          v-ripple.400="'rgba(40, 199, 111, 0.15)'"
-          variant="flat-success"
-          class="btn-icon"
-          v-b-modal.modal-view-csr
-          @click="SelectCSRID(data.item.id)"
-        >
-          <feather-icon icon="EyeIcon" />
-        </b-button>
+        <template #cell(created)="data">
+          {{ data.item.created_at }}
+        </template>
 
-        <b-button
-          v-ripple.400="'rgba(40, 199, 111, 0.15)'"
-          variant="flat-success"
-          class="btn-icon"
-          v-b-modal.modal-cert-upload
-          @click="SelectCSRID(data.item.id)"
-        >
-          <feather-icon icon="UploadIcon" />
-        </b-button>
+        <template #cell(created_by)="data">
+          {{ GetUser(data.item.user_id).name }}
+        </template>
 
-        <b-button
-          v-ripple.400="'rgba(40, 199, 111, 0.15)'"
-          variant="flat-success"
-          class="btn-icon"
-          @click="DeleteCSR(data.item.id)"
-        >
-          <feather-icon icon="TrashIcon" />
-        </b-button>
-      </template>
+        <template #cell(actions)="data">
 
-    </b-table>
+          <b-button
+            v-ripple.400="'rgba(40, 199, 111, 0.15)'"
+            variant="flat-success"
+            class="btn-icon"
+            v-b-modal.modal-view-csr
+            @click="SelectCSRID(data.item.id)"
+          >
+            <feather-icon icon="EyeIcon" />
+          </b-button>
 
-    <b-table
-      small
-      :fields="CertFields"
-      :items="CertList"
-      responsive="sm"
-    >
-      <template #cell(valid_from)="data">
-        {{ data.item.valid_from }}
-      </template>
+          <b-button
+            v-ripple.400="'rgba(40, 199, 111, 0.15)'"
+            variant="flat-success"
+            class="btn-icon"
+            v-b-modal.modal-cert-upload
+            @click="SelectCSRID(data.item.id)"
+          >
+            <feather-icon icon="UploadIcon" />
+          </b-button>
 
-      <template #cell(valid_to)="data">
-        {{ data.item.valid_to }}
-      </template>
+          <b-button
+            v-ripple.400="'rgba(40, 199, 111, 0.15)'"
+            variant="flat-success"
+            class="btn-icon"
+            @click="DeleteCSR(data.item.id)"
+          >
+            <feather-icon icon="TrashIcon" />
+          </b-button>
+        </template>
 
-      <template #cell(active)="data">
-        {{ data.item.user_id }}
-      </template>
+      </b-table>
 
-      <template #cell(actions)="data">
+      <h4>Certificate List</h4>
+      <b-table
+        small
+        :fields="CertFields"
+        :items="CertList"
+        responsive="sm"
+      >
 
-        <b-button
-          v-ripple.400="'rgba(40, 199, 111, 0.15)'"
-          variant="flat-success"
-          class="btn-icon"
-          @click="DeleteCert(data.item.id)"
-        >
-          <feather-icon icon="TrashIcon" />
-        </b-button>
-      </template>
+        <template #cell(common_name)="data">
+          {{ data.item.cn }}
+        </template>
 
-    </b-table>
+        <template #cell(valid_from)="data">
+          {{ data.item.valid_from }}
+        </template>
 
-    <modal-view-c-s-r
-      :SelectedCSRID="SelectedCSRID"
-    >
-    </modal-view-c-s-r>
+        <template #cell(valid_to)="data">
+          {{ data.item.valid_to }}
+        </template>
 
-    <!-- File Upload Modal -->
-    <modal-cert-upload
-      :SelectedCSRID="SelectedCSRID"
-    >
-    </modal-cert-upload>
+        <template #cell(active)="data">
+          <b-form-radio
+            v-model="CertActive"
+            name="cert-active"
+            :value="data.item.id"
+          />
+        </template>
+
+        <template #cell(actions)="data">
+
+          <b-button
+            v-ripple.400="'rgba(40, 199, 111, 0.15)'"
+            variant="flat-success"
+            class="btn-icon"
+            @click="DeleteCert(data.item.id)"
+          >
+            <feather-icon icon="TrashIcon" />
+          </b-button>
+        </template>
+
+      </b-table>
+    </b-card-body>
+  </b-card>
+
+  <!-- Modal:  SSL Subect CSR -->
+  <modal-s-s-l-subject
+    ModalID="modal-ssl-subject-csr"
+    ModalTitle="CSR"
+  >
+  </modal-s-s-l-subject>
+
+  <!-- Modal:  SSL Subect Self-Signed -->
+  <modal-s-s-l-subject
+    ModalID="modal-ssl-subject-self-signed"
+    ModalTitle="Self-Signed"
+  >
+  </modal-s-s-l-subject>
+
+  <!-- File Upload Modal -->
+  <modal-view-c-s-r
+    :SelectedCSRID="SelectedCSRID"
+  >
+  </modal-view-c-s-r>
+
+  <!-- File Upload Modal -->
+  <modal-cert-upload
+    :SelectedCSRID="SelectedCSRID"
+  >
+  </modal-cert-upload>
 </div>
 </template>
 
 <script>
 import {
+  BCard,
+  BCardTitle,
+  BCardBody,
   BTable,
   BRow,
   BCol,
@@ -127,20 +176,28 @@ import {
   BFormCheckbox,
   BFormSelect,
   BButton,
+  BFormRadio,
+  BDropdown,
+  BDropdownItem,
 } from 'bootstrap-vue'
 import Ripple from 'vue-ripple-directive'
 import { PCM } from '@/mixins/PCM.js'
 import ModalViewCSR from '@/views/templates/ModalViewCSR.vue'
 import ModalCertUpload from '@/views/templates/ModalCertUpload.vue'
+import ModalSSLSubject from '@/views/templates/ModalSSLSubject.vue'
 
-const CSRFields = ['created', 'user', 'actions']
-const CertFields = ['valid_from', 'valid_to', 'active', 'actions']
+const CSRFields = ['common_name', 'created', 'created_by', 'actions']
+const CertFields = ['common_name', 'valid_from', 'valid_to', 'active', 'actions']
 const SelectedCSRID = null
 const SelectedCertID = null
+const ActiveCertID = null
 
 export default {
   mixins: [PCM],
   components: {
+    BCard,
+    BCardTitle,
+    BCardBody,
     BTable,
     BRow,
     BCol,
@@ -150,9 +207,13 @@ export default {
     BFormCheckbox,
     BFormSelect,
     BButton,
+    BFormRadio,
+    BDropdown,
+    BDropdownItem,
 
     ModalViewCSR,
     ModalCertUpload,
+    ModalSSLSubject,
   },
 	directives: {
     Ripple,
@@ -164,6 +225,7 @@ export default {
       CertFields,
       SelectedCSRID,
       SelectedCertID,
+      ActiveCertID,
     }
   },
   computed: {
@@ -173,8 +235,110 @@ export default {
     CertList() {
       return this.$store.state.pcmSSL.CertList
     },
+    Users() {
+      return this.$store.state.pcmUsers.Users
+    },
+    CertActive:{
+      get(){
+
+        const vm = this
+        const ActiveCertIndex = vm.CertList.findIndex((cert) => cert.active )
+
+        if(ActiveCertIndex !== -1) {
+          const ActiveCert = vm.CertList[ActiveCertIndex]
+          const ActiveCertID = ActiveCert.id
+          return ActiveCertID
+        } else {
+          return 0
+        }
+      },
+      set(CertID){
+
+        const vm = this
+        const ActiveCertID = vm.ActiveCertID
+
+        console.log(CertID+' - '+ActiveCertID)
+
+        // Ensure newly activated cert does not match already activated cert
+        // This prevents multiple activation events
+        let HonorActivation = true
+        if(CertID == ActiveCertID) {
+          HonorActivation = false
+        }
+        vm.ActiveCertID = CertID
+
+        if(HonorActivation) {
+
+          // Confirm Deletion
+          const ConfirmMsg = 'Activate certificate?  This action may require users to refresh their browser.'
+          const ConfirmOpts = {
+            title: "Confirm"
+          }
+          vm.$bvModal.msgBoxConfirm(ConfirmMsg, ConfirmOpts).then(result => {
+            if (result === true) {
+              vm.$http.patch('/api/config/cert/'+CertID+'/activate').then(response => {
+
+                // Clear currently active certificate
+                vm.CertList.forEach(function(cert){
+                  if(cert.active) {
+                    const CertCopy = JSON.parse(JSON.stringify(cert), function(key, value){
+                      if(key === 'active') {
+                        return false
+                      } else {
+                        return value
+                      }
+                    })
+                    vm.$store.commit('pcmSSL/UPDATE_Cert', {data:CertCopy})
+                  }
+                })
+
+                // Update newly activated certificate
+                vm.$store.commit('pcmSSL/UPDATE_Cert', {data:response.data})
+              }).catch(error => {
+                vm.DisplayError(error)
+              })
+            }
+          })
+        }
+
+        /*
+        vm.$http.patch('/api/config/cert/'+CertID+'/activate').then(response => {
+
+          // Clear currently active certificate
+          vm.CertList.forEach(function(cert){
+            if(cert.active) {
+              const CertCopy = JSON.parse(JSON.stringify(cert), function(key, value){
+                if(key === 'active') {
+                  return false
+                } else {
+                  return value
+                }
+              })
+              vm.$store.commit('pcmSSL/UPDATE_Cert', {data:CertCopy})
+            }
+          })
+
+          // Update newly activated certificate
+          vm.$store.commit('pcmSSL/UPDATE_Cert', {data:response.data})
+        }).catch(error => {
+          vm.DisplayError(error)
+        })
+        */
+      },
+    },
   },
   methods: {
+    GetUser(UserID){
+
+      const vm = this
+      const UserIndex = vm.Users.findIndex((user) => user.id == UserID)
+      if(UserIndex !== -1) {
+        const User = vm.Users[UserIndex]
+        return User
+      } else {
+        return false
+      }
+    },
     GenerateCSR(){
 
       const vm = this
@@ -228,6 +392,11 @@ export default {
 
       const vm = this
       vm.SelectedCSRID = CSRID
+    },
+    SelectCertID(CertID){
+
+      const vm = this
+      vm.SelectCertID = CSCertIDRID
     },
   }
 }

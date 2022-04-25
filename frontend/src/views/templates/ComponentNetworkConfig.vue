@@ -77,13 +77,6 @@
         >
           Submit
         </b-button>
-        <b-button
-          v-ripple.400="'rgba(186, 191, 199, 0.15)'"
-          type="reset"
-          variant="outline-secondary"
-        >
-          Reset
-        </b-button>
       </b-col>
     </b-row>
 

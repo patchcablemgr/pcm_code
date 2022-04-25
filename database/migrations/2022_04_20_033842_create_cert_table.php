@@ -17,6 +17,13 @@ class CreateCertTable extends Migration
             $table->id();
             $table->timestamps();
             $table->text('filename');
+            $table->timestamp('valid_from');
+            $table->timestamp('valid_to');
+            $table->string('country');
+            $table->string('state');
+            $table->string('city');
+            $table->string('organization');
+            $table->string('cn');
         });
     }
 

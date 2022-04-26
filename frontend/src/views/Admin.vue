@@ -37,13 +37,7 @@
         </b-col>
         <b-col>
 
-          <b-card
-            title="App Control"
-          >
-            <b-card-body>
-              <component-app-control/>
-            </b-card-body>
-          </b-card>
+          <component-app-control/>
 
         </b-col>
       </b-row>

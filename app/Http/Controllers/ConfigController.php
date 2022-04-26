@@ -472,4 +472,20 @@ class ConfigController extends Controller
         return $cert;
 
     }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function updateApp(Request $request)
+    {
+        $time = now();
+
+        $signalUpdate = file_put_contents('/shared/app_update', $time);
+
+        return $signalUpdate;
+
+    }
 }

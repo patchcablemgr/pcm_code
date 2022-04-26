@@ -23,12 +23,6 @@
               Generate CSR
             </b-dropdown-item>
 
-            <b-dropdown-item
-              v-b-modal.modal-ssl-subject-self-signed
-            >
-              Generate Self-Signed
-            </b-dropdown-item>
-
           </b-dropdown>
         </div>
       </div>
@@ -64,6 +58,7 @@
             class="btn-icon"
             v-b-modal.modal-view-csr
             @click="SelectCSRID(data.item.id)"
+            v-b-tooltip.hover.top="'View CSR'"
           >
             <feather-icon icon="EyeIcon" />
           </b-button>
@@ -74,6 +69,7 @@
             class="btn-icon"
             v-b-modal.modal-cert-upload
             @click="SelectCSRID(data.item.id)"
+            v-b-tooltip.hover.top="'Upload certificate'"
           >
             <feather-icon icon="UploadIcon" />
           </b-button>
@@ -82,7 +78,18 @@
             v-ripple.400="'rgba(40, 199, 111, 0.15)'"
             variant="flat-success"
             class="btn-icon"
+            @click="GenerateSelfSigned(data.item.id)"
+            v-b-tooltip.hover.top="'Generate self-signed certificate'"
+          >
+            <feather-icon icon="PenToolIcon" />
+          </b-button>
+
+          <b-button
+            v-ripple.400="'rgba(40, 199, 111, 0.15)'"
+            variant="flat-success"
+            class="btn-icon"
             @click="DeleteCSR(data.item.id)"
+            v-b-tooltip.hover.top="'Delete CSR'"
           >
             <feather-icon icon="TrashIcon" />
           </b-button>
@@ -110,11 +117,16 @@
           {{ data.item.valid_to }}
         </template>
 
+        <template #cell(issuer)="data">
+          {{ data.item.issuer }}
+        </template>
+
         <template #cell(active)="data">
           <b-form-radio
             v-model="CertActive"
             name="cert-active"
             :value="data.item.id"
+            v-b-tooltip.hover.top="'Apply certificate'"
           />
         </template>
 
@@ -125,6 +137,7 @@
             variant="flat-success"
             class="btn-icon"
             @click="DeleteCert(data.item.id)"
+            v-b-tooltip.hover.top="'Delete certificate'"
           >
             <feather-icon icon="TrashIcon" />
           </b-button>
@@ -138,13 +151,6 @@
   <modal-s-s-l-subject
     ModalID="modal-ssl-subject-csr"
     ModalTitle="CSR"
-  >
-  </modal-s-s-l-subject>
-
-  <!-- Modal:  SSL Subect Self-Signed -->
-  <modal-s-s-l-subject
-    ModalID="modal-ssl-subject-self-signed"
-    ModalTitle="Self-Signed"
   >
   </modal-s-s-l-subject>
 
@@ -164,6 +170,7 @@
 
 <script>
 import {
+  VBTooltip,
   BCard,
   BCardTitle,
   BCardBody,
@@ -187,7 +194,7 @@ import ModalCertUpload from '@/views/templates/ModalCertUpload.vue'
 import ModalSSLSubject from '@/views/templates/ModalSSLSubject.vue'
 
 const CSRFields = ['common_name', 'created', 'created_by', 'actions']
-const CertFields = ['common_name', 'valid_from', 'valid_to', 'active', 'actions']
+const CertFields = ['common_name', 'valid_from', 'valid_to', 'issuer', 'active', 'actions']
 const SelectedCSRID = null
 const SelectedCertID = null
 const ActiveCertID = null
@@ -216,6 +223,7 @@ export default {
     ModalSSLSubject,
   },
 	directives: {
+    'b-tooltip': VBTooltip,
     Ripple,
 	},
   props: {},
@@ -256,8 +264,6 @@ export default {
 
         const vm = this
         const ActiveCertID = vm.ActiveCertID
-
-        console.log(CertID+' - '+ActiveCertID)
 
         // Ensure newly activated cert does not match already activated cert
         // This prevents multiple activation events
@@ -300,30 +306,6 @@ export default {
             }
           })
         }
-
-        /*
-        vm.$http.patch('/api/config/cert/'+CertID+'/activate').then(response => {
-
-          // Clear currently active certificate
-          vm.CertList.forEach(function(cert){
-            if(cert.active) {
-              const CertCopy = JSON.parse(JSON.stringify(cert), function(key, value){
-                if(key === 'active') {
-                  return false
-                } else {
-                  return value
-                }
-              })
-              vm.$store.commit('pcmSSL/UPDATE_Cert', {data:CertCopy})
-            }
-          })
-
-          // Update newly activated certificate
-          vm.$store.commit('pcmSSL/UPDATE_Cert', {data:response.data})
-        }).catch(error => {
-          vm.DisplayError(error)
-        })
-        */
       },
     },
   },
@@ -350,14 +332,26 @@ export default {
         vm.DisplayError(error)
       })
     },
+    GenerateSelfSigned(CSRID){
+
+      const vm = this
+
+      const URL = '/api/config/csr/'+CSRID+'/self-signed'
+
+      vm.$http.post(URL).then(response => {
+        vm.$store.commit('pcmSSL/ADD_Cert', {data:response.data})
+      }).catch(error => {
+        vm.DisplayError(error)
+      })
+    },
     DeleteCSR(CSRID){
 
       const vm = this
 
       // Confirm Deletion
-      const ConfirmMsg = 'Confirm'
+      const ConfirmMsg = 'Delete CSR?'
       const ConfirmOpts = {
-        title: "Delete CSR?"
+        title: "Confirm"
       }
       vm.$bvModal.msgBoxConfirm(ConfirmMsg, ConfirmOpts).then(result => {
         if (result === true) {
@@ -374,9 +368,9 @@ export default {
       const vm = this
 
       // Confirm Deletion
-      const ConfirmMsg = 'Confirm'
+      const ConfirmMsg = 'Delete certificate?'
       const ConfirmOpts = {
-        title: "Delete certificate?"
+        title: "Confirm"
       }
       vm.$bvModal.msgBoxConfirm(ConfirmMsg, ConfirmOpts).then(result => {
         if (result === true) {
@@ -392,11 +386,6 @@ export default {
 
       const vm = this
       vm.SelectedCSRID = CSRID
-    },
-    SelectCertID(CertID){
-
-      const vm = this
-      vm.SelectCertID = CSCertIDRID
     },
   }
 }

@@ -209,6 +209,70 @@ class ConfigController extends Controller
     }
 
     /**
+     * Generate a self-signed certificate
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function generateSelfSigned(Request $request, $id)
+    {
+
+        // Prepare variables
+        $validatorInput = [
+            'id' => $id,
+        ];
+        $validatorRules = [
+            'id' => [
+                'integer',
+                'exists:csr,id'
+            ],
+        ];
+        $validatorMessages = [];
+        Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
+
+        // Get CSR
+        $CSR = CSRModel::where('id', $id)->first();
+        $CSRStr = $CSR['csr'];
+
+        // Get Key
+        $keyID = $CSR->key_id;
+        $key = KeyModel::where('id', $keyID)->first();
+        $keyFilename = $key->filename;
+        $keyStr = Storage::disk('shared')->get('keys/'.$keyFilename);
+
+        // Generate Certificate
+        $selfSignedCert = openssl_csr_sign($CSRStr, NULL, $keyStr, 365);
+
+        // Store certificate
+        $certFilename = Str::random(9).'.txt';
+        openssl_x509_export($selfSignedCert, $certStr);
+        Storage::disk('shared')->put('certs/'.$certFilename, $certStr);
+
+        // Get certificate details
+        $certDetails = openssl_x509_parse($certStr);
+
+        // Create certificate record
+        $cert = new CertModel;
+        $cert->filename = $certFilename;
+        $cert->valid_from = date('Y-m-d H:i:s', $certDetails['validFrom_time_t']);
+        $cert->valid_to = date('Y-m-d H:i:s', $certDetails['validTo_time_t']);
+        $cert->key_id = $keyID;
+        $cert->country = $certDetails['subject']['C'];
+        $cert->state = $certDetails['subject']['ST'];
+        $cert->city = $certDetails['subject']['L'];
+        $cert->organization = $certDetails['subject']['O'];
+        $cert->cn = $certDetails['subject']['CN'];
+        $cert->issuer = substr($certDetails['issuer']['CN'], 0, 254);
+        $cert->save();
+
+        // Update CSR record with cert ID
+        $CSR->cert_id = $cert->id;
+
+        return $cert;
+    }
+
+    /**
      * Display the specified resource.
      *
      * @param  int  $id

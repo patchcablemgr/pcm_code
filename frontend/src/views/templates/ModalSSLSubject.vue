@@ -163,6 +163,7 @@ export default {
 
       const vm = this
       const data = vm.SubjectData
+
       const URL = '/api/config/csr'
 
       vm.$http.post(URL, data).then(response => {

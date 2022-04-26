@@ -49,6 +49,7 @@ Route::group(['middleware' => 'auth:sanctum'], function(){
   Route::post('config/network', [ConfigController::class, 'networkConfig']);
   Route::post('config/csr', [ConfigController::class, 'generateCSR']);
   Route::post('config/csr/{id}/cert', [ConfigController::class, 'storeCert']);
+  Route::post('config/csr/{id}/self-signed', [ConfigController::class, 'generateSelfSigned']);
 
   // Only GET
   Route::get('medium', [AttributesMedia::class, 'index']);

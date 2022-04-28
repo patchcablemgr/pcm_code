@@ -7,6 +7,7 @@
 @story('deploy')
     update-code
     install-dependencies
+    run-migrations
 @endstory
  
 @task('update-code')
@@ -17,4 +18,9 @@
 @task('install-dependencies')
     cd /home/garrett/pcm_infra/laravel
     composer install
+@endtask
+
+@task('run-migrations')
+    cd /home/garrett/pcm_infra/laravel/vendor/bin
+    sail artisan migrate
 @endtask

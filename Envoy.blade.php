@@ -18,6 +18,9 @@
 @task('install-dependencies')
     cd /home/garrett/pcm_infra/laravel
     composer install
+    npm install
+    cd /home/garrett/pcm_infra/laravel/frontend
+    npm install
 @endtask
 
 @task('run-migrations')

@@ -7,6 +7,7 @@
 @story('deploy')
     update-code
     install-dependencies
+    compile
     run-migrations
 @endstory
  
@@ -21,6 +22,11 @@
     npm install
     cd /home/garrett/pcm_infra/laravel/frontend
     npm install
+@endtask
+
+@task('compile')
+    cd /home/garrett/pcm_infra/laravel
+    npm run prod
 @endtask
 
 @task('run-migrations')

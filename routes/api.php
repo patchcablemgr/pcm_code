@@ -51,6 +51,7 @@ Route::group(['middleware' => 'auth:sanctum'], function(){
   Route::post('config/csr/{id}/cert', [ConfigController::class, 'storeCert']);
   Route::post('config/csr/{id}/self-signed', [ConfigController::class, 'generateSelfSigned']);
   Route::post('config/app/update', [ConfigController::class, 'updateApp']);
+  Route::post('config/infra/update', [ConfigController::class, 'updateInfra']);
 
   // Only GET
   Route::get('medium', [AttributesMedia::class, 'index']);

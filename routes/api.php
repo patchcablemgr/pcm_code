@@ -31,6 +31,7 @@ use App\Http\Controllers\ProfileController;
 
 Route::group(['prefix' => 'auth'], function () {
     Route::post('login', [AuthController::class, 'login']);
+    Route::post('mfa', [AuthController::class, 'mfa']);
     Route::post('register', [AuthController::class, 'register']);
 
     Route::group(['middleware' => 'auth:sanctum'], function() {

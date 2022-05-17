@@ -47,8 +47,11 @@
             Please sign-in
           </b-card-text>
 
-          <!-- form -->
-          <validation-observer ref="loginValidation">
+          <!-- login form -->
+          <validation-observer
+            v-if="!displayOTP"
+            ref="loginValidation"
+          >
             <b-form
               class="auth-login-form mt-2"
               @submit.prevent
@@ -74,14 +77,12 @@
                 </validation-provider>
               </b-form-group>
 
-              <!-- forgot password -->
+              <!-- password -->
               <b-form-group>
                 <div class="d-flex justify-content-between">
                   <label for="login-password">Password</label>
-                  <b-link :to="{name:'auth-forgot-password-v2'}">
-                    <small>Forgot Password?</small>
-                  </b-link>
                 </div>
+
                 <validation-provider
                   #default="{ errors }"
                   name="Password"
@@ -112,15 +113,56 @@
                 </validation-provider>
               </b-form-group>
 
-              <!-- checkbox -->
-              <b-form-group>
-                <b-form-checkbox
-                  id="remember-me"
-                  v-model="status"
-                  name="checkbox-1"
+              <!-- submit buttons -->
+              <b-button
+                type="submit"
+                variant="primary"
+                block
+                @click="SubmitLogin"
+              >
+                Sign in
+              </b-button>
+              <validation-provider
+                #default="{ errors }"
+                name="Submit"
+              >
+                <small class="text-danger">{{ errors[0] }}</small>
+              </validation-provider>
+
+              <b-link :to="{name:'auth-forgot-password-v2'}">
+                <small>Forgot Password?</small>
+              </b-link>
+            </b-form>
+          </validation-observer>
+
+          <!-- OTP form -->
+          <validation-observer
+            v-if="displayOTP"
+            ref="otpValidation"
+          >
+            <b-form
+              class="auth-login-form mt-2"
+              @submit.prevent
+            >
+              <!-- email -->
+              <b-form-group
+                label="OTP"
+                label-for="login-otp"
+              >
+                <validation-provider
+                  #default="{ errors }"
+                  name="OTP"
+                  rules="required"
                 >
-                  Remember Me
-                </b-form-checkbox>
+                  <b-form-input
+                    id="login-otp"
+                    v-model="userOTP"
+                    :state="errors.length > 0 ? false:null"
+                    name="login-otp"
+                    placeholder="######"
+                  />
+                  <small class="text-danger">{{ errors[0] }}</small>
+                </validation-provider>
               </b-form-group>
 
               <!-- submit buttons -->
@@ -128,7 +170,7 @@
                 type="submit"
                 variant="primary"
                 block
-                @click="validationForm"
+                @click="SubmitOTP"
               >
                 Sign in
               </b-button>
@@ -141,7 +183,10 @@
             </b-form>
           </validation-observer>
 
-          <b-card-text class="text-center mt-2">
+          <b-card-text
+            v-if="!displayOTP"
+            class="text-center mt-2"
+          >
             <span>New on our platform? </span>
             <b-link :to="{name:'register'}">
               <span>&nbsp;Create an account</span>
@@ -193,6 +238,9 @@ export default {
       status: '',
       password: '',
       userEmail: '',
+      userOTP: null,
+      displayOTP: false,
+      MFASessionHash: null,
       sideImg: require('@/assets/images/pages/login-v2.svg'),
       // validation rulesimport store from '@/store/index'
       required,
@@ -213,13 +261,54 @@ export default {
     },
   },
   methods: {
-    validationForm() {
+    SubmitLogin() {
       this.$refs.loginValidation.validate().then(success => {
         if (success) {
-          console.log('login')
           this.$http.post('/api/auth/login', {
             email: this.userEmail,
             password: this.password
+          }).then(response => {
+
+            if("mfa_session_hash" in response.data) {
+
+              this.displayOTP = true
+              this.MFASessionHash = response.data.mfa_session_hash
+
+            } else {
+			
+              // `response.data` is response from API which is above mentioned
+              const { userData } = response.data
+
+              // Setting access token in localStorage
+              // NOTE: Please check the source code to better understand JWT service
+              useJwt.setToken(response.data.accessToken)
+
+              // Setting refresh token in localStorage
+              //useJwt.setRefreshToken(response.data.refreshToken)
+
+              // Setting user data in localStorage
+              localStorage.setItem('userData', JSON.stringify(response.data))
+
+              // Updating user ability in CASL plugin instance
+              this.$ability.update(response.data.ability)
+
+              // Redirection after login
+              this.$router.replace({name: 'dashboard'})
+            }
+          })
+          .catch(error => {
+            console.log(error.response.data.message)
+            this.$refs.loginValidation.setErrors({'Submit':[error.response.data.message]})
+          })
+        }
+      })
+    },
+    SubmitOTP() {
+      this.$refs.otpValidation.validate().then(success => {
+        if (success) {
+          this.$http.post('/api/auth/mfa', {
+            otp: this.userOTP,
+            mfa_session_hash: this.MFASessionHash,
           }).then(response => {
 			
             // `response.data` is response from API which is above mentioned
@@ -237,19 +326,13 @@ export default {
 
             // Updating user ability in CASL plugin instance
             this.$ability.update(response.data.ability)
-
-            // ? This is just for demo purpose as well.
-            // ? Because we are showing eCommerce app's cart items count in navbar
-            //this.$store.commit('app-ecommerce/UPDATE_CART_ITEMS_COUNT', userData.extras.eCommerceCartItemsCount)
-
+            
             // Redirection after login
-            // ? This is just for demo purpose. Don't think CASL is role based in this case, we used role in if condition just for ease
-            //this.$router.replace(getHomeRouteForLoggedInUser(userData.role))
             this.$router.replace({name: 'dashboard'})
           })
           .catch(error => {
             console.log(error.response.data.message)
-            this.$refs.loginValidation.setErrors({'Submit':[error.response.data.message]})
+            this.$refs.otpValidation.setErrors({'Submit':[error.response.data.message]})
           })
         }
       })

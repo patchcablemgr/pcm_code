@@ -24,11 +24,12 @@ class ProfileController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function generateMFAQRCode()
+    public function generateMFAQRCode(Request $request)
     {
 
         // Get user ID
-        $userID = Auth::id();
+        $user = $request->user();
+        $userID = $user['id'];
         
         // Initialize google MFA
         $google2fa = new Google2FA();
@@ -69,7 +70,8 @@ class ProfileController extends Controller
         $otp = $request->input('otp');
         
         // Get user ID
-        $userID = Auth::id();
+        $user = $request->user();
+        $userID = $user['id'];
 
         // Initialize google MFA
         $google2fa = new Google2FA();
@@ -94,13 +96,15 @@ class ProfileController extends Controller
     /**
      * Update the specified resource in storage.
      *
+     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function disableMFA()
+    public function disableMFA(Request $request)
     {
         
         // Get user ID
-        $userID = Auth::id();
+        $user = $request->user();
+        $userID = $user['id'];
 
         // Retrieve user
         $user = User::where('id', $userID)->first();

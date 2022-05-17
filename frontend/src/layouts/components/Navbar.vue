@@ -122,9 +122,12 @@ export default {
   },
   methods: {
     logout() {
-	    this.$http.get('/api/auth/logout').then(
+
+      const vm = this
+
+	    vm.$http.get('/api/auth/logout').then(
         localStorage.clear(),
-        this.$router.push({name: 'login'})
+        vm.$router.push({name: 'login'})
       ).catch(error => {
         vm.DisplayError(error)
       })

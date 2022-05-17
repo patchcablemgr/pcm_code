@@ -16,6 +16,7 @@ use App\Http\Controllers\TrunkController;
 use App\Http\Controllers\ConnectionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ConfigController;
+use App\Http\Controllers\ProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -51,7 +52,7 @@ Route::group(['middleware' => 'auth:sanctum'], function(){
   Route::post('config/csr/{id}/cert', [ConfigController::class, 'storeCert']);
   Route::post('config/csr/{id}/self-signed', [ConfigController::class, 'generateSelfSigned']);
   Route::post('config/app/update', [ConfigController::class, 'updateApp']);
-  Route::post('config/infra/update', [ConfigController::class, 'updateInfra']);
+  Route::post('profile/mfa', [ProfileController::class, 'confirmMFA']);
 
   // Only GET
   Route::get('medium', [AttributesMedia::class, 'index']);
@@ -61,6 +62,7 @@ Route::group(['middleware' => 'auth:sanctum'], function(){
   Route::get('config/network', [ConfigController::class, 'indexNetwork']);
   Route::get('config/csr', [ConfigController::class, 'indexCSR']);
   Route::get('config/cert', [ConfigController::class, 'indexCert']);
+  Route::get('profile/mfa', [ProfileController::class, 'generateMFAQRCode']);
 
   // Only DELETE
   Route::delete('config/csr/{id}', [ConfigController::class, 'destroyCSR']);
@@ -68,6 +70,7 @@ Route::group(['middleware' => 'auth:sanctum'], function(){
 
   // Only PATCH
   Route::patch('config/cert/{id}/activate', [ConfigController::class, 'activateCert']);
+  Route::patch('profile/mfa', [ProfileController::class, 'disableMFA']);
 
   // No POST
   Route::apiResources([

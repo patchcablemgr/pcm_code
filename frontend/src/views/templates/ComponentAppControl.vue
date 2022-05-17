@@ -23,12 +23,6 @@
               Update App
             </b-dropdown-item>
 
-            <b-dropdown-item
-              @click="UpdateInfra"
-            >
-              Update Infra
-            </b-dropdown-item>
-
           </b-dropdown>
         </div>
       </div>
@@ -74,19 +68,6 @@ export default {
       const vm = this
       
       const URL = '/api/config/app/update'
-
-      vm.$http.post(URL).then(response => {
-        console.log(response)
-      }).catch(error => {
-        vm.DisplayError(error)
-      })
-      
-    },
-    UpdateInfra(){
-
-      const vm = this
-      
-      const URL = '/api/config/infra/update'
 
       vm.$http.post(URL).then(response => {
         console.log(response)

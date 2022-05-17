@@ -1711,5 +1711,13 @@ export const PCM = {
                 })
             }
         },
+        DisplaySuccess: function(Msg) {
+
+            // Display error to user via toast
+            this.$bvToast.toast(Msg, {
+                title: 'Success',
+                variant: 'success',
+            })
+        },
     }
 }

@@ -1,37 +1,298 @@
 <template>
   <div>
-    <b-card title="Kick start your project 🚀">
-	  <b-card-text>test</b-card-text>
-	  <b-card-text><span @click="getUser">Logout</span></b-card-text>
-      <b-card-text>All the best for your new project.</b-card-text>
-      <b-card-text>Please make sure to read our <b-link
-        href="https://pixinvent.com/demo/vuexy-vuejs-admin-dashboard-template/documentation/"
-        target="_blank"
-      >
-        Template Documentation
-      </b-link> to understand where to go from here and how to use our template.</b-card-text>
-    </b-card>
+    <b-container class="bv-example-row" fluid="xs">
+      <b-row>
+        <b-col
+          lg="4"
+        >
 
-    <b-card title="Want to integrate JWT? 🔒">
-      <b-card-text>We carefully crafted JWT flow so you can implement JWT with ease and with minimum efforts.</b-card-text>
-      <b-card-text>Please read our  JWT Documentation to get more out of JWT authentication.</b-card-text>
-    </b-card>
-  </div>
+          <b-card
+            v-if="DependenciesReady"
+          >
+            <b-card-title>
+              <div class="d-flex flex-wrap justify-content-between">
+                <div class="demo-inline-spacing">
+                  Multi-Factor Authentication
+                </div>
+                <div class="demo-inline-spacing">
+                  <b-dropdown
+                    v-ripple.400="'rgba(255, 255, 255, 0.15)'"
+                    right
+                    size="sm"
+                    text="Actions"
+                    variant="primary"
+                  >
+
+                    <b-dropdown-item
+                      @click="EnableMFA"
+                      :disabled="UserData.mfa_enabled"
+                    >
+                      Enable
+                    </b-dropdown-item>
+
+                    <b-dropdown-item
+                      variant="danger"
+                      @click="DisableMFA"
+                      :disabled="!UserData.mfa_enabled"
+                    >
+                      Disable
+                    </b-dropdown-item>
+
+                  </b-dropdown>
+                </div>
+              </div>
+            </b-card-title>
+            <b-card-body>
+
+              <!-- Current State -->
+              <dl class="row">
+                <dt class="col-sm-3">
+                  Current State
+                </dt>
+                <dd class="col-sm-9">
+
+                  <b-badge
+                    v-if="UserData.mfa_enabled"
+                    pill
+                    variant="success"
+                  >
+                    Enabled
+                  </b-badge>
+
+                  <b-badge
+                    v-if="!UserData.mfa_enabled"
+                    pill
+                    variant="danger"
+                  >
+                    Disabled
+                  </b-badge>
+                </dd>
+              </dl>
+              
+              <div
+                v-if="MFAPending"
+              >
+                
+                <b-form
+                  @submit.prevent="ConfirmMFA"
+                  @reset="ResetMFA"
+                  style="width:100%"
+                >
+
+                  <!-- Instructions -->
+                  <dl class="row">
+                    <dt class="col-sm-3">
+                      Instructions
+                    </dt>
+                    <dd class="col-sm-9">
+                      <ol
+                        type="1"
+                      >
+                        <li>
+                          Download and install the Google Authenticator app from your mobile device's app store.
+                        </li>
+                        <li>
+                          Scan the QR code below with the Google Authenticator app to configure your device.
+                        </li>
+                        <li>
+                          Confirm by entering the One Time Password from the PatchCableMgr entry in your Google Authenticator app.
+                        </li>
+                      </ol>
+                    </dd>
+                  </dl>
+
+                  <!-- QR Code -->
+                  <dl class="row">
+                    <dt class="col-sm-3">
+                      QR Code
+                    </dt>
+                    <dd class="col-sm-9">
+                      <img
+                        style="overflow:visible;"
+                        :src="QRCode"
+                      />
+                    </dd>
+                  </dl>
+
+                  <!-- OTP -->
+                  <dl class="row">
+                    <dt class="col-sm-3">
+                      Confirm OTP
+                    </dt>
+                    <dd class="col-sm-9">
+                      <b-form-input
+                        name="otp"
+                        v-model="ConfirmOTP"
+                        placeholder="OTP"
+                      />
+                    </dd>
+                  </dl>
+
+                  <!-- Submit/Cancel -->
+                  <div offset-md="4">
+
+                    <b-button
+                      v-ripple.400="'rgba(255, 255, 255, 0.15)'"
+                      type="submit"
+                      variant="primary"
+                      class="mr-1"
+                    >
+                      Submit
+                    </b-button>
+
+                    <b-button
+                      v-ripple.400="'rgba(186, 191, 199, 0.15)'"
+                      type="reset"
+                      variant="outline-secondary"
+                    >
+                      Cancel
+                    </b-button>
+                  </div>
+                </b-form>
+              </div>
+            </b-card-body>
+          </b-card>
+
+        </b-col>
+      </b-row>
+    </b-container>
+
+</div>
 </template>
 
 <script>
-import { BCard, BCardText, BLink } from 'bootstrap-vue'
+import {
+  BContainer,
+  BRow,
+  BCol,
+  BCard,
+  BCardTitle,
+  BCardBody,
+  BCardText,
+  BFormRadio,
+  BDropdown,
+  BDropdownItem,
+  BDropdownDivider,
+  BButton,
+  VBTooltip,
+  BForm,
+  BFormInput,
+  BBadge,
+} from 'bootstrap-vue'
+import Ripple from 'vue-ripple-directive'
+import ToastGeneral from './templates/ToastGeneral.vue'
+import { PCM } from '@/mixins/PCM.js'
+
+const QRCode = ''
+const MFAPending = false
+const ConfirmOTP = ''
+const UserDataReady = false
+const UserData = null
 
 export default {
+  mixins: [PCM],
   components: {
+    BContainer,
+    BRow,
+    BCol,
     BCard,
+    BCardTitle,
+    BCardBody,
+    BDropdown,
+		BDropdownItem,
+		BDropdownDivider,
     BCardText,
-    BLink,
+    BFormRadio,
+    BButton,
+    BForm,
+    BFormInput,
+    BBadge,
+
+    ToastGeneral,
+  },
+  directives: {
+    Ripple,
+    'b-tooltip': VBTooltip,
+	},
+  data() {
+    return {
+      QRCode,
+      MFAPending,
+      ConfirmOTP,
+      UserDataReady,
+      UserData,
+    }
+  },
+  computed: {
+    DependenciesReady: function() {
+
+      const vm = this
+      const Dependencies = [
+        vm.UserDataReady,
+      ]
+      
+      const DependenciesReady = Dependencies.every(function(element){ return element == true })
+      return DependenciesReady
+    },
   },
   methods: {
-    getUser() {
-	    this.$http.get('/api/auth/user').then(res => console.log(res))
+    EnableMFA() {
+
+      const vm = this
+      vm.$http.get('/api/profile/mfa').then(response => {
+        vm.QRCode = response.data
+        vm.MFAPending = true
+      }).catch(error => {vm.DisplayError(error)})
     },
+    DisableMFA() {
+
+      const vm = this
+
+      const ConfirmMsg = "Disabling multi-factor authentication will ease the security of your account and invalidate the Google Authenticator entry.  Are you sure you want to disable multi-factor authentication?"
+      const ConfirmOpts = {
+        title: "Disable?"
+      }
+      vm.$bvModal.msgBoxConfirm(ConfirmMsg, ConfirmOpts).then(result => {
+
+        if (result === true) {
+          vm.$http.patch('/api/profile/mfa').then(response => {
+            vm.UserData = response.data
+            vm.DisplaySuccess('MFA successfully disabled.')
+          }).catch(error => {vm.DisplayError(error)})
+        }
+      })
+    },
+    ConfirmMFA() {
+
+      const vm = this
+      const data = {'otp': vm.ConfirmOTP}
+      vm.$http.post('/api/profile/mfa', data).then(response => {
+        
+        vm.UserData = response.data
+        vm.MFAPending = false
+        vm.DisplaySuccess('MFA successfully enabled.')
+      }).catch(error => {vm.DisplayError(error)})
+    },
+    ResetMFA() {
+
+      const vm = this
+      vm.MFAPending = false
+      vm.QRCode = ''
+    },
+    GETUser() {
+	    this.$http.get('/api/auth/user').then(response => {
+        
+        const vm = this
+        vm.UserData = response.data
+        vm.UserDataReady = true
+      }).catch(error => {vm.DisplayError(error)})
+    },
+  },
+  mounted() {
+
+    const vm = this
+
+    vm.GETUser()
   },
 }
 </script>

@@ -31,5 +31,5 @@
 
 @task('run-migrations')
     cd /home/garrett/pcm_infra/laravel/vendor/bin
-    php sail artisan migrate
+    sail artisan migrate
 @endtask

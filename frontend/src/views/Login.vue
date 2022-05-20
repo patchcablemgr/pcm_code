@@ -49,7 +49,7 @@
 
           <!-- login form -->
           <validation-observer
-            v-if="!displayOTP"
+            v-if="visibleForm == 'login'"
             ref="loginValidation"
           >
             <b-form
@@ -109,9 +109,17 @@
                       />
                     </b-input-group-append>
                   </b-input-group>
+
+                  <b-link
+                    @click="displayForgotPW">
+                    <small>Forgot Password?</small>
+                  </b-link>
+
                   <small class="text-danger">{{ errors[0] }}</small>
                 </validation-provider>
               </b-form-group>
+
+              
 
               <!-- submit buttons -->
               <b-button
@@ -129,22 +137,19 @@
                 <small class="text-danger">{{ errors[0] }}</small>
               </validation-provider>
 
-              <b-link :to="{name:'auth-forgot-password-v2'}">
-                <small>Forgot Password?</small>
-              </b-link>
             </b-form>
           </validation-observer>
 
           <!-- OTP form -->
           <validation-observer
-            v-if="displayOTP"
+            v-if="visibleForm == 'otp'"
             ref="otpValidation"
           >
             <b-form
               class="auth-login-form mt-2"
               @submit.prevent
             >
-              <!-- email -->
+              <!-- OTP -->
               <b-form-group
                 label="OTP"
                 label-for="login-otp"
@@ -162,7 +167,9 @@
                     placeholder="######"
                   />
                   <small class="text-danger">{{ errors[0] }}</small>
+                  
                 </validation-provider>
+
               </b-form-group>
 
               <!-- submit buttons -->
@@ -180,11 +187,72 @@
               >
                 <small class="text-danger">{{ errors[0] }}</small>
               </validation-provider>
+              
             </b-form>
+
+            <b-link
+              @click="displayLogin">
+              <small>Go Back</small>
+            </b-link>
+
+          </validation-observer>
+
+          <!-- Forgot PW form -->
+          <validation-observer
+            v-if="visibleForm == 'forgotPW'"
+            ref="forgotPWValidation"
+          >
+            <b-form
+              class="auth-login-form mt-2"
+              @submit.prevent
+            >
+              <!-- email -->
+              <b-form-group
+                label="Email"
+                label-for="login-forgot-pw"
+              >
+                <validation-provider
+                  #default="{ errors }"
+                  name="Email"
+                  rules="required|email"
+                >
+                  <b-form-input
+                    id="login-forgot-pw"
+                    v-model="userForgotPWEmail"
+                    :state="errors.length > 0 ? false:null"
+                    name="login-forgot-pw"
+                    placeholder="john@example.com"
+                  />
+                  <small class="text-danger">{{ errors[0] }}</small>
+                </validation-provider>
+              </b-form-group>
+
+              <!-- submit buttons -->
+              <b-button
+                type="submit"
+                variant="primary"
+                block
+                @click="SubmitForgotPW"
+              >
+                Submit
+              </b-button>
+              <validation-provider
+                #default="{ errors }"
+                name="Submit"
+              >
+                <small class="text-danger">{{ errors[0] }}</small>
+              </validation-provider>
+            </b-form>
+
+            <b-link
+              @click="displayLogin">
+              <small>Go Back</small>
+            </b-link>
+
           </validation-observer>
 
           <b-card-text
-            v-if="!displayOTP"
+            v-if="visibleForm == 'login'"
             class="text-center mt-2"
           >
             <span>New on our platform? </span>
@@ -241,6 +309,8 @@ export default {
       userOTP: null,
       displayOTP: false,
       MFASessionHash: null,
+      userForgotPWEmail: '',
+      visibleForm: 'login',
       sideImg: require('@/assets/images/pages/login-v2.svg'),
       // validation rulesimport store from '@/store/index'
       required,
@@ -271,7 +341,7 @@ export default {
 
             if("mfa_session_hash" in response.data) {
 
-              this.displayOTP = true
+              this.visibleForm = 'otp'
               this.MFASessionHash = response.data.mfa_session_hash
 
             } else {
@@ -331,11 +401,35 @@ export default {
             this.$router.replace({name: 'dashboard'})
           })
           .catch(error => {
-            console.log(error.response.data.message)
             this.$refs.otpValidation.setErrors({'Submit':[error.response.data.message]})
           })
         }
       })
+    },
+    SubmitForgotPW() {
+      this.$refs.forgotPWValidation.validate().then(success => {
+        if (success) {
+
+          const url = '/api/auth/forgot-password'
+          const data = {}
+          this.$http.post(url, data).then(response => {
+            console.log(response)
+          })
+          .catch(error => {
+            this.$refs.forgotPWValidation.setErrors({'Submit':[error.response.data.message]})
+          })
+        }
+      })
+    },
+    displayForgotPW() {
+
+      const vm = this
+      this.visibleForm = "forgotPW"
+    },
+    displayLogin() {
+
+      const vm = this
+      this.visibleForm = "login"
     },
   },
 }

@@ -145,6 +145,21 @@ class AuthController extends Controller
 	}
 
 	/**
+	* Send forgot password link to user
+	*
+	* @param  [string] email
+	*/
+
+	public function forgotPassword(Request $request)
+	{
+		$request->validate([
+		'email' => 'required|string|email',
+		]);
+
+		return true;
+	}
+
+	/**
 	* Login user and create token
 	*
 	* @param  [string] mfa_session_hash

@@ -18,15 +18,22 @@ class TenancyWrapper
      */
     public function handle(Request $request, Closure $next)
     {
+        $appDeployment = env('APP_DEPLOYMENT');
 
-        //First you need to instantiate the middleware you want to use and call the handle method on it.
-        //Then you have to create a closure where you'll do all your logic.
-        return app(InitializeTenancyByDomain::class)->handle($request, function ($request) use ($next) {
-            return app(PreventAccessFromCentralDomains::class)->handle($request, function ($request) use ($next) {
-                //Put your awesome stuff there. Like:
-    
-                return $next($request);
+        if($appDeployment === 'hosted') {
+
+            //First you need to instantiate the middleware you want to use and call the handle method on it.
+            //Then you have to create a closure where you'll do all your logic.
+            return app(InitializeTenancyByDomain::class)->handle($request, function ($request) use ($next) {
+                return app(PreventAccessFromCentralDomains::class)->handle($request, function ($request) use ($next) {
+                    //Put your awesome stuff there. Like:
+        
+                    return $next($request);
+                });
             });
-        });
+
+        } else {
+            return $next($request);
+        }
     }
 }

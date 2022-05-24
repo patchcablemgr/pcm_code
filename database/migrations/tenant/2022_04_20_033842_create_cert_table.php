@@ -19,11 +19,13 @@ class CreateCertTable extends Migration
             $table->text('filename');
             $table->timestamp('valid_from');
             $table->timestamp('valid_to');
+            $table->integer('key_id');
             $table->string('country');
             $table->string('state');
             $table->string('city');
             $table->string('organization');
             $table->string('cn');
+            $table->string('issuer');
         });
     }
 

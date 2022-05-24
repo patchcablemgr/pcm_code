@@ -13,7 +13,7 @@ class CreateCablePathTable extends Migration
      */
     public function up()
     {
-        Schema::connection('mysql')->create('cable_path', function (Blueprint $table) {
+        Schema::create('cable_path', function (Blueprint $table) {
             $table->integer('id', true);
             $table->integer('cabinet_a_id');
             $table->integer('cabinet_b_id')->default(0);
@@ -30,13 +30,6 @@ class CreateCablePathTable extends Migration
      */
     public function down()
     {
-        Schema::connection('mysql')->drop('cable_path', function (Blueprint $table) {
-            
-            
-            
-            
-            
-            
-        });
+        Schema::dropIfExists('cable_path');
     }
 }

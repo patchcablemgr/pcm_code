@@ -13,7 +13,7 @@ class CreateCategoryTable extends Migration
      */
     public function up()
     {
-        Schema::connection('mysql')->create('category', function (Blueprint $table) {
+        Schema::create('category', function (Blueprint $table) {
             $table->integer('id', true);
 			$table->dateTime('created_at');
 			$table->dateTime('updated_at');
@@ -31,11 +31,6 @@ class CreateCategoryTable extends Migration
      */
     public function down()
     {
-        Schema::connection('mysql')->drop('category', function (Blueprint $table) {
-            
-            
-            
-            
-        });
+        Schema::dropIfExists('category');
     }
 }

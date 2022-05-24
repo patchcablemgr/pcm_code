@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class AddMfaToUsersTable extends Migration
+class CreateAttributesPortOrientationTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,10 +13,11 @@ class AddMfaToUsersTable extends Migration
      */
     public function up()
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->boolean('mfa_enabled')->default(false);
-            $table->char('mfa_secret', 100)->nullable();
-            $table->char('mfa_secret_temp', 100)->nullable();
+        Schema::create('attributes_port_orientation', function (Blueprint $table) {
+            $table->integer('id', true);
+            $table->integer('value');
+            $table->string('name');
+            $table->boolean('default');
         });
     }
 
@@ -27,8 +28,6 @@ class AddMfaToUsersTable extends Migration
      */
     public function down()
     {
-        Schema::table('users', function (Blueprint $table) {
-            //
-        });
+        Schema::dropIfExists('attributes_port_orientation');
     }
 }

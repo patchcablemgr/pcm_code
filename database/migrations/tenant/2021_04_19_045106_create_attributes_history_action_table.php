@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateAttributesMediaCategoryTable extends Migration
+class CreateAttributesHistoryActionTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,11 +13,10 @@ class CreateAttributesMediaCategoryTable extends Migration
      */
     public function up()
     {
-        Schema::connection('mysql')->create('attributes_media_category', function (Blueprint $table) {
+        Schema::create('attributes_history_action', function (Blueprint $table) {
             $table->integer('id', true);
             $table->integer('value');
             $table->string('name');
-            $table->integer('type_id');
         });
     }
 
@@ -28,11 +27,6 @@ class CreateAttributesMediaCategoryTable extends Migration
      */
     public function down()
     {
-        Schema::connection('mysql')->drop('attributes_media_category', function (Blueprint $table) {
-            
-            
-            
-            
-        });
+        Schema::dropIfExists('attributes_history_action');
     }
 }

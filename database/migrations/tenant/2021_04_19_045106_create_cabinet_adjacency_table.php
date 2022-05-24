@@ -13,7 +13,7 @@ class CreateCabinetAdjacencyTable extends Migration
      */
     public function up()
     {
-        Schema::connection('mysql')->create('cabinet_adjacency', function (Blueprint $table) {
+        Schema::create('cabinet_adjacency', function (Blueprint $table) {
             $table->integer('id', true);
             $table->integer('left_cabinet_id')->nullable();
             $table->integer('right_cabinet_id')->nullable();
@@ -28,11 +28,6 @@ class CreateCabinetAdjacencyTable extends Migration
      */
     public function down()
     {
-        Schema::connection('mysql')->drop('cabinet_adjacency', function (Blueprint $table) {
-            
-            
-            
-            
-        });
+        Schema::dropIfExists('cabinet_adjacency');
     }
 }

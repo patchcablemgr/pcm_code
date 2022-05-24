@@ -13,7 +13,7 @@ class CreateTemplateTable extends Migration
      */
     public function up()
     {
-        Schema::connection('mysql')->create('template', function (Blueprint $table) {
+        Schema::create('template', function (Blueprint $table) {
             $table->integer('id', true)->from(10);
             $table->dateTime('created_at');
 			$table->dateTime('updated_at');
@@ -38,25 +38,6 @@ class CreateTemplateTable extends Migration
      */
     public function down()
     {
-        Schema::connection('mysql')->drop('template', function (Blueprint $table) {
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-        });
+        Schema::dropIfExists('template');
     }
 }

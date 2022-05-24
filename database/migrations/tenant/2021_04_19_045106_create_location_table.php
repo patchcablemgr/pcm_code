@@ -13,7 +13,7 @@ class CreateLocationTable extends Migration
      */
     public function up()
     {
-        Schema::connection('mysql')->create('location', function (Blueprint $table) {
+        Schema::create('location', function (Blueprint $table) {
             $table->integer('id', true);
 			$table->dateTime('created_at');
 			$table->dateTime('updated_at');
@@ -34,15 +34,6 @@ class CreateLocationTable extends Migration
      */
     public function down()
     {
-        Schema::connection('mysql')->drop('location', function (Blueprint $table) {
-            
-            
-            
-            
-            
-            
-            
-            
-        });
+        Schema::dropIfExists('location');
     }
 }

@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateAttributesCableConnectorTable extends Migration
+class CreateFloorplanTemplateTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,11 +13,12 @@ class CreateAttributesCableConnectorTable extends Migration
      */
     public function up()
     {
-        Schema::connection('mysql')->create('attributes_cable_connector', function (Blueprint $table) {
+        Schema::create('floorplan_template', function (Blueprint $table) {
             $table->integer('id', true);
-            $table->integer('value');
+            $table->string('type');
             $table->string('name');
-            $table->boolean('default');
+            $table->string('icon');
+            $table->string('function');
         });
     }
 
@@ -28,11 +29,6 @@ class CreateAttributesCableConnectorTable extends Migration
      */
     public function down()
     {
-        Schema::connection('mysql')->drop('attributes_cable_connector', function (Blueprint $table) {
-            
-            
-            
-            
-        });
+        Schema::dropIfExists('floorplan_template');
     }
 }

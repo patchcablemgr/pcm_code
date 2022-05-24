@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateAttributesHistoryActionTable extends Migration
+class CreateAttributesCableConnectorTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,10 +13,11 @@ class CreateAttributesHistoryActionTable extends Migration
      */
     public function up()
     {
-        Schema::connection('mysql')->create('attributes_history_action', function (Blueprint $table) {
+        Schema::create('attributes_cable_connector', function (Blueprint $table) {
             $table->integer('id', true);
             $table->integer('value');
             $table->string('name');
+            $table->boolean('default');
         });
     }
 
@@ -27,10 +28,6 @@ class CreateAttributesHistoryActionTable extends Migration
      */
     public function down()
     {
-        Schema::connection('mysql')->drop('attributes_history_action', function (Blueprint $table) {
-            
-            
-            
-        });
+        Schema::dropIfExists('attributes_cable_connector');
     }
 }

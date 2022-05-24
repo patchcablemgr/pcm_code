@@ -13,7 +13,7 @@ class CreateHistoryTable extends Migration
      */
     public function up()
     {
-        Schema::connection('mysql')->create('history', function (Blueprint $table) {
+        Schema::create('history', function (Blueprint $table) {
             $table->integer('id', true);
             $table->integer('date');
             $table->string('function');
@@ -30,13 +30,6 @@ class CreateHistoryTable extends Migration
      */
     public function down()
     {
-        Schema::connection('mysql')->drop('history', function (Blueprint $table) {
-            
-            
-            
-            
-            
-            
-        });
+        Schema::dropIfExists('history');
     }
 }

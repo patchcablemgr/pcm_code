@@ -13,7 +13,7 @@ class CreateTenantTable extends Migration
      */
     public function up()
     {
-        Schema::connection('mysql')->create('tenant', function (Blueprint $table) {
+        Schema::create('tenant', function (Blueprint $table) {
             $table->integer('id', true);
             $table->string('name');
             $table->string('version', 15);
@@ -34,17 +34,6 @@ class CreateTenantTable extends Migration
      */
     public function down()
     {
-        Schema::connection('mysql')->drop('tenant', function (Blueprint $table) {
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-        });
+        Schema::dropIfExists('tenant');
     }
 }

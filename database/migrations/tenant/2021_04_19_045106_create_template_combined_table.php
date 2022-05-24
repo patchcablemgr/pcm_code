@@ -13,7 +13,7 @@ class CreateTemplateCombinedTable extends Migration
      */
     public function up()
     {
-        Schema::connection('mysql')->create('template_combined', function (Blueprint $table) {
+        Schema::create('template_combined', function (Blueprint $table) {
             $table->integer('id', true);
             $table->string('templateName');
             $table->integer('template_id')->nullable();
@@ -29,12 +29,6 @@ class CreateTemplateCombinedTable extends Migration
      */
     public function down()
     {
-        Schema::connection('mysql')->drop('template_combined', function (Blueprint $table) {
-            
-            
-            
-            
-            
-        });
+        Schema::dropIfExists('template_combined');
     }
 }

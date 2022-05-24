@@ -13,7 +13,7 @@ class CreateCableTable extends Migration
      */
     public function up()
     {
-        Schema::connection('mysql')->create('cable', function (Blueprint $table) {
+        Schema::create('cable', function (Blueprint $table) {
             $table->integer('id', true);
             $table->integer('a_id')->default(0)->index('a_id');
             $table->string('a_identifier')->default('0');
@@ -42,28 +42,6 @@ class CreateCableTable extends Migration
      */
     public function down()
     {
-        Schema::connection('mysql')->drop('cable', function (Blueprint $table) {
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-        });
+        Schema::dropIfExists('cable');
     }
 }

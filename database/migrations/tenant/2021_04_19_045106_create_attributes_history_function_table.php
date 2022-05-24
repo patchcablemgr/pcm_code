@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateAttributesPortOrientationTable extends Migration
+class CreateAttributesHistoryFunctionTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,11 +13,10 @@ class CreateAttributesPortOrientationTable extends Migration
      */
     public function up()
     {
-        Schema::connection('mysql')->create('attributes_port_orientation', function (Blueprint $table) {
+        Schema::create('attributes_history_function', function (Blueprint $table) {
             $table->integer('id', true);
             $table->integer('value');
             $table->string('name');
-            $table->boolean('default');
         });
     }
 
@@ -28,11 +27,6 @@ class CreateAttributesPortOrientationTable extends Migration
      */
     public function down()
     {
-        Schema::connection('mysql')->drop('attributes_port_orientation', function (Blueprint $table) {
-            
-            
-            
-            
-        });
+        Schema::dropIfExists('attributes_history_function');
     }
 }

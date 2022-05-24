@@ -13,7 +13,7 @@ class CreatePortTable extends Migration
      */
     public function up()
     {
-        Schema::connection('mysql')->create('port', function (Blueprint $table) {
+        Schema::create('port', function (Blueprint $table) {
             $table->integer('id', true);
             $table->integer('object_id');
             $table->integer('object_face');
@@ -29,12 +29,6 @@ class CreatePortTable extends Migration
      */
     public function down()
     {
-        Schema::connection('mysql')->drop('port', function (Blueprint $table) {
-            
-            
-            
-            
-            
-        });
+        Schema::dropIfExists('attributes_cabportle_connector');
     }
 }

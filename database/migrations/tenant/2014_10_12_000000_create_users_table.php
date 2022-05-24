@@ -23,11 +23,11 @@ class CreateUsersTable extends Migration
             $table->string('role');
             $table->rememberToken();
             $table->timestamps();
-            $table->boolean('mfa_enabled');
-            $table->string('mfa_secret');
-            $table->string('mfa_secret_temp');
-            $table->string('mfa_session_hash');
-            $table->integer('mfa_session_expiration');
+            $table->boolean('mfa_enabled')->nullable();
+            $table->string('mfa_secret')->nullable();
+            $table->string('mfa_secret_temp')->nullable();
+            $table->string('mfa_session_hash')->nullable();
+            $table->integer('mfa_session_expiration')->nullable();
         });
     }
 

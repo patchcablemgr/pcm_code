@@ -20,7 +20,7 @@ class TenancyWrapper
     {
         $appDeployment = env('APP_DEPLOYMENT');
 
-        if($appDeployment === 'hosted' and !$request->is('api/auth/register-tenant')) {
+        if($appDeployment === 'hosted' and (!$request->is('api/auth/register-tenant') or !$request->is('register-tenant'))) {
 
             //First you need to instantiate the middleware you want to use and call the handle method on it.
             //Then you have to create a closure where you'll do all your logic.

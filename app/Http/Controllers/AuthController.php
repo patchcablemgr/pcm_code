@@ -5,7 +5,9 @@ use Illuminate\Http\Request;
 use PragmaRX\Google2FAQRCode\Google2FA;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use App\Models\TenantModel;
 use Validator;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -55,6 +57,60 @@ class AuthController extends Controller
         else{
             return response()->json(['error'=>'Provide proper details']);
         }
+    }
+
+	/**
+    * Create tenant
+    *
+	* @param  [string] tenant
+    * @param  [string] name
+    * @param  [string] email
+    * @param  [string] password
+    * @param  [string] password_confirmation
+    * @return [string] message
+    */
+    public function registerTenant(Request $request)
+    {
+        $request->validate([
+			'tenant' => 'required|string',
+            'name' => 'required|string',
+            'email'=>'required|string|unique:users',
+            'password'=>'required|string',
+            'c_password' => 'required|same:password'
+        ]);
+		
+		if (!TenantModel::where('id', '=', $request->tenant)->exists()) {
+
+			$userData = array(
+				'name' => $request->name,
+				'email' => $request->email,
+				'password' => bcrypt($request->password),
+				'status' => true,
+				'role' => 'admin'
+			);
+
+			$tenant = TenantModel::create(['tenant' => $request->tenant, 'initial_user_data' => $userData]);
+			$tenant->domains()->create(['domain' => $request->tenant]);
+
+			return $tenant->run(function($tenant) {
+				
+				$user = new User($tenant['initial_user_data']);
+				$tenant->initial_user_data = null;
+				$tenant->save();
+	
+				if($user->save()) {
+	
+					return response()->json([
+					'tenant' => $tenant->tenant
+					],201);
+				} else {
+					$tenant->delete();
+					return response()->json(['error'=>'Provide proper details']);
+				}
+			});
+		} else {
+			return response()->json(['error'=>'Tenant already exists']);
+		}
     }
 	
 	/**

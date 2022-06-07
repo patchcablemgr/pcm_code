@@ -104,6 +104,16 @@ const router = new VueRouter({
       action: 'read',
     },
   },
+  {
+    path: '/register-tenant',
+    name: 'register-tenant',
+    component: () => import('@/views/Register-Tenant.vue'),
+    meta: {
+      layout: 'full',
+      resource: 'Public',
+      action: 'read',
+    },
+  },
 	{
       path: '/not-authorized',
       name: 'not-authorized',

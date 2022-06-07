@@ -34,6 +34,7 @@ Route::group(['prefix' => 'auth'], function () {
     Route::post('mfa', [AuthController::class, 'mfa']);
     Route::post('forgot-password', [AuthController::class, 'forgotPassword']);
     Route::post('register', [AuthController::class, 'register']);
+    Route::post('register-tenant', [AuthController::class, 'registerTenant']);
 
     Route::group(['middleware' => 'auth:sanctum'], function() {
       Route::get('logout', [AuthController::class, 'logout']);

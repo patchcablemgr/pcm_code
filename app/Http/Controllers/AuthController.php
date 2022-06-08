@@ -89,8 +89,12 @@ class AuthController extends Controller
 				'role' => 'admin'
 			);
 
-			$tenant = TenantModel::create(['tenant' => $request->tenant, 'initial_user_data' => $userData]);
-			$tenant->domains()->create(['domain' => $request->tenant]);
+			$tenant = TenantModel::create([
+				'id' => $request->tenant,
+				'initial_user_data' => $userData,
+				'tenancy_db_username' => 'user_'.$request->tenant,
+				'tenancy_db_password' => 'password123',
+			]);
 
 			return $tenant->run(function($tenant) {
 				

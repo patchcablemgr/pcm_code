@@ -22,6 +22,8 @@ class CreateTenantsTable extends Migration
 
             $table->timestamps();
             $table->json('data')->nullable();
+            $table->string('tenancy_db_username', 500)->nullable();
+            $table->string('tenancy_db_password', 500)->nullable();
         });
     }
 

@@ -7,7 +7,7 @@
         <vuexy-logo />
 
         <h2 class="brand-text text-primary ml-1">
-          Vuexy
+          PatchCableMgr
         </h2>
       </b-link>
       <!-- /Brand logo-->
@@ -38,12 +38,6 @@
           lg="12"
           class="px-xl-2 mx-auto"
         >
-          <b-card-title class="mb-1">
-            Adventure starts here 🚀
-          </b-card-title>
-          <b-card-text class="mb-2">
-            Make your app management easy and fun!
-          </b-card-text>
 
           <!-- form -->
           <validation-observer

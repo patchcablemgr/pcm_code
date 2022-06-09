@@ -7,7 +7,7 @@
         <vuexy-logo />
 
         <h2 class="brand-text text-primary ml-1">
-          Vuexy
+          PatchCableMgr
         </h2>
       </b-link>
       <!-- /Brand logo-->
@@ -38,12 +38,6 @@
           lg="12"
           class="px-xl-2 mx-auto"
         >
-          <b-card-title class="mb-1">
-            Adventure starts here 🚀
-          </b-card-title>
-          <b-card-text class="mb-2">
-            Make your app management easy and fun!
-          </b-card-text>
 
           <!-- form -->
           <validation-observer
@@ -66,14 +60,12 @@
                   rules="required"
                 >
                   <b-form-input
-                    :style="{width:'50%', display: 'inline'}"
                     id="register-tenant"
                     v-model="tenant"
                     name="register-tenant"
                     :state="errors.length > 0 ? false:null"
                     placeholder="acme"
                   />
-                  <span>.{{host}}</span>
                   <small class="text-danger">{{ errors[0] }}</small>
                 </validation-provider>
               </b-form-group>
@@ -175,17 +167,10 @@
                 type="submit"
                 :disabled="invalid"
               >
-                Sign up
+                Register
               </b-button>
             </b-form>
           </validation-observer>
-
-          <p class="text-center mt-2">
-            <span>Already have an account?</span>
-            <b-link :to="{name:'login'}">
-              <span>&nbsp;Sign in instead</span>
-            </b-link>
-          </p>
 		  
         </b-col>
       </b-col>
@@ -231,7 +216,6 @@ export default {
   mixins: [togglePasswordVisibility],
   data() {
     return {
-      host: location.host,
       status: '',
       tenant: '',
       username: '',

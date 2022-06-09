@@ -100,8 +100,8 @@ class AuthController extends Controller
 
 			return $tenant->run(function($tenant) {
 				
-				$user = new User($tenant['initial_user_data']);
-				$host = $tenant('id');
+				$user = new User($tenant->initial_user_data);
+				$host = $tenant->initial_host;
 				$tenant->initial_user_data = null;
 				$tenant->initial_host = null;
 				$tenant->save();
@@ -109,7 +109,7 @@ class AuthController extends Controller
 				if($user->save()) {
 	
 					return response()->json([
-						'tenant-url' => $tenant->tenant.'.'.$host
+						'tenant-url' => $tenant->id.'.'.$host
 					],201);
 				} else {
 					$tenant->delete();

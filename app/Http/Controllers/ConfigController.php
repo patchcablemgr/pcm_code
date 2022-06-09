@@ -421,6 +421,7 @@ class ConfigController extends Controller
         $cert->city = $certDetails['subject']['L'];
         $cert->organization = $certDetails['subject']['O'];
         $cert->cn = $certDetails['subject']['CN'];
+        $cert->active = false;
         $cert->save();
 
         // Update CSR record with cert ID

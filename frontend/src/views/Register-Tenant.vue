@@ -256,7 +256,7 @@ export default {
           })
           .then(function(response) {
             console.log(response)
-            window.location.href = 'https://'+response.data.tenant-url
+            window.location.href = 'https://'+response['data']['tenant-url']
           }).catch(error => {
     
             // Display error to user via toast

@@ -256,7 +256,7 @@ export default {
           })
           .then(function(response) {
             console.log(response)
-            window.location.href = 'https://'+response['data']['tenant-url']
+            window.location.href = 'https://test1.pcm-dev-hosted.gkelly.us'
           }).catch(error => {
     
             // Display error to user via toast

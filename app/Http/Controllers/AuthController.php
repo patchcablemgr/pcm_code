@@ -112,11 +112,11 @@ class AuthController extends Controller
 					],201);
 				} else {
 					$tenant->delete();
-					return response()->json(['error'=>'Provide proper details']);
+					return response()->json(['error'=>'Provide proper details'],422);
 				}
 			});
 		} else {
-			return response()->json(['error'=>'Tenant already exists']);
+			return response()->json(['error'=>'Tenant already exists'],422);
 		}
     }
 	

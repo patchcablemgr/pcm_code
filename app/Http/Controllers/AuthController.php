@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\TenantModel;
 use Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -93,7 +94,7 @@ class AuthController extends Controller
 				'id' => $request->tenant,
 				'initial_user_data' => $userData,
 				'tenancy_db_username' => 'user_'.$request->tenant,
-				'tenancy_db_password' => 'password123',
+				'tenancy_db_password' => Str::random(40),
 			]);
 
 			return $tenant->run(function($tenant) {
@@ -103,9 +104,11 @@ class AuthController extends Controller
 				$tenant->save();
 	
 				if($user->save()) {
+
+					$host = $request->header('register-host');
 	
 					return response()->json([
-					'tenant' => $tenant->tenant
+						'tenant-url' => $tenant->tenant.'.'.$host
 					],201);
 				} else {
 					$tenant->delete();

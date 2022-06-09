@@ -26,6 +26,7 @@ class CreateCertTable extends Migration
             $table->string('organization');
             $table->string('cn');
             $table->string('issuer');
+            $table->boolean('active');
         });
     }
 

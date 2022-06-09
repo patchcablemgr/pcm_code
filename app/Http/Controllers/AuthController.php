@@ -93,6 +93,7 @@ class AuthController extends Controller
 			$tenant = TenantModel::create([
 				'id' => $request->tenant,
 				'initial_user_data' => $userData,
+				'initial_host' => $request->header('register-host'),
 				'tenancy_db_username' => 'user_'.$request->tenant,
 				'tenancy_db_password' => Str::random(40),
 			]);
@@ -100,12 +101,12 @@ class AuthController extends Controller
 			return $tenant->run(function($tenant) {
 				
 				$user = new User($tenant['initial_user_data']);
+				$host = $tenant['initial_host'];
 				$tenant->initial_user_data = null;
+				$tenant->initial_host = null;
 				$tenant->save();
 	
 				if($user->save()) {
-
-					$host = $request->header('register-host');
 	
 					return response()->json([
 						'tenant-url' => $tenant->tenant.'.'.$host

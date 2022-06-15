@@ -98,15 +98,6 @@ import {
 import Ripple from 'vue-ripple-directive'
 import { PCM } from '@/mixins/PCM.js'
 
-/*
-const NetworkConfig = {
-  'dhcp': false,
-  'host_address': '',
-  'gateway': '',
-  'dns': '',
-}
-*/
-
 export default {
   mixins: [PCM],
   components: {

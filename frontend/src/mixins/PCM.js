@@ -203,13 +203,13 @@ export const PCM = {
                     ChildrenFiltered = vm.Objects[Context].filter(object => object.location_id == ParentID && object.parent_id == null)
                 }
             } else if(ParentType == 'object') {
-
+                
                 if(Scope == 'partition' || Scope == 'port') {
 
                     // Cannot trunk to self
                     const SelectedObjectID = vm.PartitionAddressSelected[Context].object_id
                     if(ParentID != SelectedObjectID) {
-
+                        
                         // Collect connectable partitions
                         const ParentObjectIndex = vm.GetObjectIndex(ParentID, Context)
                         const ParentObject = vm.Objects[Context][ParentObjectIndex]
@@ -218,9 +218,11 @@ export const PCM = {
                         const ParentTemplate = vm.Templates[Context][ParentTemplateIndex]
                         const FaceArray = ['front','rear']
                         FaceArray.forEach(function(Face){
-                            ChildrenFiltered = ChildrenFiltered.concat(vm.GetConnectablePartitions(ParentID, Face, ParentTemplate.blueprint[Face]))
+                            ChildrenFiltered = ChildrenFiltered.concat(vm.GetConnectablePartitions(ParentID, Face, ParentTemplate.blueprint[Face], Scope))
                         })
+                        
                         ChildrenFiltered = ChildrenFiltered.concat(vm.GetInsertConnectablePartitions(ParentID))
+                        
                     }
                 }
             }
@@ -262,6 +264,7 @@ export const PCM = {
                             order: child.partition_address.length + child.partition_address[child.partition_address.length - 1],
                         })
                     } else {
+                        
                         for (let i = 0; i < PortTotal; i++) {
                             const Port = vm.GeneratePortID(i, PortTotal, child.port_format)
                             ChildData.push({
@@ -647,7 +650,7 @@ export const PCM = {
         
             return AreasString
         },
-        GetConnectablePartitions: function(ObjectID, Face, Blueprint, ConnectablePartitions=[], BasePartAddr=[]) {
+        GetConnectablePartitions: function(ObjectID, Face, Blueprint, Scope, ConnectablePartitions=[], BasePartAddr=[]) {
 
             const vm = this
             const Context = vm.Context
@@ -659,6 +662,7 @@ export const PCM = {
             let SelectedPortTotal
             const SelectedObject = vm.GetObjectSelected(Context)
             const FloorplanType = SelectedObject.floorplan_object_type
+            
             if(FloorplanType === null) {
                 const SelectedTemplate = vm.GetTemplateSelected(Context)
                 const SelectedPartition = vm.GetPartitionSelected(Context)
@@ -695,12 +699,12 @@ export const PCM = {
                     let Compatible = true
 
                     // Cannot trunk endpoint to endpoint
-                    if(SelectedTemplateFunction == 'endpoint' && NodeTemplateFunction == 'endpoint') {
+                    if(Scope == 'partition' && SelectedTemplateFunction == 'endpoint' && NodeTemplateFunction == 'endpoint') {
                         Compatible = false
                     }
 
                     // Must have same number of ports
-                    if((SelectedPortTotal != NodePortTotal) && (SelectedPortTotal != 0)) {
+                    if(Scope == 'partition' && SelectedPortTotal != NodePortTotal && SelectedPortTotal != 0) {
                         Compatible = false
                     }
 
@@ -743,7 +747,7 @@ export const PCM = {
                         ConnectablePartitions.push(ConnectablePartition)
                     }
                 } else if(partition.type == 'generic') {
-                    vm.GetConnectablePartitions(ObjectID, Face, partition.children, ConnectablePartitions, PartAddr)
+                    vm.GetConnectablePartitions(ObjectID, Face, partition.children, Scope, ConnectablePartitions, PartAddr)
                 }
             })
 

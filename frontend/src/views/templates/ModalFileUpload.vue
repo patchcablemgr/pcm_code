@@ -8,12 +8,12 @@
       @ok="FileSubmitted()"
     >
       <b-card
-        title="Port Format"
+        title="Select a File"
         class="position-static"
       >
         <!-- Styled -->
         <b-form-file
-          @change="FileSelected($event)"
+          v-model="File"
           placeholder="Choose a file or drop it here..."
           drop-placeholder="Drop file here..."
         />
@@ -50,7 +50,9 @@ export default {
   },
   props: {
     Title: {type: String},
+    UploadType: {type: String},
     Context: {type: String},
+    NodeIDSelected: {type: Number},
     TemplateFaceSelected: {type: Object},
     PartitionAddressSelected: {type: Object},
   },
@@ -77,25 +79,49 @@ export default {
 
       const vm = this
       const Context = vm.Context
-      const Template = vm.GetTemplateSelected(Context)
-      const Face = vm.TemplateFaceSelected[Context]
-      const TemplateID = Template.id
-      const url = '/api/templates/'+TemplateID+'/image'
-      let data = new FormData()
-      const options = {
-        'headers': {
-          'Content-Type': 'multipart/form-data'
-        }
-      }
-      data.append('file', vm.File)
-      data.append('face', Face)
+      const UploadType = vm.UploadType
 
-      // POST floorplan image
-      vm.$http.post(url, data, options).then(function(response){
-        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:'template', data:response.data})
-      }).catch(error => {
-        vm.DisplayError(error)
-      })
+      if(UploadType == 'floorplanImg') {
+
+        const LocationID = vm.NodeIDSelected
+        const url = '/api/locations/'+LocationID+'/image'
+        let data = new FormData()
+        const options = {
+          'headers': {
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+        data.append('file', vm.File)
+
+        // POST floorplan image
+        vm.$http.post(url, data, options).then(function(response){
+          vm.$store.commit('pcmLocations/UPDATE_Location', {pcmContext:'actual', data:response.data})
+        }).catch(error => {
+          vm.DisplayError(error)
+        })
+
+      } else if(UploadType == 'templateImg') {
+
+        const Template = vm.GetTemplateSelected(Context)
+        const Face = vm.TemplateFaceSelected[Context]
+        const TemplateID = Template.id
+        const url = '/api/templates/'+TemplateID+'/image'
+        let data = new FormData()
+        const options = {
+          'headers': {
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+        data.append('file', vm.File)
+        data.append('face', Face)
+
+        // POST floorplan image
+        vm.$http.post(url, data, options).then(function(response){
+          vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:'template', data:response.data})
+        }).catch(error => {
+          vm.DisplayError(error)
+        })
+      }
     },
   },
   mounted() {

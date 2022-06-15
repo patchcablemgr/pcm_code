@@ -8,6 +8,7 @@ use Illuminate\Validation\Rule;
 use App\Http\Controllers\PCM;
 use Illuminate\Support\Facades\Log;
 use App\Models\ConnectionModel;
+use App\Rules\ConnectionPeerData;
 
 class ConnectionController extends Controller
 {
@@ -31,10 +32,45 @@ class ConnectionController extends Controller
      */
     public function store(Request $request)
     {
-        $returnData = array('add' => array(), 'remove' => array());
 
         // Store request data
         $data = $request->all();
+
+        $validatorInput = [
+            'id' => $data['id'],
+            'face' => $data['face'],
+            'partition' => $data['partition'],
+            'port-id' => $data['port_id'],
+            'peer-data' => $data['PeerData'],
+        ];
+        $validatorRules = [
+            'id' => [
+                'required',
+                'exists:object',
+            ],
+            'face' => [
+                'required',
+                'in:front,rear'
+            ],
+            'partition' => [
+                'array'
+            ],
+            'port-id' => [
+                'required',
+                'numeric'
+            ],
+            'peer-data' => [
+                'required',
+                'array',
+                new ConnectionPeerData,
+            ],
+        ];
+        $validatorMessages = [];
+        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        $customValidator->stopOnFirstFailure();
+        $customValidator->validate();
+
+        $returnData = array('add' => array(), 'remove' => array());
 
         // Find connections associated with selected object to be removed
         $filteredConnections = ConnectionModel::where(
@@ -152,9 +188,10 @@ class ConnectionController extends Controller
                 'exists:connection'
             ]
         ];
-        $validatorMessages = [
-        ];
-        Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
+        $validatorMessages = [];
+        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        $customValidator->stopOnFirstFailure();
+        $customValidator->validate();
 				
 		$object = ConnectionModel::where('id', $id)->first();
 

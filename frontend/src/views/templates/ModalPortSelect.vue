@@ -95,6 +95,9 @@ export default {
     Connectors() {
       return this.$store.state.pcmProps.Connectors
     },
+    Connections() {
+      return this.$store.state.pcmConnections.Connections
+    },
     TemplateType: function() {
 
       const vm = this
@@ -159,7 +162,7 @@ export default {
       if(PortSelectFunction == 'trunk') {
 
         // POST Trunk
-        const URL = '/api/trunks/'
+        const URL = '/api/trunks'
         vm.$http.post(URL, data).then(response => {
 
           // Add trunk to store
@@ -171,7 +174,7 @@ export default {
       } else if(PortSelectFunction == 'port') {
 
         // POST Connection
-        const URL = '/api/connections/'
+        const URL = '/api/connections'
         vm.$http.post(URL, data).then(response => {
 
           // Add connection to store
@@ -209,6 +212,20 @@ export default {
 
           }).catch(error => {vm.DisplayError(error)})
         })
+      } else if(PortSelectFunction == 'port') {
+
+        const SelectedPortID = vm.PartitionAddressSelected[Context].port_id[SelectedObjectFace]
+        const Connection = vm.GetConnection(SelectedObjectID, SelectedObjectFace, SelectedObjectPartition, SelectedPortID)
+        const ConnectionID = Connection.data.id
+        
+        // Delete Connection
+        const URL = '/api/connections/'+ConnectionID
+        vm.$http.delete(URL).then(response => {
+
+          // Remove trunk from store
+          vm.$store.commit('pcmConnections/REMOVE_Connection', {data:response.data})
+
+        }).catch(error => {vm.DisplayError(error)})
       }
     }
   },

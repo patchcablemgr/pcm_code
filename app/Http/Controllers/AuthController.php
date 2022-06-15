@@ -24,8 +24,8 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $request->validate([
-            'name' => 'required|string',
-            'email'=>'required|string|unique:users',
+            'name' => 'required|string|max:255',
+            'email'=>'required|string|email|unique:users|max:255',
             'password'=>'required|string',
             'c_password' => 'required|same:password'
         ]);
@@ -72,10 +72,30 @@ class AuthController extends Controller
     */
     public function registerTenant(Request $request)
     {
+
+		$reservedSubDomains = [
+			'admin',
+			'register',
+			'home',
+			'demo',
+			'api',
+			'backend',
+		];
+
         $request->validate([
-			'tenant' => 'required|string',
-            'name' => 'required|string',
-            'email'=>'required|string|unique:users',
+			'tenant' => [
+				'required',
+				'string',
+				'max:63',
+				'regex:/^[a-z0-9][a-z0-9\-]*$/',
+				Rule::notIn($reservedSubDomains),
+			],
+            'name' => [
+				'required',
+				'string',
+				'max:255',
+			],
+            'email'=>'required|string|email|unique:users',
             'password'=>'required|string',
             'c_password' => 'required|same:password'
         ]);

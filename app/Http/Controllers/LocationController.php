@@ -40,8 +40,13 @@ class LocationController extends Controller
             'floorplan'
         ];
 
-        $request->validate([
-            'parent_id' => [
+        $validatorInput = [
+            'parent-id' => $request->parent_id,
+            'type' => $request->type,
+        ];
+
+        $validatorRules = [
+            'parent-id' => [
                 'required',
                 'integer',
                 'exists:location,id'
@@ -50,19 +55,52 @@ class LocationController extends Controller
                 'required',
                 Rule::in($locationTypeArray)
             ]
-        ]);
+        ];
+
+        $validatorMessages = [];
+        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        $customValidator->stopOnFirstFailure();
+        $customValidator->validate();
+
+        $parentID = $request->parent_id;
+        $locationType = $request->type;
+
+        if($parentID !== 0) {
+
+            $parent = LocationModel::where('id', $parentID)->first();
+            $parentType = $parent['type'];
+
+            $typeCompatibility = array(
+                'location' => array(
+                    'location',
+                    'pod',
+                    'cabinet',
+                    'floorplan'
+                ),
+                'pod' => array(
+                    'cabinet'
+                ),
+                'floorplan' => array(),
+                'cabinet' => array()
+            );
+            if(!in_array($locationType, $typeCompatibility[$parentType])) {
+                throw ValidationException::withMessages(['location-type' => 'Location type is incompatible with parent.']);
+            }
+
+        }
 
         $location = new LocationModel;
 
-        $location->name = "New_".ucfirst($request->type);
-        $location->parent_id = $request->parent_id;
-        $location->type = $request->type;
+        $location->name = "New_".ucfirst($locationType);
+        $location->parent_id = $parentID;
+        $location->type = $locationType;
         $location->img = null;
-        $location->size = ($request->type == 'cabinet') ? 42 : null;
+        $location->size = ($locationType == 'cabinet') ? 42 : null;
 
         $location->save();
 
-        return $location->toArray();
+        $newLocation = LocationModel::where('id', $location->id)->first();
+        return $newLocation->toArray();
     }
 
     /**
@@ -79,11 +117,14 @@ class LocationController extends Controller
         $validatorRules = [
             'id' => [
                 'required',
+                'integer',
                 'exists:location'
             ]
         ];
         $validatorMessages = [];
-        Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
+        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        $customValidator->stopOnFirstFailure();
+        $customValidator->validate();
 
         // Retrieve location record
         $location = LocationModel::where('id', $id)->first();
@@ -105,24 +146,22 @@ class LocationController extends Controller
         ];
         $validatorRules = [
             'id' => [
-                'integer',
                 'required',
+                'integer',
                 'exists:location'
             ]
         ];
         $validatorMessages = [];
-        Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
+        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        $customValidator->stopOnFirstFailure();
+        $customValidator->validate();
 
         // Retrieve location record
         $location = LocationModel::where('id', $id)->first();
         $locationType = $location['type'];
 
-
-
         // Store request data
         $data = $request->all();
-
-        
 
         // Update template record
         foreach($data as $key => $value) {
@@ -185,7 +224,7 @@ class LocationController extends Controller
 
                 }
 
-                // Update location name
+                // Update location parent ID
                 $location->parent_id = $value;
             }
 
@@ -218,6 +257,7 @@ class LocationController extends Controller
         $validatorRules = [
             'id' => [
                 'required',
+                'integer',
                 'exists:location',
                 'unique:object,location_id'
             ]
@@ -225,7 +265,9 @@ class LocationController extends Controller
         $validatorMessages = [
             'id.unique' => 'The location contains objects and cannot be deleted.'
         ];
-        Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
+        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        $customValidator->stopOnFirstFailure();
+        $customValidator->validate();
 
         $location = LocationModel::where('id', $id)->first();
 

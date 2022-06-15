@@ -30,9 +30,21 @@ class CategoryController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => ['required', 'alpha_dash', 'unique:App\Models\CategoryModel,name', 'min:1', 'max:255'],
-            'color' => ['required', 'regex:/^\#[\dA-F]{8}$/'],
-            'default' => ['required', 'boolean'],
+            'name' => [
+                'required',
+                'alpha_dash',
+                'unique:App\Models\CategoryModel,name',
+                'min:1',
+                'max:255'
+            ],
+            'color' => [
+                'required',
+                'regex:/^\#[\dA-F]{8}$/'
+            ],
+            'default' => [
+                'required',
+                'boolean'
+            ],
         ]);
 
         $category = new CategoryModel;
@@ -98,6 +110,7 @@ class CategoryController extends Controller
             ],
             'name' => [
                 'alpha_dash',
+                'unique:App\Models\CategoryModel,name',
                 'min:1',
                 'max:255',
             ],
@@ -164,7 +177,9 @@ class CategoryController extends Controller
         $validatorMessages = [
             'id.unique' => 'The category is in use and cannot be deleted.'
         ];
-        Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
+        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        $customValidator->stopOnFirstFailure();
+        $customValidator->validate();
 
         $category = CategoryModel::where('id', $id)->first();
 

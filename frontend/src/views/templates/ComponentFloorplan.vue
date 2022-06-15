@@ -85,6 +85,12 @@
     <!-- File Upload Modal -->
     <modal-file-upload
       :File="File"
+      Title="Floorplan Image"
+      UploadType="floorplanImg"
+      :Context="Context"
+      :NodeIDSelected="NodeIDSelected"
+      :TemplateFaceSelected="TemplateFaceSelected"
+      :PartitionAddressSelected="PartitionAddressSelected"
       @FileSelected="$emit('FileSelected', $event)"
       @FileSubmitted="$emit('FileSubmitted')"
     />
@@ -123,6 +129,7 @@ export default {
     FloorplanImage: {type: String},
     File: {type: File},
     NodeIDSelected: {type: Number},
+    TemplateFaceSelected: {type: Object},
     PartitionAddressSelected: {type: Object},
     PartitionAddressHovered: {type: Object},
     ObjectsAreDraggable: {type: Boolean},

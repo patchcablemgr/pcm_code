@@ -106,6 +106,36 @@ class ConfigController extends Controller
     public function networkConfig(Request $request)
     {
 
+        // Validate template ID
+        $validatorInput = [
+            'dhcp' => $request['dhcp'],
+            'host-address' => $request['host_address'],
+            'gateway' => $request['gateway'],
+            'dns' => $request['dns'],
+        ];
+        $validatorRules = [
+            'dhcp' => [
+                'required',
+                'boolean',
+            ],
+            'host-address' => [
+                'required',
+                'regex:/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\/\d{1,2}$/'
+            ],
+            'gateway' => [
+                'required',
+                'regex:/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/'
+            ],
+            'dns' => [
+                'required',
+                'regex:/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/'
+            ],
+        ];
+        $validatorMessages = [];
+        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        $customValidator->stopOnFirstFailure();
+        $customValidator->validate();
+
         $dhcp = ($request['dhcp']) ? 'yes' : 'no';
         //$dhcp = $request['dhcp'];
         $hostAddress = $request['host_address'];
@@ -163,9 +193,10 @@ class ConfigController extends Controller
                 'max:255'
             ]
         ];
-        $validatorMessages = [
-        ];
-        Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
+        $validatorMessages = [];
+        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        $customValidator->stopOnFirstFailure();
+        $customValidator->validate();
 
         // Configure certificate fields
         $dn = array(
@@ -229,7 +260,9 @@ class ConfigController extends Controller
             ],
         ];
         $validatorMessages = [];
-        Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
+        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        $customValidator->stopOnFirstFailure();
+        $customValidator->validate();
 
         // Get CSR
         $CSR = CSRModel::where('id', $id)->first();
@@ -326,7 +359,9 @@ class ConfigController extends Controller
         ];
         $validatorMessages = [
         ];
-        Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
+        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        $customValidator->stopOnFirstFailure();
+        $customValidator->validate();
 				
 		$CSR = CSRModel::where('id', $id)->first();
 
@@ -354,7 +389,9 @@ class ConfigController extends Controller
         ];
         $validatorMessages = [
         ];
-        Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
+        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        $customValidator->stopOnFirstFailure();
+        $customValidator->validate();
 				
 		$cert = CertModel::where('id', $id)->first();
 
@@ -391,7 +428,9 @@ class ConfigController extends Controller
             ]
         ];
         $validatorMessages = [];
-        Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
+        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        $customValidator->stopOnFirstFailure();
+        $customValidator->validate();
 
         // Validate certificate
         $certStr = $request->file('file')->get();
@@ -450,7 +489,9 @@ class ConfigController extends Controller
             ]
         ];
         $validatorMessages = [];
-        Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
+        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        $customValidator->stopOnFirstFailure();
+        $customValidator->validate();
 
         // Get certificate
         $cert = CertModel::where('id', $id)->first();

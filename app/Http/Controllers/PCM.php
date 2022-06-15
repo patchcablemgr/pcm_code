@@ -4,6 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Log;
+use App\Models\ObjectModel;
+use App\Models\TemplateModel;
+use App\Models\TrunkModel;
+use App\Models\ConnectionModel;
 
 class PCM extends Controller
 {
@@ -15,6 +19,111 @@ class PCM extends Controller
 		"count" => 0,
 		"order" => 0
 	);
+
+	/**
+     * Validate RU occupancy
+     *
+     * @param  int  $locationID
+	 * @param  int  $templateID
+	 * @param  int  $cabinetRU
+     * @return arr
+     */
+    public function validateRUOccupancy($locationID, $templateID, $cabinetRU, $cabinetFace)
+    {
+        // Initialize some variables for validating RU occupancy
+        $occupiedRUs = array('front' => [], 'rear' => []);
+        $collision = false;
+
+        // Populate occupied RU array
+        $cabinetObjects = ObjectModel::where('location_id', $locationID)->get();
+        foreach($cabinetObjects as $cabinetObject) {
+            $cabinetObjectTemplateID = $cabinetObject['template_id'];
+            $cabinetObjectCabinetFront = $cabinetObject['cabinet_front'];
+            $cabinetObjectCabinetRU = $cabinetObject['cabinet_ru'];
+            $cabinetObjectTemplate = TemplateModel::where('id', $cabinetObjectTemplateID)->first();
+            $cabinetObjectMountConfig = $cabinetObjectTemplate['mount_config'];
+            $cabinetObjectRUSize = $cabinetObjectTemplate['ru_size'];
+            for($x=1; $x<=$cabinetObjectRUSize; $x++) {
+                $ruPosition = $cabinetObjectCabinetRU + $x;
+                if($cabinetObjectMountConfig == '4-post') {
+                    array_push($occupiedRUs['front'], $ruPosition);
+                    array_push($occupiedRUs['rear'], $ruPosition);
+                } else {
+                    array_push($occupiedRUs[$cabinetObjectCabinetFront], $ruPosition);
+                }
+            }
+        }
+
+        // Validate RU occupancy
+        $objectTemplate = TemplateModel::where('id', $templateID)->first();
+        $objectMountConfig = $objectTemplate['mount_config'];
+        $objectRUSize = $objectTemplate['ru_size'];
+        for($x=1; $x<=$objectRUSize; $x++) {
+            $ruPosition = $cabinetRU + $x;
+            if($objectMountConfig == '4-post') {
+                if(in_array($ruPosition, $occupiedRUs['front']) || in_array($ruPosition, $occupiedRUs['rear'])) {
+                    return ['cabinet_ru' => 'Destination RU is occupied.'];
+                }
+            } else {
+                if(in_array($ruPosition, $occupiedRUs[$cabinetFace])) {
+                    return ['cabinet_ru' => 'Destination RU is occupied.'];
+                }
+            }
+        }
+
+        return true;
+    }
+
+	/**
+     * Validate parent partition
+     *
+     * @param  int  $parentObjectTemplateID
+	 * @param  str  $objectParentFace
+	 * @param  arr  $objectParentPartitionAddress
+	 * @param  arr  $objectParentEnclosureAddress
+     * @return arr
+     */
+    public function validateParentPartition($parentObjectTemplateID, $objectParentFace, $objectParentPartitionAddress, $objectParentEnclosureAddress)
+    {
+        // Validate parent object partition
+        $parentObjectTemplate = TemplateModel::where('id', $parentObjectTemplateID)->first();
+        $parentObjectPartition = $this->getPartition($parentObjectTemplate['blueprint'], $objectParentFace, $objectParentPartitionAddress);
+        if($parentObjectPartition) {
+            if($parentObjectPartition['type'] == 'enclosure') {
+                if($objectParentEnclosureAddress[0] >= $parentObjectPartition['enc_layout']['rows'] || $objectParentEnclosureAddress[1] >= $parentObjectPartition['enc_layout']['cols']) {
+                    return['parentPartitionAddress' => 'Destination partition address is invalid.'];
+                }
+            } else {
+                return['parentPartitionAddress' => 'Destination partition type is not an enclosure.'];
+            }
+        } else {
+            return['parentPartitionAddress' => 'Destination partition cannot be found.'];
+        }
+		
+		return true;
+    }
+
+	/**
+     * Validate enclosure occupancy
+     *
+     * @param  int  $objectParentID
+	 * @param  str  $objectParentFace
+	 * @param  arr  $objectParentPartitionAddress
+	 * @param  arr  $objectParentEnclosureAddress
+     * @return arr
+     */
+    public function validateEnclosureOccupancy($objectParentID, $objectParentFace, $objectParentPartitionAddress, $objectParentEnclosureAddress)
+    {
+        // Validate parent object enclosure occupancy
+        $parentsFound = ObjectModel::where(['parent_id' => $objectParentID, 'parent_face' => $objectParentFace])->get();
+        foreach($parentsFound as $parent) {
+            if($parent['parent_partition_address'] == $objectParentPartitionAddress && $parent['parent_enclosure_address'] == $objectParentEnclosureAddress) {
+                return ['parentEnclosureAddress' => 'Destination enclosure slot is occupied.'];
+            }
+        }
+		
+		return true;
+    }
 
     /**
      * Return partition 
@@ -107,6 +216,26 @@ class PCM extends Controller
 				$templateBlueprintPartition['port_format'] = $inputBlueprint[$index]['port_format'];
 			}
 		}
+
+		return true;
+    }
+
+    /**
+     * Return patched blueprint
+     *
+     * @param  int  $objectID
+     * @return boolean
+     */
+    public function deleteObject($objectID)
+    {
+        $objectChildren = ObjectModel::where('parent_id', $objectID)->get();
+        foreach($objectChildren as $objectChild) {
+            $this->deleteObject($objectChild['id']);
+        }
+
+        ObjectModel::where('id', $objectID)->delete();
+        TrunkModel::where('a_id', $objectID)->orWhere('b_id', $objectID)->delete();
+        ConnectionModel::where('a_id', $objectID)->orWhere('b_id', $objectID)->delete();
 
 		return true;
     }

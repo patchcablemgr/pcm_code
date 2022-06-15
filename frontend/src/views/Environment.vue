@@ -46,6 +46,7 @@
             :FloorplanImage="FloorplanImage"
             :File="File"
             :NodeIDSelected="NodeIDSelected"
+            :TemplateFaceSelected="TemplateFaceSelected"
             :PartitionAddressSelected="PartitionAddressSelected"
             :PartitionAddressHovered="PartitionAddressHovered"
             :ObjectsAreDraggable="ObjectsAreDraggable"

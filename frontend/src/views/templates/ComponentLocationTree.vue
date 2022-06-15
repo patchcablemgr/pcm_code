@@ -182,6 +182,7 @@ export default {
             "id": Node.id,
             "text": Node.name,
             "data": {
+              "id": Node.id,
               "type": Node.type,
               "icon": vm.GetNodeIcon(Node.type),
               "parent_id": Node.parent_id,
@@ -222,7 +223,7 @@ export default {
 
       // Update selected node
       vm.$refs[TreeRef].$on('node:selected', (node) => {
-
+        
         const LocationID = node.data.id
         const NodeID = node.id
         vm.$emit('SetPartitionAddressSelected', {Context, object_id:null, front:[0], rear:[0]})

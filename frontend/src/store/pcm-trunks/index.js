@@ -12,7 +12,6 @@ export default {
       state.Trunks = data
     },
     ADD_Trunk(state, {data}) {
-      console.log(data)
       state.Trunks.push(data)
     },
     UPDATE_Trunk(state, {data}) {

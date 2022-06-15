@@ -24,6 +24,7 @@ class LocationModel extends Model
             $imgMimeType = Storage::mimeType($imgPath);
             $imgBase64 = base64_encode($imgFile);
             return 'data:'.$imgMimeType.';base64,'.$imgBase64;
+
         } else {
 
             return $value;

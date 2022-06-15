@@ -46,7 +46,9 @@ class ImageController extends Controller
             ]
         ];
         $validatorMessages = [];
-        Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
+        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        $customValidator->stopOnFirstFailure();
+        $customValidator->validate();
 
         // Retrieve location record
         $location = LocationModel::where('id', $id)->first();
@@ -93,7 +95,9 @@ class ImageController extends Controller
             ]
         ];
         $validatorMessages = [];
-        Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
+        $customValidatorValidator::make($validatorInput, $validatorRules, $validatorMessages);
+        $customValidator->stopOnFirstFailure();
+        $customValidator->validate();
 
         // Retrieve record
         $template = TemplateModel::where('id', $id)->first();

@@ -266,7 +266,7 @@ export default {
             const data = {'id':ObjectID, 'face':Face, 'partition':PartitionAddress, 'port_id':PortID, PeerData}
 
             // POST Connection
-            const URL = '/api/connections/'
+            const URL = '/api/connections'
             vm.$http.post(URL, data).then(response => {
 
               // Add connection to store

@@ -439,6 +439,9 @@ export default {
     Trunks() {
       return this.$store.state.pcmTrunks.Trunks
     },
+    Connections() {
+      return this.$store.state.pcmConnections.Connections
+    },
     ComputedObjectSelected: function() {
 
       const vm = this
@@ -821,7 +824,17 @@ export default {
 
             vm.$http.delete(URL).then(response => {
 
+              // Remove deleted object
               vm.$store.commit('pcmObjects/REMOVE_Object', {pcmContext:Context, data:response.data})
+
+              // Remove trunks associated with deleted object
+              const DeleteTrunks = vm.Trunks.filter(trunk => trunk.a_id == response.data.id || trunk.b_id == response.data.id)
+              DeleteTrunks.forEach(trunk => vm.$store.commit('pcmTrunks/REMOVE_Trunk', {data:trunk}))
+
+              // Remove connections associated with deleted object
+              const DeleteConnections = vm.Connections.filter(connection => connection.a_id == response.data.id || connection.b_id == response.data.id)
+              DeleteConnections.forEach(connection => vm.$store.commit('pcmConnections/REMOVE_Connection', {data:connection}))
+
             }).catch(error => {
               vm.DisplayError(error)
             })

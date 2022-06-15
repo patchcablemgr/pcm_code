@@ -1,5 +1,4 @@
 *
 !public/
-images/*
-!images/floorplan-default.png
+!images/
 !.gitignore

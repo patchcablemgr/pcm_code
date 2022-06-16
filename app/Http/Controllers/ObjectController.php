@@ -282,12 +282,11 @@ class ObjectController extends Controller
             ],
         ];
         if($request->name) {
-            array_push($validatorInput, array(
+            $validatorInput = array_merge($validatorInput, array(
                 'name' => $request->name
             ));
-            array_push($validatorRules, array(
+            $validatorRules = array_merge($validatorRules, array(
                 'name' => [
-                    'sometimes',
                     'regex:/^[A-Za-z0-9\/]+$/',
                     'min:1',
                     'max:255'

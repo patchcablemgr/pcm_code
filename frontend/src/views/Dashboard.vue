@@ -206,7 +206,7 @@ export default {
           const Category = vm.Categories[CategoryIndex]
           const CategoryColor = Category.color
           const ObjectName = vm.GetObjectDN(Object.id)
-          const PortUtilization = (PortTotal > 0) ? (PortsPopulated / PortTotal) * 100 : 0
+          const PortUtilization = (PortTotal > 0) ? Math.round((PortsPopulated / PortTotal) * 100) : 0
           let PortUtilizationVariant = ""
           if(PortUtilization > 89) {
             PortUtilizationVariant = "danger"
@@ -262,12 +262,13 @@ export default {
       const vm = this
       const Context = vm.Context
       const FilteredInserts = vm.Objects[Context].filter(object => object.parent_id == ObjectID)
+      console.log(FilteredInserts)
 
       FilteredInserts.forEach(function(FilteredInsert) {
 
         const Insert = JSON.parse(JSON.stringify(FilteredInsert))
         ObjectInserts.push(Insert)
-        vm.GetObjectInserts(filteredInsert.id, ObjectInserts)
+        vm.GetObjectInserts(FilteredInsert.id, ObjectInserts)
 
       })
 

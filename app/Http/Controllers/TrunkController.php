@@ -34,6 +34,39 @@ class TrunkController extends Controller
     public function store(Request $request)
     {
         
+        $PCM = new PCM;
+
+        // Validate
+        $validatorInput = [
+            'id' => $request->id,
+            'face' => $request->face,
+        ];
+        $validatorRules = [
+            'id' => [
+                'required',
+                'numeric',
+                'exists:object',
+            ],
+            'id' => [
+                'required',
+                'in:front,rear',
+            ],
+        ];
+
+        $validatorMessages = [];
+        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        $customValidator->stopOnFirstFailure();
+        $customValidator->validate();
+
+        // Gather object data for further validation
+        $object = ObjectModel::where('id', $request->id)->get();
+        $objectTemplateID = $object['template_id'];
+        $objectTemplate = $TemplateModel::where('id', $objectTemplateID)->get();
+        $objectBlueprint = $template['blueprint'];
+        $objectFace = $request->face;
+        $objectPartitionAddress = $request->partition;
+        $objectPartition = $PCM->getPartition($objectBlueprint, $objectFace, $objectPartitionAddress);
+
         $returnData = array('add' => array(), 'remove' => array());
 
         // Store request data
@@ -169,9 +202,10 @@ class TrunkController extends Controller
                 'exists:trunk'
             ]
         ];
-        $validatorMessages = [
-        ];
-        Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
+        $validatorMessages = [];
+        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        $customValidator->stopOnFirstFailure();
+        $customValidator->validate();
 				
 		$trunk = TrunkModel::where('id', $id)->first();
         $trunk->delete();

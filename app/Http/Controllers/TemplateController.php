@@ -35,20 +35,6 @@ class TemplateController extends Controller
     {
 
 		$PCM = new PCM;
-		
-        // Prepare variables
-        $templateTypeArray = [
-            'standard',
-            'insert'
-        ];
-        $templateFunctionArray = [
-            'endpoint',
-            'passive'
-        ];
-        $templateMountConfigArray = [
-            '2-post',
-            '4-post'
-        ];
 
         $request->validate([
             'name' => [
@@ -63,7 +49,7 @@ class TemplateController extends Controller
             ],
             'type' => [
                 'required',
-                Rule::in($templateTypeArray)
+                'in:standard,insert',
             ],
             'ru_size' => [
                 'exclude_unless:type,standard',
@@ -73,11 +59,11 @@ class TemplateController extends Controller
             ],
             'function' => [
                 'required',
-                Rule::in($templateFunctionArray)
+                'in:endpoint,passive',
             ],
             'mount_config' => [
                 'exclude_unless:type,standard',
-                Rule::in($templateMountConfigArray)
+                'in:2-post,4-post',
             ],
             'insert_constraints.part_layout.height' => [
                 'exclude_unless:type,insert',

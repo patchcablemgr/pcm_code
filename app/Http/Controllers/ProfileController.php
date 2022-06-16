@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use PragmaRX\Google2FAQRCode\Google2FA;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
@@ -66,6 +69,21 @@ class ProfileController extends Controller
     public function confirmMFA(Request $request)
     {
 
+        // Validate input
+        $validatorInput = [
+            'otp' => $request->otp,
+        ];
+        $validatorRules = [
+            'otp' => [
+                'required',
+                'regex:/^[0-9]{6}$/',
+            ],
+        ];
+        $validatorMessages = [];
+        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        $customValidator->stopOnFirstFailure();
+        $customValidator->validate();
+
         // Store OTP
         $otp = $request->input('otp');
         
@@ -88,6 +106,8 @@ class ProfileController extends Controller
             $user->mfa_secret = $mfaSecretTemp;
             $user->mfa_secret_temp = null;
             $user->save();
+        } else {
+            throw ValidationException::withMessages(['otp' => 'Invalid OTP.']);
         }
 
         return $user;

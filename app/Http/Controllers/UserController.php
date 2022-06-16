@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use App\Models\User;
 
 class UserController extends Controller
@@ -61,8 +62,31 @@ class UserController extends Controller
                 'required',
                 'numeric',
                 'exists:users',
-            ]
+            ],
         ];
+
+        if($request->status) {
+            $validatorInput = array_merge($validatorInput, array(
+                'status' => $request->status
+            ));
+            $validatorRules = array_merge($validatorRules, array(
+                'status' => [
+                    'boolean',
+                ]
+            ));
+        }
+
+        if($request->role) {
+            $validatorInput = array_merge($validatorInput, array(
+                'role' => $request->role
+            ));
+            $validatorRules = array_merge($validatorRules, array(
+                'role' => [
+                    'in:admin,operator,user',
+                ]
+            ));
+        }
+
         $validatorMessages = [];
         $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
         $customValidator->stopOnFirstFailure();

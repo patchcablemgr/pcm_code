@@ -69,6 +69,7 @@
 						Context="template"
 						:TemplateFaceSelected="TemplateFaceSelected"
 						:PartitionAddressSelected="PartitionAddressSelected"
+            :DetailsAreEditable="true"
             @SetPartitionAddressSelected="SetPartitionAddressSelected($event)"
             @SetTemplateFaceSelected="SetTemplateFaceSelected($event)"
 					/>

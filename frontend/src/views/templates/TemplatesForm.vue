@@ -770,7 +770,7 @@ export default {
         const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
         const Blueprint = Template.blueprint[Face]
         const Partition = vm.GetPartition(Blueprint, PartitionAddress)
-        Partition.port_layout.cols = newValue
+        Partition.port_layout.cols = parseInt(newValue)
 
         vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template, src:'PortLayoutCols'})
 
@@ -795,7 +795,7 @@ export default {
         const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
         const Blueprint = Template.blueprint[Face]
         const Partition = vm.GetPartition(Blueprint, PartitionAddress)
-        Partition.port_layout.rows = newValue
+        Partition.port_layout.rows = parseInt(newValue)
 
         vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template, src:'PortLayoutRows'})
 
@@ -894,7 +894,7 @@ export default {
         const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
         const Blueprint = Template.blueprint[Face]
         const Partition = vm.GetPartition(Blueprint, PartitionAddress)
-        Partition.enc_layout.cols = newValue
+        Partition.enc_layout.cols = parseInt(newValue)
 
         vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template, src:'EncLayoutCols'})
 
@@ -919,7 +919,7 @@ export default {
         const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
         const Blueprint = Template.blueprint[Face]
         const Partition = vm.GetPartition(Blueprint, PartitionAddress)
-        Partition.enc_layout.rows = newValue
+        Partition.enc_layout.rows = parseInt(newValue)
 
         vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template, src:'EncLayoutRows'})
 

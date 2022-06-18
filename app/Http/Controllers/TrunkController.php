@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\PCM;
 use Illuminate\Support\Facades\Log;
 use App\Models\TemplateModel;
 use App\Models\ObjectModel;
 use App\Models\TrunkModel;
+use App\Models\MediaModel;
+use App\Models\PortConnectorModel;
 
 class TrunkController extends Controller
 {
@@ -40,6 +43,7 @@ class TrunkController extends Controller
         $validatorInput = [
             'id' => $request->id,
             'face' => $request->face,
+            'peer_data' => $request->peer_data,
         ];
         $validatorRules = [
             'id' => [
@@ -47,9 +51,13 @@ class TrunkController extends Controller
                 'numeric',
                 'exists:object',
             ],
-            'id' => [
+            'face' => [
                 'required',
                 'in:front,rear',
+            ],
+            'peer_data' => [
+                'required',
+                'array',
             ],
         ];
 
@@ -58,14 +66,90 @@ class TrunkController extends Controller
         $customValidator->stopOnFirstFailure();
         $customValidator->validate();
 
-        // Gather object data for further validation
-        $object = ObjectModel::where('id', $request->id)->get();
-        $objectTemplateID = $object['template_id'];
-        $objectTemplate = $TemplateModel::where('id', $objectTemplateID)->get();
-        $objectBlueprint = $template['blueprint'];
+        // Perform further validation
+        $compatible = true;
+
+        // Gather object data
+        $objectID = $request->id;
         $objectFace = $request->face;
         $objectPartitionAddress = $request->partition;
-        $objectPartition = $PCM->getPartition($objectBlueprint, $objectFace, $objectPartitionAddress);
+        $object = ObjectModel::where('id', $objectID)->first();
+        $floorplanType = $object->floorplan_object_type;
+        if($floorplanType == null) {
+            $objectTemplateID = $object->template_id;
+            $objectTemplate = TemplateModel::where('id', $objectTemplateID)->first();
+            $objectTemplateFunction = $objectTemplate->function;
+            $objectBlueprint = $objectTemplate->blueprint;
+            $objectPartition = $PCM->getPartition($objectBlueprint, $objectFace, $objectPartitionAddress);
+            $objectPartitionMediaID = $objectPartition['media'];
+            $objectPartitionPortConnectorID = $objectPartition['port_connector'];
+            $objectPortTotal = $objectPartition['port_layout']['cols'] * $objectPartition['port_layout']['rows'];
+        } else if($floorplanType == 'walljack') {
+            $objectTemplateFunction = 'passive';
+            $objectPartitionMediaID = 1;
+            $objectPartitionPortConnectorID = 1;
+            $objectPortTotal = 0;
+        } else if($floorplanType == 'wap' || $floorplanType == 'camera') {
+            $objectTemplateFunction = 'endpoint';
+            $objectPartitionMediaID = 1;
+            $objectPartitionPortConnectorID = 1;
+            $objectPortTotal = 0;
+        }
+        $objectPartitionPortConnector = PortConnectorModel::where('value', $objectPartitionPortConnectorID)->first();
+        $objectPartitionMediaTypeID = $objectPartitionPortConnector->type_id;
+
+        // Loop through trunk peers
+        foreach($request->peer_data as $peer) {
+
+            // Gather peer data
+            $peerID = $peer['id'];
+            $peerFace = $peer['face'];
+            $peerPartitionAddress = $peer['partition'];
+            $peer = ObjectModel::where('id', $peerID)->first();
+            $peerTemplateID = $peer->template_id;
+            $peerTemplate = TemplateModel::where('id', $peerTemplateID)->first();
+            $peerTemplateFunction = $peerTemplate->function;
+            $peerBlueprint = $peerTemplate->blueprint;
+            $peerPartition = $PCM->getPartition($peerBlueprint, $peerFace, $peerPartitionAddress);
+            $peerPartitionMediaID = $peerPartition['media'];
+            $peerPartitionPortConnectorID = $peerPartition['port_connector'];
+            $peerPartitionPortConnector = PortConnectorModel::where('value', $peerPartitionPortConnectorID)->first();
+            $peerPartitionMediaTypeID = $peerPartitionPortConnector->type_id;
+            $peerPortTotal = $peerPartition['port_layout']['cols'] * $peerPartition['port_layout']['rows'];
+
+            // Cannot trunk endpoint to endpoint
+            if($objectTemplateFunction == 'endpoint' && $peerTemplateFunction == 'endpoint') {
+                $compatible = false;
+            }
+
+            // Must have same number of ports
+            if($objectPortTotal != $peerPortTotal && $objectPortTotal != 0) {
+                $compatible = false;
+            }
+
+            // Media types must be compatible
+            if($objectTemplateFunction == 'endpoint') {
+                if($objectPartitionMediaTypeID != 4 && ($objectPartitionMediaTypeID != $peerPartitionMediaTypeID)) {
+                    $compatible = false;
+                }
+            } else if($peerTemplateFunction == 'endpoint') {
+                if($peerPartitionMediaTypeID != 4 && ($objectPartitionMediaTypeID != $objectPartitionMediaTypeID)) {
+                    $compatible = false;
+                }
+            } else {
+                $objectMedia = MediaModel::where('value', $objectPartitionMediaID)->first();
+                $objectMediaCateogoryID = $objectMedia->category_id;
+                $peerMedia = MediaModel::where('value', $peerPartitionMediaID)->first();
+                $peerMediaCateogoryID = $peerMedia->category_id;
+                if($objectMedia != $peerMedia) {
+                    $compatible = false;
+                }
+            }
+        }
+
+        if(!$compatible) {
+            throw ValidationException::withMessages(['peer_data' => 'Trunk peer is not compatible.']);
+        }
 
         $returnData = array('add' => array(), 'remove' => array());
 
@@ -92,7 +176,7 @@ class TrunkController extends Controller
         $trunkDeleteArray = $filteredTrunks->all();
 
         // Find trunks associated with selected node(s) to be removed
-        foreach($data['PeerData'] as $key => $value) {
+        foreach($data['peer_data'] as $key => $value) {
 
             if($object['floorplan_object_type'] !== null) {
                 $aAttributes = array(
@@ -136,7 +220,7 @@ class TrunkController extends Controller
         }
 
         // Create new trunk record(s)
-        foreach($data['PeerData'] as $key => $value) {
+        foreach($data['peer_data'] as $key => $value) {
 
             // Create new trunk object
             $trunk = new TrunkModel;

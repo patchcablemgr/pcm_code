@@ -157,7 +157,7 @@ export default {
       })
 
       // Compile POST data
-      const data = {'id':SelectedObjectID, 'face':SelectedObjectFace, 'partition':SelectedObjectPartition, 'port_id':SelectedObjectPortID, PeerData}
+      const data = {'id':SelectedObjectID, 'face':SelectedObjectFace, 'partition':SelectedObjectPartition, 'port_id':SelectedObjectPortID, 'peer_data':PeerData}
 
       if(PortSelectFunction == 'trunk') {
 

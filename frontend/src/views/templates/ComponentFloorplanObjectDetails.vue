@@ -100,6 +100,7 @@
 
     <!-- Modal Port Select -->
     <modal-port-select
+      ModalID="modal-port-select"
       ModalTitle="Trunk"
       TreeRef="PortSelect"
       :Context="Context"

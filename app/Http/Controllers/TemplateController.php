@@ -83,7 +83,18 @@ class TemplateController extends Controller
             ],
             'blueprint' => [
                 'required',
-                new TemplateBlueprint
+            ],
+            'blueprint.front' => [
+                'required',
+                'min:1',
+                'max:100',
+                new TemplateBlueprint($request->ru_size)
+            ],
+            'blueprint.rear' => [
+                'required',
+                'min:1',
+                'max:100',
+                new TemplateBlueprint($request->ru_size)
             ]
         ]);
 				

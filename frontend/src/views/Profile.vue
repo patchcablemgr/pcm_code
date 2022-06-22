@@ -12,6 +12,73 @@
             <b-card-title>
               <div class="d-flex flex-wrap justify-content-between">
                 <div class="demo-inline-spacing">
+                  Password change
+                </div>
+              </div>
+            </b-card-title>
+            <b-card-body>
+                
+                <b-form @submit.prevent="SubmitPasswordChange">
+                  <b-row>
+
+                    <b-col cols="12">
+                      <b-form-group
+                        label="Password"
+                        label-for="password"
+                        label-cols-md="4"
+                      >
+                        <b-form-input
+                          id="password"
+                          type="password"
+                          placeholder="············"
+                          v-model="Password"
+                        />
+                      </b-form-group>
+                    </b-col>
+
+                    <b-col cols="12">
+                      <b-form-group
+                        label="Confirm Password"
+                        label-for="password_confirm"
+                        label-cols-md="4"
+                      >
+                        <b-form-input
+                          id="password_confirm"
+                          type="password"
+                          placeholder="············"
+                          v-model="PasswordConfirm"
+                        />
+                      </b-form-group>
+                    </b-col>
+                    
+                    <!-- submit and reset -->
+                    <b-col offset-md="4">
+                      <b-button
+                        v-ripple.400="'rgba(255, 255, 255, 0.15)'"
+                        type="submit"
+                        variant="primary"
+                        class="mr-1"
+                      >
+                        Submit
+                      </b-button>
+                    </b-col>
+                  </b-row>
+
+                </b-form>
+            </b-card-body>
+          </b-card>
+
+          </b-col>
+          <b-col
+            lg="4"
+          >
+
+          <b-card
+            v-if="DependenciesReady"
+          >
+            <b-card-title>
+              <div class="d-flex flex-wrap justify-content-between">
+                <div class="demo-inline-spacing">
                   Multi-Factor Authentication
                 </div>
                 <div class="demo-inline-spacing">
@@ -176,6 +243,7 @@ import {
   BButton,
   VBTooltip,
   BForm,
+  BFormGroup,
   BFormInput,
   BBadge,
 } from 'bootstrap-vue'
@@ -188,6 +256,8 @@ const MFAPending = false
 const ConfirmOTP = ''
 const UserDataReady = false
 const UserData = null
+const Password = ''
+const PasswordConfirm = ''
 
 export default {
   mixins: [PCM],
@@ -205,6 +275,7 @@ export default {
     BFormRadio,
     BButton,
     BForm,
+    BFormGroup,
     BFormInput,
     BBadge,
 
@@ -221,6 +292,8 @@ export default {
       ConfirmOTP,
       UserDataReady,
       UserData,
+      Password,
+      PasswordConfirm,
     }
   },
   computed: {
@@ -285,6 +358,18 @@ export default {
         const vm = this
         vm.UserData = response.data
         vm.UserDataReady = true
+      }).catch(error => {vm.DisplayError(error)})
+    },
+    SubmitPasswordChange() {
+
+      const vm = this
+      const data = {
+        'password': vm.Password,
+        'password_confirm': vm.PasswordConfirm
+      }
+      vm.$http.patch('/api/profile/change-password', data).then(response => {
+        
+        vm.DisplaySuccess('Password successfully updated.')
       }).catch(error => {vm.DisplayError(error)})
     },
   },

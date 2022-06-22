@@ -2,13 +2,20 @@
 
 namespace App\Http\Controllers;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use PragmaRX\Google2FAQRCode\Google2FA;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Models\TenantModel;
-use Validator;
+use App\Models\ForgotPasswordModel;
+//use Validator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
@@ -236,11 +243,86 @@ class AuthController extends Controller
 
 	public function forgotPassword(Request $request)
 	{
+		$request->validate(['email' => 'required|email']);
+
+		if (User::where('email', '=', $request->email)->count() > 0) {
+
+			$user = User::where('email', '=', $request->email)->first();
+
+			// Generate password reset code
+			$code = Str::random(10);
+
+			$response = Http::asForm()
+				->post('https://pcm.patchcablemgr.com/api/forgot-password', [
+					'email' => $request->email,
+					'code' => $code,
+				]);
+
+			if($response->status() !== 200) {
+				throw ValidationException::withMessages(['forgot-password' => $response->body()]);
+			} else {
+
+				// Create new forgot_password entry
+				$forgotPassword = new ForgotPasswordModel;
+
+				// Store forgot_password data
+				$forgotPassword->email = $request->email;
+				$forgotPassword->user_id = $user['id'];
+				$forgotPassword->code = $code;
+				$forgotPassword->created_timestamp = time();
+
+				// Save forgot_password entry
+				$forgotPassword->save();
+			}
+		}
+ 
+        return true;
+	}
+
+	/**
+	* Reset password
+	*
+	* @param  [string] code
+	* @param  [string] password
+	*/
+
+	public function resetPassword(Request $request)
+	{
 		$request->validate([
-		'email' => 'required|string|email',
+			'code' => 'required|string',
+			'password' => 'required|string',
 		]);
 
-		return true;
+		if (ForgotPasswordModel::where('code', '=', $request->code)->count() > 0) {
+
+			$forgotPassword = ForgotPasswordModel::where('code', '=', $request->code)->first();
+			if(($forgotPassword['created_timestamp']+300) > time() && !$forgotPassword['used']) {
+				if (User::where('id', '=', $forgotPassword['user_id'])->count() > 0) {
+
+					// Reset user password
+					$user = User::where('id', '=', $forgotPassword['user_id'])->first();
+					$user->forceFill([
+						'password' => Hash::make($request->password),
+					]);
+					$user->save();
+
+					// Clear user sessions
+					$user->tokens()->delete();
+
+					// Mark pasword reset as used
+					$forgotPassword->used = true;
+					$forgotPassword->save();
+				} else {
+					throw ValidationException::withMessages(['code' => 'Code is not associated with a valid user.']);
+				}
+			} else {
+				throw ValidationException::withMessages(['code' => 'Code has expired.']);
+			}
+		} else {
+			throw ValidationException::withMessages(['code' => 'Code is invalid.']);
+		}
+ 
+        return true;
 	}
 
 	/**

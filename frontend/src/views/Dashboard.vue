@@ -164,9 +164,8 @@ export default {
         const TemplateID = Object.template_id
         const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
         const Template = vm.Templates[Context][TemplateIndex]
-        const TemplateType = Template.type
 
-        if(TemplateType == 'standard') {
+        if(Template && Template.type == 'standard') {
 
           PortsPopulated = PortsPopulated + vm.Connections.filter((connection) => connection.a_id == ObjectID || connection.b_id == ObjectID).length
 

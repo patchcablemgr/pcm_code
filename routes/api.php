@@ -33,6 +33,7 @@ Route::group(['prefix' => 'auth'], function () {
     Route::post('login', [AuthController::class, 'login']);
     Route::post('mfa', [AuthController::class, 'mfa']);
     Route::post('forgot-password', [AuthController::class, 'forgotPassword']);
+    Route::post('reset-password', [AuthController::class, 'resetPassword']);
     Route::post('register', [AuthController::class, 'register']);
     Route::post('register-tenant', [AuthController::class, 'registerTenant']);
 
@@ -74,6 +75,7 @@ Route::group(['middleware' => 'auth:sanctum'], function(){
   // Only PATCH
   Route::patch('config/cert/{id}/activate', [ConfigController::class, 'activateCert']);
   Route::patch('profile/mfa', [ProfileController::class, 'disableMFA']);
+  Route::patch('profile/change-password', [ProfileController::class, 'changePassword']);
 
   // No POST
   Route::apiResources([

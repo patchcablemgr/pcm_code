@@ -43,15 +43,17 @@
           >
             Welcome to PatchCableMgr
           </b-card-title>
-          <b-card-text class="mb-2">
-            Please sign-in
-          </b-card-text>
 
           <!-- login form -->
           <validation-observer
             v-if="visibleForm == 'login'"
             ref="loginValidation"
           >
+
+            <b-card-text class="mb-2">
+              Sign-in
+            </b-card-text>
+            
             <b-form
               class="auth-login-form mt-2"
               @submit.prevent
@@ -111,7 +113,7 @@
                   </b-input-group>
 
                   <b-link
-                    @click="displayForgotPW">
+                    @click="displayForgotPassword">
                     <small>Forgot Password?</small>
                   </b-link>
 
@@ -145,6 +147,11 @@
             v-if="visibleForm == 'otp'"
             ref="otpValidation"
           >
+
+            <b-card-text class="mb-2">
+              2nd Factor Authentication
+            </b-card-text>
+
             <b-form
               class="auth-login-form mt-2"
               @submit.prevent
@@ -199,9 +206,14 @@
 
           <!-- Forgot PW form -->
           <validation-observer
-            v-if="visibleForm == 'forgotPW'"
-            ref="forgotPWValidation"
+            v-if="visibleForm == 'ForgotPassword'"
+            ref="ForgotPassword"
           >
+
+            <b-card-text class="mb-2">
+              Forgot Password
+            </b-card-text>
+
             <b-form
               class="auth-login-form mt-2"
               @submit.prevent
@@ -209,7 +221,7 @@
               <!-- email -->
               <b-form-group
                 label="Email"
-                label-for="login-forgot-pw"
+                label-for="forgot-pw"
               >
                 <validation-provider
                   #default="{ errors }"
@@ -217,12 +229,113 @@
                   rules="required|email"
                 >
                   <b-form-input
-                    id="login-forgot-pw"
+                    id="forgot-pw"
                     v-model="userForgotPWEmail"
                     :state="errors.length > 0 ? false:null"
-                    name="login-forgot-pw"
+                    name="forgot-pw"
                     placeholder="john@example.com"
                   />
+                  <small class="text-danger">{{ errors[0] }}</small>
+
+                  <b-link
+                    @click="displayResetPassword">
+                    <small>Reset Password</small>
+                  </b-link>
+
+                </validation-provider>
+              </b-form-group>
+
+              <!-- submit buttons -->
+              <b-button
+                type="submit"
+                variant="primary"
+                block
+                @click="SubmitForgotPassword"
+              >
+                Submit
+              </b-button>
+              <validation-provider
+                #default="{ errors }"
+                name="Submit"
+              >
+                <small class="text-danger">{{ errors[0] }}</small>
+              </validation-provider>
+            </b-form>
+
+            <b-link
+              @click="displayLogin">
+              <small>Go Back</small>
+            </b-link>
+
+          </validation-observer>
+
+          <!-- Reset PW form -->
+          <validation-observer
+            v-if="visibleForm == 'ResetPassword'"
+            ref="ResetPassword"
+          >
+
+            <b-card-text class="mb-2">
+              Reset Password
+            </b-card-text>
+
+            <b-form
+              class="auth-login-form mt-2"
+              @submit.prevent
+            >
+              <!-- code -->
+              <b-form-group
+                label="Code"
+                label-for="reset-code"
+              >
+                <validation-provider
+                  #default="{ errors }"
+                  name="Code"
+                  rules="required"
+                >
+                  <b-form-input
+                    id="reset-code"
+                    v-model="ResetCode"
+                    :state="errors.length > 0 ? false:null"
+                    name="reset-code"
+                    placeholder="ABC123"
+                  />
+                  <small class="text-danger">{{ errors[0] }}</small>
+                </validation-provider>
+              </b-form-group>
+
+              <!-- password -->
+              <b-form-group
+                label-for="register-password"
+                label="Password"
+              >
+                <validation-provider
+                  #default="{ errors }"
+                  name="Password"
+                  vid="password"
+                  rules="required"
+                >
+                  <b-input-group
+                    class="input-group-merge"
+                    :class="errors.length > 0 ? 'is-invalid':null"
+                  >
+                    <b-form-input
+                      id="reset-password"
+                      v-model="ResetPassword"
+                      class="form-control-merge"
+                      :type="passwordFieldType"
+                      :state="errors.length > 0 ? false:null"
+                      name="reset-password"
+                      placeholder="············"
+                    />
+                    <b-input-group-append is-text>
+                      <feather-icon
+                        :icon="passwordToggleIcon"
+                        class="cursor-pointer"
+                        @click="togglePasswordVisibility"
+                      />
+                    </b-input-group-append>
+                  </b-input-group>
                   <small class="text-danger">{{ errors[0] }}</small>
                 </validation-provider>
               </b-form-group>
@@ -232,7 +345,7 @@
                 type="submit"
                 variant="primary"
                 block
-                @click="SubmitForgotPW"
+                @click="SubmitResetPassword"
               >
                 Submit
               </b-button>
@@ -310,6 +423,8 @@ export default {
       displayOTP: false,
       MFASessionHash: null,
       userForgotPWEmail: '',
+      ResetCode: '',
+      ResetPassword: '',
       visibleForm: 'login',
       sideImg: require('@/assets/images/pages/login-v2.svg'),
       // validation rulesimport store from '@/store/index'
@@ -406,25 +521,48 @@ export default {
         }
       })
     },
-    SubmitForgotPW() {
-      this.$refs.forgotPWValidation.validate().then(success => {
+    SubmitForgotPassword() {
+      this.$refs.ForgotPassword.validate().then(success => {
         if (success) {
 
           const url = '/api/auth/forgot-password'
-          const data = {}
+          const data = {'email' : this.userForgotPWEmail}
           this.$http.post(url, data).then(response => {
             console.log(response)
           })
           .catch(error => {
-            this.$refs.forgotPWValidation.setErrors({'Submit':[error.response.data.message]})
+            this.$refs.ForgotPassword.setErrors({'Submit':[error.response.data.message]})
           })
         }
       })
     },
-    displayForgotPW() {
+    SubmitResetPassword() {
+      this.$refs.ResetPassword.validate().then(success => {
+        if (success) {
+
+          const url = '/api/auth/reset-password'
+          const data = {
+            'code' : this.ResetCode,
+            'password' : this.ResetPassword,
+          }
+          this.$http.post(url, data).then(response => {
+            console.log(response)
+          })
+          .catch(error => {
+            this.$refs.ResetPassword.setErrors({'Submit':[error.response.data.message]})
+          })
+        }
+      })
+    },
+    displayForgotPassword() {
 
       const vm = this
-      this.visibleForm = "forgotPW"
+      this.visibleForm = "ForgotPassword"
+    },
+    displayResetPassword() {
+
+      const vm = this
+      this.visibleForm = "ResetPassword"
     },
     displayLogin() {
 

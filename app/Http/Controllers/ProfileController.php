@@ -9,6 +9,7 @@ use Illuminate\Validation\ValidationException;
 use PragmaRX\Google2FAQRCode\Google2FA;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
 class ProfileController extends Controller
 {
@@ -132,6 +133,32 @@ class ProfileController extends Controller
         $user->mfa_enabled = false;
         $user->mfa_secret = null;
         $user->mfa_secret_temp = null;
+        $user->save();
+
+        return $user;
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function changePassword(Request $request)
+    {
+
+        $request->validate([
+			'password' => 'required|string',
+			'password_confirm' => 'required|string|same:password',
+		]);
+        
+        // Get user ID
+        $user = $request->user();
+
+        // Update password
+        $user->forceFill([
+            'password' => Hash::make($request->password),
+        ]);
         $user->save();
 
         return $user;

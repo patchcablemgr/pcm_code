@@ -166,6 +166,12 @@ class DatabaseSeeder extends Seeder
             foreach($historyActionArray as $historyAction) {
                 DB::table('attributes_history_action')->insert($historyAction);
             }
+
+            // tenant
+            $appID = Str::random(10);
+            $tenant = [ 'name' => 'Acme', 'app_id' => $appID];
+
+            DB::table('tenant')->insert($tenant);
         }
     }
 }

@@ -116,6 +116,12 @@ export default {
       const DependenciesReady = Dependencies.every(function(element){ return element == true })
       return DependenciesReady
     },
+    Organization() {
+      return this.$store.state.pcmOrganization.Organization
+    },
+    OrganizationReady: function() {
+      return this.$store.state.pcmOrganization.OrganizationReady
+    },
     Objects() {
       return this.$store.state.pcmObjects.Objects
     },
@@ -295,6 +301,16 @@ export default {
       //this.$http.get('/api/auth/logout').then(res => console.log(res))
 	    this.$http.get('/api/auth/user').then(res => console.log(res))
     },
+    GETOrganization() {
+
+      const vm = this
+      
+      vm.$http.get('/api/organization').then(function(response){
+
+        vm.$store.commit('pcmObjects/SET_Organization', {data: response.data})
+        vm.$store.commit('pcmObjects/SET_Ready', {ReadyState:true})
+      })
+    },
     GETObjects() {
 
       const vm = this
@@ -357,6 +373,7 @@ export default {
 
     const vm = this
 
+    vm.GETOrganization()
     vm.GETObjects()
     vm.GETConnections()
     vm.GETTemplates()

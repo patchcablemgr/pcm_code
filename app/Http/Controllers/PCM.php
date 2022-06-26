@@ -8,6 +8,7 @@ use App\Models\ObjectModel;
 use App\Models\TemplateModel;
 use App\Models\TrunkModel;
 use App\Models\ConnectionModel;
+use App\Models\OrganizationModel;
 
 class PCM extends Controller
 {
@@ -236,6 +237,28 @@ class PCM extends Controller
         ObjectModel::where('id', $objectID)->delete();
         TrunkModel::where('a_id', $objectID)->orWhere('b_id', $objectID)->delete();
         ConnectionModel::where('a_id', $objectID)->orWhere('b_id', $objectID)->delete();
+
+		return true;
+    }
+
+    /**
+     * Return patched blueprint
+     *
+     * @param  int  $objectID
+     * @return boolean
+     */
+    public function fetchLicenseData($objectID)
+    {
+
+        $organization = OrganizationModel::where('id', '=', '*')->first();
+        $response = Http::get('https://pcm.patchcablemgr.com/api/license-check', [
+            'app-id' => $appID,
+        ]);
+
+        if($response->status() === 200) {
+            $organization->license_data = $response->json();
+            $organization->save();
+        }
 
 		return true;
     }

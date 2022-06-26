@@ -17,6 +17,7 @@ use App\Http\Controllers\ConnectionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ConfigController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\OrganizationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -67,6 +68,7 @@ Route::group(['middleware' => 'auth:sanctum'], function(){
   Route::get('config/csr', [ConfigController::class, 'indexCSR']);
   Route::get('config/cert', [ConfigController::class, 'indexCert']);
   Route::get('profile/mfa', [ProfileController::class, 'generateMFAQRCode']);
+  Route::get('organization', [OrganizationController::class, 'index']);
 
   // Only DELETE
   Route::delete('config/csr/{id}', [ConfigController::class, 'destroyCSR']);

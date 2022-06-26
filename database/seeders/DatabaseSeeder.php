@@ -169,7 +169,7 @@ class DatabaseSeeder extends Seeder
 
             // tenant
             $appID = Str::random(10);
-            $tenant = [ 'name' => 'Acme', 'app_id' => $appID];
+            $tenant = [ 'name' => 'Acme', 'license_last_checked' => time(), 'app_id' => $appID];
 
             DB::table('tenant')->insert($tenant);
         }

@@ -4,8 +4,9 @@
   >
     <b-container class="bv-example-row" fluid="xs">
       <b-row>
-        <b-col>
 
+        <!-- Users -->
+        <b-col>
           <b-card
             title="Users"
           >
@@ -13,10 +14,28 @@
               <component-users/>
             </b-card-body>
           </b-card>
-
         </b-col>
-        <b-col>
 
+        <!-- App Control -->
+        <b-col>
+          <component-app-control/>
+        </b-col>
+
+        <!-- Licensing -->
+        <b-col>
+          <component-licensing/>
+        </b-col>
+
+      </b-row>
+      <b-row>
+
+        <!-- SSL Config -->
+        <b-col>
+          <component-s-s-l-config/>
+        </b-col>
+
+        <!-- Network Config -->
+        <b-col>
           <b-card
             title="Network Config"
           >
@@ -26,20 +45,8 @@
               />
             </b-card-body>
           </b-card>
-
         </b-col>
-      </b-row>
-      <b-row>
-        <b-col>
 
-          <component-s-s-l-config/>
-
-        </b-col>
-        <b-col>
-
-          <component-app-control/>
-
-        </b-col>
       </b-row>
     </b-container>
 
@@ -74,6 +81,7 @@ import ComponentUsers from '@/views/templates/ComponentUsers.vue'
 import ComponentNetworkConfig from '@/views/templates/ComponentNetworkConfig.vue'
 import ComponentSSLConfig from '@/views/templates/ComponentSSLConfig.vue'
 import ComponentAppControl from '@/views/templates/ComponentAppControl.vue'
+import ComponentLicensing from '@/views/templates/ComponentLicensing.vue'
 
 const NetworkConfig = {
   'dhcp': false,
@@ -105,6 +113,7 @@ export default {
     ComponentNetworkConfig,
     ComponentSSLConfig,
     ComponentAppControl,
+    ComponentLicensing,
   },
   directives: {
     Ripple,

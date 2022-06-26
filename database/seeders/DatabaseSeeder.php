@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use App\Models\PortConnectorModel;
+use App\Models\TenantModel;
 
 class DatabaseSeeder extends Seeder
 {
@@ -15,7 +15,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        if(!PortConnectorModel::all()->count()) {
+        if(!TenantModel::all()->count()) {
 
             // attributes_port_connector
             $portConnectorArray = [

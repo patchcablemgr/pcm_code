@@ -20,7 +20,7 @@
             <b-dropdown-item
               @click="UpdateApp"
             >
-              Update App
+              Update
             </b-dropdown-item>
 
           </b-dropdown>
@@ -29,6 +29,21 @@
     </b-card-title>
 
     <b-card-body>
+      <table>
+
+        <!-- Current Version -->
+        <tr>
+          <td class="text-right">
+            <strong>Current Version:</strong>
+          </td>
+          <td>
+          </td>
+          <td>
+            1.0.0
+          </td>
+        </tr>
+
+      </table>
     </b-card-body>
   </b-card>
 </div>

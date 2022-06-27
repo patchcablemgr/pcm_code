@@ -78,6 +78,7 @@ Route::group(['middleware' => 'auth:sanctum'], function(){
   Route::patch('config/cert/{id}/activate', [ConfigController::class, 'activateCert']);
   Route::patch('profile/mfa', [ProfileController::class, 'disableMFA']);
   Route::patch('profile/change-password', [ProfileController::class, 'changePassword']);
+  Route::patch('organization', [OrganizationController::class, 'update']);
 
   // No POST
   Route::apiResources([

@@ -307,8 +307,8 @@ export default {
       
       vm.$http.get('/api/organization').then(function(response){
 
-        vm.$store.commit('pcmObjects/SET_Organization', {data: response.data})
-        vm.$store.commit('pcmObjects/SET_Ready', {ReadyState:true})
+        vm.$store.commit('pcmOrganization/SET_Organization', {data: response.data})
+        vm.$store.commit('pcmOrganization/SET_Ready', {ReadyState:true})
       })
     },
     GETObjects() {

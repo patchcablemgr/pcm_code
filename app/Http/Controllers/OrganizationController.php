@@ -7,6 +7,7 @@ use App\Models\OrganizationModel;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Http;
 
 class OrganizationController extends Controller
 {
@@ -17,7 +18,7 @@ class OrganizationController extends Controller
      */
     public function index()
     {
-        $organization = OrganizationModel::all();
+        $organization = OrganizationModel::first();
 
         return $organization;
     }
@@ -48,12 +49,27 @@ class OrganizationController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request)
     {
-        //
+
+        $request->validate(['license-key' => 'required|alpha_num|size:10']);
+
+        $organization = OrganizationModel::first();
+        $appID = $organization->app_id;
+
+        $response = Http::asForm()
+        ->patch('https://pcm.patchcablemgr.com/api/license', [
+            'license-key' => $request['license-key'],
+            'app-id' => $appID,
+        ]);
+
+        if($response->status() !== 200) {
+            throw ValidationException::withMessages(['license-key' => $response->body()]);
+        } else {
+            return $response;
+        }
     }
 
     /**

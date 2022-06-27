@@ -16,6 +16,6 @@ class OrganizationModel extends Model
 
     public function getVersionAttribute()
     {
-        return getenv('VERSION');
+        return getenv('APP_VERSION');
     }
 }

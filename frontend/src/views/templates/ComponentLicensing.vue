@@ -53,7 +53,7 @@
             </b-button>
           </td>
           <td>
-            abc123
+            {{ LicenseKey }}
           </td>
         </tr>
 
@@ -124,7 +124,26 @@ export default {
   data() {
     return {}
   },
-  computed: {},
+  computed: {
+    Organization() {
+      return this.$store.state.pcmOrganization.Organization
+    },
+    OrganizationReady: function() {
+      return this.$store.state.pcmOrganization.OrganizationReady
+    },
+    LicenseKey: {
+      get() {
+
+        const vm = this
+        const LicenseKey = vm.Organization.license_key
+        return (LicenseKey) ? LicenseKey : 'None'
+
+      },
+      set(newValue) {
+        return false
+      }
+    }
+  },
   methods: {
     RefreshSubscription(){
 

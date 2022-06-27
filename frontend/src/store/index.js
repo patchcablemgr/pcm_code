@@ -15,6 +15,7 @@ import pcmTrunks from './pcm-trunks'
 import pcmConnections from './pcm-connections'
 import pcmUsers from './pcm-users'
 import pcmSSL from './pcm-ssl'
+import pcmOrganization from './pcm-organization'
 
 Vue.use(Vuex)
 
@@ -33,6 +34,7 @@ export default new Vuex.Store({
     pcmConnections,
     pcmUsers,
     pcmSSL,
+    pcmOrganization,
   },
   strict: process.env.DEV,
 })

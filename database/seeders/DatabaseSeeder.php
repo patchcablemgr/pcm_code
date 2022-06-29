@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use App\Models\TenantModel;
+use App\Models\OrganizationModel;
 
 class DatabaseSeeder extends Seeder
 {
@@ -15,7 +15,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        if(!TenantModel::all()->count()) {
+        if(!OrganizationModel::all()->count()) {
             $this->initial();
         }
     }
@@ -192,7 +192,7 @@ class DatabaseSeeder extends Seeder
         ];
         $tenant = [ 'name' => 'Acme', 'license_last_checked' => time(), 'license_data' => json_encode($licenseData), 'app_id' => $appID, 'version' => $version];
 
-        DB::table('tenant')->insert($tenant);
+        DB::table('organization')->insert($tenant);
     }
 
     /**

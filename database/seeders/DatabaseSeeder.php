@@ -190,7 +190,7 @@ class DatabaseSeeder extends Seeder
                 'user' => 2,
             ]
         ];
-        $tenant = [ 'name' => 'Acme', 'license_last_checked' => time(), 'license_data' => $licenseData, 'app_id' => $appID, 'version' => $version];
+        $tenant = [ 'name' => 'Acme', 'license_last_checked' => time(), 'license_data' => json_encode($licenseData), 'app_id' => $appID, 'version' => $version];
 
         DB::table('tenant')->insert($tenant);
     }

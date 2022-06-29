@@ -178,7 +178,7 @@ class DatabaseSeeder extends Seeder
         }
 
         // tenant
-        $appID = guidv4();
+        $appID = $this->guidv4();
         $version = getenv('APP_VERSION');
         $licenseData = [
             'status' => 'inactive',

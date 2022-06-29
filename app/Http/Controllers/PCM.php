@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 use App\Models\ObjectModel;
 use App\Models\TemplateModel;
 use App\Models\TrunkModel;
@@ -242,24 +243,44 @@ class PCM extends Controller
     }
 
     /**
-     * Return patched blueprint
+     * Return license data
      *
-     * @param  int  $objectID
+     * @param  str  $licenseKey
+     * @param  str  $licenseKey
      * @return boolean
      */
-    public function fetchLicenseData($objectID)
+    public function fetchLicenseData($licenseKey, $appID)
     {
 
-        $organization = OrganizationModel::where('id', '=', '*')->first();
-        $response = Http::get('https://pcm.patchcablemgr.com/api/license-check', [
-            'app-id' => $appID,
-        ]);
+        $response = Http::asForm()
+        ->withOptions([
+            'headers' => [
+                'Accept' => 'application/json',
+            ],
+        ])
+        ->get('https://pcm.patchcablemgr.com/api/license/'.$licenseKey.'/'.$appID);
 
-        if($response->status() === 200) {
-            $organization->license_data = $response->json();
-            $organization->save();
-        }
+		return $response;
+    }
 
-		return true;
+    /**
+     * Return license portal
+     *
+     * @param  str  $licenseKey
+     * @param  str  $licenseKey
+     * @return boolean
+     */
+    public function fetchLicensePortal($licenseKey, $appID)
+    {
+
+        $response = Http::asForm()
+        ->withOptions([
+            'headers' => [
+                'Accept' => 'application/json',
+            ],
+        ])
+        ->get('https://pcm.patchcablemgr.com/api/license/portal/'.$licenseKey.'/'.$appID);
+
+		return $response;
     }
 }

@@ -1723,5 +1723,12 @@ export const PCM = {
                 variant: 'success',
             })
         },
+        ConvertTimestampToDate: function(UnixTimestamp) {
+            
+            const DateObj = new Date(UnixTimestamp * 1000)
+            const DateStr = DateObj.toLocaleString()
+            
+            return DateStr
+        }
     }
 }

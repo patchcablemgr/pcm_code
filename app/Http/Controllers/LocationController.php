@@ -9,6 +9,7 @@ use Illuminate\Validation\ValidationException;
 use App\Models\LocationModel;
 use App\Http\Controllers\PCM;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Gate;
 
 class LocationController extends Controller
 {
@@ -32,6 +33,12 @@ class LocationController extends Controller
      */
     public function store(Request $request)
     {
+
+        // RBAC
+        if (! Gate::allows('operator')) {
+            abort(403);
+        }
+
         // Prepare variables
         $locationTypeArray = [
             'location',
@@ -141,6 +148,12 @@ class LocationController extends Controller
      */
     public function update(Request $request, $id)
     {
+
+        // RBAC
+        if (! Gate::allows('operator')) {
+            abort(403);
+        }
+
         $validatorInput = [
             'id' => $id
         ];
@@ -251,6 +264,12 @@ class LocationController extends Controller
      */
     public function destroy($id)
     {
+
+        // RBAC
+        if (! Gate::allows('operator')) {
+            abort(403);
+        }
+        
         $validatorInput = [
             'id' => $id
         ];

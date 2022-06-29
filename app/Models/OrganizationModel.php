@@ -10,12 +10,8 @@ class OrganizationModel extends Model
     use HasFactory;
     protected $table = 'organization';
     protected $casts = [
-      'entitlement_data' => 'array',
+      'license_data' => 'array',
     ];
     protected $hidden = ['app_id'];
 
-    public function getVersionAttribute()
-    {
-        return getenv('APP_VERSION');
-    }
 }

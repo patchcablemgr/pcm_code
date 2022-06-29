@@ -26,7 +26,15 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        Gate::define('update-object', function (User $user) {
+        Gate::define('admin', function (User $user) {
+
+            $allowedRoles = array(
+                'admin'
+            );
+            return in_array($user->role, $allowedRoles);
+        });
+
+        Gate::define('operator', function (User $user) {
 
             $allowedRoles = array(
                 'operator',

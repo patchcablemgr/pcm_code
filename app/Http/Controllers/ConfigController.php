@@ -12,18 +12,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Gate;
 
 class ConfigController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-        //
-    }
 
     /**
      * Display a listing of the resource.
@@ -32,6 +24,12 @@ class ConfigController extends Controller
      */
     public function indexNetwork()
     {
+
+        // RBAC
+        if (! Gate::allows('admin')) {
+            abort(403);
+        }
+
         $filename = '/shared/network_config';
         $contents = file($filename);
         $data = array();
@@ -68,6 +66,11 @@ class ConfigController extends Controller
     public function indexCSR()
     {
 
+        // RBAC
+        if (! Gate::allows('admin')) {
+            abort(403);
+        }
+
         $CSRs = CSRModel::all();
 
         return $CSRs;
@@ -81,20 +84,14 @@ class ConfigController extends Controller
     public function indexCert()
     {
 
+        // RBAC
+        if (! Gate::allows('admin')) {
+            abort(403);
+        }
+
         $certs = CertModel::all();
 
         return $certs;
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
     }
 
     /**
@@ -105,6 +102,11 @@ class ConfigController extends Controller
      */
     public function networkConfig(Request $request)
     {
+
+        // RBAC
+        if (! Gate::allows('admin')) {
+            abort(403);
+        }
 
         // Validate template ID
         $validatorInput = [
@@ -158,6 +160,11 @@ class ConfigController extends Controller
      */
     public function generateCSR(Request $request)
     {
+
+        // RBAC
+        if (! Gate::allows('admin')) {
+            abort(403);
+        }
 
         $validatorInput = [
             'country' => $request->country,
@@ -249,6 +256,11 @@ class ConfigController extends Controller
     public function generateSelfSigned(Request $request, $id)
     {
 
+        // RBAC
+        if (! Gate::allows('admin')) {
+            abort(403);
+        }
+
         // Prepare variables
         $validatorInput = [
             'id' => $id,
@@ -307,40 +319,6 @@ class ConfigController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
-    }
-
-    /**
      * Remove the specified resource from storage.
      *
      * @param  int  $id
@@ -348,6 +326,12 @@ class ConfigController extends Controller
      */
     public function destroyCSR($id)
     {
+
+        // RBAC
+        if (! Gate::allows('admin')) {
+            abort(403);
+        }
+
         $validatorInput = [
             'id' => $id
         ];
@@ -378,6 +362,12 @@ class ConfigController extends Controller
      */
     public function destroyCert($id)
     {
+
+        // RBAC
+        if (! Gate::allows('admin')) {
+            abort(403);
+        }
+
         $validatorInput = [
             'id' => $id
         ];
@@ -413,6 +403,12 @@ class ConfigController extends Controller
      */
     public function storeCert(Request $request, $id)
     {
+
+        // RBAC
+        if (! Gate::allows('admin')) {
+            abort(403);
+        }
+
         // Prepare variables
         $validatorInput = [
             'id' => $id,
@@ -478,6 +474,12 @@ class ConfigController extends Controller
      */
     public function activateCert(Request $request, $id)
     {
+
+        // RBAC
+        if (! Gate::allows('admin')) {
+            abort(403);
+        }
+
         // Prepare variables
         $validatorInput = [
             'id' => $id,
@@ -524,6 +526,12 @@ class ConfigController extends Controller
      */
     public function updateApp(Request $request)
     {
+
+        // RBAC
+        if (! Gate::allows('admin')) {
+            abort(403);
+        }
+        
         $time = now();
 
         $signalUpdate = file_put_contents('/shared/app_update', $time);

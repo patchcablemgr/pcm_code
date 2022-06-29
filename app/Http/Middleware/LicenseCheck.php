@@ -19,13 +19,22 @@ class LicenseCheck
     public function handle(Request $request, Closure $next)
     {
 
-        $organization = OrganizationModel::where('id', '=', '*')->first();
-        $licenseLastChecked = $organization['license_last_checked'];
-        $appID = $organization['app_id'];
+        $organization = OrganizationModel::first();
+        $licenseKey = $organization->license_key;
+        $appID = $organization->app_id;
+        $licenseLastChecked = $organization->license_last_checked;
 
-        if(($licenseLastChecked+86400) > time()) {
-            $PCM = new PCM;
-            $PCM->fetchLicenseData();
+        if($licenseKey !== null && $appID !== null && $licenseLastChecked !== null) {
+            if(($licenseLastChecked+86400) < time()) {
+                $PCM = new PCM;
+                $licenseData = $PCM->fetchLicenseData($licenseKey, $appID);
+
+                if($licenseData->status() == 200) {
+                    $organization->license_last_checked = time();
+                    $organization->license_data = $licenseData->json();
+                    $organization->save();
+                }
+            }
         }
 
         return $next($request);

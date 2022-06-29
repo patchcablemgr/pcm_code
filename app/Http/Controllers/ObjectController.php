@@ -36,6 +36,11 @@ class ObjectController extends Controller
     public function storeStandard(Request $request)
     {
 
+        // RBAC
+        if (! Gate::allows('operator')) {
+            abort(403);
+        }
+
         $PCM = new PCM;
 
         $validatorInput = [
@@ -112,6 +117,11 @@ class ObjectController extends Controller
      */
     public function storeInsert(Request $request)
     {
+
+        // RBAC
+        if (! Gate::allows('operator')) {
+            abort(403);
+        }
 
         $PCM = new PCM;
 
@@ -200,6 +210,11 @@ class ObjectController extends Controller
     public function storeFloorplan(Request $request)
     {
 
+        // RBAC
+        if (! Gate::allows('operator')) {
+            abort(403);
+        }
+
         $validatorInput = [
             'locationID' => $request->location_id,
             'floorplanObjectType' => $request->floorplan_object_type,
@@ -244,17 +259,6 @@ class ObjectController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
-    }
-
-    /**
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -264,7 +268,8 @@ class ObjectController extends Controller
     public function update(Request $request, $id)
     {
 
-        if (! Gate::allows('update-object')) {
+        // RBAC
+        if (! Gate::allows('operator')) {
             abort(403);
         }
 
@@ -436,6 +441,11 @@ class ObjectController extends Controller
      */
     public function destroy($id)
     {
+
+        // RBAC
+        if (! Gate::allows('operator')) {
+            abort(403);
+        }
 
         $PCM = new PCM;
 

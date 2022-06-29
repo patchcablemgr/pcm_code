@@ -69,6 +69,8 @@ Route::group(['middleware' => 'auth:sanctum'], function(){
   Route::get('config/cert', [ConfigController::class, 'indexCert']);
   Route::get('profile/mfa', [ProfileController::class, 'generateMFAQRCode']);
   Route::get('organization', [OrganizationController::class, 'index']);
+  Route::get('organization/license', [OrganizationController::class, 'showLicense']);
+  Route::get('organization/license/portal', [OrganizationController::class, 'showLicensePortal']);
 
   // Only DELETE
   Route::delete('config/csr/{id}', [ConfigController::class, 'destroyCSR']);
@@ -78,7 +80,7 @@ Route::group(['middleware' => 'auth:sanctum'], function(){
   Route::patch('config/cert/{id}/activate', [ConfigController::class, 'activateCert']);
   Route::patch('profile/mfa', [ProfileController::class, 'disableMFA']);
   Route::patch('profile/change-password', [ProfileController::class, 'changePassword']);
-  Route::patch('organization', [OrganizationController::class, 'update']);
+  Route::patch('organization/license', [OrganizationController::class, 'updateLicense']);
 
   // No POST
   Route::apiResources([

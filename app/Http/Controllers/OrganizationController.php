@@ -7,7 +7,8 @@ use App\Models\OrganizationModel;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Http;
+use App\Http\Controllers\PCM;
+use Illuminate\Support\Facades\Gate;
 
 class OrganizationController extends Controller
 {
@@ -24,25 +25,77 @@ class OrganizationController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Display the specified resource.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function showLicense()
     {
-        //
+
+        // RBAC
+        if (! Gate::allows('admin')) {
+            abort(403);
+        }
+
+        $organization = OrganizationModel::first();
+        $licenseKey = $organization->license_key;
+        $appID = $organization->app_id;
+
+        if($licenseKey == null) {
+            throw ValidationException::withMessages(['license_key' => 'Invalid license key.']);
+        }
+
+        if($appID == null) {
+            throw ValidationException::withMessages(['app_id' => 'Invalid app ID.']);
+        }
+
+        $PCM = new PCM;
+        $licenseData = $PCM->fetchLicenseData($licenseKey, $appID);
+
+        if($licenseData->status() == 200) {
+            $organization->license_last_checked = time();
+            $organization->license_data = $licenseData->json();
+            $organization->save();
+            return $organization;
+        } else {
+            throw ValidationException::withMessages(['license-server' => $licenseData->body()]);
+        }
     }
 
     /**
      * Display the specified resource.
      *
-     * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function showLicensePortal()
     {
-        //
+
+        // RBAC
+        if (! Gate::allows('admin')) {
+            abort(403);
+        }
+
+        $organization = OrganizationModel::first();
+        $licenseKey = $organization->license_key;
+        $appID = $organization->app_id;
+
+        if($licenseKey == null) {
+            throw ValidationException::withMessages(['license_key' => 'Invalid license key.']);
+        }
+
+        if($appID == null) {
+            throw ValidationException::withMessages(['app_id' => 'Invalid app ID.']);
+        }
+
+        $PCM = new PCM;
+        $licensePortal = $PCM->fetchLicensePortal($licenseKey, $appID);
+
+        if($licensePortal->status() == 200) {
+            return $licensePortal->body();
+        } else {
+            throw ValidationException::withMessages(['license-server' => $licensePortal->body()]);
+        }
+
     }
 
     /**
@@ -51,35 +104,32 @@ class OrganizationController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request)
+    public function updateLicense(Request $request)
     {
 
+        // RBAC
+        if (! Gate::allows('admin')) {
+            abort(403);
+        }
+
         $request->validate(['license-key' => 'required|alpha_num|size:10']);
+        $licenseKey = $request['license-key'];
 
         $organization = OrganizationModel::first();
         $appID = $organization->app_id;
 
-        $response = Http::asForm()
-        ->patch('https://pcm.patchcablemgr.com/api/license', [
-            'license-key' => $request['license-key'],
-            'app-id' => $appID,
-        ]);
+        $PCM = new PCM;
+        $licenseData = $PCM->fetchLicenseData($licenseKey, $appID);
 
-        if($response->status() !== 200) {
-            throw ValidationException::withMessages(['license-key' => $response->body()]);
+        if($licenseData->status() == 200) {
+            $organization->license_last_checked = time();
+            $organization->license_key = $licenseKey;
+            $organization->license_data = $licenseData->json();
+            $organization->save();
+            return $organization;
         } else {
-            return $response;
+            throw ValidationException::withMessages(['license-server' => $licenseData->body()]);
         }
-    }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
     }
 }

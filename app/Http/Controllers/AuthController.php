@@ -253,10 +253,15 @@ class AuthController extends Controller
 			$code = Str::random(10);
 
 			$response = Http::asForm()
-				->post('https://pcm.patchcablemgr.com/api/forgot-password', [
-					'email' => $request->email,
-					'code' => $code,
-				]);
+			->withOptions([
+				'headers' => [
+					'Accept' => 'application/json',
+				]
+			])
+			->post('https://pcm.patchcablemgr.com/api/forgot-password', [
+				'email' => $request->email,
+				'code' => $code,
+			]);
 
 			if($response->status() !== 200) {
 				throw ValidationException::withMessages(['forgot-password' => $response->body()]);

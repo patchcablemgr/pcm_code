@@ -9,6 +9,7 @@ use App\Http\Controllers\PCM;
 use Illuminate\Support\Facades\Log;
 use App\Models\ConnectionModel;
 use App\Rules\ConnectionPeerData;
+use Illuminate\Support\Facades\Gate;
 
 class ConnectionController extends Controller
 {
@@ -32,6 +33,11 @@ class ConnectionController extends Controller
      */
     public function store(Request $request)
     {
+
+        // RBAC
+        if (! Gate::allows('operator')) {
+            abort(403);
+        }
 
         // Store request data
         $data = $request->all();
@@ -149,29 +155,6 @@ class ConnectionController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
-    {
-        //
-    }
-
-    /**
      * Remove the specified resource from storage.
      *
      * @param  int  $id
@@ -179,6 +162,12 @@ class ConnectionController extends Controller
      */
     public function destroy($id)
     {
+
+        // RBAC
+        if (! Gate::allows('operator')) {
+            abort(403);
+        }
+        
         $validatorInput = [
             'id' => $id
         ];

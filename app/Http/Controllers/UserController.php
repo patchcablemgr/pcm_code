@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class UserController extends Controller
 {
@@ -17,33 +19,16 @@ class UserController extends Controller
      */
     public function index()
     {
+
+        // RBAC
+        if (! Gate::allows('admin')) {
+            abort(403);
+        }
+
         $users = User::all();
 
         return $users;
     }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
-    }
-
     /**
      * Update the specified resource in storage.
      *
@@ -53,6 +38,12 @@ class UserController extends Controller
      */
     public function update(Request $request, $id)
     {
+
+        // RBAC
+        if (! Gate::allows('admin')) {
+            abort(403);
+        }
+        
         // Validate
         $validatorInput = [
             'id' => $id,
@@ -65,6 +56,7 @@ class UserController extends Controller
             ],
         ];
 
+        // Validate user status
         if($request->status) {
             $validatorInput = array_merge($validatorInput, array(
                 'status' => $request->status
@@ -76,6 +68,7 @@ class UserController extends Controller
             ));
         }
 
+        // Validate user role
         if($request->role) {
             $validatorInput = array_merge($validatorInput, array(
                 'role' => $request->role
@@ -91,6 +84,12 @@ class UserController extends Controller
         $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
         $customValidator->stopOnFirstFailure();
         $customValidator->validate();
+
+        // Validate user is not self
+        $userID = Auth::id();
+        if($userID == $id) {
+            throw ValidationException::withMessages(['id' => 'Cannot update your own account.']);
+        }
 
         // Store user
         $user = User::where('id', $id)->first();

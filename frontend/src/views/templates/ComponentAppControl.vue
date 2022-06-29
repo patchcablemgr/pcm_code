@@ -39,7 +39,7 @@
           <td>
           </td>
           <td>
-            1.0.0
+            {{ Organization.version }}
           </td>
         </tr>
 
@@ -76,7 +76,11 @@ export default {
   data() {
     return {}
   },
-  computed: {},
+  computed: {
+    Organization() {
+      return this.$store.state.pcmOrganization.Organization
+    },
+  },
   methods: {
     UpdateApp(){
 

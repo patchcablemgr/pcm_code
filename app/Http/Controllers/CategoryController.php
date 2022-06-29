@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use App\Models\CategoryModel;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Gate;
 
 class CategoryController extends Controller
 {
@@ -29,6 +30,12 @@ class CategoryController extends Controller
      */
     public function store(Request $request)
     {
+
+        // RBAC
+        if (! Gate::allows('operator')) {
+            abort(403);
+        }
+
         $request->validate([
             'name' => [
                 'required',
@@ -92,6 +99,11 @@ class CategoryController extends Controller
      */
     public function update(Request $request, $id)
     {
+
+        // RBAC
+        if (! Gate::allows('operator')) {
+            abort(403);
+        }
 
         $defaultCategory = CategoryModel::where('default', '=', 1)->first();
 
@@ -164,6 +176,12 @@ class CategoryController extends Controller
      */
     public function destroy($id)
     {
+
+        // RBAC
+        if (! Gate::allows('operator')) {
+            abort(403);
+        }
+
         $validatorInput = [
             'id' => $id
         ];

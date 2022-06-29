@@ -26,7 +26,7 @@
                   <dd class="col-sm-8">
                     <b-form-input
                       name="license-key"
-                      v-model="LicenseKey"
+                      v-model="Key"
                     />
                   </dd>
                 </dl>
@@ -57,8 +57,6 @@ import { BContainer, BRow, BCol, BCard, BForm, BButton, BFormInput, BFormSelect,
 import Ripple from 'vue-ripple-directive'
 import { PCM } from '@/mixins/PCM.js'
 
-const LicenseKey = ''
-
 export default {
   mixins: [PCM],
   components: {
@@ -78,10 +76,11 @@ export default {
   },
   props: {
     ModalTitle: {type: String},
+    LicenseKey: {type: String},
   },
   data () {
     return {
-      LicenseKey,
+      Key: this.LicenseKey
     }
   },
   computed: {
@@ -97,9 +96,9 @@ export default {
 
       const vm = this
       const Data = {
-        'license-key': vm.LicenseKey,
+        'license-key': vm.Key,
       }
-      const URL = '/api/organization'
+      const URL = '/api/organization/license'
 
       vm.$http.patch(URL, Data).then(response => {
         vm.$store.commit('pcmOrganization/UPDATE_Organization', {data:response.data})

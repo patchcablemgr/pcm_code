@@ -10,6 +10,7 @@ use App\Http\Controllers\PCM;
 use App\Rules\TemplateBlueprint;
 use App\Rules\TemplateInsertParentData;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Gate;
 
 class TemplateController extends Controller
 {
@@ -33,6 +34,11 @@ class TemplateController extends Controller
      */
     public function store(Request $request)
     {
+
+        // RBAC
+        if (! Gate::allows('operator')) {
+            abort(403);
+        }
 
 		$PCM = new PCM;
 
@@ -124,17 +130,6 @@ class TemplateController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
-    }
-
-    /**
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -143,6 +138,11 @@ class TemplateController extends Controller
      */
     public function update(Request $request, $id)
     {
+
+        // RBAC
+        if (! Gate::allows('operator')) {
+            abort(403);
+        }
 
         $PCM = new PCM;
 
@@ -216,6 +216,12 @@ class TemplateController extends Controller
      */
     public function destroy($id)
     {
+
+        // RBAC
+        if (! Gate::allows('operator')) {
+            abort(403);
+        }
+        
 		$validatorInput = [
             'id' => $id
         ];

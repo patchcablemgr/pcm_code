@@ -53,7 +53,7 @@
             </b-button>
           </td>
           <td>
-            {{ LicenseKey }}
+            {{ Organization.license_key }}
           </td>
         </tr>
 
@@ -65,7 +65,7 @@
           <td>
           </td>
           <td>
-            Active
+            {{ Organization.license_data.status }}
           </td>
         </tr>
 
@@ -77,7 +77,67 @@
           <td>
           </td>
           <td>
-            20230101
+            {{ Expiration }}
+          </td>
+        </tr>
+
+        <!-- Last Checked -->
+        <tr>
+          <td class="text-right">
+            <strong>Last Checked:</strong>
+          </td>
+          <td>
+          </td>
+          <td>
+            {{ LastChecked }}
+          </td>
+        </tr>
+
+        <!-- Entitlement Cabinet -->
+        <tr>
+          <td class="text-right">
+            <strong>Cabinets:</strong>
+          </td>
+          <td>
+          </td>
+          <td>
+            {{ (Organization.license_data.entitlement.cabinet == 0) ? "Unlimited" : Organization.license_data.entitlement.cabinet }} (<small>{{ CabinetCount }} used</small>)
+          </td>
+        </tr>
+
+        <!-- Entitlement Objects -->
+        <tr>
+          <td class="text-right">
+            <strong>Objects:</strong>
+          </td>
+          <td>
+          </td>
+          <td>
+            {{ (Organization.license_data.entitlement.object == 0) ? "Unlimited" : Organization.license_data.entitlement.object }} (<small>{{ ObjectCount }} used</small>)
+          </td>
+        </tr>
+
+        <!-- Entitlement Connections -->
+        <tr>
+          <td class="text-right">
+            <strong>Connections:</strong>
+          </td>
+          <td>
+          </td>
+          <td>
+            {{ (Organization.license_data.entitlement.connection == 0) ? "Unlimited" : Organization.license_data.entitlement.connection }} (<small>{{ ConnectionCount }} used</small>)
+          </td>
+        </tr>
+
+        <!-- Entitlement Users -->
+        <tr>
+          <td class="text-right">
+            <strong>Users:</strong>
+          </td>
+          <td>
+          </td>
+          <td>
+            {{ (Organization.license_data.entitlement.user == 0) ? "Unlimited" : Organization.license_data.entitlement.user }} (<small>{{ UserCount }} used</small>)
           </td>
         </tr>
 
@@ -88,6 +148,7 @@
   <!-- Modal Edit License Key -->
   <modal-edit-license-key
     ModalTitle="License Key"
+    :LicenseKey="LicenseKey"
   />
 </div>
 </template>
@@ -125,11 +186,20 @@ export default {
     return {}
   },
   computed: {
+    Users: function() {
+      return this.$store.state.pcmUsers.Users
+    },
+    Connections() {
+      return this.$store.state.pcmConnections.Connections
+    },
     Organization() {
       return this.$store.state.pcmOrganization.Organization
     },
-    OrganizationReady: function() {
-      return this.$store.state.pcmOrganization.OrganizationReady
+    Objects() {
+      return this.$store.state.pcmObjects.Objects
+    },
+    Locations() {
+      return this.$store.state.pcmLocations.Locations
     },
     LicenseKey: {
       get() {
@@ -142,39 +212,118 @@ export default {
       set(newValue) {
         return false
       }
+    },
+    Expiration: {
+      get() {
+
+        const vm = this
+        const Expiration = vm.Organization.license_data.expiration
+        if(Expiration === null) {
+          return "N/A"
+        } else {
+          return vm.ConvertTimestampToDate(Expiration)
+        }
+
+      },
+      set(newValue) {
+        return false
+      }
+    },
+    ObjectCount: {
+      get() {
+
+        const vm = this
+        const ObjectCount = vm.Objects.actual.length
+        return ObjectCount
+
+      },
+      set(newValue) {
+        return false
+      }
+    },
+    CabinetCount: {
+      get() {
+
+        const vm = this
+        const Cabinets = vm.Locations.actual.filter(location => location.type == 'cabinet')
+        const CabinetCount = Cabinets.length
+        return CabinetCount
+
+      },
+      set(newValue) {
+        return false
+      }
+    },
+    UserCount: {
+      get() {
+
+        const vm = this
+        const ActiveUsers = vm.Users.filter(user => user.status)
+        const UserCount = ActiveUsers.length
+        return UserCount
+
+      },
+      set(newValue) {
+        return false
+      }
+    },
+    ConnectionCount: {
+      get() {
+
+        const vm = this
+        const ConnectionCount = vm.Connections.length
+        return ConnectionCount
+
+      },
+      set(newValue) {
+        return false
+      }
+    },
+    LastChecked: {
+      get() {
+
+        const vm = this
+        const Expiration = vm.Organization.license_last_checked
+        if(Expiration === null) {
+          return "Never"
+        } else {
+          return vm.ConvertTimestampToDate(Expiration)
+        }
+
+      },
+      set(newValue) {
+        return false
+      }
     }
   },
   methods: {
     RefreshSubscription(){
 
-      console.log('refresh')
-      /*
       const vm = this
       
-      const URL = '/api/config/app/update'
+      const URL = '/api/organization/license'
 
-      vm.$http.post(URL).then(response => {
-        console.log(response)
+      vm.$http.get(URL).then(response => {
+        vm.$store.commit('pcmOrganization/SET_Organization', {data:response.data})
       }).catch(error => {
         vm.DisplayError(error)
       })
-      */
+      
     },
     ManageSubscription(){
 
-      console.log('manage')
-      /*
       const vm = this
       
-      const URL = '/api/config/app/update'
+      const URL = '/api/organization/license/portal'
 
-      vm.$http.post(URL).then(response => {
-        console.log(response)
+      vm.$http.get(URL).then(response => {
+        console.log(response.data.url)
+        window.open(response.data.url, '_blank');
       }).catch(error => {
         vm.DisplayError(error)
       })
-      */
     },
-  }
+  },
+  mounted() {},
 }
 </script>

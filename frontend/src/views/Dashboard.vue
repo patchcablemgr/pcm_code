@@ -116,17 +116,17 @@ export default {
       const DependenciesReady = Dependencies.every(function(element){ return element == true })
       return DependenciesReady
     },
-    Organization() {
-      return this.$store.state.pcmOrganization.Organization
-    },
-    OrganizationReady: function() {
-      return this.$store.state.pcmOrganization.OrganizationReady
-    },
     Objects() {
       return this.$store.state.pcmObjects.Objects
     },
     ObjectsReady: function() {
       return this.$store.state.pcmObjects.ObjectsReady
+    },
+    Organization() {
+      return this.$store.state.pcmOrganization.Organization
+    },
+    OrganizationReady: function() {
+      return this.$store.state.pcmOrganization.OrganizationReady
     },
     Connections() {
       return this.$store.state.pcmConnections.Connections

@@ -22,7 +22,7 @@ class DatabaseSeeder extends Seeder
         if(!OrganizationModel::all()->count()) {
             $this->call([Seeder_1_0_0::class]);
         }
-/*
+
         $organization = DB::table('organization')->first();
         $currentVersion = $organization->version;
 
@@ -30,8 +30,6 @@ class DatabaseSeeder extends Seeder
         if(version_compare($currentVersion, '1.0.0') == 0) {
             $this->call([Seeder_1_0_1::class]);
         }
-
-*/
 
     }
 }

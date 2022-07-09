@@ -4,7 +4,7 @@
     $now = new DateTime;
 @endsetup
 
-@story('deploy')
+@story('upgrade')
     update-code
     install-dependencies
     compile

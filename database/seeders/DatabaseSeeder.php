@@ -24,9 +24,9 @@ class DatabaseSeeder extends Seeder
             $this->call([Seeder_1_0_0::class]);
         }
 
-        $org = ObjectModel::where('id', 1)->first();
+        $org = OrganizationModel::where('id', 1)->first();
         $orgVersion = $org->version;
-        Log::info('attempt-4');
+        Log::info('attempt-5');
         Log::info($orgVersion);
 
         // 1.0.0 -> 1.0.1

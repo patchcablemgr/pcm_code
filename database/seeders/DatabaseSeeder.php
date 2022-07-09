@@ -24,8 +24,8 @@ class DatabaseSeeder extends Seeder
             $this->call([Seeder_1_0_0::class]);
         }
 
-        $organization = DB::table('organization')->first();
-        $currentVersion = $organization->version;
+        $currentVersion = DB::table('organization')->first()->value('version');
+        Log::info('attempt-1');
         Log::info($currentVersion);
 
         // 1.0.0 -> 1.0.1

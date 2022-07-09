@@ -28,10 +28,17 @@ class Seeder_1_0_1 extends Seeder
         }
 
         // Update app version
+        $org = ObjectModel::where('id', 1)->first();
+        $org->version = $version;
+
+        $org->save();
+
+        /*
         $org = DB::table('organization')->where('id', 1)->first();
         $orgID = $org->id;
         DB::table('organization')
             ->where('id', $orgID)
             ->update(['version' => $version]);
+            */
     }
 }

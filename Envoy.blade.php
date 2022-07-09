@@ -32,10 +32,10 @@
 
 @task('run-migrations')
     cd /home/pcmuser/pcm_selfhosted/app/vendor/bin
-    sudo sail artisan migrate --path=database/migrations/tenant
+    sail artisan migrate --path=database/migrations/tenant
 @endtask
 
 @task('run-seeder')
     cd /home/pcmuser/pcm_selfhosted/app/vendor/bin
-    sudo sail artisan db:seed
+    sail artisan db:seed
 @endtask

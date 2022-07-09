@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
 
         // 1.0.0 -> 1.0.1
         if(version_compare($currentVersion, '1.0.0') === 0) {
+            Log::info('Upgrade to 1.0.1');
             $this->call([Seeder_1_0_1::class]);
         }
 

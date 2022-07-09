@@ -28,9 +28,10 @@ class Seeder_1_0_1 extends Seeder
         }
 
         // Update app version
-        $entryID = DB::table('organization')->first()->value('id');
+        $org = DB::table('organization')->where('id', 1)->first();
+        $orgID = $org->id;
         DB::table('organization')
-            ->where('id', $entryID)
+            ->where('id', $orgID)
             ->update(['version' => $version]);
     }
 }

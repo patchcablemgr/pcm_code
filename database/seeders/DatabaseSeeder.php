@@ -24,12 +24,13 @@ class DatabaseSeeder extends Seeder
             $this->call([Seeder_1_0_0::class]);
         }
 
-        $currentVersion = DB::table('organization')->first()->value('version');
-        Log::info('attempt-1');
-        Log::info($currentVersion);
+        $org = DB::table('organization')->where('id', 1)->first();
+        $orgVersion = $org->version;
+        Log::info('attempt-2');
+        Log::info($orgVersion);
 
         // 1.0.0 -> 1.0.1
-        if(version_compare($currentVersion, '1.0.0') === 0) {
+        if(version_compare($orgVersion, '1.0.0') === 0) {
             Log::info('Upgrade to 1.0.1');
             $this->call([Seeder_1_0_1::class]);
         }

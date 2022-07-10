@@ -32,10 +32,10 @@
 
 @task('run-migrations')
     cd /home/pcmuser/pcm_selfhosted/app/vendor/bin
-    ./sail artisan migrate --path=database/migrations/tenant
+    ./sail artisan migrate --path=database/migrations/tenant 2>&1 > /home/pcmuser/output-migrate
 @endtask
 
 @task('run-seeder')
     cd /home/pcmuser/pcm_selfhosted/app/vendor/bin
-    ./sail artisan db:seed
+    ./sail artisan db:seed 2>&1 > /home/pcmuser/output-migrate
 @endtask

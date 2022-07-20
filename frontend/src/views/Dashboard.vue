@@ -9,7 +9,7 @@
         >
 
           <b-card
-            title="Port Utilization - test"
+            title="Port Utilization"
           >
             <b-card-body>
               <b-table

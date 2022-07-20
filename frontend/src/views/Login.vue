@@ -4,10 +4,10 @@
 
       <!-- Brand logo-->
       <b-link class="brand-logo">
-        <vuexy-logo />
-        <h2 class="brand-text text-primary ml-1">
+        <img src="@/assets/images/logo/pcm-logo.png" class="img-fluid" alt="Brand logo">
+        <!--h2 class="brand-text text-primary ml-1">
           PatchCableMgr
-        </h2>
+        </h2-->
       </b-link>
       <!-- /Brand logo-->
 

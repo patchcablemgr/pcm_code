@@ -84,9 +84,9 @@ class AuthController extends Controller
 			'admin',
 			'register',
 			'home',
-			'demo',
 			'api',
 			'backend',
+			'pcm'
 		];
 
         $request->validate([

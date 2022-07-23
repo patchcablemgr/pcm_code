@@ -570,6 +570,19 @@ export default {
       this.visibleForm = "login"
     },
   },
+  mounted() {
+
+    const vm = this
+
+    if(typeof vm.$route.query.uname !== 'undefined') {
+      vm.userEmail = vm.$route.query.uname
+    }
+
+    if(typeof vm.$route.query.pword !== 'undefined') {
+      vm.password = vm.$route.query.pword
+    }
+    
+  }
 }
 </script>
 

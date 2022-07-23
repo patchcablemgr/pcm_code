@@ -47,7 +47,7 @@ class ConnectionController extends Controller
             'face' => $data['face'],
             'partition' => $data['partition'],
             'port-id' => $data['port_id'],
-            'peer-data' => $data['PeerData'],
+            'peer-data' => $data['peer_data'],
         ];
         $validatorRules = [
             'id' => [
@@ -97,7 +97,7 @@ class ConnectionController extends Controller
         $connectionDeleteArray = $filteredConnections->all();
 
         // Find connections associated with selected node(s) to be removed
-        foreach($data['PeerData'] as $key => $value) {
+        foreach($data['peer_data'] as $key => $value) {
 
             $aAttributes = array(
                 ['a_id', $value['id']],
@@ -128,7 +128,7 @@ class ConnectionController extends Controller
         }
 
         // Create new connection record(s)
-        foreach($data['PeerData'] as $key => $value) {
+        foreach($data['peer_data'] as $key => $value) {
 
             // Create new connection object
             $connection = new ConnectionModel;

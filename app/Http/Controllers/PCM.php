@@ -258,7 +258,7 @@ class PCM extends Controller
                 'Accept' => 'application/json',
             ],
         ])
-        ->get('https://pcm.patchcablemgr.com/api/license/'.$licenseKey.'/'.$appID);
+        ->get('https://patchcablemgr.com/api/license/'.$licenseKey.'/'.$appID);
 
 		return $response;
     }
@@ -279,7 +279,7 @@ class PCM extends Controller
                 'Accept' => 'application/json',
             ],
         ])
-        ->get('https://pcm.patchcablemgr.com/api/license/portal/'.$licenseKey.'/'.$appID);
+        ->get('https://patchcablemgr.com/api/license/portal/'.$licenseKey.'/'.$appID);
 
 		return $response;
     }

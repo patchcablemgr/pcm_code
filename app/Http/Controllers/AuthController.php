@@ -258,7 +258,7 @@ class AuthController extends Controller
 					'Accept' => 'application/json',
 				]
 			])
-			->post('https://pcm.patchcablemgr.com/api/forgot-password', [
+			->post('https://patchcablemgr.com/api/forgot-password', [
 				'email' => $request->email,
 				'code' => $code,
 			]);

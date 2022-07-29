@@ -2,23 +2,26 @@
     <!-- Template port select modal -->
     <b-modal
       :id="ModalID"
-      title="Edit"
+      :title="ModalTitle"
       size="lg"
-      ok-title="OK"
+      ok-title="Submit"
       @ok="Submit"
       cancel-title="Clear"
       @cancel="Clear"
     >
       <b-row>
         <b-col>
-          <b-card
-            :title="ModalTitle"
-          >
+          <b-card>
+            <b-card-title>
+              <feather-icon class="mr-1" icon="MapPinIcon" />
+              {{SelectedDN}}
+            </b-card-title>
             <b-card-body>
               <liquor-tree
                 :ref="TreeRef"
                 :data="[]"
                 :options="LocationTreeOptions"
+                class="pcm_scroll"
               >
                 <span class="tree-text" slot-scope="{ node }" style="width:100%;">
                   <template>
@@ -42,6 +45,7 @@ import {
   BRow,
   BCol,
   BCard,
+  BCardTitle,
   BCardBody,
 } from 'bootstrap-vue'
 import { PCM } from '@/mixins/PCM.js'
@@ -58,6 +62,7 @@ export default {
     BRow,
     BCol,
     BCard,
+    BCardTitle,
     BCardBody,
     LiquorTree,
   },
@@ -120,6 +125,13 @@ export default {
 
       return TemplateType
     },
+    SelectedDN: function() {
+
+      const vm = this
+      const SelectedDN = vm.GenerateSelectedPortDN(vm.PortSelectFunction)
+
+      return SelectedDN
+    },
   },
   methods: {
     Submit: function() {
@@ -145,7 +157,6 @@ export default {
       const SelectedObjectFace = (SelectedObjectIsFloorplan) ? 'front' : vm.PartitionAddressSelected[Context].object_face
       const SelectedObjectPartition = (SelectedObjectIsFloorplan) ? [0] : vm.PartitionAddressSelected[Context][SelectedObjectFace]
       const SelectedObjectPortID = (SelectedObjectIsFloorplan) ? null : vm.PartitionAddressSelected[Context].port_id[SelectedObjectFace]
-      //const SelectedObjectPortID = null
 
       let PeerData = []
       TreeSelection.forEach(function(node){

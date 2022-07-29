@@ -353,7 +353,7 @@
     <!-- Modal Port Select -->
     <modal-port-select
       ModalID="port-select-trunk"
-      ModalTitle="Trunk"
+      ModalTitle="Select Trunk Peer"
       TreeRef="PortSelectTrunk"
       :Context="Context"
       :PartitionAddressSelected="PartitionAddressSelected"

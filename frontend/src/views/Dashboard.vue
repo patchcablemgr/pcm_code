@@ -3,7 +3,11 @@
     v-if="DependenciesReady"
   >
     <b-container class="bv-example-row" fluid="xs">
-      <b-row>
+      <b-row
+        cols="1"
+        cols-md="2"
+        cols-xl="3"
+      >
         <b-col
           lg="4"
         >

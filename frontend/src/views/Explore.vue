@@ -3,7 +3,11 @@
     v-if="DependenciesReady"
   >
     <b-container class="bv-example-row" fluid="xs">
-      <b-row>
+      <b-row
+        cols="1"
+        cols-md="2"
+        cols-xl="3"
+      >
         <b-col>
           <b-card
             title="Locations and Cabinets"
@@ -58,6 +62,7 @@
         >
           <b-card
             title="Cabinet"
+            :class="{ pcm_sticky: IsSticky, pcm_scroll: IsSticky }"
           >
 
             <b-card-body
@@ -69,19 +74,24 @@
             <b-card-body
               v-if=" PreviewDisplay == 'cabinet' "
             >
-              <b-form-radio
-                v-model="TemplateFaceSelected.actual"
-                plain
-                value="front"
-              >Front
-              </b-form-radio>
-              <b-form-radio
-                v-model="TemplateFaceSelected.actual"
-                plain
-                value="rear"
-              >
-                Rear
-              </b-form-radio>
+              <div class="demo-inline-spacing">
+                <b-form-radio
+                  v-model="TemplateFaceSelected.actual"
+                  value="front"
+                >Front
+                </b-form-radio>
+                <b-form-radio
+                  v-model="TemplateFaceSelected.actual"
+                  value="rear"
+                >
+                  Rear
+                </b-form-radio>
+                <b-form-checkbox
+                    v-model="IsSticky"
+                    switch
+                  >Sticky
+                </b-form-checkbox>
+              </div>
               <component-cabinet
                 :LocationID="NodeIDSelected"
                 Context="actual"
@@ -144,6 +154,7 @@ import {
   BCardBody,
   BCardText,
   BFormRadio,
+  BFormCheckbox,
   BDropdown,
   BDropdownItem,
   BDropdownDivider,
@@ -204,6 +215,8 @@ const DetailsAreEditable = false
 
 const ObjectsAreDraggable = false
 
+const IsSticky = false
+
 export default {
   mixins: [PCM],
   components: {
@@ -218,6 +231,7 @@ export default {
 		BDropdownDivider,
     BCardText,
     BFormRadio,
+    BFormCheckbox,
     BButton,
 
     ToastGeneral,
@@ -245,6 +259,7 @@ export default {
       DetailsAreEditable,
       ObjectsAreDraggable,
       File: null,
+      IsSticky,
     }
   },
   computed: {

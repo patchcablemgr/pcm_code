@@ -3,7 +3,11 @@
     v-if="DependenciesReady"
   >
     <b-container class="bv-example-row" fluid="xs">
-      <b-row>
+      <b-row
+        cols="1"
+        cols-md="2"
+        cols-xl="3"
+      >
         <b-col>
           <b-card
             title="Properties"
@@ -27,25 +31,33 @@
 
           <b-card
             title="Preview"
+            :class="{ pcm_sticky: IsSticky, pcm_scroll: IsSticky }"
           >
             <b-card-body
               v-if=" PreviewDisplay == 'cabinet' "
             >
-              <b-form-radio
-                v-model="TemplateFaceSelected.workspace"
-                plain
-                value="front"
-                :disabled="TemplateFaceToggleIsDisabled"
-              >Front
-              </b-form-radio>
-              <b-form-radio
-                v-model="TemplateFaceSelected.workspace"
-                plain
-                value="rear"
-                :disabled="TemplateFaceToggleIsDisabled"
-              >
-                Rear
-              </b-form-radio>
+              <div class="demo-inline-spacing">
+                
+                <b-form-radio
+                  v-model="TemplateFaceSelected.workspace"
+                  value="front"
+                  :disabled="TemplateFaceToggleIsDisabled"
+                >Front
+                </b-form-radio>
+
+                <b-form-radio
+                  v-model="TemplateFaceSelected.workspace"
+                  value="rear"
+                  :disabled="TemplateFaceToggleIsDisabled"
+                >Rear
+                </b-form-radio>
+
+                <b-form-checkbox
+                  v-model="IsSticky"
+                  switch
+                >Sticky
+                </b-form-checkbox>
+              </div>
               <component-cabinet
                 :LocationID="LocationID"
                 Context="workspace"
@@ -93,7 +105,7 @@
 </template>
 
 <script>
-import { BContainer, BRow, BCol, BCard, BCardBody, BCardText, BFormRadio, } from 'bootstrap-vue'
+import { BContainer, BRow, BCol, BCard, BCardBody, BCardText, BFormCheckbox, BFormRadio, } from 'bootstrap-vue'
 import TemplatesForm from './templates/TemplatesForm.vue'
 import ToastGeneral from './templates/ToastGeneral.vue'
 import ComponentCabinet from './templates/ComponentCabinet.vue'
@@ -102,6 +114,7 @@ import ComponentTemplates from './templates/ComponentTemplates.vue'
 import ModalTemplatesEdit from './templates/ModalTemplatesEdit.vue'
 import { PCM } from '@/mixins/PCM.js'
 
+const IsSticky = false
 const CategoriesWatcherActive = true
 const LocationID = 1
 const StandardTemplateID = 1
@@ -179,6 +192,7 @@ export default {
     BCard,
     BCardBody,
     BCardText,
+    BFormCheckbox,
     BFormRadio,
 
     TemplatesForm,
@@ -190,6 +204,7 @@ export default {
   },
   data() {
     return {
+      IsSticky,
       CategoriesWatcherActive,
       LocationID,
       TemplateFaceSelected,

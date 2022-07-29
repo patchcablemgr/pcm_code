@@ -4,6 +4,7 @@
       :ref="TreeRef"
       :data="[]"
       :options="LocationTreeOptions"
+      class="pcm_scroll"
     >
       <span class="tree-text" slot-scope="{ node }" style="width:100%;">
         <template>

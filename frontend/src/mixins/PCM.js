@@ -277,7 +277,8 @@ export const PCM = {
                                 type: 'port',
                                 parent_id: child.location_id,
                                 img: '',
-                                order: child.partition_address.length + child.partition_address[child.partition_address.length - 1],
+                                //order: child.partition_address.length + child.partition_address[child.partition_address.length - 1],
+                                order: i,
                             })
                         }
                     }
@@ -1246,6 +1247,22 @@ export const PCM = {
         },
 
 // Misc
+        GenerateSelectedPortDN: function(Scope){
+            const vm = this
+            const Context = vm.Context
+            const ObjectID = vm.PartitionAddressSelected[Context].object_id
+            const Face = vm.PartitionAddressSelected[Context].object_face
+            const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+            const PortIndex = vm.PartitionAddressSelected[Context].port_id[Face]
+
+            let SelectedPortDN = ''
+
+            if(ObjectID !== null) {
+                SelectedPortDN = vm.GenerateDN(Scope, ObjectID, Face, PartitionAddress, PortIndex)
+            }
+
+            return SelectedPortDN
+        },
         GenerateDN: function(Scope, ObjectID, Face, PartitionAddress, PortIndex=0){
 
             const vm = this

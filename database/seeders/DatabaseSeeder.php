@@ -6,6 +6,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use App\Models\OrganizationModel;
 use Database\Seeders\Seeder_1_0_0;
+use Database\Seeders\Seeder_1_0_1;
 
 class DatabaseSeeder extends Seeder
 {

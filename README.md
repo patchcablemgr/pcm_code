@@ -1,8 +1,7 @@
 ## 1.0.1
 
 Fixes:
-
-Features:
+- Resolved card width issue on mobile browsers
 
 Enhancements:
 - Display object ports in ascending order

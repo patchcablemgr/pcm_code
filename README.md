@@ -1,3 +1,8 @@
+## 1.0.2
+
+Fixes:
+- Resolved inability to upload template image
+
 ## 1.0.1
 
 Fixes:

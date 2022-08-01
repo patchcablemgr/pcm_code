@@ -31,5 +31,14 @@ class DatabaseSeeder extends Seeder
             $this->call([Seeder_1_0_1::class]);
         }
 
+        $org = OrganizationModel::where('id', 1)->first();
+        $orgVersion = $org->version;
+
+        // 1.0.1 -> 1.0.2
+        if(version_compare($orgVersion, '1.0.1') === 0) {
+            $org->version = '1.0.2';
+            $org->save();
+        }
+
     }
 }

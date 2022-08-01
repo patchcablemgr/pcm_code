@@ -345,6 +345,7 @@
     <!-- File Upload Modal -->
     <modal-file-upload
       Title="Template Image"
+      UploadType="templateImg"
       :Context="Context"
       :TemplateFaceSelected="TemplateFaceSelected"
       :PartitionAddressSelected="PartitionAddressSelected"

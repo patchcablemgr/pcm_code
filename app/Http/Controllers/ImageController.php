@@ -99,7 +99,7 @@ class ImageController extends Controller
             ]
         ];
         $validatorMessages = [];
-        $customValidatorValidator::make($validatorInput, $validatorRules, $validatorMessages);
+        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
         $customValidator->stopOnFirstFailure();
         $customValidator->validate();
 

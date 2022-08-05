@@ -1,30 +1,55 @@
 <!-- Templates -->
 
 <template>
-  <b-card
-    title="Templates"
-  >
+  <div>
+  <b-card>
+    <b-card-title class="mb-0">
+      <div class="d-flex flex-wrap justify-content-between">
+        <div class="demo-inline-spacing">
+          Templates
+        </div>
+        <div
+          v-if="Context != 'catalog'"
+          class="demo-inline-spacing"
+        >
+          <b-dropdown
+            v-ripple.400="'rgba(255, 255, 255, 0.15)'"
+            right
+            size="sm"
+            text="Actions"
+            variant="primary"
+          >
+            <b-dropdown-item
+              variant="danger"
+              v-b-modal.modal-template-catalog
+            >
+              Import
+            </b-dropdown-item>
+
+          </b-dropdown>
+        </div>
+      </div>
+    </b-card-title>
     <b-card-body>
 
       <!-- TemplateFace -->
-      <b-form-radio
-        v-model="ComputedTemplateFace"
-        plain
-        value="front"
-      >Front
-      </b-form-radio>
-      <b-form-radio
-        v-model="ComputedTemplateFace"
-        plain
-        value="rear"
-      >
-        Rear
-      </b-form-radio>
+      <div class="demo-inline-spacing mb-1">
+        <b-form-radio
+          v-model="ComputedTemplateFace"
+          value="front"
+        >Front
+        </b-form-radio>
+        <b-form-radio
+          v-model="ComputedTemplateFace"
+          value="rear"
+        >Rear
+        </b-form-radio>
+      </div>
 
       <!-- Filter -->
-      <label for="template-filter">Filter:</label>
       <b-form-tags
         v-model="TemplateFilter"
+        placeholder="Add filter tags..."
         input-id="template-filter"
         class="mb-2"
       />
@@ -32,7 +57,7 @@
       <!-- Templates -->
       <app-collapse>
         <app-collapse-item
-          v-for="Category in Categories"
+          v-for="Category in Categories[Context]"
           :key="Category.id"
           :title="Category.name+' ('+CategoryTemplateCount(Category.id)+')'"
         >
@@ -75,25 +100,47 @@
 
     </b-card-body>
   </b-card>
+
+  <!-- Modal Template Catalog -->
+  <modal-template-catalog
+    ModalID="modal-template-catalog"
+    Context="catalog"
+    :TemplateFaceSelected="TemplateFaceSelected"
+    :PartitionAddressSelected="PartitionAddressSelected"
+    :PartitionAddressHovered="PartitionAddressHovered"
+    @SetTemplateFaceSelected=" $emit('SetTemplateFaceSelected', $event) "
+  />
+
+  </div>
 </template>
 
 <script>
-import { BCard, BCardBody, BFormTags, BFormRadio } from 'bootstrap-vue'
+import { BCard, BCardTitle, BCardBody, BDropdown, BDropdownItem, BFormTags, BFormRadio } from 'bootstrap-vue'
+import Ripple from 'vue-ripple-directive'
 import AppCollapse from '@core/components/app-collapse/AppCollapse.vue'
 import AppCollapseItem from '@core/components/app-collapse/AppCollapseItem.vue'
-import ComponentObject from './ComponentObject.vue'
+import ComponentObject from '@/views/templates/ComponentObject.vue'
+import ModalTemplateCatalog from '@/views/templates/ModalTemplateCatalog.vue'
 
 const TemplateFilter = []
 
 export default {
   components: {
     BCard,
+    BCardTitle,
     BCardBody,
+    BDropdown,
+    BDropdownItem,
     BFormTags,
     BFormRadio,
     AppCollapse,
     AppCollapseItem,
+    
     ComponentObject,
+    ModalTemplateCatalog,
+  },
+  directives: {
+    Ripple,
   },
   props: {
     Context: {type: String},

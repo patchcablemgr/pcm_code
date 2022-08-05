@@ -209,8 +209,8 @@ export default {
       const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
       const Template = vm.Templates[Context][TemplateIndex]
       const CategoryID = Template.category_id
-      const CategoryIndex = vm.Categories.findIndex((cateogry) => cateogry.id == CategoryID )
-      const Category = vm.Categories[CategoryIndex]
+      const CategoryIndex = vm.Categories[Context].findIndex((cateogry) => cateogry.id == CategoryID )
+      const Category = vm.Categories[Context][CategoryIndex]
 
       return Category
 

@@ -97,7 +97,7 @@
           >
             <b-card-text>
               <div
-                v-for="(Category) in Categories"
+                v-for="(Category) in Categories[Context]"
                 v-bind:key="Category.id"
                 class="pcm_box"
                 :class="{
@@ -162,6 +162,7 @@ export default {
       HoveredCategoryID,
       SelectedCategoryID,
       LocalCategoryData,
+      Context: 'actual',
     }
   },
   computed: {
@@ -176,6 +177,7 @@ export default {
     Clicked: function(CategoryID) {
 
       const vm = this
+      const Context = vm.Context
       const SelectedCategoryID = vm.SelectedCategoryID
 
       if(SelectedCategoryID == CategoryID) {
@@ -184,8 +186,8 @@ export default {
       } else {
 
         vm.SelectedCategoryID = CategoryID
-        const CategoryIndex = vm.Categories.findIndex((category) => category.id == CategoryID)
-        const Category = vm.Categories[CategoryIndex]
+        const CategoryIndex = vm.Categories[Context].findIndex((category) => category.id == CategoryID)
+        const Category = vm.Categories[Context][CategoryIndex]
         vm.LocalCategoryData.name = Category.name
         vm.LocalCategoryData.default = Category.default
         vm.LocalCategoryData.color = Category.color
@@ -203,19 +205,20 @@ export default {
     Submit: function() {
 
       const vm = this
+      const Context = vm.Context
       const CategoryID = vm.SelectedCategoryID
       const Category = vm.LocalCategoryData
       Category.color = (Category.color.hasOwnProperty('hex8')) ? Category.color.hex8 : Category.color
       
       if(CategoryID) {
         vm.$http.patch('/api/categories/'+CategoryID, Category).then(response => {
-          vm.$store.commit('pcmCategories/UPDATE_Category', response.data)
+          vm.$store.commit('pcmCategories/UPDATE_Category', {'pcmContext': Context, 'data': response.data})
         }).catch(error => {
           vm.DisplayError(error)
         })
       } else {
         vm.$http.post('/api/categories', Category).then(response => {
-          vm.$store.commit('pcmCategories/ADD_Category', response.data)
+          vm.$store.commit('pcmCategories/ADD_Category', {'pcmContext': Context, 'data': response.data})
         }).catch(error => {
           vm.DisplayError(error)
         })
@@ -224,11 +227,12 @@ export default {
     Delete: function() {
 
       const vm = this
+      const Context = vm.Context
       const CategoryID = vm.SelectedCategoryID
       vm.SelectedCategoryID = null
 
       vm.$http.delete('/api/categories/'+CategoryID).then(response => {
-        vm.$store.commit('pcmCategories/DELETE_Category', response.data)
+        vm.$store.commit('pcmCategories/DELETE_Category', {'pcmContext': Context, 'data': response.data})
       }).catch(error => {
         vm.DisplayError(error)
       })

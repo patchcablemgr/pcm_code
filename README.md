@@ -1,3 +1,8 @@
+## 1.1.0
+
+Features:
+- Template catalog
+
 ## 1.0.2
 
 Fixes:

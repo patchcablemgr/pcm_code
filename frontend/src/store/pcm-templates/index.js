@@ -2,11 +2,13 @@ const TemplatesReady = {
   'workspace': false,
   'actual': false,
   'template': false,
+  'catalog': false,
 }
 const Templates = {
   'workspace': [],
   'actual': [],
-  'template': []
+  'template': [],
+  'catalog': [],
 }
 const DefaultStaticValue = 'Port'
 const DefaultIncrementalValue = '1'

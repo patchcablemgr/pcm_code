@@ -1,30 +1,43 @@
+const CategoriesReady = {
+  'workspace': false,
+  'actual': false,
+  'template': false,
+  'catalog': false,
+}
+const Categories = {
+  'workspace': [],
+  'actual': [],
+  'template': [],
+  'catalog': [],
+}
+
 export default {
   namespaced: true,
   state: {
-    CategoriesReady:false,
-    Categories: null
+    CategoriesReady,
+    Categories
   },
   mutations: {
-    SET_Categories(state, data) {
-      state.Categories = data
+    SET_Categories(state, {pcmContext, data}) {
+      state.Categories[pcmContext] = data
     },
-    ADD_Category(state, data) {
-      state.Categories.push(data)
+    ADD_Category(state, {pcmContext, data}) {
+      state.Categories[pcmContext].push(data)
     },
-    UPDATE_Category(state, data) {
+    UPDATE_Category(state, {pcmContext, data}) {
 
       const ID = data.id
-      const Index = state.Categories.findIndex((item) => item.id == ID)
-      state.Categories.splice(Index, 1, data)
+      const Index = state.Categories[pcmContext].findIndex((item) => item.id == ID)
+      state.Categories[pcmContext].splice(Index, 1, data)
     },
-    DELETE_Category(state, data) {
+    DELETE_Category(state, {pcmContext, data}) {
 
       const ID = data.id
-      const Index = state.Categories.findIndex((item) => item.id == ID)
-      state.Categories.splice(Index, 1)
+      const Index = state.Categories[pcmContext].findIndex((item) => item.id == ID)
+      state.Categories[pcmContext].splice(Index, 1)
     },
-    SET_Ready(state, ReadyState) {
-      state.CategoriesReady = ReadyState
+    SET_Ready(state, {pcmContext, ReadyState}) {
+      state.CategoriesReady[pcmContext] = ReadyState
     },
   },
   actions: {}

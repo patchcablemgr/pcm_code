@@ -2,11 +2,13 @@ const ObjectsReady = {
   'workspace': false,
   'actual': false,
   'template': false,
+  'catalog': false,
 }
 const Objects = {
   'workspace': [],
   'actual': [],
   'template': [],
+  'catalog': [],
 }
 
 export default {

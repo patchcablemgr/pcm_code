@@ -30,9 +30,11 @@
         <b-col>
 
           <b-card
-            title="Preview"
             :class="{ pcm_sticky: IsSticky, pcm_scroll: IsSticky }"
           >
+            <b-card-title  class="mb-0">
+              Preview
+            </b-card-title>
             <b-card-body
               v-if=" PreviewDisplay == 'cabinet' "
             >
@@ -105,7 +107,7 @@
 </template>
 
 <script>
-import { BContainer, BRow, BCol, BCard, BCardBody, BCardText, BFormCheckbox, BFormRadio, } from 'bootstrap-vue'
+import { BContainer, BRow, BCol, BCard, BCardTitle, BCardBody, BCardText, BFormCheckbox, BFormRadio, } from 'bootstrap-vue'
 import TemplatesForm from './templates/TemplatesForm.vue'
 import ToastGeneral from './templates/ToastGeneral.vue'
 import ComponentCabinet from './templates/ComponentCabinet.vue'
@@ -122,6 +124,7 @@ const InsertTemplateID = 2
 const TemplateFaceSelected = {
   'workspace': 'front',
   'template': 'front',
+  'catalog': 'front',
 }
 const PartitionAddressSelected = {
   'workspace': {
@@ -190,6 +193,7 @@ export default {
     BRow,
     BCol,
     BCard,
+    BCardTitle,
     BCardBody,
     BCardText,
     BFormCheckbox,
@@ -219,7 +223,8 @@ export default {
 
       const vm = this
       const Dependencies = [
-        vm.CategoriesReady,
+        vm.CategoriesReady.template,
+        vm.CategoriesReady.workspace,
         vm.TemplatesReady.template,
         vm.TemplatesReady.workspace,
         vm.ObjectsReady.template,
@@ -370,13 +375,13 @@ export default {
       const StandardTemplateIndex = vm.GetTemplateIndex(WorkspaceStandardID, Context)
       const InsertTemplateIndex = vm.GetTemplateIndex(WorkspaceInsertID, Context)
 
-      const DefaultCategoryIndex = Categories.findIndex((category) => category.default)
+      const DefaultCategoryIndex = Categories[Context].findIndex((category) => category.default)
       let DefaultCategoryID
 
       if(DefaultCategoryIndex !== -1) {
-        DefaultCategoryID = Categories[DefaultCategoryIndex].id
+        DefaultCategoryID = Categories[Context][DefaultCategoryIndex].id
       } else {
-        DefaultCategoryID = Categories[0].id
+        DefaultCategoryID = Categories[Context][0].id
       }
 
       const StandardTemplateUpdated = JSON.parse(JSON.stringify(vm.Templates[Context][StandardTemplateIndex]), function(key, value){
@@ -434,10 +439,15 @@ export default {
       const vm = this
       vm.$http.get('/api/categories')
       .then(response => {
-        vm.$store.commit('pcmCategories/SET_Categories', response.data)
+        vm.$store.commit('pcmCategories/SET_Categories', {pcmContext:'workspace', data:response.data})
+        vm.$store.commit('pcmCategories/SET_Categories', {pcmContext:'template', data:response.data})
+        vm.$store.commit('pcmCategories/SET_Categories', {pcmContext:'actual', data:response.data})
         vm.SetDefaultCategory()
-        vm.$store.commit('pcmCategories/SET_Ready', true)
+        vm.$store.commit('pcmCategories/SET_Ready', {pcmContext:'workspace', ReadyState:true})
+        vm.$store.commit('pcmCategories/SET_Ready', {pcmContext:'template', ReadyState:true})
+        vm.$store.commit('pcmCategories/SET_Ready', {pcmContext:'actual', ReadyState:true})
       }).catch(error => {
+        console.log(error)
         vm.DisplayError(error)
       })
     },
@@ -519,8 +529,6 @@ export default {
   mounted() {
 
     const vm = this
-
-    vm.$store.commit('pcmCategories/SET_Ready', false)
     
     vm.GETObjects()
     vm.GETLocations()
@@ -529,6 +537,7 @@ export default {
     vm.GETConnectors()
     vm.GETMedium()
     vm.GETOrientations()
+
   },
 }
 </script>

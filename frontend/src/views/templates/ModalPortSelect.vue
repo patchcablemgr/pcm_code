@@ -247,54 +247,65 @@ export default {
     const PortSelectFunction = vm.PortSelectFunction
     const TreeRef = vm.TreeRef
 
-    this.$root.$on('bv::modal::shown', (bvEvent, modalId) => {
+    vm.$root.$on('bv::modal::shown', (bvEvent, modalId) => {
 
-      // Build tree
-      // setTimeout is required to wait until liquor tree is rendered before manipulating it (https://www.hesselinkwebdesign.nl/2019/nexttick-vs-settimeout-in-vue/)
-      setTimeout(function(){
-        
-        // Determine if tree will display partitions or ports
-        let Scope
-        if(PortSelectFunction == 'trunk') {
-          Scope = (vm.TemplateType == 'standard' || vm.TemplateType == 'insert') ? 'partition' : 'port'
-        } else {
-          Scope = 'port'
-        }
+      // Only trigger on intended modal
+      if(modalId == vm.ModalID) {
 
-        vm.BuildLocationTree({Scope})
-
-        const SelectedObjectID = vm.PartitionAddressSelected[Context].object_id
-        const SelectedObjectFace = vm.PartitionAddressSelected[Context].object_face
-        const SelectedObjectPartition = vm.PartitionAddressSelected[Context][SelectedObjectFace]
-
-        const Object = vm.GetObjectSelected(Context)
-        const FloorplanObjectType = Object.floorplan_object_type
-
-        // Prevent users from selecting multiple partitions
-        // Allow users to select multiple ports
-        let MultipleSelect
-        if (Scope == 'partition') {
-          MultipleSelect = false
-        } else {
-          if (FloorplanObjectType == 'walljack') {
-            MultipleSelect = true
+        // Build tree
+        // setTimeout is required to wait until liquor tree is rendered before manipulating it (https://www.hesselinkwebdesign.nl/2019/nexttick-vs-settimeout-in-vue/)
+        setTimeout(function(){
+          
+          // Determine if tree will display partitions or ports
+          let Scope
+          if(PortSelectFunction == 'trunk') {
+            Scope = (vm.TemplateType == 'standard' || vm.TemplateType == 'insert') ? 'partition' : 'port'
           } else {
+            Scope = 'port'
+          }
+
+          vm.BuildLocationTree({Scope})
+
+          const SelectedObjectID = vm.PartitionAddressSelected[Context].object_id
+          const SelectedObjectFace = vm.PartitionAddressSelected[Context].object_face
+          const SelectedObjectPartition = vm.PartitionAddressSelected[Context][SelectedObjectFace]
+
+          const Object = vm.GetObjectSelected(Context)
+          const FloorplanObjectType = Object.floorplan_object_type
+
+          // Prevent users from selecting multiple partitions
+          // Allow users to select multiple ports
+          let MultipleSelect
+          if (Scope == 'partition') {
             MultipleSelect = false
+          } else {
+            if (FloorplanObjectType == 'walljack') {
+              MultipleSelect = true
+            } else {
+              MultipleSelect = false
+            }
           }
-        }
-        vm.$refs[TreeRef].setMultiple(MultipleSelect)
-        
-        if(PortSelectFunction == 'trunk') {
+          vm.$refs[TreeRef].setMultiple(MultipleSelect)
+          
+          if(PortSelectFunction == 'trunk') {
 
-          const Trunks = vm.GetTrunks(SelectedObjectID, SelectedObjectFace, SelectedObjectPartition)
-          const TrunksWithPortSet = Trunks.findIndex((trunk) => trunk.b_port !== null)
+            const Trunks = vm.GetTrunks(SelectedObjectID, SelectedObjectFace, SelectedObjectPartition)
+            const TrunksWithPortSet = Trunks.findIndex((trunk) => trunk.b_port !== null)
 
-          if(TrunksWithPortSet == -1 || FloorplanObjectType != null) {
-            vm.SelectTrunkNodes(SelectedObjectID, Trunks)
+            if(TrunksWithPortSet == -1 || FloorplanObjectType != null) {
+              vm.SelectTrunkNodes(SelectedObjectID, Trunks)
+            }
           }
-        }
-      }, 0)
+        }, 0)
+      }
     })
   },
+  beforeDestroy(){
+
+    const vm = this
+
+    // Clean up
+    vm.$root.$off('bv::modal::shown')
+  }
 }
 </script>

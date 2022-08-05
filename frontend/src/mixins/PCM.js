@@ -1264,7 +1264,6 @@ export const PCM = {
             return SelectedPortDN
         },
         GenerateDN: function(Scope, ObjectID, Face, PartitionAddress, PortIndex=0){
-
             const vm = this
             const Context = 'actual'
             let DNArray = []
@@ -1719,7 +1718,6 @@ export const PCM = {
         },
         DisplayError: function(errData) {
 
-            console.log(errData.response.status)
             if(errData.response.status == 401) {
                 this.$router.push('login')
             } else {

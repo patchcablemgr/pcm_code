@@ -353,6 +353,7 @@
 
     <!-- Modal Port Select -->
     <modal-port-select
+      v-if="Context != 'template'"
       ModalID="port-select-trunk"
       ModalTitle="Select Trunk Peer"
       TreeRef="PortSelectTrunk"
@@ -490,7 +491,7 @@ export default {
         if(Template) {
           const CategoryID = Template.category_id
           const CategoryIndex = vm.GetCategoryIndex(CategoryID)
-          ReturnData = vm.Categories[CategoryIndex].name
+          ReturnData = vm.Categories[Context][CategoryIndex].name
         }
 
         return ReturnData
@@ -760,7 +761,8 @@ export default {
     GetCategoryIndex: function(CategoryID) {
 
       const vm = this
-      const CategoryIndex = vm.Categories.findIndex((category) => category.id == CategoryID)
+      const Context = vm.Context
+      const CategoryIndex = vm.Categories[Context].findIndex((category) => category.id == CategoryID)
 
       return parseInt(CategoryIndex)
     },
@@ -777,8 +779,8 @@ export default {
       const TemplateName = Template.name
 
       const CategoryID = Template.category_id
-      const CategoryIndex = vm.Categories.findIndex((category) => category.id == CategoryID)
-      const Category = vm.Categories[CategoryIndex]
+      const CategoryIndex = vm.Categories[Context].findIndex((category) => category.id == CategoryID)
+      const Category = vm.Categories[Context][CategoryIndex]
       const CategoryName = Category.name
 
       // Confirm Deletion

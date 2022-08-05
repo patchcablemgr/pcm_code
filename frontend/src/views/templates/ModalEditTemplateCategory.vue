@@ -111,12 +111,13 @@ export default {
 
       // Store variables
       const vm = this
+      const Context = vm.Context
       let WorkingArray = []
 
       // Populate working array with data to be used as select options
-      for(let i = 0; i < vm.Categories.length; i++) {
+      for(let i = 0; i < vm.Categories[Context].length; i++) {
 
-        let Category = vm.Categories[i]
+        let Category = vm.Categories[Context][i]
         WorkingArray.push({'value': Category.id, 'text': Category.name})
       }
 

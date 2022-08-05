@@ -269,7 +269,8 @@ export default {
 
       const vm = this
       const Dependencies = [
-        vm.CategoriesReady,
+        vm.CategoriesReady.template,
+        vm.CategoriesReady.actual,
         vm.TemplatesReady.template,
         vm.TemplatesReady.actual,
         vm.ObjectsReady.template,
@@ -515,8 +516,12 @@ export default {
       const vm = this
       vm.$http.get('/api/categories')
       .then(response => {
-        vm.$store.commit('pcmCategories/SET_Categories', response.data)
-        vm.$store.commit('pcmCategories/SET_Ready', true)
+        vm.$store.commit('pcmCategories/SET_Categories', {pcmContext:'workspace', data:response.data})
+        vm.$store.commit('pcmCategories/SET_Categories', {pcmContext:'template', data:response.data})
+        vm.$store.commit('pcmCategories/SET_Categories', {pcmContext:'actual', data:response.data})
+        vm.$store.commit('pcmCategories/SET_Ready', {pcmContext:'workspace', ReadyState:true})
+        vm.$store.commit('pcmCategories/SET_Ready', {pcmContext:'template', ReadyState:true})
+        vm.$store.commit('pcmCategories/SET_Ready', {pcmContext:'actual', ReadyState:true})
       }).catch(error => {
         vm.DisplayError(error)
       })

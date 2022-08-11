@@ -65,9 +65,9 @@ class TemplateController extends Controller
         $customValidator->stopOnFirstFailure();
         $customValidator->validate();
 
-        $template = $PCM->importCatalogTemplate($id);
+        $responseData = $PCM->fetchCatalogTemplate($id);
 
-        return $catalogTemplates;
+        return $responseData;
     }
 
     /**

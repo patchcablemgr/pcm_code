@@ -4,7 +4,7 @@
   <div>
 	
   <b-card>
-    <b-card-title>
+    <b-card-title class="mb-0">
       <div class="d-flex flex-wrap justify-content-between">
 				<div class="demo-inline-spacing">
           {{CardTitle}}
@@ -32,9 +32,16 @@
               :disabled="!TemplateSelected"
             >Where Used</b-dropdown-item>
 
+            <b-dropdown-item
+              v-if="Context == 'catalog'"
+              @click=" ImportTemplate() "
+              :disabled="!TemplateSelected"
+            >Import</b-dropdown-item>
+
             <b-dropdown-divider />
 
             <b-dropdown-item
+              v-if="Context == 'template' || Context == 'actual'"
               variant="danger"
               @click=" DeleteTemplate() "
               :disabled="!TemplateSelected"
@@ -765,6 +772,26 @@ export default {
       const CategoryIndex = vm.Categories[Context].findIndex((category) => category.id == CategoryID)
 
       return parseInt(CategoryIndex)
+    },
+    ImportTemplate: function() {
+
+      const vm = this
+      const Context = vm.Context
+
+      const Template = vm.GetTemplateSelected(Context)
+      const TemplateID = Template.id
+
+      vm.$http.get('/api/catalog/template/'+TemplateID).then(response => {
+
+        const Category = response.data.category
+        vm.$store.commit('pcmCategories/ADD_Category', {pcmContext:'template', data:Category})
+
+        const Template = response.data.template
+        vm.GeneratePseudoData('template', Template)
+				
+        // Append new template to template array
+        vm.$store.commit('pcmTemplates/ADD_Template', {pcmContext:'template', data:Template})
+      })
     },
     DeleteTemplate: function() {
 

@@ -20,7 +20,6 @@
             variant="primary"
           >
             <b-dropdown-item
-              variant="danger"
               v-b-modal.modal-template-catalog
             >
               Import
@@ -108,6 +107,7 @@
     :TemplateFaceSelected="TemplateFaceSelected"
     :PartitionAddressSelected="PartitionAddressSelected"
     :PartitionAddressHovered="PartitionAddressHovered"
+    @SetPartitionAddressSelected=" $emit('SetPartitionAddressSelected', $event) "
     @SetTemplateFaceSelected=" $emit('SetTemplateFaceSelected', $event) "
   />
 
@@ -207,8 +207,9 @@ export default {
 
       // Store data
       const vm = this
+      const Context = vm.Context
 
-      const TemplatesFiltered = vm.Templates.template.filter(template => template.category_id == CategoryID && template.type == 'standard')
+      const TemplatesFiltered = vm.Templates[Context].filter(template => template.category_id == CategoryID && template.type == 'standard')
 
       return TemplatesFiltered.length
 

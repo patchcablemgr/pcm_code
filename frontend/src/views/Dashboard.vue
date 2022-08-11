@@ -113,7 +113,7 @@ export default {
         vm.ObjectsReady.actual,
         vm.ConnectionsReady,
         vm.TemplatesReady.actual,
-        vm.CategoriesReady,
+        vm.CategoriesReady.actual,
         vm.LocationsReady.actual,
       ]
       
@@ -211,8 +211,8 @@ export default {
           })
 
           const CategoryID = Template.category_id
-          const CategoryIndex = vm.Categories.findIndex((category) => category.id == CategoryID )
-          const Category = vm.Categories[CategoryIndex]
+          const CategoryIndex = vm.Categories[Context].findIndex((category) => category.id == CategoryID )
+          const Category = vm.Categories[Context][CategoryIndex]
           const CategoryColor = Category.color
           const ObjectName = vm.GetObjectDN(Object.id)
           const PortUtilization = (PortTotal > 0) ? Math.round((PortsPopulated / PortTotal) * 100) : 0
@@ -353,8 +353,8 @@ export default {
       const vm = this
       vm.$http.get('/api/categories')
       .then(response => {
-        vm.$store.commit('pcmCategories/SET_Categories', response.data)
-        vm.$store.commit('pcmCategories/SET_Ready', true)
+        vm.$store.commit('pcmCategories/SET_Categories', {pcmContext:'actual', data:response.data})
+        vm.$store.commit('pcmCategories/SET_Ready', {pcmContext:'actual', ReadyState:true})
       }).catch(error => {
         vm.DisplayError(error)
       })

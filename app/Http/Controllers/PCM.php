@@ -246,7 +246,7 @@ class PCM extends Controller
      * Return license data
      *
      * @param  str  $licenseKey
-     * @param  str  $licenseKey
+     * @param  str  $appID
      * @return boolean
      */
     public function fetchLicenseData($licenseKey, $appID)
@@ -267,7 +267,7 @@ class PCM extends Controller
      * Return license portal
      *
      * @param  str  $licenseKey
-     * @param  str  $licenseKey
+     * @param  str  $appID
      * @return boolean
      */
     public function fetchLicensePortal($licenseKey, $appID)
@@ -280,6 +280,63 @@ class PCM extends Controller
             ],
         ])
         ->get('https://patchcablemgr.com/api/license/portal/'.$licenseKey.'/'.$appID);
+
+		return $response;
+    }
+
+    /**
+     * Return catalog categories
+     *
+     * @return array
+     */
+    public function fetchCatalogCategories()
+    {
+
+        $response = Http::asForm()
+        ->withOptions([
+            'headers' => [
+                'Accept' => 'application/json',
+            ],
+        ])
+        ->get('https://patchcablemgr.com/api/catalog/categories');
+
+		return $response;
+    }
+
+    /**
+     * Return catalog templates
+     *
+     * @return array
+     */
+    public function fetchCatalogTemplates()
+    {
+
+        $response = Http::asForm()
+        ->withOptions([
+            'headers' => [
+                'Accept' => 'application/json',
+            ],
+        ])
+        ->get('https://patchcablemgr.com/api/catalog/templates');
+
+		return $response;
+    }
+
+    /**
+     * Return catalog templates
+     *
+     * @return array
+     */
+    public function fetchCatalogTemplate($id)
+    {
+
+        $response = Http::asForm()
+        ->withOptions([
+            'headers' => [
+                'Accept' => 'application/json',
+            ],
+        ])
+        ->get('https://patchcablemgr.com/api/catalog/template/'.$id);
 
 		return $response;
     }

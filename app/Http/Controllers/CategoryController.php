@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Http\Controllers\PCM;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use App\Models\CategoryModel;
@@ -20,6 +21,20 @@ class CategoryController extends Controller
     {
         $categories = CategoryModel::all();
         return $categories->toArray();
+    }
+
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function indexCatalogCategories()
+    {
+        
+        $PCM = new PCM;
+        $catalogCategories = $PCM->fetchCatalogCategories();
+
+        return $catalogCategories;
     }
 
     /**

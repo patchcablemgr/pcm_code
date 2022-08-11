@@ -93,6 +93,7 @@
             :TemplateFaceSelected="TemplateFaceSelected"
             :PartitionAddressSelected="PartitionAddressSelected"
             :PartitionAddressHovered="PartitionAddressHovered"
+            @SetPartitionAddressSelected="SetPartitionAddressSelected($event)"
             @SetTemplateFaceSelected="SetTemplateFaceSelected($event)"
           />
 
@@ -159,6 +160,17 @@ const PartitionAddressSelected = {
       'front': null,
       'rear': null,
     }
+  },
+  'catalog': {
+    'object_id': null,
+    'object_face': null,
+    'template_id': null,
+    'front': [0],
+    'rear': [0],
+    'port_id': {
+      'front': null,
+      'rear': null,
+    }
   }
 }
 const PartitionAddressHovered = {
@@ -174,6 +186,17 @@ const PartitionAddressHovered = {
     }
   },
   'template': {
+    'object_id': null,
+    'object_face': null,
+    'template_id': null,
+    'front': false,
+    'rear': false,
+    'port_id': {
+      'front': null,
+      'rear': null,
+    }
+  },
+  'catalog': {
     'object_id': null,
     'object_face': null,
     'template_id': null,
@@ -447,7 +470,6 @@ export default {
         vm.$store.commit('pcmCategories/SET_Ready', {pcmContext:'template', ReadyState:true})
         vm.$store.commit('pcmCategories/SET_Ready', {pcmContext:'actual', ReadyState:true})
       }).catch(error => {
-        console.log(error)
         vm.DisplayError(error)
       })
     },

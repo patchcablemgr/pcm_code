@@ -263,7 +263,7 @@ export default {
             const PeerData = [{'id':null, 'face':null, 'partition':null, 'port_id':null}]
 
             // Compile POST data
-            const data = {'id':ObjectID, 'face':Face, 'partition':PartitionAddress, 'port_id':PortID, PeerData}
+            const data = {'id':ObjectID, 'face':Face, 'partition':PartitionAddress, 'port_id':PortID, 'peer_data':PeerData}
 
             // POST Connection
             const URL = '/api/connections'

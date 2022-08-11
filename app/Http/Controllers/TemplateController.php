@@ -27,6 +27,50 @@ class TemplateController extends Controller
     }
 
     /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function indexCatalogTemplates()
+    {
+        
+        $PCM = new PCM;
+        $catalogTemplates = $PCM->fetchCatalogTemplates();
+
+        return $catalogTemplates;
+    }
+
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function importCatalogTemplate($id)
+    {
+        
+        $PCM = new PCM;
+
+        // Validate template ID
+        $validatorInput = [
+            'id' => $id,
+        ];
+        $validatorRules = [
+            'id' => [
+                'required',
+                'numeric',
+            ],
+        ];
+        $validatorMessages = [];
+        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        $customValidator->stopOnFirstFailure();
+        $customValidator->validate();
+
+        $template = $PCM->importCatalogTemplate($id);
+
+        return $catalogTemplates;
+    }
+
+    /**
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request

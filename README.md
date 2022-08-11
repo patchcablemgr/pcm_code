@@ -3,6 +3,9 @@
 Features:
 - Template catalog
 
+Fixes:
+- Resolved error when marking port as populated
+
 ## 1.0.2
 
 Fixes:

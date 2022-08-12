@@ -6,7 +6,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use App\Models\TemplateModel;
+use App\Models\CategoryModel;
 use App\Http\Controllers\PCM;
+use App\Http\Controllers\CategoryController;
 use App\Rules\TemplateBlueprint;
 use App\Rules\TemplateInsertParentData;
 use Illuminate\Support\Facades\Log;
@@ -65,9 +67,48 @@ class TemplateController extends Controller
         $customValidator->stopOnFirstFailure();
         $customValidator->validate();
 
-        $responseData = $PCM->fetchCatalogTemplate($id);
+        // Retrieve template and category data
+        $responseData = $PCM->fetchCatalogTemplate($id)->json();
+        $template = $responseData['template'];
+        $category = $responseData['category'];
 
-        return $responseData;
+        // Attempt to find category
+        $existingCategory = CategoryModel::where('name', $category['name'])->first();
+
+        // Create category if it doesn't exist and store category ID
+        if(is_null($existingCategory)) {
+
+            // Create new category
+            $categoryController = new CategoryController;
+            $categoryRequest = new Request;
+            $categoryRequest->setMethod('POST');
+            $categoryRequest->request->add($category);
+            $newCategory = $categoryController->store($categoryRequest);
+
+            // Store category ID
+            $categoryID = $newCategory['id'];
+        } else {
+
+            // Store category
+            $newCategory = false;
+
+            // Store category ID
+            $categoryID = $existingCategory['id'];
+        }
+
+        $template['category_id'] = $categoryID;
+
+        $templateRequest = new Request;
+        $templateRequest->setMethod('POST');
+        $templateRequest->request->add($template);
+        $newTemplate = $this->store($templateRequest);
+
+        $returnData = array(
+            'template' => $newTemplate,
+            'category' => $newCategory
+        );
+
+        return $returnData;
     }
 
     /**

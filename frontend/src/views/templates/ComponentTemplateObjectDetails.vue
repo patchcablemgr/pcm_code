@@ -360,7 +360,7 @@
 
     <!-- Modal Port Select -->
     <modal-port-select
-      v-if="Context != 'template'"
+      v-if="Context != 'template' && Context != 'catalog'"
       ModalID="port-select-trunk"
       ModalTitle="Select Trunk Peer"
       TreeRef="PortSelectTrunk"
@@ -784,7 +784,9 @@ export default {
       vm.$http.get('/api/catalog/template/'+TemplateID).then(response => {
 
         const Category = response.data.category
-        vm.$store.commit('pcmCategories/ADD_Category', {pcmContext:'template', data:Category})
+        if(Category) {
+          vm.$store.commit('pcmCategories/ADD_Category', {pcmContext:'template', data:Category})
+        }
 
         const Template = response.data.template
         vm.GeneratePseudoData('template', Template)

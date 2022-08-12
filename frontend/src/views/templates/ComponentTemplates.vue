@@ -186,7 +186,9 @@ export default {
     GetObjectIndex: function(TemplateID) {
 
       const vm = this
-      const ObjectIndex = vm.Objects.template.findIndex((object) => object.template_id == TemplateID)
+      const Context = vm.Context
+      
+      const ObjectIndex = vm.Objects[Context].findIndex((object) => object.template_id == TemplateID)
 
       return ObjectIndex
 
@@ -198,7 +200,7 @@ export default {
 
       const ObjectIndex = vm.GetObjectIndex(TemplateID)
       
-      const ObjectID = vm.Objects.template[ObjectIndex].id
+      const ObjectID = vm.Objects[Context][ObjectIndex].id
       
       return ObjectID
 

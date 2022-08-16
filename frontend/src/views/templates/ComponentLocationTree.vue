@@ -159,7 +159,7 @@ export default {
           let Node = vm.$refs[TreeRef].find(Criteria)[0]
           Node.remove()
           
-        }).catch(error => {console.log(error); vm.DisplayError(error)})
+        }).catch(error => {vm.DisplayError(error)})
 
       } else {
 

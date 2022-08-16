@@ -289,8 +289,6 @@ export default {
           this.ConnectionCanvasHeight = this.$refs.ConnectionCanvasParent.clientHeight
           this.ConnectionCanvasWidth = this.$refs.ConnectionCanvasParent.clientWidth
 
-          console.log(JSON.stringify(vm.ConnectionLineData))
-          console.log(JSON.stringify(vm.TrunkLineData))
         }, 0);
       }
     }

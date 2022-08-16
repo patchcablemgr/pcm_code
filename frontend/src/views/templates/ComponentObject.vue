@@ -110,9 +110,7 @@ export default {
           const ObjectCategoryIndex = vm.Categories[Context].findIndex((category) => category.id == ObjectCategoryID)
 
           // Get category
-          console.log('ObjectCategoryIndex: '+ObjectCategoryIndex)
           const Category = vm.Categories[Context][ObjectCategoryIndex]
-          console.log('Category: '+Category)
           TemplateColor = Category.color
         }
       }

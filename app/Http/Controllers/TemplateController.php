@@ -9,6 +9,9 @@ use App\Models\TemplateModel;
 use App\Models\CategoryModel;
 use App\Http\Controllers\PCM;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ImageController;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\UploadedFile;
 use App\Rules\TemplateBlueprint;
 use App\Rules\TemplateInsertParentData;
 use Illuminate\Support\Facades\Log;
@@ -96,12 +99,48 @@ class TemplateController extends Controller
             $categoryID = $existingCategory['id'];
         }
 
+        // Update template category ID
         $template['category_id'] = $categoryID;
 
+        // Store template
         $templateRequest = new Request;
         $templateRequest->setMethod('POST');
         $templateRequest->request->add($template);
         $newTemplate = $this->store($templateRequest);
+
+        // Store front image if it exists
+        $faceArray = array('front', 'rear');
+
+        foreach($faceArray as $face) {
+
+            $imgData = $template['image_'.$face];
+
+            if($imgData) {
+
+                // $imgData = data:image/jpeg;base64,/9j/4AAQSkZJRgABAQE
+                list($preamble, $imgBase64) = explode(',', $imgData);
+                $imgBase64 = str_replace(' ', '+', $imgBase64);
+                // $preamble = data:image/jpeg;base64
+                // $imgBase64 = /9j/4AAQSkZJRgABAQE
+                list($metaData,) = explode(';', $preamble);
+                // $metaData = data:image/jpeg
+                list(, $mimeType) = explode(':', $metaData);
+                // $mimeType = image/jpeg
+                list(, $fileExt) = explode('/', $mimeType);
+
+                $fileName = 'import-temp.'.$fileExt;
+                $filePath = 'images/'.$fileName;
+
+                Storage::disk('local')->put($filePath, base64_decode($imgBase64));
+                $file = array('file' => new UploadedFile(base_path('storage/app/'.$filePath), $fileName, $mimeType, null, true));
+                $data = array('face' => $face);
+                $request = (new Request())->duplicate($data, [], [], [], $file);
+
+                $templateImageController = new ImageController;
+                $newTemplate = $templateImageController->storeTemplateImage($request, $newTemplate['id']);
+
+            }
+        }
 
         $returnData = array(
             'template' => $newTemplate,

@@ -1174,7 +1174,6 @@ export default {
       const ObjectID = vm.PartitionAddressSelected[Context].object_id
       const TemplateID = vm.GetTemplateID(ObjectID, Context)
       const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-      console.log('TemplateIndex: '+TemplateIndex)
       const PreviewData = vm.Templates[Context][TemplateIndex]
       const TemplateFaceArray = ['front','rear']
       let RUSizeMin = 1

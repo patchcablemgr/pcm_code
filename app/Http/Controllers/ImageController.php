@@ -91,7 +91,7 @@ class ImageController extends Controller
                 'exists:template,id'
             ],
             'file' => [
-                'mimes:jpg,png,gif',
+                'mimes:jpg,jpeg,png,gif',
                 'max:512'
             ],
             'face' => [

@@ -625,7 +625,9 @@ export default {
         let PartitionType = '-'
 
         if(Partition) {
+          console.log(Partition)
           PartitionType = Partition.type
+
           PartitionType = PartitionType.charAt(0).toUpperCase() + PartitionType.slice(1)
         }
 

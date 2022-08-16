@@ -311,6 +311,7 @@
 
       <!-- Media -->
       <dl
+        v-if="TemplateFunction == 'passive'"
         class="row"
         v-show="PartitionType == 'connectable'"
       >
@@ -1002,7 +1003,7 @@ export default {
 
         if(vm.GetPartitionUnitsAvailable(ParentPartitionAddress)) {
 
-          const ParentTemplateChildren = (ParentPartitionAddress.length) ? ParentTemplate.children : ParentTemplate
+          const ParentTemplateChildren = ParentTemplate.children
 
           if(Position == 'after') {
 
@@ -1087,11 +1088,7 @@ export default {
           UnitsAvailable = PartitionParent.units
         }
 
-        if(PartitionAddress.length > 0) {
-          PartitionChildren = Partition.children
-        } else {
-          PartitionChildren = Partition
-        }
+        PartitionChildren = Partition.children
 
         PartitionChildren.forEach(function(PartitionChild) {
           UnitsAvailable = UnitsAvailable - PartitionChild.units
@@ -1265,7 +1262,7 @@ export default {
         }
 
         // Subtract child partitions
-        const ParentPartitionChildren = (ParentPartitionAddress.length) ? ParentPartition.children : ParentPartition
+        const ParentPartitionChildren = ParentPartition.children
         ParentPartitionChildren.forEach(function(ChildPartition, Index){
           if(Index != PartitionIndex) {
             let ChildPartitionSize = ChildPartition.units

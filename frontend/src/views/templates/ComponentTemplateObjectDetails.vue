@@ -235,7 +235,7 @@
         </td>
         <td>
           <b-button
-            v-if="DetailsAreEditable"
+            v-if="TrunkedToEditable"
             v-ripple.400="'rgba(40, 199, 111, 0.15)'"
             variant="flat-success"
             class="btn-icon"
@@ -256,7 +256,7 @@
         </td>
         <td>
           <b-button
-            v-if="Context == 'template' && DetailsAreEditable"
+            v-if="PortRangeEditable"
             v-ripple.400="'rgba(40, 199, 111, 0.15)'"
             variant="flat-success"
             class="btn-icon"
@@ -304,16 +304,6 @@
         </td>
       </tr>
 
-      <tr>
-        <td class="text-right">
-          Enclosure Tolerance:
-        </td>
-        <td>
-        </td>
-        <td>
-          {{ComputedCategoryName}}
-        </td>
-      </tr>
     </table>
 
   </b-card-body>
@@ -463,6 +453,26 @@ export default {
       const Context = vm.Context
       return (vm.GetTemplateSelected(Context)) ? true : false
     },
+    PortRangeEditable: function(){
+
+      const vm = this
+      const Context = vm.Context
+      const DetailsAreEditable = vm.DetailsAreEditable
+      const Partition = vm.GetPartitionSelected(Context)
+      const PartitionType = (Partition) ? Partition.type : null
+
+      return Context == 'template' && DetailsAreEditable && PartitionType == 'connectable'
+
+    },
+    TrunkedToEditable: function(){
+
+      const vm = this
+      const Context = vm.Context
+      const DetailsAreEditable = vm.DetailsAreEditable
+
+      return Context == 'actual' && DetailsAreEditable
+
+    },
     ComputedObjectName: {
       get() {
 
@@ -514,36 +524,44 @@ export default {
 
         if(Partition) {
 
-          const ObjectID = vm.PartitionAddressSelected[Context].object_id
-          const ObjectFace = vm.PartitionAddressSelected[Context].object_face
-          const ObjectPartition = vm.PartitionAddressSelected[Context][ObjectFace]
+          if(Partition.type == 'connectable' && Context == 'actual') {
 
-          const Trunks = vm.GetTrunks(ObjectID, ObjectFace, ObjectPartition)
-          const TrunksWithPortSet = Trunks.findIndex((trunk) => trunk.b_port !== null)
+            const ObjectID = vm.PartitionAddressSelected[Context].object_id
+            const ObjectFace = vm.PartitionAddressSelected[Context].object_face
+            const ObjectPartition = vm.PartitionAddressSelected[Context][ObjectFace]
 
-          if(TrunksWithPortSet != -1) {
-            TrunkedTo = "[Floorplan Object]"
-          } else if(Trunks.length == 1) {
-            Trunks.forEach(function(Trunk){
+            const Trunks = vm.GetTrunks(ObjectID, ObjectFace, ObjectPartition)
+            const TrunksWithPortSet = Trunks.findIndex((trunk) => trunk.b_port !== null)
 
-              const LocalTrunkSide = (Trunk.a_id == ObjectID) ? 'a' : 'b'
-              let RemoteObjectID
-              let RemoteObjectFace
-              let RemoteObjectPartition
-              if(LocalTrunkSide == 'a') {
-                RemoteObjectID = Trunk.b_id
-                RemoteObjectFace = Trunk.b_face
-                RemoteObjectPartition = Trunk.b_partition
-              } else {
-                RemoteObjectID = Trunk.a_id
-                RemoteObjectFace = Trunk.a_face
-                RemoteObjectPartition = Trunk.a_partition
-              }
+            if(TrunksWithPortSet != -1) {
+              TrunkedTo = "[Floorplan Object]"
+            } else if(Trunks.length == 1) {
+              Trunks.forEach(function(Trunk){
 
-              const Scope = 'trunk'
-              TrunkedTo = vm.GenerateDN(Scope, RemoteObjectID, RemoteObjectFace, RemoteObjectPartition)
+                const LocalTrunkSide = (Trunk.a_id == ObjectID) ? 'a' : 'b'
+                let RemoteObjectID
+                let RemoteObjectFace
+                let RemoteObjectPartition
+                if(LocalTrunkSide == 'a') {
+                  RemoteObjectID = Trunk.b_id
+                  RemoteObjectFace = Trunk.b_face
+                  RemoteObjectPartition = Trunk.b_partition
+                } else {
+                  RemoteObjectID = Trunk.a_id
+                  RemoteObjectFace = Trunk.a_face
+                  RemoteObjectPartition = Trunk.a_partition
+                }
 
-            })
+                const Scope = 'trunk'
+                TrunkedTo = vm.GenerateDN(Scope, RemoteObjectID, RemoteObjectFace, RemoteObjectPartition)
+
+              })
+            } else {
+              TrunkedTo = "[None]"
+            }
+
+          } else {
+            TrunkedTo = "N/A"
           }
         }
 
@@ -625,9 +643,7 @@ export default {
         let PartitionType = '-'
 
         if(Partition) {
-          console.log(Partition)
           PartitionType = Partition.type
-
           PartitionType = PartitionType.charAt(0).toUpperCase() + PartitionType.slice(1)
         }
 

@@ -577,14 +577,21 @@ export const PCM = {
 			let Partition = Blueprint
 			let PartitionCollection = Blueprint
             
-			PartitionAddress.forEach(function(PartitionIndex) {
-				if(typeof PartitionCollection[PartitionIndex] !== 'undefined') {
-					Partition = PartitionCollection[PartitionIndex]
-					PartitionCollection = PartitionCollection[PartitionIndex]['children']
-				} else {
-					return false
-				}
-			})
+            if(PartitionAddress.length) {
+                PartitionAddress.forEach(function(PartitionIndex) {
+                    if(typeof PartitionCollection[PartitionIndex] !== 'undefined') {
+                        Partition = PartitionCollection[PartitionIndex]
+                        PartitionCollection = PartitionCollection[PartitionIndex]['children']
+                    } else {
+                        return false
+                    }
+                })
+            } else {
+                Partition = {
+                    type: 'generic',
+                    children: Blueprint
+                }
+            }
 			
 			return Partition
       

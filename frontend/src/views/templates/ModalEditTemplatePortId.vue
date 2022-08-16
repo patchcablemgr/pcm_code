@@ -404,7 +404,7 @@ export default {
       const ObjectID = vm.PartitionAddressSelected[Context].object_id
       if(ObjectID) {
         const TemplateID = vm.GetTemplateID(ObjectID, Context)
-        const Face = vm.TemplateFaceSelected[Context]
+        const Face = vm.PartitionAddressSelected[Context].object_face
         const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
         const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
         const Template = vm.Templates[Context][TemplateIndex]

@@ -240,6 +240,7 @@ export default {
         vm.TemplatesReady.actual,
         vm.ObjectsReady.template,
         vm.LocationsReady,
+        vm.CablePathsReady,
         vm.TrunksReady
       ]
       
@@ -251,6 +252,9 @@ export default {
     },
     LocationsReady: function() {
       return this.$store.state.pcmLocations.LocationsReady.actual
+    },
+    CablePathsReady: function() {
+      return this.$store.state.pcmCablePaths.CablePathsReady.actual
     },
     Categories() {
       return this.$store.state.pcmCategories.Categories
@@ -562,6 +566,19 @@ export default {
         vm.DisplayError(error)
       })
     },
+    GETCablePaths() {
+
+      const vm = this
+      const Context = 'actual'
+
+      // GET locations
+      vm.$http.get('/api/locations/cable-paths').then(response => {
+        vm.$store.commit('pcmCablePaths/SET_CablePaths', {pcmContext:Context, data:response.data})
+        vm.$store.commit('pcmCablePaths/SET_Ready', {pcmContext:Context, ReadyState:true})
+      }).catch(error => {
+        vm.DisplayError(error)
+      })
+    },
     GETTrunks() {
 
       const vm = this
@@ -582,6 +599,7 @@ export default {
     const vm = this
 
     vm.GETLocations()
+    vm.GETCablePaths()
     vm.GETCategories()
     vm.GETTemplates()
     vm.GETFloorplanTemplates()

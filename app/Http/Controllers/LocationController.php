@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use App\Models\LocationModel;
+use App\Models\CablePathModel;
 use App\Models\ObjectModel;
 use App\Http\Controllers\PCM;
 use Illuminate\Support\Facades\Log;
@@ -24,6 +25,18 @@ class LocationController extends Controller
         $locations = LocationModel::all();
 
         return $locations;
+    }
+
+    /**
+     * Display a listing of the cable path resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function indexCablePaths()
+    {
+        $cablePaths = CablePathModel::all();
+
+        return $cablePaths;
     }
 
     /**

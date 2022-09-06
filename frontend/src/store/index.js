@@ -17,6 +17,7 @@ import pcmUsers from './pcm-users'
 import pcmSSL from './pcm-ssl'
 import pcmOrganization from './pcm-organization'
 import pcmState from './pcm-state'
+import pcmCablePaths from './pcm-cable-paths'
 
 Vue.use(Vuex)
 
@@ -37,6 +38,7 @@ export default new Vuex.Store({
     pcmSSL,
     pcmOrganization,
     pcmState,
+    pcmCablePaths,
   },
   strict: process.env.DEV,
 })

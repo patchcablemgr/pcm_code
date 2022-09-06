@@ -74,6 +74,7 @@ Route::group(['middleware' => 'auth:sanctum'], function(){
   Route::get('catalog/categories', [CategoryController::class, 'indexCatalogCategories']);
   Route::get('catalog/templates', [TemplateController::class, 'indexCatalogTemplates']);
   Route::get('catalog/template/{id}', [TemplateController::class, 'importCatalogTemplate']);
+  Route::get('locations/cable-paths', [LocationController::class, 'indexCablePaths']);
 
   // Only DELETE
   Route::delete('config/csr/{id}', [ConfigController::class, 'destroyCSR']);

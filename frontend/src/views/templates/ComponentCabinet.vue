@@ -12,7 +12,7 @@
       :key="CabinetRU"
       :CabinetID="LocationID"
     >
-      <td class="pcm_cabinet">{{ CabinetRU }}</td>
+      <td class="pcm_cabinet">{{ GetRUNumber(CabinetRU) }}</td>
       <td
         v-if=" RackObjectID(CabinetRU) !== false "
         class="pcm_cabinet_ru"
@@ -24,7 +24,6 @@
           :Context="Context"
           :ObjectID="RackObjectID(CabinetRU)"
           :CabinetFace="TemplateFaceSelected[Context]"
-          :PartitionAddressSelected="PartitionAddressSelected"
           :PartitionAddressHovered="PartitionAddressHovered"
           :ObjectsAreDraggable="ObjectsAreDraggable"
           @InsertObjectDropped=" $emit('InsertObjectDropped', $event) "
@@ -37,7 +36,7 @@
         @dragenter.prevent
         class="pcm_cabinet_ru"
       />
-      <td class="pcm_cabinet">{{ CabinetRU }}</td>
+      <td class="pcm_cabinet">{{ GetRUNumber(CabinetRU) }}</td>
     </tr>
     <tr>
       <td class="pcm_cabinet" colspan=3>
@@ -64,10 +63,8 @@ export default {
     CartDropdown,
   },
   props: {
-    LocationID: {type: Number},
     Context: {type: String},
     TemplateFaceSelected: {type: Object},
-    PartitionAddressSelected: {type: Object},
     PartitionAddressHovered: {type: Object},
     ObjectsAreDraggable: {type: Boolean},
   },
@@ -85,6 +82,17 @@ export default {
     Locations: function() {
       return this.$store.state.pcmLocations.Locations
     },
+    StateSelected() {
+      return this.$store.state.pcmState.Selected
+    },
+    LocationID: function() {
+
+      const vm = this
+      const Context = vm.Context
+      const LocationID = vm.StateSelected[Context].location_id
+      
+      return LocationID
+    },
     LocationData: function() {
 
       const vm = this
@@ -96,6 +104,20 @@ export default {
     }
   },
   methods: {
+    GetRUNumber: function(RUIndex) {
+
+      const vm = this
+      const Cabinet = vm.LocationData
+      const CabinetOrientation = Cabinet.ru_orientation
+      let RUNumber = RUIndex
+
+      if(CabinetOrientation == 'bottom-up') {
+        const CabinetSize = Cabinet.size
+        RUNumber = CabinetSize - (RUIndex - 1)
+      }
+
+      return RUNumber
+    },
     RackObjectID: function(CabinetRU) {
       
       // Initial variables
@@ -184,7 +206,7 @@ export default {
         data = {
           "location_id": LocationID,
           "cabinet_face": CabinetFace,
-          "cabinet_ru": CabinetRU,
+          "cabinet_ru": vm.GetRUNumber(CabinetRU),
         }
 
         // POST new object

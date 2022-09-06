@@ -360,7 +360,6 @@ export default {
     ModalID: {type: String},
     Context: {type: String},
     TemplateFaceSelected: {type: Object},
-    PartitionAddressSelected: {type: Object},
     PreviewPortID: {type: String},
   },
   data() {
@@ -390,6 +389,9 @@ export default {
     Objects() {
       return this.$store.state.pcmObjects.Objects
     },
+    StateSelected() {
+      return this.$store.state.pcmState.Selected
+    },
     PortPreview: function() {
 
       const vm = this
@@ -401,11 +403,11 @@ export default {
       const vm = this
       const Context = vm.Context
       let PortFormat = null
-      const ObjectID = vm.PartitionAddressSelected[Context].object_id
+      const ObjectID = vm.StateSelected[Context].object_id
       if(ObjectID) {
         const TemplateID = vm.GetTemplateID(ObjectID, Context)
-        const Face = vm.PartitionAddressSelected[Context].object_face
-        const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+        const Face = vm.StateSelected[Context].object_face
+        const PartitionAddress = vm.StateSelected[Context].partition[Face]
         const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
         const Template = vm.Templates[Context][TemplateIndex]
         const Blueprint = Template.blueprint[Face]
@@ -481,7 +483,7 @@ export default {
 
         const Face = vm.TemplateFaceSelected[Context]
         const Blueprint = Template.blueprint[Face]
-        const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+        const PartitionAddress = vm.StateSelected[Context].partition[Face]
         const Partition = vm.GetPartition(Blueprint, PartitionAddress)
         let Order = 0
         let Value = ''
@@ -572,7 +574,7 @@ export default {
 
         const Face = vm.TemplateFaceSelected[Context]
         const Blueprint = Template.blueprint[Face]
-        const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+        const PartitionAddress = vm.StateSelected[Context].partition[Face]
         const Partition = vm.GetPartition(Blueprint, PartitionAddress)
         const CountOrig = Partition.port_format[FieldIndex].count
         const CountNew = parseInt(Count)
@@ -618,7 +620,7 @@ export default {
 
         const Face = vm.TemplateFaceSelected[Context]
         const Blueprint = Template.blueprint[Face]
-        const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+        const PartitionAddress = vm.StateSelected[Context].partition[Face]
         const Partition = vm.GetPartition(Blueprint, PartitionAddress)
         const OrderOrig = Partition.port_format[FieldIndex].order
 
@@ -734,7 +736,7 @@ export default {
 
       const Face = vm.TemplateFaceSelected[Context]
       const Blueprint = Template.blueprint[Face]
-      const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+      const PartitionAddress = vm.StateSelected[Context].partition[Face]
       const Partition = vm.GetPartition(Blueprint, PartitionAddress)
       const PortFormatLength = Partition.port_format.length
       const PortFormatIndex = vm.SelectedPortFormatIndex
@@ -774,7 +776,7 @@ export default {
 
       const Face = vm.TemplateFaceSelected[Context]
       const Blueprint = Template.blueprint[Face]
-      const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+      const PartitionAddress = vm.StateSelected[Context].partition[Face]
       const Partition = vm.GetPartition(Blueprint, PartitionAddress)
       const PortFormatLength = Partition.port_format.length
 
@@ -839,7 +841,7 @@ export default {
 
       const Face = vm.TemplateFaceSelected[Context]
       const Blueprint = Template.blueprint[Face]
-      const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+      const PartitionAddress = vm.StateSelected[Context].partition[Face]
       const Partition = vm.GetPartition(Blueprint, PartitionAddress)
 
       const PortFormatIndex = vm.SelectedPortFormatIndex
@@ -889,7 +891,7 @@ export default {
 
       const Face = vm.TemplateFaceSelected[Context]
       const Blueprint = Template.blueprint[Face]
-      const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+      const PartitionAddress = vm.StateSelected[Context].partition[Face]
       const Partition = vm.GetPartition(Blueprint, PartitionAddress)
 
       Partition.port_format[FieldIndex].value = Value

@@ -34,7 +34,6 @@ export default {
     TemplateID: {},
     PartitionAddress: {},
     PortID: {},
-    PartitionAddressSelected: {},
   },
   data() {
     return {
@@ -68,6 +67,9 @@ export default {
     Connections() {
       return this.$store.state.pcmConnections.Connections
     },
+    StateSelected() {
+      return this.$store.state.pcmState.Selected
+    },
     PortIsSelected: {
       get() {
         return (this.SelectedPortIndex !== null) ? true : false
@@ -78,8 +80,8 @@ export default {
 
         const vm = this
         const Context = vm.Context
-        const Face = vm.PartitionAddressSelected[Context].object_face
-        const PortID = vm.PartitionAddressSelected[Context].port_id[Face]
+        const Face = vm.StateSelected[Context].object_face
+        const PortID = vm.StateSelected[Context].port_id[Face]
 
         return PortID
       },
@@ -101,7 +103,7 @@ export default {
         const Context = vm.Context
         const ObjectID = vm.ObjectID
         const ObjectFace = vm.ObjectFace
-        const ObjectPartition = vm.PartitionAddressSelected[Context][ObjectFace]
+        const ObjectPartition = vm.StateSelected[Context].partition[ObjectFace]
         const PortID = vm.PortID
 
         return vm.GetPortDisposition(Context, ObjectID, ObjectFace, ObjectPartition, PortID)

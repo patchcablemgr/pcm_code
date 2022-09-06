@@ -80,11 +80,13 @@ class ObjectController extends Controller
         $customValidator->stopOnFirstFailure();
         $customValidator->validate();
 
+        $cabinet = LocationModel::where('id', $request->location_id)->first();
+
         // Store new object variables
         $objectName = "New_Object";
         $templateID = $request->template_id;
         $locationID = $request->location_id;
-        $cabinetRU = $request->cabinet_ru;
+        $cabinetRU = $PCM->getRUIndex($request->cabinet_ru, $cabinet->size, $cabinet->ru_orientation);
         $cabinetFace = $request->cabinet_face;
         $templateFace = $request->template_face;
         $cabinetFront = ($cabinetFace == $templateFace) ? 'front' : 'rear';
@@ -292,7 +294,7 @@ class ObjectController extends Controller
             ));
             $validatorRules = array_merge($validatorRules, array(
                 'name' => [
-                    'regex:/^[A-Za-z0-9\/]+$/',
+                    'regex:/^[A-Za-z0-9\/\_]+$/',
                     'min:1',
                     'max:255'
                 ]
@@ -326,66 +328,77 @@ class ObjectController extends Controller
             ]);
 
         } else if($objectType == 'insert') {
-            
             // Validate insert data
-            $request->validate([
-                'parent_id' => [
-                    'required',
-                    'integer',
-                    'exists:object,id'
-                ],'parent_face' => [
-                    'in:front,rear',
-                ],'parent_partition_address' => [
-                    'array'
-                ],'parent_enclosure_address' => [
-                    'array'
-                ],
-            ]);
 
-            // Collect request variables required for validation
-            $objectParentID = $request->parent_id;
-            $objectParentFace = $request->parent_face;
-            $objectParentPartitionAddress = $request->parent_partition_address;
-            $objectParentEnclosureAddress = $request->parent_enclosure_address;
-            $parentObject = ObjectModel::where('id', $objectParentID)->first();
-            $parentObjectTemplateID = $parentObject['template_id'];
+            if($request->cabinet_ru) {
+            
+                // Validate parent data
+                $request->validate([
+                    'parent_id' => [
+                        'required',
+                        'integer',
+                        'exists:object,id'
+                    ],'parent_face' => [
+                        'required',
+                        'in:front,rear',
+                    ],'parent_partition_address' => [
+                        'required',
+                        'array'
+                    ],'parent_enclosure_address' => [
+                        'required',
+                        'array'
+                    ],
+                ]);
 
-            // Validate parent object partition
-            $Err = $PCM->validateParentPartition($parentObjectTemplateID, $objectParentFace, $objectParentPartitionAddress, $objectParentEnclosureAddress);
-            if($Err !== true) {
-                throw ValidationException::withMessages($Err);
-            }
+                // Collect request variables required for validation
+                $objectParentID = $request->parent_id;
+                $objectParentFace = $request->parent_face;
+                $objectParentPartitionAddress = $request->parent_partition_address;
+                $objectParentEnclosureAddress = $request->parent_enclosure_address;
+                $parentObject = ObjectModel::where('id', $objectParentID)->first();
+                $parentObjectTemplateID = $parentObject['template_id'];
 
-            // Validate parent object enclosure occupancy
-            $Err = $PCM->validateEnclosureOccupancy($objectParentID, $objectParentFace, $objectParentPartitionAddress, $objectParentEnclosureAddress);
-            if($Err !== true) {
-                throw ValidationException::withMessages($Err);
+                // Validate parent object partition
+                $Err = $PCM->validateParentPartition($parentObjectTemplateID, $objectParentFace, $objectParentPartitionAddress, $objectParentEnclosureAddress);
+                if($Err !== true) {
+                    throw ValidationException::withMessages($Err);
+                }
+
+                // Validate parent object enclosure occupancy
+                $Err = $PCM->validateEnclosureOccupancy($objectParentID, $objectParentFace, $objectParentPartitionAddress, $objectParentEnclosureAddress);
+                if($Err !== true) {
+                    throw ValidationException::withMessages($Err);
+                }
             }
 
         } else if($objectType == 'standard') {
-
             // Validate standard data
-            $request->validate([
-                'cabinet_ru' => [
-                    'required',
-                    'integer',
-                    'between:1,52'
-                ],
-            ]);
 
-            // Collect request variables required for validation
-            $objectID = $id;
-            $object = ObjectModel::where('id', $objectID)->first();
-            $templateID = $object['template_id'];
-            $locationID = $request->location_id;
-            $cabinetRU = $request->cabinet_ru;
-            $cabinetFace = $request->cabinet_face;
+            if($request->cabinet_ru) {
 
-            // Validate RU occupancy
-            if($object['cabinet_ru'] != $cabinetRU) {
-                $Err = $PCM->validateRUOccupancy($locationID, $templateID, $cabinetRU, $cabinetFace);
-                if($Err !== true) {
-                    throw ValidationException::withMessages($Err);
+                // Validate cabinet RU
+                $request->validate([
+                    'cabinet_ru' => [
+                        'integer',
+                        'between:1,52'
+                    ],
+                ]);
+
+                
+
+                // Collect request variables required for validation
+                $templateID = $object->template_id;
+                $locationID = $object->location_id;
+                $cabinet = LocationModel::where('id', $locationID)->first();
+                $cabinetRU = $PCM->getRUIndex($request->cabinet_ru, $cabinet->size, $cabinet->ru_orientation);
+                $cabinetFace = $request->cabinet_face;
+
+                // Validate RU occupancy
+                if($object['cabinet_ru'] != $cabinetRU) {
+                    $Err = $PCM->validateRUOccupancy($locationID, $templateID, $cabinetRU, $cabinetFace);
+                    if($Err !== true) {
+                        throw ValidationException::withMessages($Err);
+                    }
                 }
             }
         }
@@ -397,8 +410,10 @@ class ObjectController extends Controller
         foreach($data as $key => $value) {
             if($key == 'cabinet_ru') {
 
+                $cabinet = LocationModel::where('id', $request->location_id)->first();
+
                 // Update object RU
-                $object->cabinet_ru = $value;
+                $object->cabinet_ru = $PCM->getRUIndex($value, $cabinet->size, $cabinet->ru_orientation);
             } else if($key == 'name') {
 
                 // Update object name

@@ -6,7 +6,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use App\Models\OrganizationModel;
 use Database\Seeders\Seeder_1_0_0;
-use Database\Seeders\Seeder_1_0_1;
+use Database\Seeders\Seeder_1_2_0;
 
 class DatabaseSeeder extends Seeder
 {
@@ -28,7 +28,8 @@ class DatabaseSeeder extends Seeder
 
         // 1.0.0 -> 1.0.1
         if(version_compare($orgVersion, '1.0.0') === 0) {
-            $this->call([Seeder_1_0_1::class]);
+            $org->version = '1.0.1';
+            $org->save();
         }
 
         $org = OrganizationModel::where('id', 1)->first();
@@ -52,6 +53,7 @@ class DatabaseSeeder extends Seeder
 
         // 1.1.0 -> 1.2.0
         if(version_compare($orgVersion, '1.1.0') === 0) {
+            $this->call([Seeder_1_2_0::class]);
             $org->version = '1.2.0';
             $org->save();
         }

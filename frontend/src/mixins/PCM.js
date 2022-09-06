@@ -38,7 +38,7 @@ export const PCM = {
         GetSelectedObjectIndex: function(Context){
 
             const vm = this
-            const ObjectID = vm.PartitionAddressSelected[Context].object_id
+            const ObjectID = vm.StateSelected[Context].object_id
             const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
 
             return ObjectIndex
@@ -107,7 +107,7 @@ export const PCM = {
         GetSelectedTemplateIndex: function(Context){
 
             const vm = this
-            const ObjectID = vm.PartitionAddressSelected[Context].object_id
+            const ObjectID = vm.StateSelected[Context].object_id
             
             const TemplateID = vm.GetTemplateID(ObjectID, Context)
             const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
@@ -207,7 +207,7 @@ export const PCM = {
                 if(Scope == 'partition' || Scope == 'port') {
 
                     // Cannot trunk to self
-                    const SelectedObjectID = vm.PartitionAddressSelected[Context].object_id
+                    const SelectedObjectID = vm.StateSelected[Context].object_id
                     if(ParentID != SelectedObjectID) {
                         
                         // Collect connectable partitions
@@ -489,11 +489,15 @@ export const PCM = {
             }
       
             if(HonorClick) {
-                vm.PartitionAddressSelected[Context].object_id = ObjectID
-                vm.PartitionAddressSelected[Context].object_face = Face
-                vm.PartitionAddressSelected[Context][Face] = PartitionAddress
-                vm.PartitionAddressSelected[Context].template_id = TemplateID
-                vm.PartitionAddressSelected[Context].port_id[Face] = PortIndex
+
+                let WorkingSelected = vm.StateSelected[Context]
+
+                WorkingSelected.object_id = ObjectID
+                WorkingSelected.object_face = Face
+                WorkingSelected.partition[Face] = PartitionAddress
+                WorkingSelected.port_id[Face] = PortIndex
+
+                vm.$store.commit('pcmState/UPDATE_Selected', {pcmContext:Context, data:WorkingSelected})
             }
 
             if(HonorClick && Context == 'template' && PartitionType == 'enclosure') {
@@ -560,9 +564,9 @@ export const PCM = {
             const ObjectFace = data.ObjectFace
             const PartitionAddress = data.PartitionAddress
 
-            const StoredObjectID = vm.PartitionAddressSelected[Context].object_id
-            const StoredObjectFace = vm.PartitionAddressSelected[Context].object_face
-            const StoredPartitionAddress = vm.PartitionAddressSelected[Context][StoredObjectFace]
+            const StoredObjectID = vm.StateSelected[Context].object_id
+            const StoredObjectFace = vm.StateSelected[Context].object_face
+            const StoredPartitionAddress = vm.StateSelected[Context].partition[StoredObjectFace]
 
             if(ObjectID == StoredObjectID && ObjectFace == StoredObjectFace && JSON.stringify(PartitionAddress) == JSON.stringify(StoredPartitionAddress)) {
                 return true
@@ -601,8 +605,8 @@ export const PCM = {
             // Store variables
             const vm = this
             Context = (Context) ? Context : vm.Context
-            const Face = vm.PartitionAddressSelected[Context].object_face
-            const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+            const Face = vm.StateSelected[Context].object_face
+            const PartitionAddress = vm.StateSelected[Context].partition[Face]
             let Partition = false
 
             const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
@@ -770,7 +774,7 @@ export const PCM = {
             let TempNameArray
             const Face = 'front'
             NameArray.push('')
-            const SelectedObjectID = vm.PartitionAddressSelected[Context].object_id
+            const SelectedObjectID = vm.StateSelected[Context].object_id
 
             // Retrieve child inserts
             const InsertObjects = vm.Objects[Context].filter(object => object.parent_id == ObjectID)
@@ -869,11 +873,18 @@ export const PCM = {
         FloorplanClicked: function({ObjectID, Context}) {
 
             // Store variables
-            const vm = this                
-            vm.PartitionAddressSelected[Context].object_id = ObjectID
-            vm.PartitionAddressSelected[Context].object_face = 'front'
-            vm.PartitionAddressSelected[Context].front = [0]
-            vm.PartitionAddressSelected[Context].rear = [0]
+            const vm = this
+
+            let WorkingSelected = vm.StateSelected[Context]
+
+            WorkingSelected.object_id = ObjectID
+            WorkingSelected.object_face = 'front'
+            WorkingSelected.partition.front = [0]
+            WorkingSelected.partition.rear = [0]
+            WorkingSelected.port_id.front = [0]
+            WorkingSelected.port_id.rear = [0]
+
+            vm.$store.commit('pcmState/UPDATE_Selected', {pcmContext:Context, data:WorkingSelected})
 
         },
         FloorplanIsSelected: function(ObjectID) {
@@ -881,7 +892,7 @@ export const PCM = {
             // Store variables
             const vm = this
             const Context = vm.Context
-            return vm.PartitionAddressSelected[Context].object_id == ObjectID
+            return vm.StateSelected[Context].object_id == ObjectID
         },
 
 // Port
@@ -1257,15 +1268,19 @@ export const PCM = {
         GenerateSelectedPortDN: function(Scope){
             const vm = this
             const Context = vm.Context
-            const ObjectID = vm.PartitionAddressSelected[Context].object_id
-            const Face = vm.PartitionAddressSelected[Context].object_face
-            const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
-            const PortIndex = vm.PartitionAddressSelected[Context].port_id[Face]
+            const ObjectID = vm.StateSelected[Context].object_id
+            const Face = vm.StateSelected[Context].object_face
+            const PartitionAddress = vm.StateSelected[Context].partition[Face]
+            const PortIndex = vm.StateSelected[Context].port_id[Face]
 
             let SelectedPortDN = ''
 
             if(ObjectID !== null) {
-                SelectedPortDN = vm.GenerateDN(Scope, ObjectID, Face, PartitionAddress, PortIndex)
+
+                const Partition = vm.GetPartitionSelected(Context)
+                if(Partition.type == "connectable") {
+                    SelectedPortDN = vm.GenerateDN(Scope, ObjectID, Face, PartitionAddress, PortIndex)
+                }
             }
 
             return SelectedPortDN

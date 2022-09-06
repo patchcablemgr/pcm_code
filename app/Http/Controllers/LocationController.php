@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use App\Models\LocationModel;
+use App\Models\ObjectModel;
 use App\Http\Controllers\PCM;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Gate;
@@ -103,6 +104,7 @@ class LocationController extends Controller
         $location->type = $locationType;
         $location->img = null;
         $location->size = ($locationType == 'cabinet') ? 42 : null;
+        $location->ru_orientation = ($locationType == 'cabinet') ? 'bottom-up' : null;
 
         $location->save();
 
@@ -154,6 +156,8 @@ class LocationController extends Controller
             abort(403);
         }
 
+        $PCM = new PCM;
+
         $validatorInput = [
             'id' => $id
         ];
@@ -176,7 +180,7 @@ class LocationController extends Controller
         // Store request data
         $data = $request->all();
 
-        // Update template record
+        // Update location record
         foreach($data as $key => $value) {
 
             // Node text
@@ -246,6 +250,81 @@ class LocationController extends Controller
 
                 // Update location name
                 $location->order = $value;
+            }
+
+            // Location size
+            if($key == 'size') {
+
+                $validatorInput = [
+                    'size' => $value
+                ];
+                $validatorRules = [
+                    'size' => [
+                        'integer',
+                        'min:1',
+                        'max:52'
+                    ]
+                ];
+                $validatorMessages = [];
+                Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
+
+                // Validate location is cabinet
+                $location = LocationModel::where('id', $id)->first();
+                $locationType = $location['type'];
+                if($locationType != 'cabinet') {
+                    throw ValidationException::withMessages([$key => 'Location type is incompatible.']);
+                }
+
+                // Validate cabinet resize
+                if($value < $location->size) {
+                    $Err = $PCM->validateCabinetResize($id, $value);
+                    if($Err !== true) {
+                        throw ValidationException::withMessages($Err);
+                    }
+                }
+
+                // Store original cabinet size
+                $cabinetSize = $location->size;
+
+                // Update cabinet size
+                $location->size = intval($value);
+
+                // Update object RU
+                if($location->ru_orientation == 'bottom-up') {
+
+                    $cabinetSizeDiff = ($cabinetSize > $value) ? (($cabinetSize - $value) * -1) : ($value - $cabinetSize);
+
+                    $objects = ObjectModel::where('location_id', $id)->where('cabinet_ru', '<>', null)->get();
+                    foreach($objects as $object) {
+                        $object->cabinet_ru = $object->cabinet_ru + $cabinetSizeDiff;
+                        $object->save();
+                    }
+                }
+                
+            }
+
+            // Location ru orientation
+            if($key == 'ru_orientation') {
+
+                $validatorInput = [
+                    'ru_orientation' => $value
+                ];
+                $validatorRules = [
+                    'ru_orientation' => [
+                        Rule::in(['bottom-up', 'top-down'])
+                    ]
+                ];
+                $validatorMessages = [];
+                Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
+
+                $location = LocationModel::where('id', $id)->first();
+                $locationType = $location['type'];
+                if($locationType != 'cabinet') {
+                    throw ValidationException::withMessages([$key => 'Location type is incompatible.']);
+                }
+
+                // Update cabinet size
+                $location->ru_orientation = $value;
             }
         }
 

@@ -16,10 +16,7 @@
               <component-location-tree
                 Context="actual"
                 TreeRef="LocationsAndCabinetsTree"
-                :NodeIDSelected="NodeIDSelected"
                 :TreeIsContextual="TreeIsContextual"
-                @SetPartitionAddressSelected="SetPartitionAddressSelected($event)"
-                @LocationNodeSelected="LocationNodeSelected($event)"
               />
             </b-card-body>
           </b-card>
@@ -27,16 +24,12 @@
           <component-floorplan-object-details
             v-if=" PreviewDisplay == 'floorplan' "
             Context="actual"
-            :PartitionAddressSelected="PartitionAddressSelected"
             :DetailsAreEditable="DetailsAreEditable"
-            @SetPartitionAddressSelected="SetPartitionAddressSelected($event)"
           />
 
           <component-floorplan-objects
             v-if=" PreviewDisplay == 'floorplan' "
             Context="actual"
-            :NodeIDSelected="NodeIDSelected"
-            :PartitionAddressSelected="PartitionAddressSelected"
             :PartitionAddressHovered="PartitionAddressHovered"
           />
 
@@ -49,8 +42,6 @@
             Context="actual"
             :FloorplanImage="FloorplanImage"
             :File="File"
-            :NodeIDSelected="NodeIDSelected"
-            :PartitionAddressSelected="PartitionAddressSelected"
             :PartitionAddressHovered="PartitionAddressHovered"
             :ObjectsAreDraggable="ObjectsAreDraggable"
             @FileSelected="FileSelected($event)"
@@ -93,15 +84,12 @@
                 </b-form-checkbox>
               </div>
               <component-cabinet
-                :LocationID="NodeIDSelected"
                 Context="actual"
                 :TemplateFaceSelected="TemplateFaceSelected"
-                :PartitionAddressSelected="PartitionAddressSelected"
                 :PartitionAddressHovered="PartitionAddressHovered"
                 :ObjectsAreDraggable="ObjectsAreDraggable"
                 @StandardObjectDropped="StandardObjectDropped($event)"
                 @InsertObjectDropped="InsertObjectDropped($event)"
-                @LocationNodeSelected="LocationNodeSelected($event)"
               />
             </b-card-body>
           </b-card>
@@ -115,22 +103,18 @@
             CardTitle="Object Details"
 						Context="actual"
 						:TemplateFaceSelected="TemplateFaceSelected"
-						:PartitionAddressSelected="PartitionAddressSelected"
             :DetailsAreEditable="DetailsAreEditable"
-            @SetPartitionAddressSelected="SetPartitionAddressSelected($event)"
             @SetTemplateFaceSelected="SetTemplateFaceSelected($event)"
 					/>
 
           <component-port
             CardTitle="Port Details"
 						Context="actual"
-						:PartitionAddressSelected="PartitionAddressSelected"
 					/>
 
           <component-connection-path
             CardTitle="Connection Path"
 						Context="actual"
-						:PartitionAddressSelected="PartitionAddressSelected"
             :PartitionAddressHovered="PartitionAddressHovered"
 					/>
 
@@ -179,20 +163,6 @@ const TemplateFaceSelected = {
   'template': 'front',
 }
 
-const PartitionAddressSelected = {
-  'actual': {
-    'object_id': null,
-    'object_face': null,
-    'template_id': null,
-    'front': [0],
-    'rear': [0],
-    'port_id': {
-      'front': null,
-      'rear': null,
-    },
-  }
-}
-
 const PartitionAddressHovered = {
   'actual': {
     'object_id': null,
@@ -207,14 +177,9 @@ const PartitionAddressHovered = {
   }
 }
 
-const NodeIDSelected = null
-
 const TreeIsContextual = false
-
 const DetailsAreEditable = false
-
 const ObjectsAreDraggable = false
-
 const IsSticky = false
 
 export default {
@@ -252,9 +217,7 @@ export default {
   data() {
     return {
       TemplateFaceSelected,
-      PartitionAddressSelected,
       PartitionAddressHovered,
-      NodeIDSelected,
       TreeIsContextual,
       DetailsAreEditable,
       ObjectsAreDraggable,
@@ -300,6 +263,9 @@ export default {
     Objects() {
       return this.$store.state.pcmObjects.Objects
     },
+    StateSelected() {
+      return this.$store.state.pcmState.Selected
+    },
     ObjectsReady: function() {
       return this.$store.state.pcmObjects.ObjectsReady
     },
@@ -309,16 +275,24 @@ export default {
     TrunksReady: function() {
       return this.$store.state.pcmTrunks.TrunksReady
     },
+    LocationID: function() {
+
+      const vm = this
+      const Context = 'actual'
+      const LocationID = vm.StateSelected[Context].location_id
+
+      return LocationID
+    },
     FloorplanImage: function() {
       
       const vm = this
       const Context = 'actual'
-      const NodeID = vm.NodeIDSelected
+      const LocationID = vm.LocationID
       let NodeFloorplanImage = null
 
-      if(NodeID) {
+      if(LocationID) {
 
-        const NodeIndex = vm.GetLocationIndex(NodeID, Context)
+        const NodeIndex = vm.GetLocationIndex(LocationID, Context)
         const Node = vm.Locations[Context][NodeIndex]
         NodeFloorplanImage = Node.img
       }
@@ -329,12 +303,12 @@ export default {
 
       const vm = this
       const Context = 'actual'
-      const NodeID = vm.NodeIDSelected
+      const LocationID = vm.LocationID
       let PreviewDisplay = "none"
 
-      if(NodeID) {
+      if(LocationID) {
 
-        const LocationIndex = vm.GetLocationIndex(NodeID, Context)
+        const LocationIndex = vm.GetLocationIndex(LocationID, Context)
         const Location = vm.Locations[Context][LocationIndex]
         const NodeType = Location.type
 
@@ -353,18 +327,6 @@ export default {
     },
   },
   methods: {
-    LocationNodeSelected: function(EmitData) {
-      const vm = this
-      const NodeID = EmitData.id
-      vm.NodeIDSelected = NodeID
-    },
-    SetPartitionAddressSelected: function({Context, object_id, front, rear}) {
-
-      const vm = this
-      vm.PartitionAddressSelected[Context].object_id = object_id
-      vm.PartitionAddressSelected[Context].front = front
-      vm.PartitionAddressSelected[Context].rear = rear
-    },
     SetTemplateFaceSelected: function({Context, Face}) {
 
       const vm = this
@@ -380,7 +342,7 @@ export default {
     FileSubmitted: function() {
 
       const vm = this
-      const LocationID = vm.NodeIDSelected
+      const LocationID = vm.LocationID
       const url = '/api/locations/'+LocationID+'/image'
       let data = new FormData()
       const options = {

@@ -16,27 +16,26 @@
               <component-location-tree
                 Context="actual"
                 TreeRef="LocationsAndCabinetsTree"
-                :NodeIDSelected="NodeIDSelected"
                 :TreeIsContextual="TreeIsContextual"
-                @SetPartitionAddressSelected="SetPartitionAddressSelected($event)"
-                @LocationNodeSelected="LocationNodeSelected($event)"
               />
             </b-card-body>
           </b-card>
 
+          <component-cabinet-details
+          v-if=" PreviewDisplay == 'cabinet' "
+            CardTitle="Cabinet Details"
+            Context="actual"
+          />
+
           <component-floorplan-object-details
             v-if=" PreviewDisplay == 'floorplan' "
             Context="actual"
-            :PartitionAddressSelected="PartitionAddressSelected"
             :DetailsAreEditable="DetailsAreEditable"
-            @SetPartitionAddressSelected="SetPartitionAddressSelected($event)"
           />
 
           <component-floorplan-objects
             v-if=" PreviewDisplay == 'floorplan' "
             Context="actual"
-            :NodeIDSelected="NodeIDSelected"
-            :PartitionAddressSelected="PartitionAddressSelected"
             :PartitionAddressHovered="PartitionAddressHovered"
           />
 
@@ -49,9 +48,7 @@
             Context="actual"
             :FloorplanImage="FloorplanImage"
             :File="File"
-            :NodeIDSelected="NodeIDSelected"
             :TemplateFaceSelected="TemplateFaceSelected"
-            :PartitionAddressSelected="PartitionAddressSelected"
             :PartitionAddressHovered="PartitionAddressHovered"
             :ObjectsAreDraggable="ObjectsAreDraggable"
             @FileSelected="FileSelected($event)"
@@ -93,15 +90,12 @@
                 </b-form-checkbox>
               </div>
               <component-cabinet
-                :LocationID="NodeIDSelected"
                 Context="actual"
                 :TemplateFaceSelected="TemplateFaceSelected"
-                :PartitionAddressSelected="PartitionAddressSelected"
                 :PartitionAddressHovered="PartitionAddressHovered"
                 :ObjectsAreDraggable="ObjectsAreDraggable"
                 @StandardObjectDropped="StandardObjectDropped($event)"
                 @InsertObjectDropped="InsertObjectDropped($event)"
-                @LocationNodeSelected="LocationNodeSelected($event)"
               />
             </b-card-body>
           </b-card>
@@ -115,16 +109,13 @@
             CardTitle="Object Details"
 						Context="actual"
 						:TemplateFaceSelected="TemplateFaceSelected"
-						:PartitionAddressSelected="PartitionAddressSelected"
             :DetailsAreEditable="DetailsAreEditable"
-            @SetPartitionAddressSelected="SetPartitionAddressSelected($event)"
             @SetTemplateFaceSelected="SetTemplateFaceSelected($event)"
 					/>
 
           <component-templates
             Context="template"
             :TemplateFaceSelected="TemplateFaceSelected"
-            :PartitionAddressSelected="PartitionAddressSelected"
             :PartitionAddressHovered="PartitionAddressHovered"
             :ObjectsAreDraggable="ObjectsAreDraggable"
             @SetTemplateFaceSelected="SetTemplateFaceSelected($event)"
@@ -159,6 +150,7 @@ import {
 } from 'bootstrap-vue'
 import ToastGeneral from './templates/ToastGeneral.vue'
 import ComponentLocationTree from '@/views/templates/ComponentLocationTree.vue'
+import ComponentCabinetDetails from '@/views/templates/ComponentCabinetDetails.vue'
 import ComponentCabinet from './templates/ComponentCabinet.vue'
 import ComponentTemplateObjectDetails from './templates/ComponentTemplateObjectDetails.vue'
 import ComponentTemplates from './templates/ComponentTemplates.vue'
@@ -171,31 +163,6 @@ import ComponentFloorplanObjectDetails from './templates/ComponentFloorplanObjec
 const TemplateFaceSelected = {
   'actual': 'front',
   'template': 'front',
-}
-
-const PartitionAddressSelected = {
-  'actual': {
-    'object_id': null,
-    'object_face': null,
-    'template_id': null,
-    'front': [0],
-    'rear': [0],
-    'port_id': {
-      'front': null,
-      'rear': null,
-    },
-  },
-  'template': {
-    'object_id': null,
-    'object_face': null,
-    'template_id': null,
-    'front': [0],
-    'rear': [0],
-    'port_id': {
-      'front': null,
-      'rear': null,
-    },
-  }
 }
 
 const PartitionAddressHovered = {
@@ -215,7 +182,6 @@ const PartitionAddressHovered = {
   }
 }
 
-const NodeIDSelected = null
 const TreeIsContextual = true
 const DetailsAreEditable = true
 const ObjectsAreDraggable = true
@@ -240,6 +206,7 @@ export default {
 
     ToastGeneral,
     ComponentLocationTree,
+    ComponentCabinetDetails,
     ComponentCabinet,
     ComponentTemplateObjectDetails,
     ComponentTemplates,
@@ -254,9 +221,7 @@ export default {
   data() {
     return {
       TemplateFaceSelected,
-      PartitionAddressSelected,
       PartitionAddressHovered,
-      NodeIDSelected,
       TreeIsContextual,
       DetailsAreEditable,
       ObjectsAreDraggable,
@@ -311,16 +276,19 @@ export default {
     TrunksReady: function() {
       return this.$store.state.pcmTrunks.TrunksReady
     },
+    StateSelected() {
+      return this.$store.state.pcmState.Selected
+    },
     FloorplanImage: function() {
       
       const vm = this
       const Context = 'actual'
-      const NodeID = vm.NodeIDSelected
+      const LocationID = vm.StateSelected[Context].location_id
       let NodeFloorplanImage = null
 
-      if(NodeID) {
+      if(LocationID) {
 
-        const NodeIndex = vm.GetLocationIndex(NodeID, Context)
+        const NodeIndex = vm.GetLocationIndex(LocationID, Context)
         const Node = vm.Locations[Context][NodeIndex]
         NodeFloorplanImage = Node.img
       }
@@ -331,12 +299,12 @@ export default {
 
       const vm = this
       const Context = 'actual'
-      const NodeID = vm.NodeIDSelected
+      const LocationID = vm.StateSelected[Context].location_id
       let PreviewDisplay = "none"
 
-      if(NodeID) {
+      if(LocationID) {
 
-        const LocationIndex = vm.GetLocationIndex(NodeID, Context)
+        const LocationIndex = vm.GetLocationIndex(LocationID, Context)
         const Location = vm.Locations[Context][LocationIndex]
         const NodeType = Location.type
 
@@ -355,18 +323,6 @@ export default {
     },
   },
   methods: {
-    LocationNodeSelected: function(EmitData) {
-      const vm = this
-      const NodeID = EmitData.id
-      vm.NodeIDSelected = NodeID
-    },
-    SetPartitionAddressSelected: function({Context, object_id, front, rear}) {
-
-      const vm = this
-      vm.PartitionAddressSelected[Context].object_id = object_id
-      vm.PartitionAddressSelected[Context].front = front
-      vm.PartitionAddressSelected[Context].rear = rear
-    },
     SetTemplateFaceSelected: function({Context, Face}) {
 
       const vm = this
@@ -382,7 +338,8 @@ export default {
     FileSubmitted: function() {
 
       const vm = this
-      const LocationID = vm.NodeIDSelected
+      const Context = 'actual'
+      const LocationID = vm.StateSelected[Context].location_id
       const url = '/api/locations/'+LocationID+'/image'
       let data = new FormData()
       const options = {

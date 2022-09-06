@@ -46,7 +46,6 @@ export default {
   directives: {},
   props: {
     Context: {type: String},
-    PartitionAddressSelected: {type: Object},
   },
   data () {
     return {
@@ -61,6 +60,9 @@ export default {
     },
     Objects() {
       return this.$store.state.pcmObjects.Objects
+    },
+    StateSelected() {
+      return this.$store.state.pcmState.Selected
     },
     TemplateName: {
       get() {

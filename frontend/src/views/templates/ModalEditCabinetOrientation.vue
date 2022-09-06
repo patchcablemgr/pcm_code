@@ -12,31 +12,29 @@
             :title="ModalTitle"
           >
             <b-card-text>
+
               <validation-observer
                 ref="validation"
                 v-slot="{ invalid }"
               >
               <validation-provider
                 name="Value"
-                :rules="{regex: /^[A-Za-z0-9\/\_]+$/}"
+                :rules="{regex: /^(bottom\-up|top\-down)$/}"
                 #default="{ errors }"
               >
-                <b-form
-                  @submit.prevent="Submit"
-                >
-                  <b-form-input
-                    v-model="ObjectName"
-                    type="text"
-                    autofocus
-                  />
-                  <small class="text-danger">{{ errors[0] }}</small>
-                </b-form>
+                <b-form-select
+                  v-model="CabinetOrientation"
+                  :options="CabinetOrientationOptions"
+                  autofocus
+                />
+                <small class="text-danger">{{ errors[0] }}</small>
               </validation-provider>
-              </validation-observer>
+            </validation-observer>
             </b-card-text>
           </b-card>
         </b-col>
       </b-row>
+
     </b-modal>
 </template>
 
@@ -44,7 +42,7 @@
 import { BContainer, BRow, BCol, BCard, BForm, BButton, BFormInput, BFormSelect, BFormCheckbox, BCardText, } from 'bootstrap-vue'
 import { PCM } from '@/mixins/PCM.js'
 import { configure, ValidationProvider, ValidationObserver } from 'vee-validate'
-import { regex } from '@validations'
+import { required, regex } from '@validations'
 
 const config = {
   useConstraintAttrs: false,
@@ -53,7 +51,11 @@ const config = {
 
 configure(config)
 
-let ObjectName = null
+let CabinetOrientation = null
+const CabinetOrientationOptions = [
+  {'value': 'bottom-up','text': 'bottom-up'},
+  {'value': 'top-down','text': 'top-down'},
+]
 
 export default {
   mixins: [PCM],
@@ -70,6 +72,7 @@ export default {
     BCardText,
     ValidationProvider,
     ValidationObserver,
+    required,
     regex,
   },
   directives: {},
@@ -80,28 +83,41 @@ export default {
   },
   data () {
     return {
-      ObjectName,
+      CabinetOrientation,
+      CabinetOrientationOptions,
     }
   },
   computed: {
-    Objects() {
-      return this.$store.state.pcmObjects.Objects
+    Locations() {
+      return this.$store.state.pcmLocations.Locations
     },
     StateSelected() {
       return this.$store.state.pcmState.Selected
     },
-    ComputedObjectName() {
+    LocationID() {
+
+      const vm = this
+      const Context = vm.Context
+
+      return vm.StateSelected[Context].location_id
+    },
+    ComputedCabinetOrientation() {
 
         const vm = this
         const Context = vm.Context
-        const Object = vm.GetObjectSelected(Context)
-        let ObjectName = 'N/A'
+        const LocationID = vm.LocationID
+        let CabinetOrientation = 'N/A'
 
-        if(Object) {
-          ObjectName = Object.name
+        if(LocationID) {
+          const LocationIndex = vm.GetLocationIndex(LocationID, Context)
+          const Location = vm.Locations[Context][LocationIndex]
+          const LocationType = Location.type
+          if(LocationType == 'cabinet') {
+            CabinetOrientation = Location.ru_orientation
+          }
         }
         
-        return ObjectName
+        return CabinetOrientation
     },
   },
   methods: {
@@ -109,25 +125,22 @@ export default {
 
       const vm = this
       const Context = vm.Context
-      const ObjectID = vm.StateSelected[Context].object_id
+      const LocationID = vm.LocationID
 
       vm.$refs.validation.validate().then((Valid) => {
         if(Valid) {
 
-          // PATCH object
-          const URL = '/api/objects/'+ObjectID
+          // PATCH location
+          const URL = '/api/locations/'+LocationID
           const data = {
-            name: vm.ObjectName
+            ru_orientation: vm.CabinetOrientation
           }
           vm.$http.patch(URL, data).then(response => {
 
             // Update node from store
-            vm.$store.commit('pcmObjects/UPDATE_Object', {pcmContext:Context, data:response.data})
+            vm.$store.commit('pcmLocations/UPDATE_Location', {pcmContext:Context, data:response.data})
 
           }).catch(error => {vm.DisplayError(error)})
-
-          // Hide modal, this is necessary to close modal after submitting by click or enter
-          vm.$bvModal.hide(vm.ModalID)
         }
       })
     }
@@ -139,7 +152,7 @@ export default {
 
       // Only trigger on intended modal
       if(modalId == vm.ModalID) {
-        vm.ObjectName = vm.ComputedObjectName
+        vm.CabinetOrientation = vm.ComputedCabinetOrientation
       }
     })
   },

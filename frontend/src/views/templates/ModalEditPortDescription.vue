@@ -18,7 +18,7 @@
               >
               <validation-provider
                 name="Value"
-                :rules="{regex: /^[A-Za-z0-9\/\_]+$/}"
+                :rules="{regex: /^[A-Za-z0-9\/]+$/}"
                 #default="{ errors }"
               >
                 <b-form

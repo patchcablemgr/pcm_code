@@ -72,7 +72,6 @@ export default {
     ModalTitle: {type: String},
     TreeRef: {type: String},
     Context: {type: String},
-    PartitionAddressSelected: {type: Object},
     PortSelectFunction: {type: String},
   },
   data () {
@@ -103,11 +102,14 @@ export default {
     Connections() {
       return this.$store.state.pcmConnections.Connections
     },
+    StateSelected() {
+      return this.$store.state.pcmState.Selected
+    },
     TemplateType: function() {
 
       const vm = this
       const Context = vm.Context
-      const ObjectID = vm.PartitionAddressSelected[Context].object_id
+      const ObjectID = vm.StateSelected[Context].object_id
       let TemplateType = null
 
       if(ObjectID) {
@@ -145,7 +147,7 @@ export default {
       }
       const TreeSelection = vm.$refs[TreeRef].findAll(Criteria)
 
-      const SelectedObjectID = vm.PartitionAddressSelected[Context].object_id
+      const SelectedObjectID = vm.StateSelected[Context].object_id
 
       let FloorplanObjectType
       if(SelectedObjectID) {
@@ -154,9 +156,9 @@ export default {
         FloorplanObjectType = Object.floorplan_object_type
       }
       const SelectedObjectIsFloorplan = (FloorplanObjectType == 'camera' || FloorplanObjectType == 'wap' || FloorplanObjectType == 'walljack') ? true : false
-      const SelectedObjectFace = (SelectedObjectIsFloorplan) ? 'front' : vm.PartitionAddressSelected[Context].object_face
-      const SelectedObjectPartition = (SelectedObjectIsFloorplan) ? [0] : vm.PartitionAddressSelected[Context][SelectedObjectFace]
-      const SelectedObjectPortID = (SelectedObjectIsFloorplan) ? null : vm.PartitionAddressSelected[Context].port_id[SelectedObjectFace]
+      const SelectedObjectFace = (SelectedObjectIsFloorplan) ? 'front' : vm.StateSelected[Context].object_face
+      const SelectedObjectPartition = (SelectedObjectIsFloorplan) ? [0] : vm.StateSelected[Context].partition[SelectedObjectFace]
+      const SelectedObjectPortID = (SelectedObjectIsFloorplan) ? null : vm.StateSelected[Context].port_id[SelectedObjectFace]
 
       let PeerData = []
       TreeSelection.forEach(function(node){
@@ -203,9 +205,9 @@ export default {
       const TreeRef = vm.TreeRef
       const PortSelectFunction = vm.PortSelectFunction
 
-      const SelectedObjectID = vm.PartitionAddressSelected[Context].object_id
-      const SelectedObjectFace = vm.PartitionAddressSelected[Context].object_face
-      const SelectedObjectPartition = vm.PartitionAddressSelected[Context][SelectedObjectFace]
+      const SelectedObjectID = vm.StateSelected[Context].object_id
+      const SelectedObjectFace = vm.StateSelected[Context].object_face
+      const SelectedObjectPartition = vm.StateSelected[Context].partition[SelectedObjectFace]
 
       if(PortSelectFunction == 'trunk') {
 
@@ -225,7 +227,7 @@ export default {
         })
       } else if(PortSelectFunction == 'port') {
 
-        const SelectedPortID = vm.PartitionAddressSelected[Context].port_id[SelectedObjectFace]
+        const SelectedPortID = vm.StateSelected[Context].port_id[SelectedObjectFace]
         const Connection = vm.GetConnection(SelectedObjectID, SelectedObjectFace, SelectedObjectPartition, SelectedPortID)
         const ConnectionID = Connection.data.id
         
@@ -266,9 +268,9 @@ export default {
 
           vm.BuildLocationTree({Scope})
 
-          const SelectedObjectID = vm.PartitionAddressSelected[Context].object_id
-          const SelectedObjectFace = vm.PartitionAddressSelected[Context].object_face
-          const SelectedObjectPartition = vm.PartitionAddressSelected[Context][SelectedObjectFace]
+          const SelectedObjectID = vm.StateSelected[Context].object_id
+          const SelectedObjectFace = vm.StateSelected[Context].object_face
+          const SelectedObjectPartition = vm.StateSelected[Context].partition[SelectedObjectFace]
 
           const Object = vm.GetObjectSelected(Context)
           const FloorplanObjectType = Object.floorplan_object_type

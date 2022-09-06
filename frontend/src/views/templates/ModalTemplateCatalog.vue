@@ -12,7 +12,6 @@
             <component-templates
               Context="catalog"
               :TemplateFaceSelected="TemplateFaceSelected"
-              :PartitionAddressSelected="PartitionAddressSelected"
               :PartitionAddressHovered="PartitionAddressHovered"
               @SetTemplateFaceSelected=" $emit('SetTemplateFaceSelected', $event) "
             />
@@ -22,9 +21,7 @@
             CardTitle="Template Details"
 						Context="catalog"
 						:TemplateFaceSelected="TemplateFaceSelected"
-						:PartitionAddressSelected="PartitionAddressSelected"
             :DetailsAreEditable="true"
-            @SetPartitionAddressSelected=" $emit('SetPartitionAddressSelected', $event) "
             @SetTemplateFaceSelected=" $emit('SetTemplateFaceSelected', $event) "
 					/>
         </b-col>
@@ -60,7 +57,6 @@ export default {
     ModalID: {type: String},
     Context: {type: String},
     TemplateFaceSelected: {type: Object},
-    PartitionAddressSelected: {type: Object},
     PartitionAddressHovered: {type: Object},
   },
   data () {

@@ -93,9 +93,9 @@
 
     <!-- Modal Edit Object Name -->
     <modal-edit-object-name
-      :Context="Context"
-      :PartitionAddressSelected="PartitionAddressSelected"
+      ModalID="modal-edit-object-name"
       ModalTitle="Object Name"
+      :Context="Context"
     />
 
     <!-- Modal Port Select -->
@@ -104,7 +104,6 @@
       ModalTitle="Trunk"
       TreeRef="PortSelect"
       :Context="Context"
-      :PartitionAddressSelected="PartitionAddressSelected"
       PortSelectFunction="trunk"
     />
 
@@ -149,7 +148,6 @@ export default {
   props: {
     Context: {type: String},
     FloorplanTemplateData: {type: Array},
-    PartitionAddressSelected: {type: Object},
     DetailsAreEditable: {type: Boolean},
   },
   data() {
@@ -169,11 +167,14 @@ export default {
     Locations() {
       return this.$store.state.pcmLocations.Locations
     },
+    StateSelected() {
+      return this.$store.state.pcmState.Selected
+    },
     ComputedObjectSelected: function() {
 
       const vm = this
       const Context = vm.Context
-      return (vm.PartitionAddressSelected[Context].object_id) ? true : false
+      return (vm.StateSelected[Context].object_id) ? true : false
     },
     Trunkable: function() {
 
@@ -192,7 +193,7 @@ export default {
 
       const vm = this
       const Context = vm.Context
-      const ObjectID = vm.PartitionAddressSelected[Context].object_id
+      const ObjectID = vm.StateSelected[Context].object_id
       let ObjectName = '-'
 
       if(ObjectID) {
@@ -207,7 +208,7 @@ export default {
 
       const vm = this
       const Context = vm.Context
-      const ObjectID = vm.PartitionAddressSelected[Context].object_id
+      const ObjectID = vm.StateSelected[Context].object_id
       let TemplateName = '-'
 
       if(ObjectID) {
@@ -226,7 +227,7 @@ export default {
 
       const vm = this
       const Context = vm.Context
-      const ObjectID = vm.PartitionAddressSelected[Context].object_id
+      const ObjectID = vm.StateSelected[Context].object_id
       let TemplateType = null
 
       if(ObjectID) {
@@ -244,7 +245,7 @@ export default {
       let Trunked = '-'
 
       if(vm.TemplateType == 'wap' || vm.TemplateType == 'walljack' || vm.TemplateType == 'camera') {
-        const ObjectID = vm.PartitionAddressSelected[Context].object_id
+        const ObjectID = vm.StateSelected[Context].object_id
         const Trunks = vm.GetTrunks(ObjectID, 'front', [0])
         Trunked = (Trunks.length) ? 'Yes' : 'No'
       } else {
@@ -260,7 +261,7 @@ export default {
       const vm = this
       const Context = vm.Context
 
-      const ObjectID = vm.PartitionAddressSelected[Context].object_id
+      const ObjectID = vm.StateSelected[Context].object_id
       const ObjectIndex = vm.Objects[Context].findIndex((object) => object.id == ObjectID)
       const Object = vm.Objects[Context][ObjectIndex]
       const ObjectName = Object.name
@@ -281,14 +282,7 @@ export default {
           vm.$http.delete(URL).then(response => {
 
             // Clear user selection
-            const PartitionAddressSelected = {
-              Context,
-              object_id: null,
-              template_id: null,
-              front: [0],
-              rear: [0]
-            }
-            vm.$emit('SetPartitionAddressSelected', PartitionAddressSelected)
+            vm.$store.commit('pcmState/DEFAULT_Selected', {pcmContext:Context})
 
             // Remove object from store
             vm.$store.commit('pcmObjects/REMOVE_Object', {pcmContext:Context, data:response.data})

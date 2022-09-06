@@ -52,9 +52,7 @@ export default {
     Title: {type: String},
     UploadType: {type: String},
     Context: {type: String},
-    NodeIDSelected: {type: Number},
     TemplateFaceSelected: {type: Object},
-    PartitionAddressSelected: {type: Object},
   },
   data() {
     return {
@@ -67,6 +65,9 @@ export default {
     },
     Objects() {
       return this.$store.state.pcmObjects.Objects
+    },
+    StateSelected() {
+      return this.$store.state.pcmState.Selected
     },
   },
   methods: {
@@ -83,7 +84,7 @@ export default {
 
       if(UploadType == 'floorplanImg') {
 
-        const LocationID = vm.NodeIDSelected
+        const LocationID = vm.StateSelected[Context].location_id
         const url = '/api/locations/'+LocationID+'/image'
         let data = new FormData()
         const options = {

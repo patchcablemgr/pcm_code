@@ -63,8 +63,6 @@ export default {
   },
   props: {
     Context: {type: String},
-    NodeIDSelected: {type: Number},
-    PartitionAddressSelected: {type: Object},
     PartitionAddressHovered: {type: Object},
   },
   data() {
@@ -79,11 +77,14 @@ export default {
     Objects() {
       return this.$store.state.pcmObjects.Objects
     },
+    StateSelected() {
+      return this.$store.state.pcmState.Selected
+    },
     FloorplanObjects: function() {
 
       const vm = this
       const Context = vm.Context
-      const LocationID = vm.NodeIDSelected
+      const LocationID = vm.StateSelected[Context].location_id
       const FloorplanObjects = vm.Objects[Context].filter((object) => object.location_id == LocationID )
 
       return FloorplanObjects
@@ -92,7 +93,7 @@ export default {
 
       const vm = this
       const Context = vm.Context
-      return vm.PartitionAddressSelected[Context].object_id
+      return vm.StateSelected[Context].object_id
     }
   },
   methods: {

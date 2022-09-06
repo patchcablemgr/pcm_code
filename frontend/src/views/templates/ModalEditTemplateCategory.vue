@@ -59,7 +59,6 @@ export default {
   props: {
     Context: {type: String},
     ModalTitle: {type: String},
-    PartitionAddressSelected: {type: Object},
   },
   data () {
     return {
@@ -75,12 +74,16 @@ export default {
     Objects() {
       return this.$store.state.pcmObjects.Objects
     },
+    StateSelected() {
+      return this.$store.state.pcmState.Selected
+    },
     TemplateCategoryID: {
       get() {
       
         const vm = this
         const Context = vm.Context
-        const TemplateID = vm.PartitionAddressSelected[Context].template_id
+        const ObjectID = vm.StateSelected[Context].object_id
+        const TemplateID = vm.GetTemplateID(ObjectID, Context)
         const TemplateIndex = vm.GetTemplateIndex(TemplateID)
         const Template = vm.Templates[Context][TemplateIndex]
 

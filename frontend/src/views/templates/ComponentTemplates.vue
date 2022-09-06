@@ -84,11 +84,8 @@
                     :Context="Context"
                     :ObjectID="GetObjectID(Template.id)"
                     :CabinetFace="TemplateFaceSelected[Context]"
-                    :PartitionAddressSelected="PartitionAddressSelected"
                     :PartitionAddressHovered="PartitionAddressHovered"
                     :ObjectsAreDraggable="ObjectsAreDraggable"
-                    @PartitionClicked=" $emit('PartitionClicked', $event) "
-                    @PartitionHovered=" $emit('PartitionHovered', $event) "
                   />
                 </td>
               </tr>
@@ -105,9 +102,7 @@
     ModalID="modal-template-catalog"
     Context="catalog"
     :TemplateFaceSelected="TemplateFaceSelected"
-    :PartitionAddressSelected="PartitionAddressSelected"
     :PartitionAddressHovered="PartitionAddressHovered"
-    @SetPartitionAddressSelected=" $emit('SetPartitionAddressSelected', $event) "
     @SetTemplateFaceSelected=" $emit('SetTemplateFaceSelected', $event) "
   />
 
@@ -145,7 +140,6 @@ export default {
   props: {
     Context: {type: String},
     TemplateFaceSelected: {type: Object},
-    PartitionAddressSelected: {type: Object},
     PartitionAddressHovered: {type: Object},
     ObjectsAreDraggable: {type: Boolean},
   },

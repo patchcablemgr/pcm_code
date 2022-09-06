@@ -89,7 +89,6 @@ export default {
   props: {
     Context: {type: String},
     TreeRef: {type: String},
-    NodeIDSelected: {type: Number},
     TreeIsContextual: {type: Boolean},
   },
   data() {
@@ -101,6 +100,9 @@ export default {
   computed: {
     Locations() {
       return this.$store.state.pcmLocations.Locations
+    },
+    StateSelected() {
+      return this.$store.state.pcmState.Selected
     },
   },
   methods: {
@@ -148,7 +150,7 @@ export default {
           vm.$store.commit('pcmLocations/REMOVE_Location', response.data)
 
           // Clear node selection
-          vm.$emit('LocationNodeSelected', {id:null})
+          vm.$store.commit('pcmState/DEFAULT_Selected', {pcmContext:Context})
 
           const ReturnedLocationID = response.data.id
 
@@ -224,12 +226,14 @@ export default {
 
       // Update selected node
       vm.$refs[TreeRef].$on('node:selected', (node) => {
-        
-        const LocationID = node.data.id
-        const NodeID = node.id
-        vm.$emit('SetPartitionAddressSelected', {Context, object_id:null, front:[0], rear:[0]})
-        vm.$emit('LocationNodeSelected', {"id":LocationID})
-        document.cookie = "environment_location_nodeID="+NodeID
+
+        const UpdateData = {
+          location_id: node.data.id,
+          node_id: node.id
+        }
+
+        vm.$store.commit('pcmState/DEFAULT_Selected', {pcmContext:Context})
+        vm.$store.commit('pcmState/UPDATE_Selected', {pcmContext:Context, data:UpdateData})
       })
       
       // Update node text
@@ -283,7 +287,7 @@ export default {
         })
       })
 
-      const SelectedNodeID = vm.GetCookie('environment_location_nodeID')
+      const SelectedNodeID = vm.StateSelected[Context].node_id ? vm.StateSelected[Context].node_id : ""
       if(SelectedNodeID != "") {
 
         // Select previously viewed node

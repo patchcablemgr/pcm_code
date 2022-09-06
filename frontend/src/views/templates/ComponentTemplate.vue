@@ -26,7 +26,6 @@
         :ObjectID="ObjectID"
         :CabinetFace="CabinetFace"
         :ObjectFace="ObjectFace"
-        :PartitionAddressSelected="PartitionAddressSelected"
         :PartitionAddressHovered="PartitionAddressHovered"
         :ObjectsAreDraggable="ObjectsAreDraggable"
       />
@@ -52,19 +51,8 @@
           :TemplateID="GetTemplateID(ObjectID)"
           :PartitionAddress="GetPartitionAddress(PartitionIndex)"
           :PortID="(portIndex-1)"
-          :PartitionAddressSelected="PartitionAddressSelected"
         >
         </component-port-r>
-        <!--div
-          v-for=" portIndex in (Partition.port_layout.rows * Partition.port_layout.cols) "
-          :key=" portIndex "
-          class=" pcm_template_connectable_port_unk "
-          :style="{ 'grid-area': 'area'+(portIndex-1) }"
-          @click.stop=" PartitionClicked({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': GetPartitionAddress(PartitionIndex), 'PortID': portIndex}) "
-        >
-          <component-port-r>
-          </component-port-r>
-        </div-->
       </div>
 
       <!-- Enclosure partition -->
@@ -90,7 +78,6 @@
             :Context="Context"
             :ObjectID="GetEnclosureInsertID(encIndex-1, Partition.enc_layout.cols)"
             :CabinetFace="CabinetFace"
-            :PartitionAddressSelected="PartitionAddressSelected"
             :PartitionAddressHovered="PartitionAddressHovered"
             :ObjectsAreDraggable="ObjectsAreDraggable"
             @InsertObjectDropped=" $emit('InsertObjectDropped', $event) "
@@ -131,7 +118,6 @@ export default {
     CabinetFace: {type: String},
     ObjectFace: {type: String},
     TemplateFaceSelected: {type: Object},
-    PartitionAddressSelected: {type: Object},
     PartitionAddressHovered: {type: Object},
     ObjectsAreDraggable: {type: Boolean},
   },
@@ -144,6 +130,9 @@ export default {
     },
     Objects() {
       return this.$store.state.pcmObjects.Objects
+    },
+    StateSelected() {
+      return this.$store.state.pcmState.Selected
     },
     IsPseudo: function() {
 

@@ -22,7 +22,6 @@
       :ObjectID="ObjectID"
       :CabinetFace="CabinetFace"
       :ObjectFace="ObjectFace"
-      :PartitionAddressSelected="PartitionAddressSelected"
       :PartitionAddressHovered="PartitionAddressHovered"
       :ObjectsAreDraggable="ObjectsAreDraggable"
       @InsertObjectDropped=" $emit('InsertObjectDropped', $event) "
@@ -50,7 +49,6 @@ export default {
     Context: {type: String},
     ObjectID: {},
     CabinetFace: {type: String},
-    PartitionAddressSelected: {type: Object},
     PartitionAddressHovered: {type: Object},
     ObjectsAreDraggable: {type: Boolean},
   },
@@ -63,6 +61,9 @@ export default {
     },
     Objects() {
       return this.$store.state.pcmObjects.Objects
+    },
+    StateSelected() {
+      return this.$store.state.pcmState.Selected
     },
     IsPseudoObject: function() {
 

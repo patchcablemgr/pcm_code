@@ -16,11 +16,7 @@
               <templates-form
                 Context="workspace"
                 :TemplateFaceSelected="TemplateFaceSelected"
-                :PartitionAddressSelected="PartitionAddressSelected"
                 :PartitionTypeDisabled="PartitionTypeDisabled"
-                SetLocationID
-                @SetLocationID="SetLocationID($event)"
-                @SetPartitionAddressSelected="SetPartitionAddressSelected($event)"
                 @SetTemplateFaceSelected="SetTemplateFaceSelected($event)"
               />
             </b-card-body>
@@ -61,10 +57,8 @@
                 </b-form-checkbox>
               </div>
               <component-cabinet
-                :LocationID="LocationID"
                 Context="workspace"
                 :TemplateFaceSelected="TemplateFaceSelected"
-                :PartitionAddressSelected="PartitionAddressSelected"
                 :PartitionAddressHovered="PartitionAddressHovered"
               />
             </b-card-body>
@@ -82,18 +76,14 @@
             CardTitle="Template Details"
 						Context="template"
 						:TemplateFaceSelected="TemplateFaceSelected"
-						:PartitionAddressSelected="PartitionAddressSelected"
             :DetailsAreEditable="true"
-            @SetPartitionAddressSelected="SetPartitionAddressSelected($event)"
             @SetTemplateFaceSelected="SetTemplateFaceSelected($event)"
 					/>
 
           <component-templates
             Context="template"
             :TemplateFaceSelected="TemplateFaceSelected"
-            :PartitionAddressSelected="PartitionAddressSelected"
             :PartitionAddressHovered="PartitionAddressHovered"
-            @SetPartitionAddressSelected="SetPartitionAddressSelected($event)"
             @SetTemplateFaceSelected="SetTemplateFaceSelected($event)"
           />
 
@@ -119,59 +109,10 @@ import { PCM } from '@/mixins/PCM.js'
 
 const IsSticky = false
 const CategoriesWatcherActive = true
-const LocationID = 1
-const StandardTemplateID = 1
-const InsertTemplateID = 2
 const TemplateFaceSelected = {
   'workspace': 'front',
   'template': 'front',
   'catalog': 'front',
-}
-const PartitionAddressSelected = {
-  'workspace': {
-    'object_id': StandardTemplateID,
-    'object_face': 'front',
-    'template_id': StandardTemplateID,
-    'front': [0],
-    'rear': [0],
-    'port_id': {
-      'front': null,
-      'rear': null,
-    }
-  },
-  'template': {
-    'object_id': null,
-    'object_face': null,
-    'template_id': null,
-    'front': [0],
-    'rear': [0],
-    'port_id': {
-      'front': null,
-      'rear': null,
-    }
-  },
-  'object': {
-    'object_id': null,
-    'object_face': null,
-    'template_id': null,
-    'front': [0],
-    'rear': [0],
-    'port_id': {
-      'front': null,
-      'rear': null,
-    }
-  },
-  'catalog': {
-    'object_id': null,
-    'object_face': null,
-    'template_id': null,
-    'front': [0],
-    'rear': [0],
-    'port_id': {
-      'front': null,
-      'rear': null,
-    }
-  }
 }
 const PartitionAddressHovered = {
   'workspace': {
@@ -233,12 +174,8 @@ export default {
     return {
       IsSticky,
       CategoriesWatcherActive,
-      LocationID,
       TemplateFaceSelected,
-      PartitionAddressSelected,
       PartitionAddressHovered,
-      StandardTemplateID,
-      InsertTemplateID,
     }
   },
   computed: {
@@ -275,6 +212,9 @@ export default {
     ObjectsReady: function() {
       return this.$store.state.pcmObjects.ObjectsReady
     },
+    StateSelected() {
+      return this.$store.state.pcmState.Selected
+    },
     PreviewDisplay: function(){
 
       const vm = this
@@ -306,7 +246,8 @@ export default {
     TemplateFaceToggleIsDisabled: function() {
 
       const vm = this
-      const Template = vm.GetTemplateSelected('workspace')
+      const Context = 'workspace'
+      const Template = vm.GetTemplateSelected(Context)
       const MountConfig = Template.mount_config
       const TemplateType = Template.type
 
@@ -315,25 +256,14 @@ export default {
     PartitionTypeDisabled: function() {
       // Store variables
       const vm = this
-      const TemplateFaceSelected = vm.TemplateFaceSelected.workspace
-      const PartitionAddressSelected = vm.PartitionAddressSelected.workspace[TemplateFaceSelected]
+      const Context = 'workspace'
+      const Face = vm.TemplateFaceSelected[Context]
+      const PartitionAddress = vm.StateSelected[Context].partition[Face]
 
-      return !PartitionAddressSelected.length
+      return !PartitionAddress.length
     },
   },
   methods: {
-    SetLocationID: function(newValue) {
-
-      const vm = this
-      vm.LocationID = newValue
-    },
-    SetPartitionAddressSelected: function({Context, object_id, front, rear}) {
-
-      const vm = this
-      vm.PartitionAddressSelected[Context].object_id = object_id
-      vm.PartitionAddressSelected[Context].front = front
-      vm.PartitionAddressSelected[Context].rear = rear
-    },
     SetTemplateFaceSelected: function({Context, Face}) {
 
       const vm = this

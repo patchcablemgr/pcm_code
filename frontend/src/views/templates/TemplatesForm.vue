@@ -446,7 +446,6 @@
       v-if="PartitionType == 'connectable'"
       Context="workspace"
       :TemplateFaceSelected="TemplateFaceSelected"
-      :PartitionAddressSelected="PartitionAddressSelected"
     />
 
   </b-row>
@@ -483,7 +482,6 @@ export default {
   props: {
     Context: {type: String},
     TemplateFaceSelected: {type: Object},
-    PartitionAddressSelected: {type: Object},
     PartitionTypeDisabled: {type: Boolean},
   },
   data() {
@@ -528,13 +526,16 @@ export default {
     Objects() {
       return this.$store.state.pcmObjects.Objects
     },
+    StateSelected() {
+      return this.$store.state.pcmState.Selected
+    },
     ComputedSelectedPartitionDirection: {
       get() {
         // Store variables
         const vm = this
         const Context = vm.Context
         const Face = vm.TemplateFaceSelected[Context]
-        const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+        const PartitionAddress = vm.StateSelected[Context].partition[Face]
 
         return vm.GetPartitionDirection(PartitionAddress)
       }
@@ -597,15 +598,20 @@ export default {
 			
         // Set active preview template index
         const ActiveWorkspaceID = (newValue == 'insert') ? WorkspaceInsertID : WorkspaceStandardID
-
-        // Set LocationID
-        vm.$emit('SetLocationID', ActiveWorkspaceID)
         
-        // Set PartitionAddressSelected
-        const object_id = ActiveWorkspaceID
-        const front = [0]
-        const rear = [0]
-        vm.$emit('SetPartitionAddressSelected', {Context, object_id, front, rear})
+        // Update StateSelected
+        const UpdateData = {
+          object_id: ActiveWorkspaceID,
+          object_face: 'front',
+          partition: {
+            front: [0],
+            rear: [0]
+          },
+          location_id: ActiveWorkspaceID,
+          location_face: 'front'
+        }
+        vm.$store.commit('pcmState/UPDATE_Selected', {pcmContext:Context, data:UpdateData})
+
       }
     },
     TemplateRUSize: {
@@ -688,7 +694,7 @@ export default {
         const vm = this
         const Context = vm.Context
         const TemplateFace = vm.TemplateFaceSelected[Context]
-        const TemplatePartitionAddress = vm.PartitionAddressSelected[Context][TemplateFace]
+        const TemplatePartitionAddress = vm.StateSelected[Context].partition[TemplateFace]
 
         const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
         const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
@@ -742,7 +748,7 @@ export default {
         const vm = this
         const Context = vm.Context
         const Face = vm.TemplateFaceSelected[Context]
-        const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+        const PartitionAddress = vm.StateSelected[Context].partition[Face]
         const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
         const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
         const Blueprint = Template.blueprint[Face]
@@ -766,7 +772,7 @@ export default {
         const vm = this
         const Context = vm.Context
         const Face = vm.TemplateFaceSelected[Context]
-        const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+        const PartitionAddress = vm.StateSelected[Context].partition[Face]
         const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
         const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
         const Blueprint = Template.blueprint[Face]
@@ -791,7 +797,7 @@ export default {
         const vm = this
         const Context = vm.Context
         const Face = vm.TemplateFaceSelected[Context]
-        const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+        const PartitionAddress = vm.StateSelected[Context].partition[Face]
         const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
         const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
         const Blueprint = Template.blueprint[Face]
@@ -816,7 +822,7 @@ export default {
         const vm = this
         const Context = vm.Context
         const Face = vm.TemplateFaceSelected[Context]
-        const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+        const PartitionAddress = vm.StateSelected[Context].partition[Face]
         const Template = vm.GetTemplateSelected(Context)
         const Blueprint = Template.blueprint[Face]
         const Partition = vm.GetPartition(Blueprint, PartitionAddress)
@@ -840,7 +846,7 @@ export default {
         const vm = this
         const Context = vm.Context
         const Face = vm.TemplateFaceSelected[Context]
-        const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+        const PartitionAddress = vm.StateSelected[Context].partition[Face]
         const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
         const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
         const Blueprint = Template.blueprint[Face]
@@ -865,7 +871,7 @@ export default {
         const vm = this
         const Context = vm.Context
         const Face = vm.TemplateFaceSelected[Context]
-        const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+        const PartitionAddress = vm.StateSelected[Context].partition[Face]
         const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
         const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
         const Blueprint = Template.blueprint[Face]
@@ -890,7 +896,7 @@ export default {
         const vm = this
         const Context = vm.Context
         const Face = vm.TemplateFaceSelected[Context]
-        const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+        const PartitionAddress = vm.StateSelected[Context].partition[Face]
         const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
         const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
         const Blueprint = Template.blueprint[Face]
@@ -915,7 +921,7 @@ export default {
         const vm = this
         const Context = vm.Context
         const Face = vm.TemplateFaceSelected[Context]
-        const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+        const PartitionAddress = vm.StateSelected[Context].partition[Face]
         const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
         const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
         const Blueprint = Template.blueprint[Face]
@@ -931,7 +937,7 @@ export default {
       const vm = this
       const Context = vm.Context
       const Face = vm.TemplateFaceSelected[Context]
-      const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+      const PartitionAddress = vm.StateSelected[Context].partition[Face]
 
       // Get Partition
       const Partition = vm.GetPartitionSelected(Context)
@@ -943,7 +949,7 @@ export default {
       const vm = this
       const Context = vm.Context
       const Face = vm.TemplateFaceSelected[Context]
-      const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+      const PartitionAddress = vm.StateSelected[Context].partition[Face]
       const PartitionParentAddress = PartitionAddress.slice(0, PartitionAddress.length - 1)
 
       return !vm.GetPartitionUnitsAvailable(PartitionParentAddress)
@@ -955,12 +961,14 @@ export default {
       const vm = this
       const Context = vm.Context
       const Face = vm.TemplateFaceSelected[Context]
-      const PartitionAddressSelected = vm.PartitionAddressSelected.workspace[Face]
-      const Template = vm.GetTemplateSelected(Context)
-      const Layer1Partitions = Template.blueprint[Face]
+      const PartitionAddress = vm.StateSelected[Context].partition[Face]
       let RemovePartitionDisabled = false
 
-      if(PartitionAddressSelected.length == 1) {
+      if(PartitionAddress.length == 1) {
+
+        const Template = vm.GetTemplateSelected(Context)
+        const Layer1Partitions = Template.blueprint[Face]
+
         if(Layer1Partitions.length == 1) {
           RemovePartitionDisabled = true
         }
@@ -981,7 +989,7 @@ export default {
       const vm = this
       const Context = vm.Context
       const Face = vm.TemplateFaceSelected[Context]
-      const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+      const PartitionAddress = vm.StateSelected[Context].partition[Face]
       const GenericPartition = vm.$store.state.pcmProps.GenericBlueprintGeneric
       const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
       const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
@@ -1015,16 +1023,23 @@ export default {
             // Insert new partition before selected partition
             ParentTemplateChildren.splice(PartitionIndex, 0, GenericPartition)
 
-            // Update PartitionAddressSelected as it is shifted right
+            // Shift selected partition
             PartitionAddress[PartitionAddress.length - 1] = PartitionIndex + 1
-            const SelectedObjectID = vm.PartitionAddressSelected[Context].object_id
-            const SelectedPartitionAddressFront = (Face == 'front') ? PartitionAddress : vm.PartitionAddressSelected[Context]['front']
-            const SelectedPartitionAddressRear = (Face == 'rear') ? PartitionAddress : vm.PartitionAddressSelected[Context]['rear']
-            vm.$emit('SetPartitionAddressSelected', {Context, object_id: SelectedObjectID, front: SelectedPartitionAddressFront, rear: SelectedPartitionAddressRear})
+
+            // Update StateSelected
+            const UpdateData = {
+              partition: {
+                front: (Face == 'front') ? PartitionAddress : vm.StateSelected[Context].partition.front,
+                rear: (Face == 'rear') ? PartitionAddress : vm.StateSelected[Context].partition.rear
+              }
+            }
+            vm.$store.commit('pcmState/UPDATE_Selected', {pcmContext:Context, data:UpdateData})
+
           }
         }
       }
 
+      // Update template
       vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
     },
     PartitionDelete: function() {
@@ -1035,7 +1050,7 @@ export default {
       const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
       const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
       const Face = vm.TemplateFaceSelected[Context]
-      const ParentPartitionAddress = JSON.parse(JSON.stringify(vm.PartitionAddressSelected[Context][Face]))
+      const ParentPartitionAddress = JSON.parse(JSON.stringify(vm.StateSelected[Context].partition[Face]))
       const PartitionIndex = ParentPartitionAddress.pop()
       let ParentPartitionSet = Template.blueprint[Face]
 
@@ -1046,7 +1061,7 @@ export default {
       ParentPartitionSet.splice(PartitionIndex, 1)
 
       // Adjust selected partition
-      let PartitionAddress = JSON.parse(JSON.stringify(vm.PartitionAddressSelected[Context][Face]))
+      let PartitionAddress = JSON.parse(JSON.stringify(vm.StateSelected[Context].partition[Face]))
       if(ParentPartitionSet.length) {
         if(PartitionIndex == 0) {
           PartitionAddress[PartitionAddress.length - 1] = 0
@@ -1056,10 +1071,17 @@ export default {
       } else {
         PartitionAddress = ParentPartitionAddress
       }
-      const SelectedObjectID = vm.PartitionAddressSelected[Context].object_id
-      const SelectedPartitionAddressFront = (Face == 'front') ? PartitionAddress : vm.PartitionAddressSelected[Context]['front']
-      const SelectedPartitionAddressRear = (Face == 'rear') ? PartitionAddress : vm.PartitionAddressSelected[Context]['rear']
-      vm.$emit('SetPartitionAddressSelected', {Context, object_id: SelectedObjectID, front: SelectedPartitionAddressFront, rear: SelectedPartitionAddressRear})
+
+      // Update StateSelected
+      const UpdateData = {
+        partition: {
+          front: (Face == 'front') ? PartitionAddress : vm.StateSelected[Context].partition.front,
+          rear: (Face == 'rear') ? PartitionAddress : vm.StateSelected[Context].partition.rear
+        }
+      }
+      vm.$store.commit('pcmState/UPDATE_Selected', {pcmContext:Context, data:UpdateData})
+
+      // Update template
       vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
 
     },
@@ -1168,7 +1190,7 @@ export default {
 
       const vm = this
       const Context = vm.Context
-      const ObjectID = vm.PartitionAddressSelected[Context].object_id
+      const ObjectID = vm.StateSelected[Context].object_id
       const TemplateID = vm.GetTemplateID(ObjectID, Context)
       const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
       const PreviewData = vm.Templates[Context][TemplateIndex]
@@ -1238,7 +1260,7 @@ export default {
         const Blueprint = Template.blueprint[Face]
         const TemplateType = Template.type
         
-        const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
+        const PartitionAddress = vm.StateSelected[Context].partition[Face]
         const ParentPartitionAddress = JSON.parse(JSON.stringify(PartitionAddress))
         const PartitionIndex = ParentPartitionAddress.pop()
         const ParentPartition = vm.GetPartition(Blueprint, ParentPartitionAddress)

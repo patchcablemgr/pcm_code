@@ -66,7 +66,6 @@
               :TemplateID="GetTemplateID(Element.id)"
               :PartitionAddress="Element.partition"
               :PortID="Element.port_id"
-              :PartitionAddressSelected="PartitionAddressSelected"
             >
             </component-port-r>
           </td>
@@ -125,7 +124,6 @@ export default {
   props: {
     CardTitle: {type: String},
     Context: {type: String},
-    PartitionAddressSelected: {type: Object},
     PartitionAddressHovered: {type: Object},
   },
   data() {
@@ -165,6 +163,9 @@ export default {
     Connections() {
       return this.$store.state.pcmConnections.Connections
     },
+    StateSelected() {
+      return this.$store.state.pcmState.Selected
+    },
     PortIsSelected: {
       get() {
         return (this.SelectedPortIndex !== null) ? true : false
@@ -175,8 +176,8 @@ export default {
 
         const vm = this
         const Context = vm.Context
-        const Face = vm.PartitionAddressSelected[Context].object_face
-        const PortID = vm.PartitionAddressSelected[Context].port_id[Face]
+        const Face = vm.StateSelected[Context].object_face
+        const PortID = vm.StateSelected[Context].port_id[Face]
 
         return PortID
       },
@@ -187,10 +188,10 @@ export default {
 
         const vm = this
         const Context = vm.Context
-        const ObjectID = vm.PartitionAddressSelected[Context].object_id
-        const Face = vm.PartitionAddressSelected[Context].object_face
-        const Partition = vm.PartitionAddressSelected[Context][Face]
-        const PortID = vm.PartitionAddressSelected[Context].port_id[Face]
+        const ObjectID = vm.StateSelected[Context].object_id
+        const Face = vm.StateSelected[Context].object_face
+        const Partition = vm.StateSelected[Context].partition[Face]
+        const PortID = vm.StateSelected[Context].port_id[Face]
 
         return vm.GetConnectionPath(ObjectID, Face, Partition, PortID, Context)
         

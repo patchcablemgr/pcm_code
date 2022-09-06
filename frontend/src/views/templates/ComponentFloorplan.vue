@@ -88,9 +88,7 @@
       Title="Floorplan Image"
       UploadType="floorplanImg"
       :Context="Context"
-      :NodeIDSelected="NodeIDSelected"
       :TemplateFaceSelected="TemplateFaceSelected"
-      :PartitionAddressSelected="PartitionAddressSelected"
       @FileSelected="$emit('FileSelected', $event)"
       @FileSubmitted="$emit('FileSubmitted')"
     />
@@ -128,9 +126,7 @@ export default {
     Context: {type: String},
     FloorplanImage: {type: String},
     File: {type: File},
-    NodeIDSelected: {type: Number},
     TemplateFaceSelected: {type: Object},
-    PartitionAddressSelected: {type: Object},
     PartitionAddressHovered: {type: Object},
     ObjectsAreDraggable: {type: Boolean},
   },
@@ -148,11 +144,14 @@ export default {
     Objects() {
       return this.$store.state.pcmObjects.Objects
     },
+    StateSelected() {
+      return this.$store.state.pcmState.Selected
+    },
     FloorplanObjects: function() {
 
       const vm = this
       const Context = vm.Context
-      const LocationID = vm.NodeIDSelected
+      const LocationID = vm.StateSelected[Context].location_id
       const FloorplanObjects = vm.Objects[Context].filter((object) => object.location_id == LocationID )
 
       return FloorplanObjects
@@ -227,7 +226,7 @@ export default {
 
       if(TemplateContext == 'template') {
 
-        const LocationID = vm.NodeIDSelected
+        const LocationID = vm.StateSelected[Context].location_id
         const FloorplanObjectType = event.dataTransfer.getData('floorplan_object_type')
 
         data.location_id = LocationID

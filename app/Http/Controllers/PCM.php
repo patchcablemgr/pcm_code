@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
+use App\Models\LocationModel;
 use App\Models\ObjectModel;
 use App\Models\TemplateModel;
 use App\Models\TrunkModel;
@@ -22,19 +23,17 @@ class PCM extends Controller
 		"order" => 0
 	);
 
-	/**
-     * Validate RU occupancy
+    /**
+     * Return list of occupied RUs
      *
      * @param  int  $locationID
-	 * @param  int  $templateID
-	 * @param  int  $cabinetRU
      * @return arr
      */
-    public function validateRUOccupancy($locationID, $templateID, $cabinetRU, $cabinetFace)
+    private function generateOccupiedRUArray($locationID)
     {
-        // Initialize some variables for validating RU occupancy
-        $occupiedRUs = array('front' => [], 'rear' => []);
-        $collision = false;
+        
+        // Initialize some variables
+        $occupiedRUArray = array('front' => [], 'rear' => []);
 
         // Populate occupied RU array
         $cabinetObjects = ObjectModel::where('location_id', $locationID)->get();
@@ -45,29 +44,96 @@ class PCM extends Controller
             $cabinetObjectTemplate = TemplateModel::where('id', $cabinetObjectTemplateID)->first();
             $cabinetObjectMountConfig = $cabinetObjectTemplate['mount_config'];
             $cabinetObjectRUSize = $cabinetObjectTemplate['ru_size'];
-            for($x=1; $x<=$cabinetObjectRUSize; $x++) {
+            for($x=0; $x<$cabinetObjectRUSize; $x++) {
                 $ruPosition = $cabinetObjectCabinetRU + $x;
                 if($cabinetObjectMountConfig == '4-post') {
-                    array_push($occupiedRUs['front'], $ruPosition);
-                    array_push($occupiedRUs['rear'], $ruPosition);
+                    array_push($occupiedRUArray['front'], $ruPosition);
+                    array_push($occupiedRUArray['rear'], $ruPosition);
                 } else {
-                    array_push($occupiedRUs[$cabinetObjectCabinetFront], $ruPosition);
+                    array_push($occupiedRUArray[$cabinetObjectCabinetFront], $ruPosition);
                 }
             }
         }
+
+        return $occupiedRUArray;
+    }
+
+    /**
+     * Return RU index
+     *
+     * @param  int  $cabinetRU
+     * @param  int  $cabinetSize
+     * @param  int  $cabinetOrientation
+     * @return int
+     */
+    public function getRUIndex($cabinetRU, $cabinetSize, $cabinetOrientation)
+    {
+
+        $RUIndex = $cabinetRU;
+        if($cabinetOrientation == 'bottom-up') {
+            $RUIndex = ($cabinetSize - $cabinetRU) + 1;
+        }
+
+        return $RUIndex;
+    }
+
+    /**
+     * Validate cabinet resize
+     *
+     * @param  int  $locationID
+	 * @param  int  $templateID
+	 * @param  int  $cabinetRU
+     * @return arr
+     */
+    public function validateCabinetResize($locationID, $newSize)
+    {
+
+        // Initialize some variables
+        $occupiedRUArray = $this->generateOccupiedRUArray($locationID);
+
+        $cabinet = LocationModel::where('id', $locationID)->first();
+        $cabinetSize = $cabinet->size;
+        $cabinetOrientation = $cabinet->ru_orientation;
+
+        if($newSize < $cabinetSize) {
+            for($x=$cabinetSize; $x>$newSize; $x--) {
+                $ruIndex = $this->getRUIndex($x, $cabinetSize, $cabinetOrientation);
+                if(in_array($ruIndex, $occupiedRUArray['front']) || in_array($ruIndex, $occupiedRUArray['rear'])) {
+                    return ['cabinet_ru' => 'Cabinet cannot be smaller than highest object.'];
+                }
+            }
+
+        }
+
+        return true;
+    }
+
+	/**
+     * Validate RU occupancy
+     *
+     * @param  int  $locationID
+	 * @param  int  $templateID
+	 * @param  int  $cabinetRU
+     * @return arr
+     */
+    public function validateRUOccupancy($locationID, $templateID, $cabinetRU, $cabinetFace)
+    {
+        // Initialize some variables
+        $collision = false;
+        $occupiedRUArray = $this->generateOccupiedRUArray($locationID);
 
         // Validate RU occupancy
         $objectTemplate = TemplateModel::where('id', $templateID)->first();
         $objectMountConfig = $objectTemplate['mount_config'];
         $objectRUSize = $objectTemplate['ru_size'];
-        for($x=1; $x<=$objectRUSize; $x++) {
+        for($x=0; $x<$objectRUSize; $x++) {
             $ruPosition = $cabinetRU + $x;
             if($objectMountConfig == '4-post') {
-                if(in_array($ruPosition, $occupiedRUs['front']) || in_array($ruPosition, $occupiedRUs['rear'])) {
+                if(in_array($ruPosition, $occupiedRUArray['front']) || in_array($ruPosition, $occupiedRUArray['rear'])) {
                     return ['cabinet_ru' => 'Destination RU is occupied.'];
                 }
             } else {
-                if(in_array($ruPosition, $occupiedRUs[$cabinetFace])) {
+                if(in_array($ruPosition, $occupiedRUArray[$cabinetFace])) {
                     return ['cabinet_ru' => 'Destination RU is occupied.'];
                 }
             }

@@ -55,7 +55,7 @@
             v-ripple.400="'rgba(40, 199, 111, 0.15)'"
             variant="flat-success"
             class="btn-icon"
-            v-b-modal.modal-edit-object-name
+            v-b-modal.modal-edit-port-description
             :disabled="!PortIsSelected"
           >
             <feather-icon icon="EditIcon" />
@@ -87,11 +87,11 @@
   
   </b-card>
 
-    <!-- Modal Edit Object Name -->
-    <modal-edit-object-name
-      :Context="Context"
-      :PartitionAddressSelected="PartitionAddressSelected"
+    <!-- Modal Edit Port Description -->
+    <modal-edit-port-descrition
+      ModalID="modal-edit-port-description"
       ModalTitle="Port Description"
+      :Context="Context"
     />
 
     <!-- Modal Port Select -->
@@ -100,7 +100,6 @@
       ModalTitle="Port Connect"
       TreeRef="PortSelectPort"
       :Context="Context"
-      :PartitionAddressSelected="PartitionAddressSelected"
       PortSelectFunction="port"
     />
 
@@ -119,7 +118,7 @@ import {
   BFormCheckbox,
   BFormSelect,
 } from 'bootstrap-vue'
-import ModalEditObjectName from './ModalEditObjectName.vue'
+import ModalEditPortDescription from './ModalEditPortDescription.vue'
 import ModalPortSelect from './ModalPortSelect.vue'
 import Ripple from 'vue-ripple-directive'
 import { PCM } from '@/mixins/PCM.js'
@@ -137,7 +136,7 @@ export default {
     BFormCheckbox,
     BFormSelect,
 
-    ModalEditObjectName,
+    ModalEditPortDescription,
     ModalPortSelect,
   },
 	directives: {
@@ -146,7 +145,6 @@ export default {
   props: {
     CardTitle: {type: String},
     Context: {type: String},
-    PartitionAddressSelected: {type: Object},
   },
   data() {
     return {
@@ -180,6 +178,9 @@ export default {
     Connections() {
       return this.$store.state.pcmConnections.Connections
     },
+    StateSelected() {
+      return this.$store.state.pcmState.Selected
+    },
     PortIsSelected: {
       get() {
         return (this.SelectedPortIndex == null || typeof this.SelectedPortIndex == 'undefined') ? false : true
@@ -189,10 +190,10 @@ export default {
       get() {
         const vm = this
         const Context = vm.Context
-        const ObjectID = vm.PartitionAddressSelected[Context].object_id
-        const Face = vm.PartitionAddressSelected[Context].object_face
-        const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
-        const PortID = vm.PartitionAddressSelected[Context].port_id[Face]
+        const ObjectID = vm.StateSelected[Context].object_id
+        const Face = vm.StateSelected[Context].object_face
+        const PartitionAddress = vm.StateSelected[Context].partition[Face]
+        const PortID = vm.StateSelected[Context].port_id[Face]
 
         const Connection = vm.GetConnection(ObjectID, Face, PartitionAddress, PortID)
 
@@ -208,8 +209,8 @@ export default {
 
         const vm = this
         const Context = vm.Context
-        const Face = vm.PartitionAddressSelected[Context].object_face
-        const PortID = vm.PartitionAddressSelected[Context].port_id[Face]
+        const Face = vm.StateSelected[Context].object_face
+        const PortID = vm.StateSelected[Context].port_id[Face]
 
         return PortID
       },
@@ -217,10 +218,10 @@ export default {
 
         const vm = this
         const Context = vm.Context
-        const ObjectFace = vm.PartitionAddressSelected[Context].object_face
-        const ObjectID = vm.PartitionAddressSelected[Context].object_id
-        const TemplateID = vm.PartitionAddressSelected[Context].template_id
-        const PartitionAddress = vm.PartitionAddressSelected[Context][ObjectFace]
+        const ObjectFace = vm.StateSelected[Context].object_face
+        const ObjectID = vm.StateSelected[Context].object_id
+        const TemplateID = vm.GetTemplateID(ObjectID, Context)
+        const PartitionAddress = vm.StateSelected[Context].partition[ObjectFace]
         vm.PartitionClicked({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'TemplateID': TemplateID, 'PartitionAddress': PartitionAddress, 'PortID': PortID})
       }
     },
@@ -237,10 +238,10 @@ export default {
 
         const vm = this
         const Context = vm.Context
-        const ObjectID = vm.PartitionAddressSelected[Context].object_id
-        const Face = vm.PartitionAddressSelected[Context].object_face
-        const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
-        const PortID = vm.PartitionAddressSelected[Context].port_id[Face]
+        const ObjectID = vm.StateSelected[Context].object_id
+        const Face = vm.StateSelected[Context].object_face
+        const PartitionAddress = vm.StateSelected[Context].partition[Face]
+        const PortID = vm.StateSelected[Context].port_id[Face]
 
         const Connection = vm.GetConnection(ObjectID, Face, PartitionAddress, PortID)
 
@@ -252,12 +253,12 @@ export default {
         if(NewValue !== vm.Populated) {
 
           const Context = vm.Context
-          const ObjectID = vm.PartitionAddressSelected[Context].object_id
-          const Face = vm.PartitionAddressSelected[Context].object_face
-          const PartitionAddress = vm.PartitionAddressSelected[Context][Face]
-          const PortID = vm.PartitionAddressSelected[Context].port_id[Face]
+          const ObjectID = vm.StateSelected[Context].object_id
+          const Face = vm.StateSelected[Context].object_face
+          const PartitionAddress = vm.StateSelected[Context].partition[Face]
+          const PortID = vm.StateSelected[Context].port_id[Face]
 
-          const Connection = vm.GetConnection(ObjectID, Face, PartitionAddress, PortID)
+          //const Connection = vm.GetConnection(ObjectID, Face, PartitionAddress, PortID)
 
           if(NewValue) {
             const PeerData = [{'id':null, 'face':null, 'partition':null, 'port_id':null}]

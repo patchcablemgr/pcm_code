@@ -312,22 +312,20 @@
 
     <!-- Modal Edit Object Name -->
     <modal-edit-object-name
-      :Context="Context"
-      :PartitionAddressSelected="PartitionAddressSelected"
+      ModalID="modal-edit-object-name"
       ModalTitle="Object Name"
+      :Context="Context"
     />
 
     <!-- Modal Edit Template Name -->
     <modal-edit-template-name
       :Context="Context"
-      :PartitionAddressSelected="PartitionAddressSelected"
     />
 
     <!-- Modal Edit Template Category -->
     <modal-edit-template-category
       :Context="Context"
       ModalTitle="Category"
-      :PartitionAddressSelected="PartitionAddressSelected"
     />
 
     <!-- Modal Edit Template Port ID -->
@@ -335,7 +333,6 @@
       ModalID="modal-edit-template-port-id-details"
       :Context="Context"
       :TemplateFaceSelected="TemplateFaceSelected"
-      :PartitionAddressSelected="PartitionAddressSelected"
       PreviewPortID="temp"
     />
 
@@ -345,7 +342,6 @@
       UploadType="templateImg"
       :Context="Context"
       :TemplateFaceSelected="TemplateFaceSelected"
-      :PartitionAddressSelected="PartitionAddressSelected"
     />
 
     <!-- Modal Port Select -->
@@ -355,7 +351,6 @@
       ModalTitle="Select Trunk Peer"
       TreeRef="PortSelectTrunk"
       :Context="Context"
-      :PartitionAddressSelected="PartitionAddressSelected"
       PortSelectFunction="trunk"
     />
 
@@ -406,7 +401,6 @@ export default {
     CardTitle: {type: String},
     Context: {type: String},
     TemplateFaceSelected: {type: Object},
-    PartitionAddressSelected: {type: Object},
     DetailsAreEditable: {type: Boolean},
   },
   data() {
@@ -441,11 +435,14 @@ export default {
     Connections() {
       return this.$store.state.pcmConnections.Connections
     },
+    StateSelected() {
+      return this.$store.state.pcmState.Selected
+    },
     ComputedObjectSelected: function() {
 
       const vm = this
       const Context = vm.Context
-      return (vm.PartitionAddressSelected[Context].object_id) ? true : false
+      return (vm.StateSelected[Context].object_id) ? true : false
     },
     TemplateSelected: function(){
 
@@ -526,9 +523,9 @@ export default {
 
           if(Partition.type == 'connectable' && Context == 'actual') {
 
-            const ObjectID = vm.PartitionAddressSelected[Context].object_id
-            const ObjectFace = vm.PartitionAddressSelected[Context].object_face
-            const ObjectPartition = vm.PartitionAddressSelected[Context][ObjectFace]
+            const ObjectID = vm.StateSelected[Context].object_id
+            const ObjectFace = vm.StateSelected[Context].object_face
+            const ObjectPartition = vm.StateSelected[Context].partition[ObjectFace]
 
             const Trunks = vm.GetTrunks(ObjectID, ObjectFace, ObjectPartition)
             const TrunksWithPortSet = Trunks.findIndex((trunk) => trunk.b_port !== null)
@@ -891,14 +888,7 @@ export default {
           }
 
           // Clear user selection
-          const PartitionAddressSelected = {
-            Context,
-            object_id: null,
-            template_id: null,
-            front: [0],
-            rear: [0]
-          }
-          vm.$emit('SetPartitionAddressSelected', PartitionAddressSelected)
+          vm.$store.commit('pcmState/DEFAULT_Selected', {pcmContext:Context})
         }
       })
     },
@@ -1018,7 +1008,6 @@ export default {
       }
 
       vm.$emit('SetTemplateFaceSelected', FaceSelectedData)
-      vm.$emit('SetPartitionAddressSelected', PartitionSelectedData)
     },
   }
 }

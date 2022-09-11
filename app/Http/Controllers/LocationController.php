@@ -125,6 +125,72 @@ class LocationController extends Controller
         return $newLocation->toArray();
     }
 
+        /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function storeCablePath(Request $request, $id)
+    {
+
+        // RBAC
+        if (! Gate::allows('operator')) {
+            abort(403);
+        }
+
+        $validatorInput = [
+            'id' => $id,
+            'peer_id' => $request->peer_id,
+            'distance' => $request->distance,
+            'notes' => $request->notes,
+        ];
+
+        $validatorRules = [
+            'id' => [
+                'required',
+                'integer',
+                'exists:location,id'
+            ],
+            'peer_id' => [
+                'required',
+                'integer',
+                'exists:location,id'
+            ],
+            'distance' => [
+                'required',
+                'integer',
+                'between:1,1000'
+            ],
+            'notes' => [
+                'string',
+                'nullable',
+                'max:255'
+            ],
+        ];
+
+        $validatorMessages = [];
+        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        $customValidator->stopOnFirstFailure();
+        $customValidator->validate();
+
+        $cabinetAID = $id;
+        $cabinetBID = $request->peer_id;
+        $distance = $request->distance;
+        $notes = ($request->notes) ? $request->notes : "";
+
+        $cablePath = new CablePathModel;
+
+        $cablePath->cabinet_a_id = $cabinetAID;
+        $cablePath->cabinet_b_id = $cabinetBID;
+        $cablePath->distance = $distance;
+        $cablePath->notes = $notes;
+
+        $cablePath->save();
+
+        return $cablePath;
+    }
+
     /**
      * Display the specified resource.
      *
@@ -383,6 +449,42 @@ class LocationController extends Controller
         $location = LocationModel::where('id', $id)->first();
 
         $location->delete();
+
+        return array('id' => $id);
+    }
+
+        /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function destroyCablePath($id)
+    {
+
+        // RBAC
+        if (! Gate::allows('operator')) {
+            abort(403);
+        }
+        
+        $validatorInput = [
+            'id' => $id
+        ];
+        $validatorRules = [
+            'id' => [
+                'required',
+                'integer',
+                'exists:cable_path'
+            ]
+        ];
+        $validatorMessages = [];
+        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        $customValidator->stopOnFirstFailure();
+        $customValidator->validate();
+
+        $cablePath = CablePathModel::where('id', $id)->first();
+
+        $cablePath->delete();
 
         return array('id' => $id);
     }

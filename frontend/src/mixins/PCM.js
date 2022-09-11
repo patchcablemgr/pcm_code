@@ -135,6 +135,22 @@ export const PCM = {
 
             return LocationIndex
         },
+        GetLocationNodeID(LocationID) {
+
+            const vm = this
+            const TreeRef = vm.TreeRef
+            console.log(LocationID)
+            console.log(TreeRef)
+        
+            const Criteria = {
+                "data": {
+                    "id": LocationID
+                }
+            }
+            let Node = vm.$refs[TreeRef].find(Criteria)[0]
+        
+            return Node.id
+        },
         GetLocationNode(NodeID) {
 
             const vm = this
@@ -1285,6 +1301,26 @@ export const PCM = {
 
             return SelectedPortDN
         },
+        GenerateLocationDN: function(Context, LocationID){
+            const vm = this
+            let DNArray = []
+
+            while(LocationID !== 0) {
+
+                // Retrieve location data
+                const LocationIndex = vm.GetLocationIndex(LocationID, Context)
+                const Location = vm.Locations[Context][LocationIndex]
+                const LocationName = Location.name
+
+                // Prepend DNArray with parent object
+                DNArray.unshift(LocationName)
+
+                // Updata location ID
+                LocationID = Location.parent_id
+            }
+
+            return DNArray.join('.')
+        },
         GenerateDN: function(Scope, ObjectID, Face, PartitionAddress, PortIndex=0){
             const vm = this
             const Context = 'actual'
@@ -1347,6 +1383,9 @@ export const PCM = {
                 }
             }
 
+            const LocationDN = vm.GenerateLocationDN(Context, LocationID)
+            DNArray.unshift(LocationDN)
+            /*
             while(LocationID !== 0) {
 
                 // Retrieve location data
@@ -1360,6 +1399,7 @@ export const PCM = {
                 // Updata location ID
                 LocationID = Location.parent_id
             }
+            */
 
             return DNArray.join('.')
         },
@@ -1766,6 +1806,16 @@ export const PCM = {
             const DateStr = DateObj.toLocaleString()
             
             return DateStr
-        }
+        },
+        GetCablePathIndex: function(CablePathID, Context) {
+
+            // Initial variables
+            const vm = this
+
+            // Get index
+            const CablePathIndex = vm.CablePaths[Context].findIndex((CablePath) => CablePath.id == CablePathID )
+
+            return CablePathIndex
+        },
     }
 }

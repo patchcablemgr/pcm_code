@@ -88,7 +88,7 @@
   </b-card>
 
     <!-- Modal Edit Port Description -->
-    <modal-edit-port-descrition
+    <modal-edit-port-description
       ModalID="modal-edit-port-description"
       ModalTitle="Port Description"
       :Context="Context"

@@ -22,7 +22,7 @@
           </b-card>
 
           <component-cabinet-details
-          v-if=" PreviewDisplay == 'cabinet' "
+          v-if=" PreviewDisplay == 'cabinet' || PreviewDisplay == 'none' "
             CardTitle="Cabinet Details"
             Context="actual"
           />
@@ -572,7 +572,7 @@ export default {
       const Context = 'actual'
 
       // GET locations
-      vm.$http.get('/api/locations/cable-paths').then(response => {
+      vm.$http.get('/api/cable-paths').then(response => {
         vm.$store.commit('pcmCablePaths/SET_CablePaths', {pcmContext:Context, data:response.data})
         vm.$store.commit('pcmCablePaths/SET_Ready', {pcmContext:Context, ReadyState:true})
       }).catch(error => {

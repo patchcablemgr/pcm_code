@@ -1,7 +1,7 @@
 <template>
     <b-modal
       :id="ModalID"
-      title="Add"
+      :title="ModalTitle"
       size="lg"
       ok-title="Submit"
       @ok="Submit"
@@ -49,7 +49,7 @@
                     rules="required|between:1,1000"
                     #default="{ errors }"
                   >
-                    <!-- Name -->
+                    <!-- Distance -->
                     <dl class="row">
                       <dt class="col-sm-4">
                         Distance (m)
@@ -67,17 +67,17 @@
                   </validation-provider>
 
                   <validation-provider
-                    rules=""
+                    :rules="{regex: /^[a-zA-Z0-9\s\.]{1,255}$/}"
                     #default="{ errors }"
                   >
-                    <!-- Name -->
+                    <!-- Notes -->
                     <dl class="row">
                       <dt class="col-sm-4">
-                        Note
+                        Notes
                       </dt>
                       <dd class="col-sm-8">
                         <b-form-input
-                          v-model="PathNote"
+                          v-model="PathNotes"
                           type="text"
                           placeholder="Path note"
                         />
@@ -99,7 +99,7 @@ import { BContainer, BRow, BCol, BCard, BForm, BButton, BFormInput, BFormSelect,
 import { PCM } from '@/mixins/PCM.js'
 import LiquorTree from 'liquor-tree'
 import { configure, ValidationProvider, ValidationObserver } from 'vee-validate'
-import { between } from '@validations'
+import { between, regex } from '@validations'
 
 const config = {
   useConstraintAttrs: false,
@@ -112,7 +112,7 @@ const LocationTreeOptions = {
 }
 const TreeRef = "CabinetPath"
 let PathDistance = 1
-let PathNote = ""
+let PathNotes = ""
 
 export default {
   mixins: [PCM],
@@ -130,6 +130,7 @@ export default {
     ValidationProvider,
     ValidationObserver,
     between,
+    regex,
     LiquorTree,
   },
   directives: {},
@@ -137,13 +138,14 @@ export default {
     ModalID: {type: String},
     Context: {type: String},
     ModalTitle: {type: String},
+    CablePathID: {type: Number},
   },
   data () {
     return {
       LocationTreeOptions,
       TreeRef,
       PathDistance,
-      PathNote,
+      PathNotes,
     }
   },
   computed: {
@@ -155,6 +157,9 @@ export default {
     },
     StateSelected() {
       return this.$store.state.pcmState.Selected
+    },
+    CablePaths() {
+      return this.$store.state.pcmCablePaths.CablePaths
     },
     LocationID() {
 
@@ -177,54 +182,49 @@ export default {
       
       return Location
     },
-    ComputedCabinetSize() {
-
-        const vm = this
-        const Location = vm.Location
-        let CabinetSize = 'N/A'
-
-        if(Location) {
-          const LocationType = Location.type
-          if(LocationType == 'cabinet') {
-            CabinetSize = Location.size
-          }
-        }
-        
-        return CabinetSize
-    },
   },
   methods: {
     Submit: function() {
 
       const vm = this
       const Context = vm.Context
+      const TreeRef = vm.TreeRef
+      const CablePathID = vm.CablePathID
       const LocationID = vm.LocationID
 
       vm.$refs.validation.validate().then((Valid) => {
         if(Valid) {
-          // Delete Connection
-          const URL = '/api/locations/'+LocationID
+
+          // Collect data
+          const TreeSelection = vm.$refs[TreeRef].selected()
           const data = {
-            size: vm.CabinetSize
+            cabinet_a_id: LocationID,
+            cabinet_b_id: (TreeSelection[0]) ? TreeSelection[0].data.id : null,
+            distance: vm.PathDistance,
+            notes: vm.PathNotes,
           }
-          vm.$http.patch(URL, data).then(response => {
 
-            // Update object RU
-            if(vm.Location.ru_orientation == 'bottom-up') {
+          if(CablePathID) {
 
-              const SizeDiff = (vm.ComputedCabinetSize > vm.CabinetSize) ? ((vm.ComputedCabinetSize - vm.CabinetSize) * -1) : (vm.CabinetSize - vm.ComputedCabinetSize)
-              const Objects = vm.Objects[Context].filter(object => object.location_id == vm.LocationID && object.cabinet_ru != null)
+            // PATCH cable path
+            const URL = '/api/cable-paths/'+CablePathID
+            vm.$http.patch(URL, data).then(response => {
 
-              Objects.forEach(function(object){
-                object.cabinet_ru = object.cabinet_ru + SizeDiff
-                vm.$store.commit('pcmObjects/UPDATE_Object', {pcmContext:Context, data:object})
-              })
-            }
+              // Update entry in store
+              vm.$store.commit('pcmCablePaths/UPDATE_CablePath', {pcmContext:Context, data:response.data})
 
-            // Update node from store
-            vm.$store.commit('pcmLocations/UPDATE_Location', {pcmContext:Context, data:response.data})
+            }).catch(error => {vm.DisplayError(error)})
+          } else {
 
-          }).catch(error => {vm.DisplayError(error)})
+            // POST cable path
+            const URL = '/api/cable-paths'
+            vm.$http.post(URL, data).then(response => {
+
+              // Add new entry to store
+              vm.$store.commit('pcmCablePaths/ADD_CablePath', {pcmContext:Context, data:response.data})
+
+            }).catch(error => {vm.DisplayError(error)})
+          }
 
           // Hide modal, this is necessary to close modal after submitting by click or enter
           vm.$bvModal.hide(vm.ModalID)
@@ -236,11 +236,10 @@ export default {
 
     const vm = this
     const Context = vm.Context
-    const PortSelectFunction = vm.PortSelectFunction
     const TreeRef = vm.TreeRef
-
+    
     vm.$root.$on('bv::modal::shown', (bvEvent, modalId) => {
-
+      const CablePathID = vm.CablePathID
       // Only trigger on intended modal
       if(modalId == vm.ModalID) {
 
@@ -251,6 +250,39 @@ export default {
           // Determine if tree will display partitions or ports
           let Scope = 'location'
           vm.BuildLocationTree({Scope})
+
+          // Set input values if editing
+          if(CablePathID) {
+
+            const CablePathIndex = vm.GetCablePathIndex(CablePathID, Context)
+            const CablePath = vm.CablePaths[Context][CablePathIndex]
+            const LocationID = vm.StateSelected[Context].location_id
+            const PeerID = (CablePath.cabinet_a_id == LocationID) ? CablePath.cabinet_b_id : CablePath.cabinet_a_id
+            const PeerNodeID = vm.GetLocationNodeID(PeerID)
+            const PeerNode = vm.GetLocationNode(PeerNodeID)
+
+            vm.PathDistance = CablePath.distance
+            vm.PathNotes = CablePath.notes
+            
+            if(PeerNode) {
+
+              // Select node
+              PeerNode.select(true)
+
+              // Expand parent nodes
+              if(PeerNode.parent) {
+                let NodeParentID = PeerNode.parent.id
+                while(NodeParentID.toString() !== '0') {
+                  let NodeParent = vm.GetLocationNode(NodeParentID, TreeRef)
+                  NodeParent.expand()
+                  NodeParentID = NodeParent.data.parent_id
+                }
+              }
+            }
+          } else {
+            vm.PathDistance = 1
+            vm.PathNotes = ""
+          }
           
         }, 0)
       }

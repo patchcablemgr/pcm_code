@@ -18,6 +18,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ConfigController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\OrganizationController;
+use App\Http\Controllers\CablePathController;
 
 /*
 |--------------------------------------------------------------------------
@@ -58,6 +59,7 @@ Route::group(['middleware' => 'auth:sanctum'], function(){
   Route::post('config/csr/{id}/self-signed', [ConfigController::class, 'generateSelfSigned']);
   Route::post('config/app/update', [ConfigController::class, 'updateApp']);
   Route::post('profile/mfa', [ProfileController::class, 'confirmMFA']);
+  Route::post('cable-paths', [CablePathController::class, 'store']);
 
   // Only GET
   Route::get('medium', [AttributesMedia::class, 'index']);
@@ -74,17 +76,19 @@ Route::group(['middleware' => 'auth:sanctum'], function(){
   Route::get('catalog/categories', [CategoryController::class, 'indexCatalogCategories']);
   Route::get('catalog/templates', [TemplateController::class, 'indexCatalogTemplates']);
   Route::get('catalog/template/{id}', [TemplateController::class, 'importCatalogTemplate']);
-  Route::get('locations/cable-paths', [LocationController::class, 'indexCablePaths']);
+  Route::get('cable-paths', [CablePathController::class, 'index']);
 
   // Only DELETE
   Route::delete('config/csr/{id}', [ConfigController::class, 'destroyCSR']);
   Route::delete('config/cert/{id}', [ConfigController::class, 'destroyCert']);
+  Route::delete('cable-paths/{id}', [CablePathController::class, 'destroy']);
 
   // Only PATCH
   Route::patch('config/cert/{id}/activate', [ConfigController::class, 'activateCert']);
   Route::patch('profile/mfa', [ProfileController::class, 'disableMFA']);
   Route::patch('profile/change-password', [ProfileController::class, 'changePassword']);
   Route::patch('organization/license', [OrganizationController::class, 'updateLicense']);
+  Route::patch('cable-paths/{id}', [CablePathController::class, 'update']);
 
   // No POST
   Route::apiResources([

@@ -70,6 +70,10 @@
       class="h5 font-weight-bolder m-0 mt-2"
     >
       Cable Paths:
+      <feather-icon
+        icon="HelpCircleIcon"
+        v-b-tooltip.hover.html="TTCablePath"
+      />
     </div>
     <hr
       class="separator mt-0"
@@ -78,7 +82,7 @@
     <b-table
       small
       :fields="CablePathFields"
-      :items="CablePathItems"
+      :items="ComputedCablePaths"
       responsive="sm"
     >
 
@@ -95,7 +99,24 @@
       </template>
 
       <template #cell(actions)="data">
-        {{ data.item.id }}
+        <b-button
+          v-ripple.400="'rgba(40, 199, 111, 0.15)'"
+          variant="flat-success"
+          class="btn-icon"
+          @click=EditCablePath(data.item.id)
+          v-b-tooltip.hover.html="TTEditCablePath"
+        >
+          <feather-icon icon="EditIcon" />
+        </b-button>
+        <b-button
+          v-ripple.400="'rgba(40, 199, 111, 0.15)'"
+          variant="flat-success"
+          class="btn-icon"
+          @click="DeleteCablePath(data.item.id)"
+          v-b-tooltip.hover.html="TTDeleteCablePath"
+        >
+          <feather-icon icon="TrashIcon" />
+        </b-button>
       </template>
 
     </b-table>
@@ -105,7 +126,8 @@
       v-ripple.400="'rgba(113, 102, 240, 0.15)'"
       size="sm"
       variant="primary"
-      v-b-modal.modal-edit-cabinet-path
+      @click="AddCablePath()"
+      :disabled="ComputedCabinetSize == 'N/A'"
     >
       <feather-icon
         icon="PlusIcon"
@@ -135,7 +157,7 @@
             v-ripple.400="'rgba(40, 199, 111, 0.15)'"
             variant="flat-success"
             class="btn-icon"
-            v-b-modal.modal-edit-cabinet-size
+            @click="EditAdjacency('left')"
             :disabled="ComputedCabinetSize == 'N/A'"
           >
             <feather-icon icon="EditIcon" />
@@ -183,10 +205,18 @@
       Context="actual"
     />
 
-    <modal-edit-cabinet-path
-      ModalID="modal-edit-cabinet-path"
-      ModalTitle="Cabinet Path"
+    <modal-cable-path
+      ModalID="modal-cable-path"
+      :ModalTitle="CablePathModalTitle"
       Context="actual"
+      :CablePathID="CablePathID"
+    />
+
+    <modal-edit-cabinet-adjacency
+      ModalID="modal-edit-cabinet-adjacency"
+      ModalTitle="Cabinet Adjacency"
+      Context="actual"
+      :AdjacencySide="AdjacencySide"
     />
 
   </div>
@@ -202,21 +232,48 @@ import {
   BDropdownDivider,
   BButton,
   BTable,
+  VBTooltip,
 } from 'bootstrap-vue'
 import ModalEditCabinetSize from '@/views/templates/ModalEditCabinetSize.vue'
 import ModalEditCabinetOrientation from '@/views/templates/ModalEditCabinetOrientation.vue'
-import ModalEditCabinetPath from '@/views/templates/ModalEditCabinetPath.vue'
+import ModalCablePath from '@/views/templates/ModalCablePath.vue'
+import ModalEditCabinetAdjacency from '@/views/templates/ModalEditCabinetAdjacency.vue'
 import Ripple from 'vue-ripple-directive'
 import { PCM } from '@/mixins/PCM.js'
+
+const CablePathID = null
+const CablePathModalTitle = ""
+const AdjacencySide = "left"
+
+const TTCablePath = {
+  title: `
+    <div class="text-left">
+    <div>A cable path represents a path (e.g. ladder tray or conduit) between two cabinets that can be used to run patch cables between them.  Cable paths are used by PCM Path Finder when calculating possible cable paths and estimating required lengths.</div>
+    </div>
+  `
+}
+
+const TTEditCablePath = {
+  title: `
+    <div class="text-left">
+    <div>Edit cable path.</div>
+    </div>
+  `
+}
+
+const TTDeleteCablePath = {
+  title: `
+    <div class="text-left">
+    <div>Delete cable path.</div>
+    </div>
+  `
+}
 
 const CablePathFields = [
   {key: 'cabinet', label: 'Cabinet'},
   {key: 'distance', label: 'Distance (m)'},
   {key: 'notes', label: 'Notes'},
   {key: 'actions', label: 'Actions'},
-]
-const CablePathItems = [
-  {id: 1, cabinet: 'cab1', distance: 3, notes: 'This is a note'},
 ]
 
 export default {
@@ -233,10 +290,12 @@ export default {
 
     ModalEditCabinetSize,
     ModalEditCabinetOrientation,
-    ModalEditCabinetPath,
+    ModalCablePath,
+    ModalEditCabinetAdjacency,
   },
 	directives: {
 		Ripple,
+    'b-tooltip': VBTooltip,
 	},
   props: {
     CardTitle: {type: String},
@@ -244,13 +303,21 @@ export default {
   },
   data() {
     return {
+      CablePathID,
+      CablePathModalTitle,
+      AdjacencySide,
+      TTCablePath,
+      TTEditCablePath,
+      TTDeleteCablePath,
       CablePathFields,
-      CablePathItems,
     }
   },
   computed: {
     Locations() {
       return this.$store.state.pcmLocations.Locations
+    },
+    CablePaths() {
+      return this.$store.state.pcmCablePaths.CablePaths
     },
     StateSelected() {
       return this.$store.state.pcmState.Selected
@@ -309,8 +376,86 @@ export default {
         return true
       }
     },
+    ComputedCablePaths: {
+      get() {
+
+        const vm = this
+        const Context = vm.Context
+        const LocationID = vm.LocationID
+        let CablePaths = []
+
+        const WorkingCablePaths = vm.CablePaths[Context].filter(entry => entry.cabinet_a_id == LocationID || entry.cabinet_b_id == LocationID)
+        WorkingCablePaths.forEach(function(CablePath){
+          const RemoteCabinetID = (CablePath.cabinet_a_id == LocationID) ? CablePath.cabinet_b_id : CablePath.cabinet_a_id
+          const RemoteCabinetDN = vm.GenerateLocationDN(Context, RemoteCabinetID)
+          CablePaths.push({
+            id: CablePath.id,
+            cabinet: RemoteCabinetDN,
+            distance: CablePath.distance,
+            notes: CablePath.notes,
+          })
+        })
+        
+        return CablePaths
+      },
+      set() {
+        return true
+      }
+    },
   },
   methods: {
+    DeleteCablePath(CablePathID){
+
+      const vm = this
+      const Context = vm.Context
+
+      // Confirm Deletion
+      const ConfirmMsg = 'Delete cable path?'
+      const ConfirmOpts = {
+        title: "Confirm"
+      }
+      vm.$bvModal.msgBoxConfirm(ConfirmMsg, ConfirmOpts).then(result => {
+        if (result === true) {
+          vm.$http.delete('/api/cable-paths/'+CablePathID).then(response => {
+            vm.$store.commit('pcmCablePaths/REMOVE_CablePath', {pcmContext:Context, data:response.data})
+          }).catch(error => {
+            vm.DisplayError(error)
+          })
+        }
+      })
+    },
+    EditCablePath(CablePathID){
+
+      const vm = this
+
+      // Set some variables to be used by the modal
+      vm.CablePathModalTitle = "Edit"
+      vm.CablePathID = CablePathID
+
+      // Display the modal
+      vm.$root.$emit("bv::show::modal", "modal-cable-path")
+    },
+    AddCablePath(){
+
+    const vm = this
+
+      // Set some variables to be used by the modal
+      vm.CablePathModalTitle = "Add"
+      vm.CablePathID = null
+
+      // Display the modal
+      vm.$root.$emit("bv::show::modal", "modal-cable-path")
+    },
+    EditAdjacency(Side){
+
+      const vm = this
+
+      // Set some variables to be used by the modal
+      vm.AdjacencySide = Side
+
+      // Display the modal
+      vm.$root.$emit("bv::show::modal", "modal-edit-cabinet-adjacency")
+    },
   }
 }
 </script>

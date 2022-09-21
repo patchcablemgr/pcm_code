@@ -8,9 +8,7 @@
         cols-md="2"
         cols-xl="3"
       >
-        <b-col
-          lg="4"
-        >
+        <b-col>
 
           <b-card
             title="Port Utilization"
@@ -21,6 +19,7 @@
                 :fields="PortUtilizationFields"
                 :items="PortUtilizationList"
                 responsive="sm"
+                class="overflow-auto"
               >
 
                 <template #cell(name)="data">
@@ -271,7 +270,6 @@ export default {
       const vm = this
       const Context = vm.Context
       const FilteredInserts = vm.Objects[Context].filter(object => object.parent_id == ObjectID)
-      console.log(FilteredInserts)
 
       FilteredInserts.forEach(function(FilteredInsert) {
 
@@ -302,7 +300,6 @@ export default {
       return ConnectablePartitions
     },
     getUser() {
-      //this.$http.get('/api/auth/logout').then(res => console.log(res))
 	    this.$http.get('/api/auth/user').then(res => console.log(res))
     },
     GETOrganization() {

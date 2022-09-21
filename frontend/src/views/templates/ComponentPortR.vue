@@ -103,7 +103,7 @@ export default {
         const Context = vm.Context
         const ObjectID = vm.ObjectID
         const ObjectFace = vm.ObjectFace
-        const ObjectPartition = vm.StateSelected[Context].partition[ObjectFace]
+        const ObjectPartition = vm.PartitionAddress
         const PortID = vm.PortID
 
         return vm.GetPortDisposition(Context, ObjectID, ObjectFace, ObjectPartition, PortID)

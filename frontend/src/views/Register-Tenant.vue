@@ -255,7 +255,6 @@ export default {
             c_password: this.password
           })
           .then(function(response) {
-            console.log(response)
             window.location.href = 'https://'+response['data']['tenant-url']
           }).catch(error => {
     

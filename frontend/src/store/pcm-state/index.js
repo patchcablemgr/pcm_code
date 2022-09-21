@@ -15,7 +15,7 @@ const Default = {
 }
 
 const Selected = {
-  'actual': Default,
+  'actual': JSON.parse(JSON.stringify(Default)),
   'workspace': JSON.parse(JSON.stringify(Default), function(key, value) {
     if(key == 'object_id' || key == 'template_id') {
       return 1
@@ -29,17 +29,17 @@ const Selected = {
       return value
     }
   }),
-  'template': Default,
-  'object': Default,
-  'catalog': Default
+  'template': JSON.parse(JSON.stringify(Default)),
+  'object': JSON.parse(JSON.stringify(Default)),
+  'catalog': JSON.parse(JSON.stringify(Default))
 }
 
 const Hovered = {
-  'actual': Default,
-  'workspace': Default,
-  'template': Default,
-  'object': Default,
-  'catalog': Default
+  'actual': JSON.parse(JSON.stringify(Default)),
+  'workspace': JSON.parse(JSON.stringify(Default)),
+  'template': JSON.parse(JSON.stringify(Default)),
+  'object': JSON.parse(JSON.stringify(Default)),
+  'catalog': JSON.parse(JSON.stringify(Default))
 }
 
 export default {
@@ -57,8 +57,8 @@ export default {
 
     },
     DEFAULT_Selected(state, {pcmContext}) {
-
-      state.Selected[pcmContext] = Default
+      
+      state.Selected[pcmContext] = JSON.parse(JSON.stringify(Default))
     },
     UPDATE_Hovered(state, {pcmContext, data}) {
 
@@ -66,7 +66,7 @@ export default {
     },
     DEFAULT_Hovered(state, {pcmContext}) {
 
-      state.Hovered[pcmContext] = Default
+      state.Hovered[pcmContext] = JSON.parse(JSON.stringify(Default))
     },
   },
   actions: {}

@@ -218,11 +218,14 @@ export default {
 
         const vm = this
         const Context = vm.Context
-        const ObjectFace = vm.StateSelected[Context].object_face
-        const ObjectID = vm.StateSelected[Context].object_id
-        const TemplateID = vm.GetTemplateID(ObjectID, Context)
-        const PartitionAddress = vm.StateSelected[Context].partition[ObjectFace]
-        vm.PartitionClicked({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'TemplateID': TemplateID, 'PartitionAddress': PartitionAddress, 'PortID': PortID})
+
+        if(vm.PortIsSelected) {
+          const ObjectFace = vm.StateSelected[Context].object_face
+          const ObjectID = vm.StateSelected[Context].object_id
+          const TemplateID = vm.GetTemplateID(ObjectID, Context)
+          const PartitionAddress = vm.StateSelected[Context].partition[ObjectFace]
+          vm.PartitionClicked({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'TemplateID': TemplateID, 'PartitionAddress': PartitionAddress, 'PortID': PortID})
+        }
       }
     },
     Description: {

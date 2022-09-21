@@ -101,6 +101,12 @@ export default {
     Locations() {
       return this.$store.state.pcmLocations.Locations
     },
+    Objects() {
+      return this.$store.state.pcmObjects.Objects
+    },
+    CablePaths() {
+      return this.$store.state.pcmCablePaths.CablePaths
+    },
     StateSelected() {
       return this.$store.state.pcmState.Selected
     },
@@ -127,13 +133,13 @@ export default {
       const Context = vm.Context
       const TreeRef = vm.TreeRef
       const Action = event.option.action
-      const NodeID = event.item.node_id
+      const LocationID = event.item.node_id
 
       if(Action == 'rename') {
 
         // Rename location
         const Criteria = function(node){
-          return node.data.id == NodeID
+          return node.data.id == LocationID
         }
         Node = vm.$refs[TreeRef].find(Criteria)[0]
         Node.startEditing()
@@ -141,20 +147,44 @@ export default {
       } else if(Action == 'delete') {
 
         // Delete location
-        const url = '/api/locations/'+NodeID
-
-        // DELETE category form data
+        const url = '/api/locations/'+LocationID
         vm.$http.delete(url).then(function(response){
 
-          // Remove node from store
-          vm.$store.commit('pcmLocations/REMOVE_Location', response.data)
+          // Clear stale adjacencies
+          const AdjacencyAttributes = ['right_adj_cabinet_id', 'left_adj_cabinet_id']
+          AdjacencyAttributes.forEach(function(AdjacencyAttribute) {
+            const AdjacentCabinetIndex = vm.Locations[Context].findIndex((location) => location[AdjacencyAttribute] == LocationID)
+            if(AdjacentCabinetIndex !== -1) {
+
+              // Update adjacent cabinet
+              const AdjacentCabinet = vm.Locations[Context][AdjacentCabinetIndex]
+              const UpdatedAdjacentCabinet = JSON.parse(JSON.stringify(AdjacentCabinet), function (Key, Value) {
+                if(Key == AdjacencyAttribute) {
+                  return null
+                } else {
+                  return Value
+                }
+              })
+
+              // Update store
+              vm.$store.commit('pcmLocations/UPDATE_Location', {pcmContext:Context, data:UpdatedAdjacentCabinet})
+            }
+          })
+
+          // Clear stale cable paths
+          const StaleCablePaths = vm.CablePaths[Context].filter((CablePath) => CablePath.cabinet_a_id == LocationID || CablePath.cabinet_b_id == LocationID)
+          StaleCablePaths.forEach(function(StaleCablePath) {
+            vm.$store.commit('pcmCablePaths/REMOVE_CablePath', {pcmContext:Context, data:StaleCablePath})
+          })
 
           // Clear node selection
           vm.$store.commit('pcmState/DEFAULT_Selected', {pcmContext:Context})
 
-          const ReturnedLocationID = response.data.id
+          // Remove node from store
+          vm.$store.commit('pcmLocations/REMOVE_Location', {pcmContext:Context, data:response.data})
 
           // Delete node from tree
+          const ReturnedLocationID = response.data.id
           const Criteria = function(node){
             return node.data.id == ReturnedLocationID
           }
@@ -168,7 +198,7 @@ export default {
         // Add location
         const url = '/api/locations'
         const data = {
-          "parent_id": NodeID,
+          "parent_id": LocationID,
           "type": Action
         }
 
@@ -195,7 +225,7 @@ export default {
 
           // Append child node object to parent
           const Criteria = function(node){
-            return node.data.id == NodeID
+            return node.data.id == LocationID
           }
           let ParentNode = vm.$refs[TreeRef].find(Criteria)[0]
           ParentNode.append(Child)
@@ -227,9 +257,24 @@ export default {
       // Update selected node
       vm.$refs[TreeRef].$on('node:selected', (node) => {
 
-        const UpdateData = {
-          location_id: node.data.id,
-          node_id: node.id
+        const LocationID = node.data.id
+        const NodeID = node.id
+        let UpdateData = {
+          location_id: LocationID,
+          node_id: NodeID
+        }
+
+        // Preserve selected object/face/partition/portID if a child of selected location
+        const SelectedObjectIndex = vm.GetSelectedObjectIndex(Context)
+        if(SelectedObjectIndex !== -1) {
+          const Object = vm.Objects[Context][SelectedObjectIndex]
+          const ObjectLocationID = Object.location_id
+          if(ObjectLocationID == LocationID) {
+            UpdateData.object_id = vm.StateSelected[Context].object_id
+            UpdateData.object_face = vm.StateSelected[Context].object_face
+            UpdateData.partition = vm.StateSelected[Context].partition
+            UpdateData.port_id = vm.StateSelected[Context].port_id
+          }
         }
 
         vm.$store.commit('pcmState/DEFAULT_Selected', {pcmContext:Context})
@@ -257,24 +302,53 @@ export default {
       // Update node parent
       vm.$refs[TreeRef].$on('node:dragging:finish', (node) => {
 
-        const NodeID = node.data.id
+        const LocationID = node.data.id
         const ParentID = (node.parent) ? node.parent.data.id : 0
 
         // Determine node order
         let NodeOrder
         if(node.parent) {
-          NodeOrder = node.parent.children.findIndex(child => child.id == NodeID)
+          NodeOrder = node.parent.children.findIndex(child => child.id == LocationID)
         } else {
-          NodeOrder = vm.$refs[TreeRef].tree.model.findIndex(child => child.id == NodeID)
+          NodeOrder = vm.$refs[TreeRef].tree.model.findIndex(child => child.id == LocationID)
         }
 
         // Store data
-        const url = '/api/locations/'+NodeID
+        const url = '/api/locations/'+LocationID
         const data = {"parent_id": ParentID}
         const Scope = 'location'
 
         // PATCH category form data
         vm.$http.patch(url, data).then(function(response){
+
+          // Clear adjacent cabinets
+          const LocationIndex = vm.GetLocationIndex(LocationID, Context)
+          const Location = vm.Locations[Context][LocationIndex]
+          const LocationParentID = Location.parent_id
+
+          if(ParentID != LocationParentID) {
+
+            // Update adjacent cabinet
+            const AdjacencyAttributes = ['right_adj_cabinet_id', 'left_adj_cabinet_id']
+            AdjacencyAttributes.forEach(function(AdjacencyAttribute) {
+              const AdjacentCabinetIndex = vm.Locations[Context].findIndex((location) => location[AdjacencyAttribute] == LocationID)
+              if(AdjacentCabinetIndex !== -1) {
+
+                // Update adjacent cabinet
+                const AdjacentCabinet = vm.Locations[Context][AdjacentCabinetIndex]
+                const UpdatedAdjacentCabinet = JSON.parse(JSON.stringify(AdjacentCabinet), function (Key, Value) {
+                  if(Key == AdjacencyAttribute) {
+                    return null
+                  } else {
+                    return Value
+                  }
+                })
+
+                // Update store
+                vm.$store.commit('pcmLocations/UPDATE_Location', {pcmContext:Context, data:UpdatedAdjacentCabinet})
+              }
+            })
+          }
           
           // Update node from store
           vm.$store.commit('pcmLocations/UPDATE_Location', {pcmContext:Context, data:response.data})
@@ -296,13 +370,10 @@ export default {
           Node.select(true)
 
           // Expand parent nodes
-          if(Node.parent) {
-            let NodeParentID = Node.parent.id
-            while(NodeParentID.toString() !== '0') {
-              let NodeParent = vm.GetLocationNode(NodeParentID, TreeRef)
-              NodeParent.expand()
-              NodeParentID = NodeParent.data.parent_id
-            }
+          while(Node.parent) {
+            let NodeParent = vm.GetLocationNode(Node.parent.id, TreeRef)
+            NodeParent.expand()
+            Node = NodeParent
           }
         }
         

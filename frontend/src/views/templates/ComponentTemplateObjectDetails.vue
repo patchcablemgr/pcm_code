@@ -828,11 +828,11 @@ export default {
       const CategoryName = Category.name
 
       // Confirm Deletion
-      const DeleteObjectMsg = ObjectName+" ("+TemplateName+")"
-      const DeleteTemplateMsg = TemplateName+" ("+CategoryName+")"
+      const DeleteObjectMsg = "Delete "+ObjectName+" ("+TemplateName+")?"
+      const DeleteTemplateMsg = "Delete "+TemplateName+" ("+CategoryName+")?"
       const ConfirmMsg = (Context == 'actual') ? DeleteObjectMsg : DeleteTemplateMsg
       const ConfirmOpts = {
-        title: "Delete?"
+        title: "Confirm"
       }
       vm.$bvModal.msgBoxConfirm(ConfirmMsg, ConfirmOpts).then(result => {
 

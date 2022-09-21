@@ -37,6 +37,31 @@
           </b-card>
         </b-col>
       </b-row>
+
+      <template #modal-footer>
+        <b-button
+          variant="danger"
+          class="float-right"
+          @click="Clear"
+        >
+          Clear
+        </b-button>
+        <b-button
+          variant="secondary"
+          class="float-right"
+          @click="Cancel"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="primary"
+          class="float-right"
+          @click="Submit"
+        >
+          Submit
+        </b-button>
+      </template>
+
     </b-modal>
 </template>
 
@@ -47,6 +72,7 @@ import {
   BCard,
   BCardTitle,
   BCardBody,
+  BButton,
 } from 'bootstrap-vue'
 import { PCM } from '@/mixins/PCM.js'
 import LiquorTree from 'liquor-tree'
@@ -64,6 +90,7 @@ export default {
     BCard,
     BCardTitle,
     BCardBody,
+    BButton,
     LiquorTree,
   },
   directives: {},
@@ -136,6 +163,13 @@ export default {
     },
   },
   methods: {
+    Cancel: function() {
+
+      const vm = this
+
+      // Close modal
+      vm.$root.$emit('bv::hide::modal', vm.ModalID)
+    },
     Submit: function() {
 
       const vm = this
@@ -182,6 +216,9 @@ export default {
           response.data.add.forEach(add => vm.$store.commit('pcmTrunks/ADD_Trunk', {data:add}))
           response.data.remove.forEach(remove => vm.$store.commit('pcmTrunks/REMOVE_Trunk', {data:remove}))
 
+          // Close modal
+          vm.$root.$emit('bv::hide::modal', vm.ModalID)
+
         }).catch(error => {vm.DisplayError(error)})
 
       } else if(PortSelectFunction == 'port') {
@@ -193,6 +230,9 @@ export default {
           // Add connection to store
           response.data.add.forEach(add => vm.$store.commit('pcmConnections/ADD_Connection', {data:add}))
           response.data.remove.forEach(remove => vm.$store.commit('pcmConnections/REMOVE_Connection', {data:remove}))
+
+          // Close modal
+          vm.$root.$emit('bv::hide::modal', vm.ModalID)
 
         }).catch(error => {vm.DisplayError(error)})
 
@@ -209,37 +249,54 @@ export default {
       const SelectedObjectFace = vm.StateSelected[Context].object_face
       const SelectedObjectPartition = vm.StateSelected[Context].partition[SelectedObjectFace]
 
-      if(PortSelectFunction == 'trunk') {
-
-        const Trunks = vm.GetTrunks(SelectedObjectID, SelectedObjectFace, SelectedObjectPartition)
-
-        Trunks.forEach(function(trunk){
-
-          const TrunkID = trunk.id
-          // Delete Trunk
-          const URL = '/api/trunks/'+TrunkID
-          vm.$http.delete(URL).then(response => {
-
-            // Remove trunk from store
-            vm.$store.commit('pcmTrunks/REMOVE_Trunk', {data:response.data})
-
-          }).catch(error => {vm.DisplayError(error)})
-        })
-      } else if(PortSelectFunction == 'port') {
-
-        const SelectedPortID = vm.StateSelected[Context].port_id[SelectedObjectFace]
-        const Connection = vm.GetConnection(SelectedObjectID, SelectedObjectFace, SelectedObjectPartition, SelectedPortID)
-        const ConnectionID = Connection.data.id
-        
-        // Delete Connection
-        const URL = '/api/connections/'+ConnectionID
-        vm.$http.delete(URL).then(response => {
-
-          // Remove trunk from store
-          vm.$store.commit('pcmConnections/REMOVE_Connection', {data:response.data})
-
-        }).catch(error => {vm.DisplayError(error)})
+      const ConfirmMsg = (PortSelectFunction == 'trunk') ? "Clear trunk?" : "Clear port connection?"
+      const ConfirmOpts = {
+        title: "Confirm"
       }
+      vm.$bvModal.msgBoxConfirm(ConfirmMsg, ConfirmOpts).then(result => {
+
+        if (result === true) {
+
+          if(PortSelectFunction == 'trunk') {
+
+            const Trunks = vm.GetTrunks(SelectedObjectID, SelectedObjectFace, SelectedObjectPartition)
+
+            Trunks.forEach(function(trunk){
+
+              const TrunkID = trunk.id
+              // Delete Trunk
+              const URL = '/api/trunks/'+TrunkID
+              vm.$http.delete(URL).then(response => {
+
+                // Remove trunk from store
+                vm.$store.commit('pcmTrunks/REMOVE_Trunk', {data:response.data})
+
+              }).catch(error => {vm.DisplayError(error)})
+            })
+
+            // Close modal
+            vm.$root.$emit('bv::hide::modal', vm.ModalID)
+
+          } else if(PortSelectFunction == 'port') {
+
+            const SelectedPortID = vm.StateSelected[Context].port_id[SelectedObjectFace]
+            const Connection = vm.GetConnection(SelectedObjectID, SelectedObjectFace, SelectedObjectPartition, SelectedPortID)
+            const ConnectionID = Connection.data.id
+            
+            // Delete Connection
+            const URL = '/api/connections/'+ConnectionID
+            vm.$http.delete(URL).then(response => {
+
+              // Remove trunk from store
+              vm.$store.commit('pcmConnections/REMOVE_Connection', {data:response.data})
+
+              // Close modal
+              vm.$root.$emit('bv::hide::modal', vm.ModalID)
+
+            }).catch(error => {vm.DisplayError(error)})
+          }
+        }
+      })
     }
   },
   mounted() {

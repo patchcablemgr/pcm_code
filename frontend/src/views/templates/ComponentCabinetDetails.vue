@@ -84,6 +84,7 @@
       :fields="CablePathFields"
       :items="ComputedCablePaths"
       responsive="sm"
+      class="overflow-auto"
     >
 
       <template #cell(cabinet)="data">
@@ -104,7 +105,7 @@
           variant="flat-success"
           class="btn-icon"
           @click=EditCablePath(data.item.id)
-          v-b-tooltip.hover.html="TTEditCablePath"
+          v-b-tooltip.hover.left.html="TTEditCablePath"
         >
           <feather-icon icon="EditIcon" />
         </b-button>
@@ -113,7 +114,7 @@
           variant="flat-success"
           class="btn-icon"
           @click="DeleteCablePath(data.item.id)"
-          v-b-tooltip.hover.html="TTDeleteCablePath"
+          v-b-tooltip.hover.left.html="TTDeleteCablePath"
         >
           <feather-icon icon="TrashIcon" />
         </b-button>
@@ -164,7 +165,7 @@
           </b-button>
         </td>
         <td>
-          Cab1
+          {{ComputedCabinetLeftAdjacency}}
         </td>
       </tr>
 
@@ -178,14 +179,14 @@
             v-ripple.400="'rgba(40, 199, 111, 0.15)'"
             variant="flat-success"
             class="btn-icon"
-            v-b-modal.modal-edit-cabinet-size
+            @click="EditAdjacency('right')"
             :disabled="ComputedCabinetSize == 'N/A'"
           >
             <feather-icon icon="EditIcon" />
           </b-button>
         </td>
         <td>
-          Cab2
+          {{ComputedCabinetRightAdjacency}}
         </td>
       </tr>
     </table>
@@ -243,7 +244,7 @@ import { PCM } from '@/mixins/PCM.js'
 
 const CablePathID = null
 const CablePathModalTitle = ""
-const AdjacencySide = "left"
+let AdjacencySide = "left"
 
 const TTCablePath = {
   title: `
@@ -352,7 +353,6 @@ export default {
         return true
       }
     },
-
     ComputedCabinetOrientation: {
       get() {
 
@@ -397,6 +397,66 @@ export default {
         })
         
         return CablePaths
+      },
+      set() {
+        return true
+      }
+    },
+    ComputedCabinetLeftAdjacency: {
+      get() {
+
+        const vm = this
+        const Context = vm.Context
+        const LocationID = vm.LocationID
+        let Adjacency = 'N/A'
+
+        if(LocationID) {
+          const LocationIndex = vm.GetLocationIndex(LocationID, Context)
+          const Location = vm.Locations[Context][LocationIndex]
+          const LocationType = Location.type
+          if(LocationType == 'cabinet') {
+            const AdjacencyID = Location.left_adj_cabinet_id
+            if(AdjacencyID) {
+              const AdjacencyIndex = vm.GetLocationIndex(AdjacencyID, Context)
+              const Location = vm.Locations[Context][AdjacencyIndex]
+              Adjacency = Location.name
+            } else {
+              Adjacency = 'None'
+            }
+          }
+        }
+        
+        return Adjacency
+      },
+      set() {
+        return true
+      }
+    },
+    ComputedCabinetRightAdjacency: {
+      get() {
+
+        const vm = this
+        const Context = vm.Context
+        const LocationID = vm.LocationID
+        let Adjacency = 'N/A'
+
+        if(LocationID) {
+          const LocationIndex = vm.GetLocationIndex(LocationID, Context)
+          const Location = vm.Locations[Context][LocationIndex]
+          const LocationType = Location.type
+          if(LocationType == 'cabinet') {
+            const AdjacencyID = Location.right_adj_cabinet_id
+            if(AdjacencyID) {
+              const AdjacencyIndex = vm.GetLocationIndex(AdjacencyID, Context)
+              const Location = vm.Locations[Context][AdjacencyIndex]
+              Adjacency = Location.name
+            } else {
+              Adjacency = 'None'
+            }
+          }
+        }
+        
+        return Adjacency
       },
       set() {
         return true

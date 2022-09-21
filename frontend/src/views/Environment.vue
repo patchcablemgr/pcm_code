@@ -591,6 +591,16 @@ export default {
         vm.DisplayError(error)
       })
     },
+    GETConnections() {
+
+      const vm = this
+
+      // GET connections
+      vm.$http.get('/api/connections').then(response => {
+        vm.$store.commit('pcmConnections/SET_Connections', {data:response.data})
+        vm.$store.commit('pcmConnections/SET_Ready', {ReadyState:true})
+      }).catch(error => { vm.DisplayError(error) })
+    },
   },
   watch: {
   },
@@ -608,6 +618,7 @@ export default {
     vm.GETPortOrientations()
     vm.GETPortConnectors()
     vm.GETTrunks()
+    vm.GETConnections()
 
   },
 }

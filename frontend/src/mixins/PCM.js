@@ -139,8 +139,6 @@ export const PCM = {
 
             const vm = this
             const TreeRef = vm.TreeRef
-            console.log(LocationID)
-            console.log(TreeRef)
         
             const Criteria = {
                 "data": {
@@ -166,6 +164,7 @@ export const PCM = {
         RebuildLocationTree: function({Scope}){
 
             const vm = this
+            const Context = vm.Context
             const TreeRef = vm.TreeRef
 
             // Find expanded nodes
@@ -191,8 +190,8 @@ export const PCM = {
             })
 
             // Select selected node
-            if(vm.NodeIDSelected !== null) {
-                const SelectedNode = vm.GetLocationNode(vm.NodeIDSelected)
+            if(vm.$store.state.pcmState.Selected[Context].node_id !== null) {
+                const SelectedNode = vm.GetLocationNode(vm.$store.state.pcmState.Selected[Context].node_id)
                 SelectedNode.select()
             }
         },
@@ -210,7 +209,7 @@ export const PCM = {
 
             let ChildrenFiltered = []
 
-            if(ParentType == 'root' || ParentType == 'location') {
+            if(ParentType == 'root' || ParentType == 'location' || ParentType == 'pod') {
 
                 ChildrenFiltered = vm.Locations[Context].filter(location => location.parent_id == ParentID)
             } else if(ParentType == 'cabinet') {
@@ -1078,6 +1077,7 @@ export const PCM = {
             const ConnectionSideArray = ['a', 'b']
             let LocalConnectionSide
             let RemoteConnectionSide
+            const DebugFlag = (LocalObjectID == 15 && LocalPortID == 0) ? true : false
 
             const Connection = vm.Connections.find(function(connection){
 
@@ -1309,14 +1309,23 @@ export const PCM = {
 
                 // Retrieve location data
                 const LocationIndex = vm.GetLocationIndex(LocationID, Context)
-                const Location = vm.Locations[Context][LocationIndex]
-                const LocationName = Location.name
+                if(LocationIndex === -1) {
 
-                // Prepend DNArray with parent object
-                DNArray.unshift(LocationName)
+                    // Location not found, return 'N/A and exit while loop
+                    DNArray.unshift('N/A')
+                    LocationID = 0
+                } else {
 
-                // Updata location ID
-                LocationID = Location.parent_id
+                    // Append location name to DNArray
+                    const Location = vm.Locations[Context][LocationIndex]
+                    const LocationName = Location.name
+
+                    // Prepend DNArray with parent object
+                    DNArray.unshift(LocationName)
+
+                    // Updata location ID
+                    LocationID = Location.parent_id
+                }
             }
 
             return DNArray.join('.')
@@ -1385,21 +1394,6 @@ export const PCM = {
 
             const LocationDN = vm.GenerateLocationDN(Context, LocationID)
             DNArray.unshift(LocationDN)
-            /*
-            while(LocationID !== 0) {
-
-                // Retrieve location data
-                const LocationIndex = vm.GetLocationIndex(LocationID, Context)
-                const Location = vm.Locations[Context][LocationIndex]
-                const LocationName = Location.name
-
-                // Prepend DNArray with parent object
-                DNArray.unshift(LocationName)
-
-                // Updata location ID
-                LocationID = Location.parent_id
-            }
-            */
 
             return DNArray.join('.')
         },

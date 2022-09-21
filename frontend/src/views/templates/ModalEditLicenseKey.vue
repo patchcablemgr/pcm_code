@@ -96,7 +96,7 @@ export default {
 
       const vm = this
       const Data = {
-        'license-key': vm.Key,
+        'license_key': vm.Key,
       }
       const URL = '/api/organization/license'
 

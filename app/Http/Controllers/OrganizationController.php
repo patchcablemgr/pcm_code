@@ -112,8 +112,23 @@ class OrganizationController extends Controller
             abort(403);
         }
 
-        $request->validate(['license-key' => 'required|alpha_num|size:10']);
-        $licenseKey = $request['license-key'];
+        $validatorInput = [
+            'license-key' => $request->license_key
+        ];
+
+        $validatorRules = [
+            'license-key' => [
+                'required',
+                'regex:/^[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{4}\-[A-Z0-9]{4}$/i'
+            ]
+        ];
+
+        $validatorMessages = [];
+        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        $customValidator->stopOnFirstFailure();
+        $customValidator->validate();
+
+        $licenseKey = $request['license_key'];
 
         $organization = OrganizationModel::first();
         $appID = $organization->app_id;

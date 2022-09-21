@@ -28,11 +28,11 @@ export default {
       const Index = state.Locations[pcmContext].findIndex((item) => item.id == ID)
       state.Locations[pcmContext].splice(Index, 1, data)
     },
-    REMOVE_Location(state, data) {
+    REMOVE_Location(state, {pcmContext, data}) {
 
       const ID = data.id
-      const Index = state.Locations.template.findIndex((item) => item.id == ID)
-      state.Locations.template.splice(Index, 1)
+      const Index = state.Locations[pcmContext].findIndex((item) => item.id == ID)
+      state.Locations[pcmContext].splice(Index, 1)
     },
     SET_Ready(state, {pcmContext, ReadyState}) {
       state.LocationsReady[pcmContext] = ReadyState

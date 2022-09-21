@@ -255,12 +255,26 @@ class LocationController extends Controller
         // Retrieve location record
         $location = LocationModel::where('id', $id)->first();
         $locationType = $location['type'];
+        $locationParentID = $location['parent_id'];
 
         // Store request data
         $data = $request->all();
+        $keyArray = array(
+            'name',
+            'parent_id',
+            'order',
+            'size',
+            'ru_orientation',
+            'left_adj_cabinet_id',
+            'right_adj_cabinet_id'
+        );
 
         // Update location record
         foreach($data as $key => $value) {
+
+            if(!in_array($key, $keyArray)) {
+                throw ValidationException::withMessages(['attribute_name' => 'Invalid attribute name.']);
+            }
 
             // Node text
             if($key == 'name') {
@@ -320,7 +334,24 @@ class LocationController extends Controller
 
                 }
 
+                if($value != $location->parent_id) {
+                    // Clear stale adjacencies
+                    $clearAdjacencies = array(
+                        'left_adj_cabinet_id',
+                        'right_adj_cabinet_id'
+                    );
+                    foreach($clearAdjacencies as $adjacency) {
+                        $staleCabinets = LocationModel::where($adjacency, $id)->get();
+                        foreach($staleCabinets as $staleCabinet) {
+                            $staleCabinet[$adjacency] = null;
+                            $staleCabinet->save();
+                        }
+                    }
+                }
+
                 // Update location parent ID
+                $location->left_adj_cabinet_id = null;
+                $location->right_adj_cabinet_id = null;
                 $location->parent_id = $value;
             }
 
@@ -405,6 +436,103 @@ class LocationController extends Controller
                 // Update cabinet size
                 $location->ru_orientation = $value;
             }
+
+            // Cabinet adjacency
+            if($key == 'left_adj_cabinet_id' || $key == 'right_adj_cabinet_id') {
+
+                if($key == 'left_adj_cabinet_id') {
+                    $validatorInput = [
+                        'left_adj_cabinet_id' => $value
+                    ];
+                    $validatorRules = [
+                        'left_adj_cabinet_id' => [
+                            'integer',
+                            'exists:location,id',
+                            'nullable'
+                        ]
+                    ];
+                } else {
+                    $validatorInput = [
+                        'right_adj_cabinet_id' => $value
+                    ];
+                    $validatorRules = [
+                        'right_adj_cabinet_id' => [
+                            'integer',
+                            'exists:location,id',
+                            'nullable'
+                        ]
+                    ];
+                }
+                $validatorMessages = [];
+                Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
+
+                // Validate location is cabinet
+                if($locationType != 'cabinet') {
+                    throw ValidationException::withMessages([$key => 'Cabinet type is incompatible.']);
+                }
+
+                // Set column names
+                $adjacencyAttribute = $key;
+                $oppositeAdjacencyAttribute = ($key == 'right_adj_cabinet_id') ? 'left_adj_cabinet_id' : 'right_adj_cabinet_id';
+
+                if($value == null) {
+
+                    $location[$adjacencyAttribute] = null;
+                    $staleCabinets = LocationModel::where($oppositeAdjacencyAttribute, $id)->get();
+                    foreach($staleCabinets as $staleCabinet) {
+                        $staleCabinet[$oppositeAdjacencyAttribute] = null;
+                        $staleCabinet->save();
+                    }
+
+                } else {
+
+                    // Collect adjacent cabinet data
+                    $adjacentCabinet = LocationModel::where('id', $value)->first();
+                    $adjacentCabinetType = $adjacentCabinet->type;
+                    $adjacentCabinetParentID = $adjacentCabinet->parent_id;
+
+                    // Validate adjacent location is cabinet
+                    if($adjacentCabinetType != 'cabinet') {
+                        throw ValidationException::withMessages([$key => 'Cabinet type is incompatible.']);
+                    }
+
+                    // Validate location parent is a pod
+                    if($locationParentID == 0) {
+                        throw ValidationException::withMessages([$key => 'Cabinet parent must be pod.']);
+                    } else {
+
+                        // Collect location parent data
+                        $locationParent = LocationModel::where('id', $locationParentID)->first();
+                        $locationParentType = $locationParent->type;
+
+                        if($locationParentType != 'pod') {
+                            throw ValidationException::withMessages([$key => 'Cabinet parent must be pod.']);
+                        }
+                    }
+
+                    // Validate location and adjacent cabinet are pod neighbors
+                    if($locationParentID != $adjacentCabinetParentID) {
+                        throw ValidationException::withMessages([$key => 'Cabinets must be in same pod.']);
+                    }
+
+                    // Clear stale adjacencies
+                    $clearAdjacencies = array(
+                        [$oppositeAdjacencyAttribute, $id, $value],
+                        [$adjacencyAttribute, $value, $id]
+                    );
+                    foreach($clearAdjacencies as $adjacency) {
+                        $staleCabinets = LocationModel::where($adjacency[0], $adjacency[1])->where('id', '<>', $adjacency[2])->get();
+                        foreach($staleCabinets as $staleCabinet) {
+                            $staleCabinet[$adjacency[0]] = null;
+                            $staleCabinet->save();
+                        }
+                    }
+
+                    $location[$adjacencyAttribute] = $value;
+                    $adjacentCabinet[$oppositeAdjacencyAttribute] = $id;
+                    $adjacentCabinet->save();
+                }
+            }
         }
 
         // Save template record
@@ -445,6 +573,25 @@ class LocationController extends Controller
         $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
         $customValidator->stopOnFirstFailure();
         $customValidator->validate();
+
+        // Clear stale adjacencies
+        $clearAdjacencies = array(
+            'left_adj_cabinet_id',
+            'left_adj_cabinet_id'
+        );
+        foreach($clearAdjacencies as $adjacency) {
+            $staleCabinets = LocationModel::where($adjacency, $id)->get();
+            foreach($staleCabinets as $staleCabinet) {
+                $staleCabinet[$adjacency] = null;
+                $staleCabinet->save();
+            }
+        }
+
+        // Clear stale cable paths
+        $staleCablePaths = CablePathModel::where('cabinet_a_id', $id)->orWhere('cabinet_b_id', $id)->get();
+        foreach($staleCablePaths as $staleCablePath) {
+            $staleCablePath->delete();
+        }
 
         $location = LocationModel::where('id', $id)->first();
 

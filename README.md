@@ -1,3 +1,8 @@
+## 1.2.1
+
+Features:
+- Delete users
+
 ## 1.2.0
 
 Features:

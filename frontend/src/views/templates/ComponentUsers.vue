@@ -34,6 +34,17 @@
         />
       </template>
 
+      <template #cell(action)="data">
+        <b-button
+          v-ripple.400="'rgba(40, 199, 111, 0.15)'"
+          variant="flat-success"
+          class="btn-icon"
+          @click="DeleteUser(data.item.id)"
+        >
+          <feather-icon icon="TrashIcon" />
+        </b-button>
+      </template>
+
     </b-table>
   </div>
 </template>
@@ -43,7 +54,9 @@ import {
   BTable,
   BFormCheckbox,
   BFormSelect,
+  BButton,
 } from 'bootstrap-vue'
+import Ripple from 'vue-ripple-directive'
 import { PCM } from '@/mixins/PCM.js'
 
 const RoleOptions = [
@@ -52,7 +65,13 @@ const RoleOptions = [
   {'value': 'admin', 'text': 'Administrator'},
 ]
 
-const Fields = ['name', 'email', 'role', 'status']
+const Fields = [
+  {key: 'name', label: 'Name'},
+  {key: 'email', label: 'Email'},
+  {key: 'role', label: 'Role'},
+  {key: 'status', label: 'Status'},
+  {key: 'action', label: 'Action'},
+]
 
 export default {
   mixins: [PCM],
@@ -60,8 +79,10 @@ export default {
     BTable,
     BFormCheckbox,
     BFormSelect,
+    BButton,
   },
 	directives: {
+    Ripple,
 	},
   props: {},
   data() {
@@ -99,7 +120,26 @@ export default {
       }).catch(error => {
         vm.DisplayError(error)
       })
-    }
+    },
+    DeleteUser: function(UserID) {
+
+      const vm = this
+
+      // Confirm Deletion
+      const ConfirmMsg = 'Delete user?'
+      const ConfirmOpts = {
+        title: "Confirm"
+      }
+      vm.$bvModal.msgBoxConfirm(ConfirmMsg, ConfirmOpts).then(result => {
+        if (result === true) {
+          vm.$http.delete('/api/users/'+UserID).then(response => {
+            vm.$store.commit('pcmUsers/REMOVE_User', {data:response.data})
+          }).catch(error => {
+            vm.DisplayError(error)
+          })
+        }
+      })
+    },
   }
 }
 </script>

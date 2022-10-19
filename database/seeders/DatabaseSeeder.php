@@ -58,5 +58,13 @@ class DatabaseSeeder extends Seeder
             $org->save();
         }
 
+        $orgVersion = $org->version;
+
+        // 1.2.0 -> 1.2.1
+        if(version_compare($orgVersion, '1.2.0') === 0) {
+            $org->version = '1.2.1';
+            $org->save();
+        }
+
     }
 }

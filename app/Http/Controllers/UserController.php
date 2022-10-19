@@ -125,6 +125,38 @@ class UserController extends Controller
      */
     public function destroy($id)
     {
-        //
+        // RBAC
+        if (! Gate::allows('admin')) {
+            abort(403);
+        }
+
+        // Validate
+        $validatorInput = [
+            'id' => $id,
+        ];
+        $validatorRules = [
+            'id' => [
+                'required',
+                'numeric',
+                'exists:users',
+            ],
+        ];
+
+        $validatorMessages = [];
+        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        $customValidator->stopOnFirstFailure();
+        $customValidator->validate();
+
+        // Validate user is not self
+        $userID = Auth::id();
+        if($userID == $id) {
+            throw ValidationException::withMessages(['id' => 'Cannot delete your own account.']);
+        }
+
+        $user = User::where('id', $id)->first();
+
+        $user->delete();
+
+        return array('id' => $id);
     }
 }

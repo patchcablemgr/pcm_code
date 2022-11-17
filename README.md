@@ -1,3 +1,8 @@
+## 1.2.2
+
+Features:
+- Fix tenant registration error
+
 ## 1.2.1
 
 Features:

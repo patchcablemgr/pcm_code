@@ -95,7 +95,7 @@ class AuthController extends Controller
 				'required',
 				'string',
 				'max:63',
-				'regex:/^[a-z0-9][a-z0-9\-]*$/',
+				'regex:/^[a-zA-Z0-9][a-zA-Z0-9\-]*$/',
 				Rule::notIn($reservedSubDomains),
 			],
             'name' => [
@@ -107,22 +107,27 @@ class AuthController extends Controller
             'password'=>'required|string',
             'c_password' => 'required|same:password'
         ]);
+
+		$tenantName = strtolower($request->tenant);
+		$userName = strtolower($request->name);
+		$userEmail = strtolower($request->email);
+		$userPassword = strtolower($request->password);
 		
-		if (!TenantModel::where('id', '=', $request->tenant)->exists()) {
+		if (!TenantModel::where('id', '=', $tenantName)->exists()) {
 
 			$userData = array(
-				'name' => $request->name,
-				'email' => $request->email,
-				'password' => bcrypt($request->password),
+				'name' => $userName,
+				'email' => $userEmail,
+				'password' => bcrypt($userPassword),
 				'status' => true,
 				'role' => 'admin'
 			);
 
 			$tenant = TenantModel::create([
-				'id' => $request->tenant,
+				'id' => $tenantName,
 				'initial_user_data' => $userData,
 				'initial_host' => $request->header('tenant-domain'),
-				'tenancy_db_username' => 'user_'.$request->tenant,
+				'tenancy_db_username' => 'user_'.$tenantName,
 				'tenancy_db_password' => Str::random(40),
 			]);
 

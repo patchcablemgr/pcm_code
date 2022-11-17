@@ -259,7 +259,7 @@ export default {
           }).catch(error => {
     
             // Display error to user via toast
-            vm.$bvToast.toast(JSON.stringify(error), {
+            vm.$bvToast.toast(JSON.stringify(error.response.data), {
               title: 'Error',
               variant: 'danger',
             })

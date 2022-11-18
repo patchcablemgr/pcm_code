@@ -1,3 +1,8 @@
+## 1.2.3
+
+Features:
+- Fix user registration error
+
 ## 1.2.2
 
 Features:

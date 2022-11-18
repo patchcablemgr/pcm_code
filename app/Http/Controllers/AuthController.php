@@ -109,9 +109,9 @@ class AuthController extends Controller
         ]);
 
 		$tenantName = strtolower($request->tenant);
-		$userName = strtolower($request->name);
-		$userEmail = strtolower($request->email);
-		$userPassword = strtolower($request->password);
+		$userName = $request->name;
+		$userEmail = $request->email;
+		$userPassword = $request->password;
 		
 		if (!TenantModel::where('id', '=', $tenantName)->exists()) {
 

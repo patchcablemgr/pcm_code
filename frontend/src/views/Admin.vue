@@ -171,31 +171,6 @@ export default {
     },
   },
   methods: {
-    GETConnections() {
-
-      const vm = this
-
-      // GET connections
-      vm.$http.get('/api/connections').then(response => {
-        vm.$store.commit('pcmConnections/SET_Connections', {data:response.data})
-        vm.$store.commit('pcmConnections/SET_Ready', {ReadyState:true})
-      }).catch(error => {
-        vm.DisplayError(error)
-      })
-    },
-    GETLocations() {
-
-      const vm = this
-      const Context = 'actual'
-
-      // GET locations
-      vm.$http.get('/api/locations').then(response => {
-        vm.$store.commit('pcmLocations/SET_Locations', {pcmContext:Context, data:response.data})
-        vm.$store.commit('pcmLocations/SET_Ready', {pcmContext:Context, ReadyState:true})
-      }).catch(error => {
-        vm.DisplayError(error)
-      })
-    },
     GETUsers() {
 
       const vm = this
@@ -216,17 +191,6 @@ export default {
 
         vm.$store.commit('pcmOrganization/SET_Organization', {data: response.data})
         vm.$store.commit('pcmOrganization/SET_Ready', {ReadyState:true})
-      })
-    },
-    GETObjects() {
-
-      const vm = this
-			const Context = 'actual'
-      
-      vm.$http.get('/api/objects').then(function(response){
-
-        vm.$store.commit('pcmObjects/SET_Objects', {pcmContext: Context, data: response.data})
-        vm.$store.commit('pcmObjects/SET_Ready', {pcmContext:Context, ReadyState:true})
       })
     },
     GETNetworkConfig() {
@@ -270,11 +234,8 @@ export default {
 
     const vm = this
 
-    vm.GETConnections()
-    vm.GETLocations()
     vm.GETUsers()
     vm.GETOrganization()
-    vm.GETObjects()
     vm.GETNetworkConfig()
     vm.GETCSRList()
     vm.GETCertList()

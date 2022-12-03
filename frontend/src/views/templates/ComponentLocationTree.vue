@@ -111,6 +111,15 @@ export default {
       return this.$store.state.pcmState.Selected
     },
   },
+  watch: {
+    Locations: {
+      handler(newValue, oldValue) {
+        const Scope = 'location'
+        this.RebuildLocationTree({Scope})
+      },
+      deep: true
+    }
+  },
   methods: {
     GetCookie(cname) {
       let name = cname + "="

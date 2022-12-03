@@ -108,7 +108,6 @@ import ModalTemplatesEdit from './templates/ModalTemplatesEdit.vue'
 import { PCM } from '@/mixins/PCM.js'
 
 const IsSticky = false
-const CategoriesWatcherActive = true
 const TemplateFaceSelected = {
   'workspace': 'front',
   'template': 'front',
@@ -173,7 +172,6 @@ export default {
   data() {
     return {
       IsSticky,
-      CategoriesWatcherActive,
       TemplateFaceSelected,
       PartitionAddressHovered,
     }
@@ -189,8 +187,9 @@ export default {
         vm.TemplatesReady.workspace,
         vm.ObjectsReady.template,
         vm.ObjectsReady.workspace,
+        vm.LocationsReady.workspace,
       ]
-      
+
       const DependenciesReady = Dependencies.every(function(element){ return element == true })
       return DependenciesReady
     },
@@ -211,6 +210,12 @@ export default {
     },
     ObjectsReady: function() {
       return this.$store.state.pcmObjects.ObjectsReady
+    },
+    Locations() {
+      return this.$store.state.pcmLocations.Locations
+    },
+    LocationsReady: function() {
+      return this.$store.state.pcmLocations.LocationsReady
     },
     StateSelected() {
       return this.$store.state.pcmState.Selected
@@ -269,228 +274,8 @@ export default {
       const vm = this
       vm.TemplateFaceSelected[Context] = Face
     },
-    GETTemplates: function () {
-
-      const vm = this
-
-      // Create workspace templates
-      const WorkspaceIDs = {
-        standard: vm.$store.state.pcmProps.WorkspaceStandardID,
-        insert: vm.$store.state.pcmProps.WorkspaceInsertID
-      }
-      let WorkspaceTemplate
-      Object.entries(WorkspaceIDs).forEach(function([Type, ID]){
-        WorkspaceTemplate = JSON.parse(JSON.stringify(vm.$store.state.pcmProps.GenericTemplate), function (Key, Value) {
-          if(Key == 'id') {
-            return ID
-          } else if(Key == 'name') {
-            return "New_Template"
-          } else if(Key == 'type') {
-            if(Value === null) {
-              return Type
-            } else {
-              return Value
-            }
-          } else if(Key == 'ru_size') {
-            return (Type == 'standard') ? 1 : Value
-          } else if(Key == 'function') {
-            return 'endpoint'
-          } else if(Key == 'mount_config') {
-            return (Type == 'standard') ? '2-post' : Value
-          } else if(Key == 'insert_constraints') {
-            return (Type == 'standard') ? Value : [{part_layout:{height:2,width:24},enc_layout:{cols:1,rows:1}}]
-          } else {
-            return Value
-          }
-        })
-        vm.$store.commit('pcmTemplates/ADD_Template', {pcmContext:'workspace', data:WorkspaceTemplate})
-      })
-      vm.$store.commit('pcmTemplates/SET_Ready', {pcmContext:'workspace', ReadyState:true})
-
-      // Create actual/template templates
-      vm.$http.get('/api/templates').then(response => {
-
-        vm.$store.commit('pcmTemplates/SET_Templates', {pcmContext: 'template', data: response.data})
-        response.data.forEach(function(template) {
-          vm.GeneratePseudoData('template', template)
-        })
-        vm.$store.commit('pcmObjects/SET_Ready', {pcmContext:'template', ReadyState:true})
-        vm.$store.commit('pcmTemplates/SET_Ready', {pcmContext:'template', ReadyState:true})
-      }).catch(error => { vm.DisplayError(error) })
-    },
-    SetDefaultCategory: function() {
-
-      const vm = this
-      const Context = 'workspace'
-      const Categories = vm.Categories
-      const WorkspaceStandardID = vm.$store.state.pcmProps.WorkspaceStandardID
-      const WorkspaceInsertID = vm.$store.state.pcmProps.WorkspaceInsertID
-      const StandardTemplateIndex = vm.GetTemplateIndex(WorkspaceStandardID, Context)
-      const InsertTemplateIndex = vm.GetTemplateIndex(WorkspaceInsertID, Context)
-
-      const DefaultCategoryIndex = Categories[Context].findIndex((category) => category.default)
-      let DefaultCategoryID
-
-      if(DefaultCategoryIndex !== -1) {
-        DefaultCategoryID = Categories[Context][DefaultCategoryIndex].id
-      } else {
-        DefaultCategoryID = Categories[Context][0].id
-      }
-
-      const StandardTemplateUpdated = JSON.parse(JSON.stringify(vm.Templates[Context][StandardTemplateIndex]), function(key, value){
-        if(key == 'category_id') {
-          return DefaultCategoryID
-        } else {
-          return value
-        }
-      })
-
-      const InsertTemplateUpdated = JSON.parse(JSON.stringify(vm.Templates[Context][InsertTemplateIndex]), function(key, value){
-        if(key == 'category_id') {
-          return DefaultCategoryID
-        } else {
-          return value
-        }
-      })
-
-      vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:StandardTemplateUpdated})
-      vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:InsertTemplateUpdated})
-
-    },
-    GETLocations() {
-
-      const vm = this
-
-      // Create workspace locations
-      const WorkspaceIDs = {
-        standard: vm.$store.state.pcmProps.WorkspaceStandardID,
-        insert: vm.$store.state.pcmProps.WorkspaceInsertID
-      }
-      let WorkspaceCabinet
-      Object.entries(WorkspaceIDs).forEach(function([Type, ID]){
-        WorkspaceCabinet = JSON.parse(JSON.stringify(vm.$store.state.pcmProps.GenericCabinet), function (Key, Value) {
-          if(Key == 'id') {
-            return ID
-          } else {
-            return Value
-          }
-        })
-        vm.$store.commit('pcmLocations/ADD_Location', {pcmContext:'workspace', data:WorkspaceCabinet})
-      })
-      vm.$store.commit('pcmLocations/SET_Ready', {pcmContext:'workspace', ReadyState:true})
-
-      // Create template locations
-      vm.$http.get('/api/locations').then(response => {
-        vm.$store.commit('pcmLocations/SET_Locations', {pcmContext:'template', data:response.data})
-        vm.$store.commit('pcmLocations/SET_Ready', {pcmContext:'template', ReadyState:true})
-      }).catch(error => {
-        vm.DisplayError(error)
-      })
-    },
-    GETCategories() {
-
-      const vm = this
-      vm.$http.get('/api/categories')
-      .then(response => {
-        vm.$store.commit('pcmCategories/SET_Categories', {pcmContext:'workspace', data:response.data})
-        vm.$store.commit('pcmCategories/SET_Categories', {pcmContext:'template', data:response.data})
-        vm.$store.commit('pcmCategories/SET_Categories', {pcmContext:'actual', data:response.data})
-        vm.SetDefaultCategory()
-        vm.$store.commit('pcmCategories/SET_Ready', {pcmContext:'workspace', ReadyState:true})
-        vm.$store.commit('pcmCategories/SET_Ready', {pcmContext:'template', ReadyState:true})
-        vm.$store.commit('pcmCategories/SET_Ready', {pcmContext:'actual', ReadyState:true})
-      }).catch(error => {
-        vm.DisplayError(error)
-      })
-    },
-    GETObjects() {
-
-      const vm = this
-
-      // Create workspace objects
-      const WorkspaceIDs = {
-        standard: vm.$store.state.pcmProps.WorkspaceStandardID,
-        insert: vm.$store.state.pcmProps.WorkspaceInsertID
-      }
-      let WorkspaceObject
-      Object.entries(WorkspaceIDs).forEach(function([Type, ID]){
-        WorkspaceObject = JSON.parse(JSON.stringify(vm.$store.state.pcmProps.GenericObject), function (Key, Value) {
-          if(Key == 'id') {
-            return ID
-          } else if(Key == 'name') {
-            return "New_Object"
-          } else if(Key == 'template_id') {
-            return ID
-          } else if(Key == 'location_id') {
-            return ID
-          } else if(Key == 'cabinet_ru') {
-            return (Type == 'standard') ? 1 : Value
-          } else if(Key == 'cabinet_front') {
-            return (Type == 'standard') ? 'front' : Value
-          } else {
-            return Value
-          }
-        })
-        vm.$store.commit('pcmObjects/ADD_Object', {pcmContext:'workspace', data:WorkspaceObject})
-      })
-      vm.$store.commit('pcmObjects/SET_Ready', {pcmContext:'workspace', ReadyState:true})
-
-      vm.$http.get('/api/objects').then(response => {
-        vm.$store.commit('pcmObjects/SET_Objects', response.data)
-        vm.$store.commit('pcmObjects/SET_Ready', {pcmContext:'actual', ReadyState:true})
-      }).catch(error => {
-        vm.DisplayError(error)
-      })
-    },
-    GETConnectors() {
-
-      const vm = this
-
-      vm.$http.get('/api/port-connectors').then(response => {
-        vm.$store.commit('pcmProps/SET_Connectors', response.data)
-        vm.$store.commit('pcmProps/SET_Ready', {Prop: 'connectors', ReadyState: true})
-      }).catch(error => {
-        vm.DisplayError(error)
-      })
-    },
-    GETMedium() {
-
-      const vm = this
-
-      vm.$http.get('/api/medium').then(response => {
-        vm.$store.commit('pcmProps/SET_Medium', response.data)
-        vm.$store.commit('pcmProps/SET_Ready', {Prop: 'medium', ReadyState: true})
-      }).catch(error => {
-        vm.DisplayError(error)
-      })
-    },
-    GETOrientations() {
-
-      const vm = this
-
-      vm.$http.get('/api/port-orientation').then(response => {
-        vm.$store.commit('pcmProps/SET_Orientations', response.data)
-        vm.$store.commit('pcmProps/SET_Ready', {Prop: 'orientations', ReadyState: true})
-      }).catch(error => {
-        vm.DisplayError(error)
-      })
-    }
   },
-  watch: {
-  },
-  mounted() {
-
-    const vm = this
-    
-    vm.GETObjects()
-    vm.GETLocations()
-    vm.GETCategories()
-    vm.GETTemplates()
-    vm.GETConnectors()
-    vm.GETMedium()
-    vm.GETOrientations()
-
-  },
+  mounted() {},
 }
 </script>
 

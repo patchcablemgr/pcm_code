@@ -47,6 +47,8 @@ export default {
   state: {
     Selected,
     Hovered,
+    DataSyncTimestamp: 0,
+    DataSyncIntervalID: null,
   },
   mutations: {
     UPDATE_Selected(state, {pcmContext, data}) {
@@ -63,6 +65,14 @@ export default {
     UPDATE_Hovered(state, {pcmContext, data}) {
 
       state.Hovered[pcmContext] = data
+    },
+    UPDATE_DataSyncTimestamp(state, {timestamp}) {
+
+      state.DataSyncTimestamp = timestamp
+    },
+    UPDATE_DataSyncIntervalID(state, {IntervalID}) {
+
+      state.DataSyncIntervalID = IntervalID
     },
     DEFAULT_Hovered(state, {pcmContext}) {
 

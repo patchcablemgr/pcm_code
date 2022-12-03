@@ -1,5 +1,10 @@
 ## 1.2.3
 
+Enhancements:
+- Data synchronization
+
+## 1.2.3
+
 Features:
 - Fix user registration error
 

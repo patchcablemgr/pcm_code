@@ -235,7 +235,7 @@ export default {
         vm.TemplatesReady.template,
         vm.TemplatesReady.actual,
         vm.ObjectsReady.template,
-        vm.LocationsReady,
+        vm.LocationsReady.actual,
         vm.TrunksReady
       ]
       
@@ -246,7 +246,7 @@ export default {
       return this.$store.state.pcmLocations.Locations
     },
     LocationsReady: function() {
-      return this.$store.state.pcmLocations.LocationsReady.actual
+      return this.$store.state.pcmLocations.LocationsReady
     },
     Categories() {
       return this.$store.state.pcmCategories.Categories
@@ -471,143 +471,10 @@ export default {
         }).catch(error => {vm.DisplayError(error)})
       }
     },
-    GETCategories: function() {
-
-      const vm = this
-      vm.$http.get('/api/categories')
-      .then(response => {
-        vm.$store.commit('pcmCategories/SET_Categories', {pcmContext:'workspace', data:response.data})
-        vm.$store.commit('pcmCategories/SET_Categories', {pcmContext:'template', data:response.data})
-        vm.$store.commit('pcmCategories/SET_Categories', {pcmContext:'actual', data:response.data})
-        vm.$store.commit('pcmCategories/SET_Ready', {pcmContext:'workspace', ReadyState:true})
-        vm.$store.commit('pcmCategories/SET_Ready', {pcmContext:'template', ReadyState:true})
-        vm.$store.commit('pcmCategories/SET_Ready', {pcmContext:'actual', ReadyState:true})
-      }).catch(error => {
-        vm.DisplayError(error)
-      })
-    },
-    GETMedia: function() {
-
-      const vm = this;
-
-      vm.$http.get('/api/medium').then(function(response){
-        vm.$store.commit('pcmProps/SET_Medium', response.data)
-        vm.$store.commit('pcmProps/SET_Ready', {Prop:'medium', ReadyState:true})
-      });
-    },
-    GETTemplates: function () {
-
-      const vm = this
-			const ContextTemplate = 'template'
-      const ContextActual = 'actual'
-      
-      vm.$http.get('/api/templates').then(function(response){
-
-        vm.$store.commit('pcmTemplates/SET_Templates', {pcmContext: ContextTemplate, data: response.data})
-        vm.$store.commit('pcmTemplates/SET_Templates', {pcmContext: ContextActual, data: response.data})
-
-        response.data.forEach(function(template) {
-          vm.GeneratePseudoData(ContextTemplate, template)
-        })
-        vm.$store.commit('pcmObjects/SET_Ready', {pcmContext:ContextTemplate, ReadyState:true})
-        vm.$store.commit('pcmTemplates/SET_Ready', {pcmContext:ContextTemplate, ReadyState:true})
-        vm.$store.commit('pcmTemplates/SET_Ready', {pcmContext:ContextActual, ReadyState:true})
-      }).catch(error => { vm.DisplayError(error) })
-    },
-    GETObjects: function () {
-
-      const vm = this
-			const Context = 'actual'
-      
-      vm.$http.get('/api/objects').then(function(response){
-
-        vm.$store.commit('pcmObjects/SET_Objects', {pcmContext: Context, data: response.data})
-        vm.$store.commit('pcmObjects/SET_Ready', {pcmContext:Context, ReadyState:true})
-      })
-    },
-    GETPortOrientations: function() {
-
-      const vm = this
-
-      this.$http.get('/api/port-orientation').then(function(response){
-        vm.$store.commit('pcmProps/SET_Orientations', response.data)
-        vm.$store.commit('pcmProps/SET_Ready', {Prop:'orientations', ReadyState:true})
-      })
-    },
-    GETPortConnectors: function() {
-
-      const vm = this
-
-      vm.$http.get('/api/port-connectors').then(function(response){
-        vm.$store.commit('pcmProps/SET_Connectors', response.data)
-        vm.$store.commit('pcmProps/SET_Ready', {Prop:'connectors', ReadyState:true})
-      })
-    },
-    GETFloorplanTemplates: function() {
-
-      const vm = this
-
-      vm.$http.get('/api/floorplan-templates').then(function(response){
-        vm.$store.commit('pcmFloorplanTemplates/SET_FloorplanTemplates', {data: response.data})
-        vm.$store.commit('pcmFloorplanTemplates/SET_Ready', {ReadyState:true})
-      })
-    },
-    GETLocations() {
-
-      const vm = this
-      const Context = 'actual'
-
-      // GET locations
-      vm.$http.get('/api/locations').then(response => {
-        vm.$store.commit('pcmLocations/SET_Locations', {pcmContext:Context, data:response.data})
-        vm.$store.commit('pcmLocations/SET_Ready', {pcmContext:Context, ReadyState:true})
-      }).catch(error => {
-        vm.DisplayError(error)
-      })
-    },
-    GETTrunks() {
-
-      const vm = this
-
-      // GET trunks
-      vm.$http.get('/api/trunks').then(response => {
-        vm.$store.commit('pcmTrunks/SET_Trunks', {data:response.data})
-        vm.$store.commit('pcmTrunks/SET_Ready', {ReadyState:true})
-      }).catch(error => {
-        vm.DisplayError(error)
-      })
-    },
-    GETConnections() {
-
-      const vm = this
-
-      // GET connections
-      vm.$http.get('/api/connections').then(response => {
-        vm.$store.commit('pcmConnections/SET_Connections', {data:response.data})
-        vm.$store.commit('pcmConnections/SET_Ready', {ReadyState:true})
-      }).catch(error => {
-        vm.DisplayError(error)
-      })
-    },
   },
   watch: {
   },
-  mounted() {
-
-    const vm = this
-
-    vm.GETLocations()
-    vm.GETCategories()
-    vm.GETTemplates()
-    vm.GETFloorplanTemplates()
-    vm.GETMedia()
-    vm.GETObjects()
-    vm.GETPortOrientations()
-    vm.GETPortConnectors()
-    vm.GETTrunks()
-    vm.GETConnections()
-
-  },
+  mounted() {},
 }
 </script>
 

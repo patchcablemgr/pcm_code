@@ -12,7 +12,6 @@ export default {
       state.Connections = data
     },
     ADD_Connection(state, {data}) {
-      console.log(data)
       state.Connections.push(data)
     },
     UPDATE_Connection(state, {data}) {

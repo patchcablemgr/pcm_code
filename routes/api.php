@@ -19,6 +19,7 @@ use App\Http\Controllers\ConfigController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\CablePathController;
+use App\Http\Controllers\DataSyncController;
 
 /*
 |--------------------------------------------------------------------------
@@ -77,6 +78,7 @@ Route::group(['middleware' => 'auth:sanctum'], function(){
   Route::get('catalog/templates', [TemplateController::class, 'indexCatalogTemplates']);
   Route::get('catalog/template/{id}', [TemplateController::class, 'importCatalogTemplate']);
   Route::get('cable-paths', [CablePathController::class, 'index']);
+  Route::get('data-sync/{timestamp}', [DataSyncController::class, 'getChanges']);
 
   // Only DELETE
   Route::delete('config/csr/{id}', [ConfigController::class, 'destroyCSR']);

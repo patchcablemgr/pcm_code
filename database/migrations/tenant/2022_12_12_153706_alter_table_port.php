@@ -27,6 +27,11 @@ class AlterTablePort extends Migration
                 $table->renameColumn('object_depth', 'object_partition')->change();
             }
             $table->string('object_face', 255)->change();
+            
+        });
+
+        Schema::table('port', function (Blueprint $table) {
+
             $table->string('object_partition', 255)->change();
             
         });

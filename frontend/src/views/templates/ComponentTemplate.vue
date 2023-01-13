@@ -9,13 +9,13 @@
       :key=" GetPartitionAddress(PartitionIndex).join('-') "
       class=" pcm_template_partition_box "
       :class="{
-        pcm_template_partition_selected: PartitionIsSelected({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'PartitionAddress': GetPartitionAddress(PartitionIndex)}),
-        pcm_template_partition_hovered: PartitionIsHovered({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'PartitionAddress': GetPartitionAddress(PartitionIndex)}),
+        pcm_template_partition_selected: PartitionIsSelected({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'PartitionAddress': GetPartitionAddress(PartitionIndex), 'PortID': null}),
+        pcm_template_partition_hovered: PartitionIsHovered({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'PartitionAddress': GetPartitionAddress(PartitionIndex), 'PortID': null}),
       }"
       :style="{ 'flex-grow': GetPartitionFlexGrow(Partition.units, PartitionIndex) }"
-      @click.stop=" PartitionClicked({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': GetPartitionAddress(PartitionIndex), 'PortID': null}) "
-      @mouseover.stop=" PartitionHovered({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': GetPartitionAddress(PartitionIndex), 'HoverState': true}) "
-      @mouseleave.stop=" PartitionHovered({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': GetPartitionAddress(PartitionIndex), 'HoverState': false}) "
+      @click.stop=" PartitionClicked({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'PartitionAddress': GetPartitionAddress(PartitionIndex), 'PortID': null}) "
+      @mouseover.stop=" PartitionHovered({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'PartitionAddress': GetPartitionAddress(PartitionIndex), 'PortID': null, 'HoverState': true}) "
+      @mouseleave.stop=" PartitionHovered({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'PartitionAddress': GetPartitionAddress(PartitionIndex), 'PortID': null, 'HoverState': false}) "
     >
       <!-- Generic partition -->
       <ComponentTemplate
@@ -28,6 +28,7 @@
         :ObjectFace="ObjectFace"
         :PartitionAddressHovered="PartitionAddressHovered"
         :ObjectsAreDraggable="ObjectsAreDraggable"
+        @InsertObjectDropped=" $emit('InsertObjectDropped', $event) "
       />
 
       <!-- Connectable partition -->
@@ -133,6 +134,9 @@ export default {
     },
     StateSelected() {
       return this.$store.state.pcmState.Selected
+    },
+    StateHovered() {
+      return this.$store.state.pcmState.Hovered
     },
     IsPseudo: function() {
 
@@ -300,7 +304,8 @@ export default {
     },
     HandleDrop: function(ParentID, ParentFace, ParentPartitionAddress, ParentEnclosureAddress, event) {
       
-      // Store dataa
+      // Store data
+      
       const vm = this
       const Context = event.dataTransfer.getData('context')
       const InsertObjectID = event.dataTransfer.getData('object_id')
@@ -325,7 +330,7 @@ export default {
           "template_id": TemplateID,
           "template_face": TemplateFace,
         }
-
+        
         vm.$emit('InsertObjectDropped', data )
       }
     },

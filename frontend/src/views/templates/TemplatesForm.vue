@@ -316,7 +316,7 @@
         v-show="PartitionType == 'connectable'"
       >
         <dt class="col-sm-4">
-          Medium
+          Media
         </dt>
         <dd class="col-sm-8">
           <b-form-select
@@ -508,8 +508,8 @@ export default {
     }
   },
   computed: {
-    Medium() {
-      return this.$store.state.pcmProps.Medium
+    Media() {
+      return this.$store.state.pcmProps.Media
     },
     Connectors() {
       return this.$store.state.pcmProps.Connectors
@@ -712,8 +712,8 @@ export default {
           }
 
           // Port media type
-          const defaultMediaIndex = vm.$store.state.pcmProps.Medium.findIndex((media) => media.default)
-          const defaultMediaValue = vm.$store.state.pcmProps.Medium[defaultMediaIndex].value
+          const defaultMediaIndex = vm.$store.state.pcmProps.Media.findIndex((media) => media.default)
+          const defaultMediaValue = vm.$store.state.pcmProps.Media[defaultMediaIndex].value
           Partition.media = defaultMediaValue
 
           // Port media type
@@ -1318,9 +1318,9 @@ export default {
       let WorkingArray = []
 
       // Populate working array with data to be used as select options
-      for(let i = 0; i < vm.Medium.length; i++) {
+      for(let i = 0; i < vm.Media.length; i++) {
 
-        let Media = vm.Medium[i]
+        let Media = vm.Media[i]
         if(Media.display) {
           WorkingArray.push({'value': Media.value, 'text': Media.name})
         }

@@ -19,10 +19,24 @@
           >
 
             <b-dropdown-item
-              v-b-modal.port-select-port
+              v-b-modal.modal-port-connect
               :disabled="!PortIsSelected"
             >Connect
             </b-dropdown-item>
+
+            <b-dropdown-item
+              v-b-modal.modal-cable-select
+              :disabled="!PortIsSelected"
+            >Cable
+            </b-dropdown-item>
+
+            <b-dropdown-divider />
+
+            <b-dropdown-item
+              variant="danger"
+              @click=" Clear() "
+              :disabled="!PortIsSelected"
+            >Clear Connection</b-dropdown-item>
 
           </b-dropdown>
         </div>
@@ -62,7 +76,7 @@
           </b-button>
         </td>
         <td>
-          {{Description}}
+          {{ComputedPortDescription}}
         </td>
       </tr>
 
@@ -94,11 +108,19 @@
       :Context="Context"
     />
 
-    <!-- Modal Port Select -->
-    <modal-port-select
-      ModalID="port-select-port"
+    <!-- Modal Port Connect -->
+    <modal-port-connect
+      ModalID="modal-port-connect"
       ModalTitle="Port Connect"
-      TreeRef="PortSelectPort"
+      TreeRef="TreeSelectPort"
+      :Context="Context"
+      PortSelectFunction="port"
+    />
+
+    <!-- Modal Port Cable -->
+    <modal-cable-select
+      ModalID="modal-cable-select"
+      ModalTitle="Cable"
       :Context="Context"
       PortSelectFunction="port"
     />
@@ -119,7 +141,8 @@ import {
   BFormSelect,
 } from 'bootstrap-vue'
 import ModalEditPortDescription from './ModalEditPortDescription.vue'
-import ModalPortSelect from './ModalPortSelect.vue'
+import ModalPortConnect from './ModalPortConnect.vue'
+import ModalCableSelect from './ModalCableSelect.vue'
 import Ripple from 'vue-ripple-directive'
 import { PCM } from '@/mixins/PCM.js'
 
@@ -137,7 +160,8 @@ export default {
     BFormSelect,
 
     ModalEditPortDescription,
-    ModalPortSelect,
+    ModalPortConnect,
+    ModalCableSelect,
   },
 	directives: {
 		Ripple,
@@ -154,8 +178,8 @@ export default {
     Locations() {
       return this.$store.state.pcmLocations.Locations
     },
-    Medium() {
-      return this.$store.state.pcmProps.Medium
+    Media() {
+      return this.$store.state.pcmProps.Media
     },
     Connectors() {
       return this.$store.state.pcmProps.Connectors
@@ -177,6 +201,9 @@ export default {
     },
     Connections() {
       return this.$store.state.pcmConnections.Connections
+    },
+    Ports() {
+      return this.$store.state.pcmPorts.Ports
     },
     StateSelected() {
       return this.$store.state.pcmState.Selected
@@ -228,13 +255,24 @@ export default {
         }
       }
     },
-    Description: {
-      get() {
-        const vm = this
-        const Context = vm.Context
+    ComputedPortDescription() {
 
-        return 'DescriptionText'
-      },
+      const vm = this
+
+      const ObjectID = vm.StateSelected.actual.object_id
+      const ObjectFace = vm.StateSelected.actual.object_face
+      const ObjectPartition = vm.StateSelected.actual.partition[ObjectFace]
+      const PortID = vm.StateSelected.actual.port_id[ObjectFace]
+
+      const PortIndex = vm.Ports.findIndex((port) => port.object_id == ObjectID && port.object_face == ObjectFace && JSON.stringify(port.object_partition) == JSON.stringify(ObjectPartition) && port.port_id == PortID)
+      let PortDescription
+      if (PortIndex != -1) {
+        PortDescription = vm.Ports[PortIndex].description
+      } else {
+        PortDescription = 'None'
+      }
+
+      return PortDescription
     },
     Populated: {
       get() {
@@ -306,15 +344,29 @@ export default {
         let WorkingArray = []
 
         if(vm.PortIsSelected) {
+
+          // Get selected port details
+          const ObjectID = vm.StateSelected.actual.object_id
+          const ObjectFace = vm.StateSelected.actual.object_face
+          const ObjectPartition = vm.StateSelected.actual.partition[ObjectFace]
           const Partition = vm.GetPartitionSelected(Context)
           const PortFormat = Partition.port_format
           const PortTotal = Partition.port_layout.cols * Partition.port_layout.rows
+          let PortDescription = ''
 
           // Populate working array with data to be used as select options
           for(let i = 0; i < PortTotal; i++) {
 
-            const PortID = vm.GeneratePortID(i, PortTotal, PortFormat)
-            WorkingArray.push({'value': i, 'text': PortID})
+            const PortName = vm.GeneratePortName(Context, ObjectID, ObjectFace, ObjectPartition, i)
+            //const PortName = vm.GeneratePortID(i, PortTotal, PortFormat)
+            const PortIndex = vm.Ports.findIndex((port) => port.object_id == ObjectID && port.object_face == ObjectFace && JSON.stringify(port.object_partition) == JSON.stringify(ObjectPartition) && port.port_id == i)
+            
+            if (PortIndex != -1) {
+              PortDescription = ' ('+vm.Ports[PortIndex].description+')'
+            }
+            const OptionText = PortName+PortDescription
+            WorkingArray.push({'value': i, 'text': OptionText})
+            PortDescription = ''
           }
         }
 
@@ -323,6 +375,39 @@ export default {
     },
   },
   methods: {
+    Clear: function() {
+
+      const vm = this
+      const Context = vm.Context
+
+      const ConfirmMsg = "Clear connection?"
+      const ConfirmOpts = {
+        title: "Confirm"
+      }
+      vm.$bvModal.msgBoxConfirm(ConfirmMsg, ConfirmOpts).then(result => {
+
+        if (result === true) {
+          const ObjectID = vm.StateSelected[Context].object_id
+          const Face = vm.StateSelected[Context].object_face
+          const Partition = vm.StateSelected[Context].partition[Face]
+          const PortID = vm.StateSelected[Context].port_id[Face]
+          const Connection = vm.GetConnection(ObjectID, Face, Partition, PortID)
+          const ConnectionID = Connection.data.id
+          
+          // Delete Connection
+          const URL = '/api/connections/'+ConnectionID
+          vm.$http.delete(URL).then(response => {
+
+            // Remove trunk from store
+            vm.$store.commit('pcmConnections/REMOVE_Connection', {data:response.data})
+
+            // Close modal
+            vm.$root.$emit('bv::hide::modal', vm.ModalID)
+
+          }).catch(error => {vm.DisplayError(error)})
+        }
+      })
+    }
   }
 }
 </script>

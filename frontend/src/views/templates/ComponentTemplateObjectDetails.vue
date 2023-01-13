@@ -47,6 +47,13 @@
               :disabled="!TemplateSelected"
             >Delete</b-dropdown-item>
 
+            <b-dropdown-item
+              v-if="Context == 'template' || Context == 'actual'"
+              variant="danger"
+              @click=" Clear() "
+              :disabled="!TemplateSelected"
+            >Clear Trunk</b-dropdown-item>
+
           </b-dropdown>
         </div>
       </div>
@@ -65,7 +72,7 @@
     <table>
       <tr>
         <td class="text-right">
-          Object Name:
+          <strong>Object Name:</strong>
         </td>
         <td>
           <b-button
@@ -86,7 +93,7 @@
 
       <tr>
         <td class="text-right">
-          Template Name:
+          <strong>Template Name:</strong>
         </td>
         <td>
           <b-button
@@ -107,7 +114,7 @@
 
       <tr>
         <td class="text-right">
-          Category:
+          <strong>Category:</strong>
         </td>
         <td>
           <b-button
@@ -128,7 +135,7 @@
 
       <tr>
         <td class="text-right">
-          Type:
+          <strong>Type:</strong>
         </td>
         <td>
         </td>
@@ -139,7 +146,7 @@
 
       <tr>
         <td class="text-right">
-          Function:
+          <strong>Function:</strong>
         </td>
         <td>
         </td>
@@ -150,7 +157,7 @@
 
       <tr>
         <td class="text-right">
-          RU Size:
+          <strong>RU Size:</strong>
         </td>
         <td>
         </td>
@@ -161,7 +168,7 @@
 
       <tr>
         <td class="text-right">
-          Mount Config:
+          <strong>Mount Config:</strong>
         </td>
         <td>
         </td>
@@ -172,7 +179,7 @@
 
       <tr>
         <td class="text-right">
-          Image:
+          <strong>Image:</strong>
         </td>
         <td>
           <b-button
@@ -220,7 +227,7 @@
     <table>
       <tr>
         <td class="text-right">
-          Partition Type:
+          <strong>Partition Type:</strong>
         </td>
         <td>
         </td>
@@ -231,7 +238,7 @@
 
       <tr>
         <td class="text-right">
-          Trunked To:
+          <strong>Trunked To:</strong>
         </td>
         <td>
           <b-button
@@ -239,7 +246,7 @@
             v-ripple.400="'rgba(40, 199, 111, 0.15)'"
             variant="flat-success"
             class="btn-icon"
-            v-b-modal.port-select-trunk
+            v-b-modal.modal-trunk-select
             :disabled="!ComputedObjectSelected"
           >
             <feather-icon icon="EditIcon" />
@@ -252,7 +259,7 @@
 
       <tr>
         <td class="text-right">
-          Port Range:
+          <strong>Port Range:</strong>
         </td>
         <td>
           <b-button
@@ -273,7 +280,7 @@
 
       <tr>
         <td class="text-right">
-          Port Orientation:
+          <strong>Port Orientation:</strong>
         </td>
         <td>
         </td>
@@ -284,7 +291,7 @@
 
       <tr>
         <td class="text-right">
-          Port Type:
+          <strong>Port Type:</strong>
         </td>
         <td>
         </td>
@@ -295,7 +302,7 @@
 
       <tr>
         <td class="text-right">
-          Media Type:
+          <strong>Media Type:</strong>
         </td>
         <td>
         </td>
@@ -344,12 +351,12 @@
       :TemplateFaceSelected="TemplateFaceSelected"
     />
 
-    <!-- Modal Port Select -->
-    <modal-port-select
+    <!-- Modal Trunk Select -->
+    <modal-trunk-select
       v-if="Context != 'template' && Context != 'catalog'"
-      ModalID="port-select-trunk"
+      ModalID="modal-trunk-select"
       ModalTitle="Select Trunk Peer"
-      TreeRef="PortSelectTrunk"
+      TreeRef="TreeSelectTrunk"
       :Context="Context"
       PortSelectFunction="trunk"
     />
@@ -371,7 +378,7 @@ import ModalEditObjectName from './ModalEditObjectName.vue'
 import ModalEditTemplateName from './ModalEditTemplateName.vue'
 import ModalEditTemplateCategory from './ModalEditTemplateCategory.vue'
 import ModalEditTemplatePortId from './ModalEditTemplatePortId.vue'
-import ModalPortSelect from '@/views/templates/ModalPortSelect.vue'
+import ModalTrunkSelect from '@/views/templates/ModalTrunkSelect.vue'
 import ModalFileUpload from './ModalFileUpload.vue'
 import Ripple from 'vue-ripple-directive'
 import { PCM } from '@/mixins/PCM.js'
@@ -391,7 +398,7 @@ export default {
     ModalEditTemplateName,
     ModalEditTemplateCategory,
     ModalEditTemplatePortId,
-    ModalPortSelect,
+    ModalTrunkSelect,
     ModalFileUpload,
   },
 	directives: {
@@ -411,8 +418,8 @@ export default {
     Locations() {
       return this.$store.state.pcmLocations.Locations
     },
-    Medium() {
-      return this.$store.state.pcmProps.Medium
+    Media() {
+      return this.$store.state.pcmProps.Media
     },
     Connectors() {
       return this.$store.state.pcmProps.Connectors
@@ -746,7 +753,7 @@ export default {
             if(Partition.type == 'connectable') {
               const MediaID = Partition.media
               const MediaIndex = vm.GetMediaIndex(MediaID)
-              MediaType = vm.Medium[MediaIndex].name
+              MediaType = vm.Media[MediaIndex].name
             }
           } else {
 
@@ -776,7 +783,7 @@ export default {
     GetMediaIndex: function(MediaID) {
 
       const vm = this
-      const MediaIndex = vm.Medium.findIndex((Media) => Media.value == MediaID);
+      const MediaIndex = vm.Media.findIndex((Media) => Media.value == MediaID);
       
       return MediaIndex
     },
@@ -847,17 +854,22 @@ export default {
 
             vm.$http.delete(URL).then(response => {
               
+              // Collect parentID before deleting object... we will need it if object is an insert
+              const ParentID = Object.parent_id
+
+              // Delete pseudo object and template
+              vm.$store.commit('pcmObjects/REMOVE_Object', {pcmContext:Context, data:Object})
               vm.$store.commit('pcmTemplates/REMOVE_Template', {pcmContext:Context, data:response.data})
 
               if(Template.type == 'insert') {
-                const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
-                const Object = vm.Objects[Context][ObjectIndex]
-                const ParentID = Object.parent_id
                 const ParentIndex = vm.GetObjectIndex(ParentID, Context)
                 const Parent = vm.Objects[Context][ParentIndex]
                 const ParentTemplateID = Parent.template_id
                 const ParentTemplateIndex = vm.GetTemplateIndex(ParentTemplateID, Context)
                 const ParentTemplate = vm.Templates[Context][ParentTemplateIndex]
+
+                // Delete pseudo object and template
+                vm.$store.commit('pcmObjects/REMOVE_Object', {pcmContext:Context, data:Parent})
                 vm.$store.commit('pcmTemplates/REMOVE_Template', {pcmContext:Context, data:ParentTemplate})
               }
             }).catch(error => {
@@ -888,7 +900,7 @@ export default {
           }
 
           // Clear user selection
-          vm.$store.commit('pcmState/DEFAULT_Selected', {pcmContext:Context})
+          vm.$store.commit('pcmState/DEFAULT_Selected_Object', {pcmContext:Context})
         }
       })
     },
@@ -1009,6 +1021,32 @@ export default {
 
       vm.$emit('SetTemplateFaceSelected', FaceSelectedData)
     },
+    Clear: function() {
+
+      const vm = this
+      const Context = vm.Context
+      const SelectedObjectID = vm.StateSelected[Context].object_id
+      const SelectedObjectFace = vm.StateSelected[Context].object_face
+      const SelectedObjectPartition = vm.StateSelected[Context].partition[SelectedObjectFace]
+      const ConfirmMsg = "Clear trunk?"
+      const ConfirmOpts = {
+        title: "Confirm"
+      }
+      vm.$bvModal.msgBoxConfirm(ConfirmMsg, ConfirmOpts).then(result => {
+        if (result === true) {
+          const Trunks = vm.GetTrunks(SelectedObjectID, SelectedObjectFace, SelectedObjectPartition)
+          Trunks.forEach(function(trunk){
+            const TrunkID = trunk.id
+            // Delete Trunk
+            const URL = '/api/trunks/'+TrunkID
+            vm.$http.delete(URL).then(response => {
+              // Remove trunk from store
+              vm.$store.commit('pcmTrunks/REMOVE_Trunk', {data:response.data})
+            }).catch(error => {vm.DisplayError(error)})
+          })
+        }
+      })
+    }
   }
 }
 </script>

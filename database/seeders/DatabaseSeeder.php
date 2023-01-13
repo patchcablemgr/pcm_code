@@ -41,43 +41,33 @@ class DatabaseSeeder extends Seeder
             $org->save();
         }
 
-        $orgVersion = $org->version;
-
         // 1.0.2 -> 1.1.0
-        if(version_compare($orgVersion, '1.0.2') === 0) {
+        if(version_compare($org->version, '1.0.2') === 0) {
             $org->version = '1.1.0';
             $org->save();
         }
 
-        $orgVersion = $org->version;
-
         // 1.1.0 -> 1.2.0
-        if(version_compare($orgVersion, '1.1.0') === 0) {
+        if(version_compare($org->version, '1.1.0') === 0) {
             $this->call([Seeder_1_2_0::class]);
             $org->version = '1.2.0';
             $org->save();
         }
 
-        $orgVersion = $org->version;
-
         // 1.2.0 -> 1.2.1
-        if(version_compare($orgVersion, '1.2.0') === 0) {
+        if(version_compare($org->version, '1.2.0') === 0) {
             $org->version = '1.2.1';
             $org->save();
         }
 
-        $orgVersion = $org->version;
-
         // 1.2.1 -> 1.2.2
-        if(version_compare($orgVersion, '1.2.1') === 0) {
+        if(version_compare($org->version, '1.2.1') === 0) {
             $org->version = '1.2.2';
             $org->save();
         }
 
-        $orgVersion = $org->version;
-
         // 1.2.2 -> 1.2.3
-        if(version_compare($orgVersion, '1.2.2') === 0) {
+        if(version_compare($org->version, '1.2.2') === 0) {
             $org->version = '1.2.3';
             $org->save();
         }
@@ -85,6 +75,13 @@ class DatabaseSeeder extends Seeder
         // 1.2.3 -> 1.2.4
         if(version_compare($org->version, '1.2.3') === 0) {
             $org->version = '1.2.4';
+            $org->save();
+        }
+
+        // 1.2.4 -> 1.3.0
+        if(version_compare($org->version, '1.2.4') === 0) {
+            $this->call([Seeder_1_3_0::class]);
+            $org->version = '1.3.0';
             $org->save();
         }
 

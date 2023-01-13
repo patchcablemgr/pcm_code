@@ -45,13 +45,13 @@
               :data-trunk-pair="Element.trunk_pair"
               class="pcm_box ConnectionPathObject"
               :class="{
-                pcm_template_partition_selected: PartitionIsSelected({'Context': Context, 'ObjectID': Element.id, 'ObjectFace': Element.face, 'PartitionAddress': Element.partition}),
-                pcm_template_partition_hovered: PartitionIsHovered({'Context': Context, 'ObjectID': Element.id, 'ObjectFace': Element.face, 'PartitionAddress': Element.partition}),
+                pcm_template_partition_selected: PartitionIsSelected({'Context': Context, 'ObjectID': Element.id, 'ObjectFace': Element.face, 'PartitionAddress': Element.partition, 'PortID': Element.port_id}),
+                pcm_template_partition_hovered: PartitionIsHovered({'Context': Context, 'ObjectID': Element.id, 'ObjectFace': Element.face, 'PartitionAddress': Element.partition, 'PortID': Element.port_id}),
               }"
               :style="{ background: GetCategory(Element.id).color}"
-              @click.stop=" PartitionClicked({'Context': Context, 'ObjectID': Element.id, 'ObjectFace': Element.face, 'TemplateID': GetTemplateID(Element.id), 'PartitionAddress': Element.partition, 'PortID': null}) "
-              @mouseover.stop="PartitionHovered({'Context': Context, 'ObjectID': Element.id, 'ObjectFace': Element.face, 'TemplateID': GetTemplateID(Element.id), 'PartitionAddress': Element.partition, 'HoverState': true})"
-              @mouseleave.stop="PartitionHovered({'Context': Context, 'ObjectID': Element.id, 'ObjectFace': Element.face, 'TemplateID': GetTemplateID(Element.id), 'PartitionAddress': Element.partition, 'HoverState': false})"
+              @click.stop=" PartitionClicked({'Context': Context, 'ObjectID': Element.id, 'ObjectFace': Element.face, 'PartitionAddress': Element.partition, 'PortID': Element.port_id}) "
+              @mouseover.stop="PartitionHovered({'Context': Context, 'ObjectID': Element.id, 'ObjectFace': Element.face, 'PartitionAddress': Element.partition, 'HoverState': true})"
+              @mouseleave.stop="PartitionHovered({'Context': Context, 'ObjectID': Element.id, 'ObjectFace': Element.face, 'PartitionAddress': Element.partition, 'HoverState': false})"
             >
               {{GenerateDN('port', Element.id, Element.face, Element.partition, Element.port_id)}}
             </div>
@@ -139,8 +139,8 @@ export default {
     Locations() {
       return this.$store.state.pcmLocations.Locations
     },
-    Medium() {
-      return this.$store.state.pcmProps.Medium
+    Media() {
+      return this.$store.state.pcmProps.Media
     },
     Connectors() {
       return this.$store.state.pcmProps.Connectors
@@ -165,6 +165,9 @@ export default {
     },
     StateSelected() {
       return this.$store.state.pcmState.Selected
+    },
+    StateHovered() {
+      return this.$store.state.pcmState.Hovered
     },
     PortIsSelected: {
       get() {

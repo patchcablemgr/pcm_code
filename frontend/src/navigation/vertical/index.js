@@ -1,10 +1,10 @@
 export default [
 	{
-	  title: 'Dashboard',
-	  route: 'dashboard',
-	  icon: 'HomeIcon',
-	  resource: 'User',
-	  action:'read',
+		title: 'Dashboard',
+		route: 'dashboard',
+		icon: 'HomeIcon',
+		resource: 'User',
+		action:'read',
 	},
 	{
 		title: 'Templates',
@@ -21,17 +21,24 @@ export default [
 		action:'read',
 	},
 	{
-	  title: 'Explore',
-	  route: 'explore',
-	  icon: 'CompassIcon',
-	  resource: 'User',
-	  action:'read',
+		title: 'Explore',
+		route: 'explore',
+		icon: 'CompassIcon',
+		resource: 'User',
+		action:'read',
 	},
 	{
-	  title: 'Admin',
-	  route: 'admin',
-	  icon: 'KeyIcon',
-	  resource: 'Administrator',
-	  action:'read',
+		title: 'Cables',
+		route: 'cables',
+		icon: 'BoxIcon',
+		resource: 'Operator',
+		action:'read',
 	},
-  ]
+	{
+		title: 'Admin',
+		route: 'admin',
+		icon: 'KeyIcon',
+		resource: 'Administrator',
+		action:'read',
+	},
+]

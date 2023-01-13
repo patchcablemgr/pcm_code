@@ -1,10 +1,14 @@
 const pcmPropsReady = {
   connectors: false,
-  medium: false,
+  cableConnectors: false,
+  media: false,
+  mediaType: false,
   orientations: false
 }
 const Connectors = []
-const Medium = []
+const CableConnectors = []
+const Media = []
+const MediaType = []
 const Orientations = []
 const WorkspaceStandardID = 1
 const WorkspaceInsertID = 2
@@ -79,7 +83,9 @@ export default {
   state: {
     pcmPropsReady,
     Connectors,
-    Medium,
+    CableConnectors,
+    Media,
+    MediaType,
     Orientations,
     WorkspaceStandardID,
     WorkspaceInsertID,
@@ -94,8 +100,14 @@ export default {
     SET_Connectors(state, data) {
       state.Connectors = data
     },
-    SET_Medium(state, data) {
-      state.Medium = data
+    SET_CableConnectors(state, data) {
+      state.CableConnectors = data
+    },
+    SET_Media(state, data) {
+      state.Media = data
+    },
+    SET_MediaType(state, data) {
+      state.MediaType = data
     },
     SET_Orientations(state, data) {
       state.Orientations = data

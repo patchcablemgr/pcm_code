@@ -187,7 +187,7 @@ export default {
           })
 
           // Clear node selection
-          vm.$store.commit('pcmState/DEFAULT_Selected', {pcmContext:Context})
+          vm.$store.commit('pcmState/DEFAULT_Selected_All', {pcmContext:Context})
 
           // Remove node from store
           vm.$store.commit('pcmLocations/REMOVE_Location', {pcmContext:Context, data:response.data})
@@ -286,7 +286,7 @@ export default {
           }
         }
 
-        vm.$store.commit('pcmState/DEFAULT_Selected', {pcmContext:Context})
+        vm.$store.commit('pcmState/DEFAULT_Selected_All', {pcmContext:Context})
         vm.$store.commit('pcmState/UPDATE_Selected', {pcmContext:Context, data:UpdateData})
       })
       

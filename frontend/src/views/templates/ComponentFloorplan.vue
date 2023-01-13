@@ -215,8 +215,9 @@ export default {
       const CursorOffsetY = event.dataTransfer.getData('cursor_offset_y')
       const ElemOffsetX = event.offsetX
       const ElemOffsetY = event.offsetY
+      const ScrollYOffset = window.pageYOffset
       const PosX = parseInt(ElemOffsetX) - parseInt(CursorOffsetX)
-      const PosY = parseInt(ElemOffsetY) - parseInt(CursorOffsetY)
+      const PosY = parseInt(ElemOffsetY) - parseInt(CursorOffsetY) + parseInt(ScrollYOffset)
       const FloorplanAddress = [PosX, PosY]
       
       let url

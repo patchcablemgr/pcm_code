@@ -2,12 +2,8 @@
   <div
     v-if="DependenciesReady"
   >
-    <b-container class="bv-example-row" fluid="xs">
-      <b-row
-        cols="1"
-        cols-md="2"
-        cols-xl="3"
-      >
+    <b-container class="bv-example-row" fluid>
+      <b-row>
         <b-col>
           <b-card
             title="Properties"
@@ -23,7 +19,11 @@
           </b-card>
 
         </b-col>
-        <b-col>
+        <b-col
+          col
+          cols="12"
+          xl="4"
+        >
 
           <b-card
             :class="{ pcm_sticky: IsSticky, pcm_scroll: IsSticky }"

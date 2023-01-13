@@ -79,11 +79,19 @@ div.pcm_template_partition_border {
 }
 
 div.pcm_template_partition_selected {
-    box-shadow: 0 0 0 3px yellow inset;
+    box-shadow: 0 0 0 2px yellow inset;
 }
 
 div.pcm_template_partition_hovered {
-    box-shadow: 0 0 0 5px orange inset;
+    box-shadow: 0 0 0 3px orange inset;
+}
+
+div.pcm_template_port_selected {
+    box-shadow: 0 0 0 2px yellow;
+}
+
+div.pcm_template_port_hovered {
+    box-shadow: 0 0 0 3px orange;
 }
 
 div.pcm_template_connectable_container {

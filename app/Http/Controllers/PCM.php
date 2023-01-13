@@ -194,6 +194,179 @@ class PCM extends Controller
     }
 
     /**
+     * Validate connection path
+     *
+     * @param  arr  $portA
+	 * @param  arr  $portB
+     * @return boolean
+     */
+    public function validateConnectionPath($portA, $portB)
+    {
+        $visitedArray = array();
+        $portArray = array($portA, $portB);
+
+        foreach($portArray as $index =>$port) {
+
+            $workingPort = $port;
+
+            while($workingPort['id']) {
+
+                Log::info($index.' - '.$workingPort['id']);
+
+                // Generate port hash
+                $portHash = md5(implode('-', array($workingPort['id'], $port['face'], json_encode($port['partition']), $port['port_id'])));
+                
+                // Check to see if port has been visited
+                if(in_array($portHash, $visitedArray)) {
+                    return false;
+                }
+
+                // Add port hash to array of visited ports
+                array_push($visitedArray, $portHash);
+
+                // Get template function
+                $object = ObjectModel::where('id', $workingPort['id'])->first();
+                $templateID = $object['template_id'];
+                $template = TemplateModel::where('id', $templateID)->first();
+                $templateFunction = $template['function'];
+
+                if($templateFunction == 'passive') {
+
+                    // Get trunk
+                    $trunks = TrunkModel::where([
+                        ['a_id', '=', $workingPort['id']],
+                        ['a_face', '=', $workingPort['face']],
+                        ['a_partition', '=', $workingPort['partition']]
+                    ])->orwhere([
+                        ['b_id', '=', $workingPort['id']],
+                        ['b_face', '=', $workingPort['face']],
+                        ['b_partition', '=', $workingPort['partition']]
+                    ])->get();
+
+                    $trunkFound = false;
+                    foreach($trunks as $trunk) {
+
+                        // Determine remote and local side
+                        $localSide = ($trunk['a_id'] == $workingPort['id']) ? 'a' : 'b';
+                        $remoteSide = ($trunk['a_id'] == $workingPort['id']) ? 'b' : 'a';
+
+                        // Determine if trunk entry is relevant to this cable path
+                        if($trunk[$localSide.'_port'] == null && $trunk[$remoteSide.'_port'] == null) {
+
+                            // Both sides are null which means both sides are cabinet objects
+                            $trunkFound = true;
+
+                        } else if($trunk[$localSide.'_port'] == null) {
+
+                            // Local side is null which means it is a floorplan object
+                            if($trunk[$remoteSide.'_port'] == $workingPort['port_id']) {
+
+                                // Remote port matches so this entry is relevant to the cable path
+                                $trunkFound = true;
+                            }
+                        } else if($trunk[$remoteSide.'_port'] == null) {
+
+                            // Remote side is null which means it is a floorplan object
+                            if($trunk[$localSide.'_port'] == $workingPort['port_id']) {
+
+                                // Local port matches so this entry is relevant to the cable path
+                                $trunkFound = true;
+                            }
+                        }
+                    }
+
+                    if($trunkFound) {
+
+                        // Store remote object data
+                        $workingPort['id'] = $trunk[$remoteSide.'_id'];
+                        $workingPort['face'] = $trunk[$remoteSide.'_face'];
+                        $workingPort['partition'] = $trunk[$remoteSide.'_partition'];
+
+                        Log::info($index.' - '.$workingPort['id'].' (trunk)');
+
+                        // Generate port hash
+                        $portHashArray = array(
+                            $workingPort['id'],
+                            $workingPort['face'],
+                            json_encode($workingPort['partition']),
+                            $workingPort['port_id']
+                        );
+                        $portHash = md5(implode('-', $portHashArray));
+                        
+                        // Check to see if port has been visited
+                        if(in_array($portHash, $visitedArray)) {
+                            return false;
+                        }
+
+                        // Add port hash to array of visited ports
+                        array_push($visitedArray, $portHash);
+
+                        // Get connection
+                        $connection = ConnectionModel::where([
+                            ['a_id', '=', $workingPort['id']],
+                            ['a_face', '=', $workingPort['face']],
+                            ['a_partition', '=', $workingPort['partition']],
+                            ['a_port', '=', $workingPort['port_id']]
+                        ])->orwhere([
+                            ['b_id', '=', $workingPort['id']],
+                            ['b_face', '=', $workingPort['face']],
+                            ['b_partition', '=', $workingPort['partition']],
+                            ['b_port', '=', $workingPort['port_id']]
+                        ])->first();
+
+                        if($connection) {
+
+                            // Determine remote and local side
+                            $localSide = ($connection['a_id'] == $workingPort['id']) ? 'a' : 'b';
+                            $remoteSide = ($connection['a_id'] == $workingPort['id']) ? 'b' : 'a';
+
+                            if($connection[$remoteSide.'_id']) {
+
+                                // Store remote object data
+                                $workingPort['id'] = $connection[$remoteSide.'_id'];
+                                $workingPort['face'] = $connection[$remoteSide.'_face'];
+                                $workingPort['partition'] = $connection[$remoteSide.'_partition'];
+                                $workingPort['port_id'] = $connection[$remoteSide.'port'];
+
+                                // Generate port hash
+                                $portHashArray = array(
+                                    $workingPort['id'],
+                                    $workingPort['face'],
+                                    json_encode($workingPort['partition']),
+                                    $workingPort['port_id']
+                                );
+                                $portHash = md5(implode('-', $portHashArray));
+                                
+                                // Check to see if port has been visited
+                                if(in_array($portHash, $visitedArray)) {
+                                    return false;
+                                }
+
+                                // Add port hash to array of visited ports
+                                array_push($visitedArray, $portHash);
+                            } else {
+                                // Break while loop, connection is deadwood
+                                $workingPort['id'] = null;
+                            }
+                        } else {
+                            // Break while loop, no connection found
+                            $workingPort['id'] = null;
+                        }
+                    } else {
+                        // Break while loop, no trunk found
+                        $workingPort['id'] = null;
+                    }
+                } else {
+                    // Break while loop, object is endpoint
+                    $workingPort['id'] = null;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Return partition 
      *
      * @param  obj  $blueprint
@@ -405,5 +578,35 @@ class PCM extends Controller
         ->get('https://patchcablemgr.com/api/catalog/template/'.$id);
 
 		return $response;
+    }
+
+    /**
+     * 
+     * @param  int  $length
+     * Return length in centimeters
+     *
+     * @return array
+     */
+    public function converFeetToCm($length)
+    {
+
+        $cmLength = $length * 30.48;
+        return round($cmLength);
+        
+    }
+
+    /**
+     * 
+     * @param  int  $length
+     * Return length in centimeters
+     *
+     * @return array
+     */
+    public function converMetersToCm($length)
+    {
+
+        $cmLength = $length * 100;
+        return round($cmLength);
+        
     }
 }

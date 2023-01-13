@@ -1,3 +1,20 @@
+## 1.3.0
+
+Features:
+- Managed patch cables
+
+Fixes:
+- Inserts failing to install in deep nested enclosure partitions
+- Incorrect trunk peer port in cable path
+- Fantom templates after creation
+- Floorplan card size
+- Location is deselected when object is deleted
+- Validation error when renaming floorplan objects
+- Incorrect floorplan object position when window is scrolled
+
+Enhancements:
+- Display port name on hover
+
 ## 1.2.4
 
 Enhancements:

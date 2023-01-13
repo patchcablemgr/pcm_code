@@ -11,7 +11,7 @@ const Default = {
   },
   'location_id': null,
   'node_id': null,
-  'location_face': 'front',
+  'location_face': 'front'
 }
 
 const Selected = {
@@ -58,8 +58,30 @@ export default {
       })
 
     },
-    DEFAULT_Selected(state, {pcmContext}) {
+    DEFAULT_Selected_Object(state, {pcmContext}) {
+
+      let workingObject = JSON.parse(JSON.stringify(state.Selected[pcmContext]))
+
+      workingObject.object_id = null
+      workingObject.object_face = null
+      workingObject.partition.front = null
+      workingObject.partition.rear = null
+      workingObject.port_id.front = null
+      workingObject.port_id.rear = null
+
+      state.Selected[pcmContext] = workingObject
+    },
+    DEFAULT_Selected_Location(state, {pcmContext}) {
+
+      let workingObject = JSON.parse(JSON.stringify(state.Selected[pcmContext]))
       
+      workingObject.location_id = null
+      workingObject.node_id = null
+      workingObject.location_face = "front"
+
+      state.Selected[pcmContext] = workingObject
+    },
+    DEFAULT_Selected_All(state, {pcmContext}) {
       state.Selected[pcmContext] = JSON.parse(JSON.stringify(Default))
     },
     UPDATE_Hovered(state, {pcmContext, data}) {

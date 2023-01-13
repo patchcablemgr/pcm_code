@@ -80,6 +80,25 @@ export const PCM = {
 
             return ObjectFace
         },
+        GetObjectCategoryColor(ObjectID) {
+
+            const vm = this
+            let CategoryColor
+            if(ObjectID) {
+                const Context = 'actual'
+                const TemplateID = vm.GetTemplateID(ObjectID, Context)
+                const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+                const Template = vm.Templates[Context][TemplateIndex]
+                const CategoryID = Template.category_id
+                const CategoryIndex = vm.Categories[Context].findIndex((category) => category.id == CategoryID)
+                const Category = vm.Categories[Context][CategoryIndex]
+                CategoryColor = Category.color
+            } else {
+                CategoryColor = "#FFFFFFFF"
+            }
+
+            return CategoryColor
+        },
 
 // Template
         GetTemplateID: function(ObjectID, Context=false) {
@@ -433,20 +452,26 @@ export const PCM = {
             const Face = EmitData.ObjectFace
             const PartitionAddress = EmitData.PartitionAddress
             const HoverState = EmitData.HoverState
-            const TemplateID = EmitData.TemplateID
             const ObjectID = EmitData.ObjectID
+            const PortID = EmitData.PortID
                 
             // Hovered partition should not be highlighted if it is a preview insert parent
+            const TemplateID = vm.GetTemplateID(ObjectID, Context)
             const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
             let HonorHover
             HonorHover = (vm.Templates[Context][TemplateIndex].id.toString().includes('pseudo')) ? false : true
             HonorHover = (vm.$route.name == 'environment' && Context == 'template') ? false : HonorHover
 
             if(HonorHover) {
-                vm.PartitionAddressHovered[Context].template_id = TemplateID
-                vm.PartitionAddressHovered[Context].object_id = ObjectID
-                vm.PartitionAddressHovered[Context].object_face = Face
-                vm.PartitionAddressHovered[Context][Face] = (HoverState) ? PartitionAddress : false
+
+                let WorkingHovered = vm.StateHovered[Context]
+
+                WorkingHovered.object_id = ObjectID
+                WorkingHovered.object_face = Face
+                WorkingHovered.partition[Face] = (HoverState) ? PartitionAddress : false
+                WorkingHovered.port_id[Face] = PortID
+
+                vm.$store.commit('pcmState/UPDATE_Hovered', {pcmContext:Context, data:WorkingHovered})
             }
 
         },
@@ -457,12 +482,14 @@ export const PCM = {
             const ObjectID = data.ObjectID
             const ObjectFace = data.ObjectFace
             const PartitionAddress = data.PartitionAddress
+            const PortID = data.PortID
 
-            const StoredObjectID = vm.PartitionAddressHovered[Context].object_id
-            const StoredObjectFace = vm.PartitionAddressHovered[Context].object_face
-            const StoredPartitionAddress = vm.PartitionAddressHovered[Context][StoredObjectFace]
+            const StoredObjectID = vm.StateHovered[Context].object_id
+            const StoredObjectFace = vm.StateHovered[Context].object_face
+            const StoredPartitionAddress = vm.StateHovered[Context].partition[StoredObjectFace]
+            const StoredPortID = vm.StateHovered[Context].port_id[StoredObjectFace]
 
-            if(ObjectID == StoredObjectID && ObjectFace == StoredObjectFace && JSON.stringify(PartitionAddress) == JSON.stringify(StoredPartitionAddress)) {
+            if(ObjectID == StoredObjectID && ObjectFace == StoredObjectFace && JSON.stringify(PartitionAddress) == JSON.stringify(StoredPartitionAddress) && ((PortID !== null) ? (PortID == StoredPortID) : true)) {
                 return true
             } else {
                 return false
@@ -476,9 +503,9 @@ export const PCM = {
             const Context = EmitData.Context
             const Face = EmitData.ObjectFace
             const PartitionAddress = EmitData.PartitionAddress
-            const TemplateID = EmitData.TemplateID
             const PortID = EmitData.PortID
             const ObjectID = EmitData.ObjectID
+            const TemplateID = vm.GetTemplateID(ObjectID, Context)
             const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
 
             // Get partition type
@@ -578,12 +605,14 @@ export const PCM = {
             const ObjectID = data.ObjectID
             const ObjectFace = data.ObjectFace
             const PartitionAddress = data.PartitionAddress
+            const PortID = data.PortID
 
             const StoredObjectID = vm.StateSelected[Context].object_id
             const StoredObjectFace = vm.StateSelected[Context].object_face
             const StoredPartitionAddress = vm.StateSelected[Context].partition[StoredObjectFace]
+            const StoredPortID = vm.StateSelected[Context].port_id[StoredObjectFace]
 
-            if(ObjectID == StoredObjectID && ObjectFace == StoredObjectFace && JSON.stringify(PartitionAddress) == JSON.stringify(StoredPartitionAddress)) {
+            if(ObjectID == StoredObjectID && ObjectFace == StoredObjectFace && JSON.stringify(PartitionAddress) == JSON.stringify(StoredPartitionAddress) && ((PortID !== null) ? (PortID == StoredPortID) : true)) {
                 return true
             } else {
                 return false
@@ -736,29 +765,20 @@ export const PCM = {
                     }
 
                     // Media types must be compatible
-                    if(SelectedTemplateFunction == 'endpoint') {
-                        // Selected template is endpoint
+                    if(SelectedTemplateFunction == 'endpoint' || NodeTemplateFunction == 'endpoint') {
+                        // Selected or node template is endpoint
                         const SelectedConnector = vm.Connectors.find(connector => connector.value == SelectedConnectorID)
                         const SelectedMediaTypeID = SelectedConnector.type_id
-                        const NodeMedia = vm.Medium.find(medium => medium.value == NodeMediaID)
-                        const NodeMediaTypeID = NodeMedia.type_id
-                        if(SelectedMediaTypeID != 4 && (SelectedMediaTypeID != NodeMediaTypeID)) {
-                            Compatible = false
-                        }
-                    } else if(NodeTemplateFunction == 'endpoint') {
-                        // Node template is endpoint
-                        const SelectedMedia = vm.Medium.find(medium => medium.value == SelectedMediaID)
-                        const SelectedMediaCategoryID = SelectedMedia.category_id
                         const NodeConnector = vm.Connectors.find(connector => connector.value == NodeConnectorID)
-                        const NodeMediaCategoryID = NodeConnector.category_id
-                        if(NodeMediaCategoryID != 4 && (SelectedMediaCategoryID != NodeMediaCategoryID)) {
+                        const NodeMediaTypeID = NodeConnector.type_id
+                        if((SelectedMediaTypeID != 4 && NodeMediaTypeID != 4) && (SelectedMediaTypeID != NodeMediaTypeID)) {
                             Compatible = false
                         }
                     } else {
                         // Node and Selected templates are passive
-                        const SelectedMedia = vm.Medium.find(medium => medium.value == SelectedMediaID)
+                        const SelectedMedia = vm.Media.find(medium => medium.value == SelectedMediaID)
                         const SelectedMediaCategoryID = SelectedMedia.category_id
-                        const NodeMedia = vm.Medium.find(medium => medium.value == NodeMediaID)
+                        const NodeMedia = vm.Media.find(medium => medium.value == NodeMediaID)
                         const NodeMediaCategoryID = NodeMedia.category_id
                         if(SelectedMediaCategoryID != NodeMediaCategoryID) {
                             Compatible = false
@@ -919,9 +939,9 @@ export const PCM = {
             let LocalFace = Face
             let LocalPartition = PartitionAddress
             let LocalPortID = PortID
-            let PortPair = 0
-            let FwdTrunkPair = 0
-            let BwdTrunkPair = 0
+            let PortPair = Math.floor(Math.random() * 1000) + 1
+            let FwdTrunkPair, BwdTrunkPair = Math.floor(Math.random() * 1000) + 1
+            FwdTrunkPair = BwdTrunkPair = Math.floor(Math.random() * 1000) + 1
             const ConnectionPath = []
 
             
@@ -961,8 +981,8 @@ export const PCM = {
                             const RemotePartition = PortConnection.data[RemoteSide + '_partition']
                             const RemotePortID = PortConnection.data[RemoteSide + '_port']
 
-                            // Increment trunk pair ID
-                            FwdTrunkPair = FwdTrunkPair + 1
+                            // Generate unique ID
+                            FwdTrunkPair = Math.floor(Math.random() * 1000) + 1
 
                             ConnectionPath.push(
                                 {
@@ -984,7 +1004,7 @@ export const PCM = {
                                 LocalObjectID = RemoteTrunk.data[RemoteSide + '_id']
                                 LocalFace = RemoteTrunk.data[RemoteSide + '_face']
                                 LocalPartition = RemoteTrunk.data[RemoteSide + '_partition']
-                                LocalPortID = RemoteTrunk.data[RemoteSide + '_port']
+                                LocalPortID = (RemoteTrunk.data[RemoteSide + '_port'] == null) ? RemotePortID : RemoteTrunk.data[RemoteSide + '_port']
 
                             } else {
                                 LocalObjectID = LocalFace = LocalPartition = LocalPortID = null
@@ -993,8 +1013,8 @@ export const PCM = {
                             LocalObjectID = LocalFace = LocalPartition = LocalPortID = null
                         }
 
-                        // Increment pair index
-                        PortPair = PortPair + 1
+                        // Generate unique ID
+                        PortPair = Math.floor(Math.random() * 1000) + 1
                     }
 
                     LocalObjectID = ObjectID
@@ -1013,7 +1033,7 @@ export const PCM = {
                             const RemoteTrunkObjectID = Trunk.data[RemoteSide + '_id']
                             const RemoteTrunkFace = Trunk.data[RemoteSide + '_face']
                             const RemoteTrunkPartition = Trunk.data[RemoteSide + '_partition']
-                            const RemoteTrunkPortID = Trunk.data[RemoteSide + '_port']
+                            const RemoteTrunkPortID = (Trunk.data[RemoteSide + '_port'] == null) ? LocalPortID : Trunk.data[RemoteSide + '_port']
 
                             ConnectionPath.unshift(
                                 {
@@ -1036,8 +1056,8 @@ export const PCM = {
                                 const RemoteConnectionPartition = Connection.data[RemoteSide + '_partition']
                                 const RemoteConnectionPortID = Connection.data[RemoteSide + '_port']
 
-                                // Increment trunk pair ID
-                                BwdTrunkPair = BwdTrunkPair + 1
+                                // Generate unique ID
+                                BwdTrunkPair = Math.floor(Math.random() * 1000) + 1
 
                                 ConnectionPath.unshift(
                                     {
@@ -1063,8 +1083,8 @@ export const PCM = {
                             LocalObjectID = LocalFace = LocalPartition = LocalPortID = null
                         }
 
-                        // Increment pair index
-                        PortPair = PortPair + 1
+                        // Generate unique ID
+                        PortPair = Math.floor(Math.random() * 1000) + 1
                     }
                 }
             }
@@ -1279,6 +1299,57 @@ export const PCM = {
                 return Black
             }
         },
+        GeneratePortName: function(Context, ObjectID, ObjectFace, ObjectPartition, PortIndex){
+            
+            const vm = this
+            const NameList = []
+
+            const TemplateID = vm.GetTemplateID(ObjectID, Context)
+            const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+            if(TemplateIndex != -1) {
+                const Template = vm.Templates[Context][TemplateIndex]
+                const TemplateType = Template.type
+                const TemplateFunction = Template.function
+                const Blueprint = Template.blueprint[ObjectFace]
+                const Partition = vm.GetPartition(Blueprint, ObjectPartition)
+                const PortFormat = Partition.port_format
+                const PortTotal = Partition.port_layout.cols * Partition.port_layout.rows
+
+                const PortNumber = vm.GeneratePortID(PortIndex, PortTotal, PortFormat)
+                NameList.unshift(PortNumber)
+                
+                if(TemplateType == 'insert') {
+                    const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
+                    const Object = vm.Objects[Context][ObjectIndex]
+                    NameList.unshift(Object.name)
+                    let ParentID = Object.parent_id
+                    while(ParentID){
+
+                        // Get parent template type
+                        const ParentTemplateID = vm.GetTemplateID(ParentID, Context)
+                        const ParentTemplateIndex = vm.GetTemplateIndex(ParentTemplateID, Context)
+                        const ParentTemplate = vm.Templates[Context][ParentTemplateIndex]
+                        const ParentTemplateType = ParentTemplate.type
+
+                        // Get parent
+                        const ParentIndex = vm.GetObjectIndex(ParentID, Context)
+                        const Parent = vm.Objects[Context][ParentIndex]
+
+                        // Unshift name if parent is insert
+                        if(ParentTemplateType == 'insert') {
+                            NameList.unshift(Parent.name)
+                        }
+                        ParentID = Parent.parent_id
+                    }
+                }
+
+                const Separator = (TemplateFunction == 'passive') ? '.' : ''
+
+                return NameList.join(Separator)
+            } else {
+                return ''
+            }
+        },
 
 // Misc
         GenerateSelectedPortDN: function(Scope){
@@ -1337,180 +1408,69 @@ export const PCM = {
 
             // Get object
             const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
-            const Object = vm.Objects[Context][ObjectIndex]
-            const ObjectName = Object.name
+            if(ObjectIndex !== -1) {
+                const Object = vm.Objects[Context][ObjectIndex]
+                const ObjectName = Object.name
 
-            // Get template
-            const TemplateID = Object.template_id
-            const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-            const Template = vm.Templates[Context][TemplateIndex]
-            const TemplateFunction = Template.function
+                // Get template
+                const TemplateID = Object.template_id
+                const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+                const Template = vm.Templates[Context][TemplateIndex]
+                const TemplateFunction = Template.function
 
-            // Get template partition
-            const Blueprint = Template.blueprint[Face]
-            const Partition = vm.GetPartition(Blueprint, PartitionAddress)
+                // Get template partition
+                const Blueprint = Template.blueprint[Face]
+                const Partition = vm.GetPartition(Blueprint, PartitionAddress)
 
-            // Retrieve port data
-            const PortFormat = Partition.port_format
-            const PortTotal = Partition.port_layout.cols * Partition.port_layout.rows
-            const FirstPort = vm.GeneratePortID(0, PortTotal, PortFormat)
-            const LastPort = vm.GeneratePortID(PortTotal-1, PortTotal, PortFormat)
-            const SelectedPort = vm.GeneratePortID(PortIndex, PortTotal, PortFormat)
+                // Retrieve port data
+                const PortFormat = Partition.port_format
+                const PortTotal = Partition.port_layout.cols * Partition.port_layout.rows
+                const FirstPort = vm.GeneratePortID(0, PortTotal, PortFormat)
+                const LastPort = vm.GeneratePortID(PortTotal-1, PortTotal, PortFormat)
+                const SelectedPort = vm.GeneratePortID(PortIndex, PortTotal, PortFormat)
 
-            let ObjectParentID = Object.parent_id
-            let LocationID = Object.location_id
-            let ObjectArray = [ObjectName]
-            while(ObjectParentID !== null) {
+                let ObjectParentID = Object.parent_id
+                let LocationID = Object.location_id
+                let ObjectArray = [ObjectName]
+                while(ObjectParentID !== null) {
 
-                // Retrieve parent data
-                const ObjectParentIndex = vm.GetObjectIndex(ObjectParentID, Context)
-                const ObjectParent = vm.Objects[Context][ObjectParentIndex]
-                const ObjectParentName = ObjectParent.name
+                    // Retrieve parent data
+                    const ObjectParentIndex = vm.GetObjectIndex(ObjectParentID, Context)
+                    const ObjectParent = vm.Objects[Context][ObjectParentIndex]
+                    const ObjectParentName = ObjectParent.name
 
-                // Prepend DNArray with parent object
-                ObjectArray.unshift(ObjectParentName)
+                    // Prepend DNArray with parent object
+                    ObjectArray.unshift(ObjectParentName)
 
-                // Update parent ID and location ID
-                ObjectParentID = ObjectParent.parent_id
-                LocationID = ObjectParent.location_id
-            }
+                    // Update parent ID and location ID
+                    ObjectParentID = ObjectParent.parent_id
+                    LocationID = ObjectParent.location_id
+                }
 
-            if(TemplateFunction == 'endpoint') {
-                const InsertObjectArray = ObjectArray.filter((element, index) => {return (index == 0) ? false : true})
-                const InsertObjectName = InsertObjectArray.join('')
-                if(Scope == 'trunk') {
-                    DNArray.unshift(InsertObjectName+FirstPort+'-'+InsertObjectName+LastPort)
+                if(TemplateFunction == 'endpoint') {
+                    const InsertObjectArray = ObjectArray.filter((element, index) => {return (index == 0) ? false : true})
+                    const InsertObjectName = InsertObjectArray.join('')
+                    if(Scope == 'trunk') {
+                        DNArray.unshift(InsertObjectName+FirstPort+'-'+InsertObjectName+LastPort)
+                    } else {
+                        DNArray.unshift(InsertObjectName+SelectedPort)
+                    }
+                    DNArray.unshift(ObjectArray[0])
                 } else {
-                    DNArray.unshift(InsertObjectName+SelectedPort)
-                }
-                DNArray.unshift(ObjectArray[0])
-            } else {
-                if(Scope == 'trunk') {
-                    DNArray = ObjectArray.concat([FirstPort+'-'+LastPort])
-                } else {
-                    DNArray = ObjectArray.concat([SelectedPort])
-                }
-            }
-
-            const LocationDN = vm.GenerateLocationDN(Context, LocationID)
-            DNArray.unshift(LocationDN)
-
-            return DNArray.join('.')
-        },
-        GeneratePortID: function(Index, PortTotal, PortFormat){
-
-            // Store variables
-            const vm = this
-            let PreviewPortID = ''
-            let IncrementalCount = 0
-
-            // Account for infinite count incrementables
-            PortFormat.forEach(function(Field, FieldIndex){
-            const FieldType = Field.type
-            let FieldCount = Field.count
-
-            // Increment IncrementalCount
-            if(FieldType == 'incremental' || FieldType == 'series') {
-                IncrementalCount++
-
-                // Adjust field count
-                if(FieldType == 'incremental' && FieldCount == 0) {
-                PortFormat[FieldIndex].count = PortTotal
-                } else if(FieldType == 'series') {
-                let CurrentFieldValue = Field.value
-                PortFormat[FieldIndex].count = CurrentFieldValue.split(',').length
-                }
-            }
-            })
-
-            PortFormat.forEach(function(Field){
-            const FieldType = Field.type
-            const FieldValue = Field.value
-            const FieldOrder = Field.order
-            const FieldCount = Field.count
-            let HowMuchToIncrement
-            let RollOver
-            let Numerator = 1
-
-            if(FieldType == 'static') {
-                PreviewPortID = PreviewPortID + FieldValue
-            } else {
-
-                PortFormat.forEach(function(LoopField){
-                const LoopFieldType = LoopField.type
-                const LoopFieldOrder = LoopField.order
-                const LoopFieldCount = LoopField.count
-
-                if(LoopFieldType == 'incremental' || LoopFieldType == 'series') {
-                    if(LoopFieldOrder < FieldOrder) {
-                    Numerator *= LoopFieldCount
+                    if(Scope == 'trunk') {
+                        DNArray = ObjectArray.concat([FirstPort+'-'+LastPort])
+                    } else {
+                        DNArray = ObjectArray.concat([SelectedPort])
                     }
                 }
-                })
 
-                HowMuchToIncrement = Math.floor(Index / Numerator)
+                const LocationDN = vm.GenerateLocationDN(Context, LocationID)
+                DNArray.unshift(LocationDN)
 
-                if(HowMuchToIncrement >= FieldCount) {
-                RollOver = Math.floor(HowMuchToIncrement / FieldCount)
-                HowMuchToIncrement = HowMuchToIncrement - (RollOver * FieldCount)
-                
-                }
-
-                if(FieldType == 'incremental') {
-
-                if(!isNaN(FieldValue)) {
-                    PreviewPortID = PreviewPortID + (parseInt(FieldValue) + HowMuchToIncrement)
-                } else {
-                    PreviewPortID = PreviewPortID + '-'
-                }
-
-                } else if(FieldType == 'series') {
-
-                const FieldValueArray = FieldValue.split(',')
-                PreviewPortID = PreviewPortID + FieldValueArray[HowMuchToIncrement]
-
-                }
+                return DNArray.join('.')
+            } else {
+                return 'None'
             }
-            })
-            
-            return PreviewPortID
-        },
-        GeneratePortPreview: function(Context){
-
-            const vm = this
-            const Partition = vm.GetPartitionSelected(Context)
-
-            const PortPreviewLimit = 5
-            let PortID = ''
-            let PreviewPortIDArray = []
-
-            if(Partition.type == 'connectable') {
-                const PortFormat = Partition.port_format
-                let PortTotal = Partition.port_layout.cols * Partition.port_layout.rows
-                let Truncated = false
-                let LoopLimit = PortTotal
-
-                // Limit port preview to 5
-                if(PortTotal > PortPreviewLimit) {
-                    Truncated = true
-                    LoopLimit = PortPreviewLimit-1
-                }
-
-                // Generate port IDs
-                for(let i=0; i<LoopLimit; i++){
-                    PortID = vm.GeneratePortID(i, PortTotal, PortFormat)
-                    PreviewPortIDArray.push(PortID)
-                }
-
-                // Append ellipses if port preview is truncated
-                if(Truncated) {
-                    PreviewPortIDArray.push('...')
-                    PortID = vm.GeneratePortID(PortTotal-1, PortTotal, PortFormat)
-                    PreviewPortIDArray.push(PortID)
-                }
-            }
-
-            return PreviewPortIDArray.join(', ')
         },
         GetNodeIcon: function(NodeType) {
 
@@ -1811,5 +1771,11 @@ export const PCM = {
 
             return CablePathIndex
         },
+        ConvertCmToFeet: function(cm) {
+            return Math.round(cm*0.0328)
+        },
+        ConvertCmToMeters: function(cm) {
+            return Math.round(cm*0.01)
+        }
     }
 }

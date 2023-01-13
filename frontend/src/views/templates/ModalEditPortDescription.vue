@@ -18,14 +18,14 @@
               >
               <validation-provider
                 name="Value"
-                :rules="{regex: /^[A-Za-z0-9\/]+$/}"
+                :rules="{regex: /^[A-Za-z0-9\/\_\-\s]+$/}"
                 #default="{ errors }"
               >
                 <b-form
                   @submit.prevent="Submit"
                 >
                   <b-form-input
-                    v-model="ObjectName"
+                    v-model="PortDescription"
                     type="text"
                     autofocus
                   />
@@ -53,7 +53,7 @@ const config = {
 
 configure(config)
 
-let ObjectName = null
+let PortDescription = null
 
 export default {
   mixins: [PCM],
@@ -80,28 +80,38 @@ export default {
   },
   data () {
     return {
-      ObjectName,
+      PortDescription,
     }
   },
   computed: {
     Objects() {
       return this.$store.state.pcmObjects.Objects
     },
+    Ports() {
+      return this.$store.state.pcmPorts.Ports
+    },
     StateSelected() {
       return this.$store.state.pcmState.Selected
     },
-    ComputedObjectName() {
+    ComputedPortDescription() {
 
-        const vm = this
-        const Context = vm.Context
-        const Object = vm.GetObjectSelected(Context)
-        let ObjectName = 'N/A'
+      const vm = this
 
-        if(Object) {
-          ObjectName = Object.name
-        }
-        
-        return ObjectName
+      const ObjectID = vm.StateSelected.actual.object_id
+      const ObjectFace = vm.StateSelected.actual.object_face
+      const ObjectPartition = vm.StateSelected.actual.partition
+      const PortID = vm.StateSelected.actual.port_id
+
+      const PortIndex = vm.Ports.findIndex((port) => port.object_id == ObjectID && port.object_face == ObjectFace && JSON.stringify(port.object_partition) == JSON.stringify(ObjectPartition) && port.port_id == PortID)
+
+      let PortDescription
+      if (PortIndex != -1) {
+        PortDescription = vm.Ports[PortIndex].description
+      } else {
+        PortDescription = 'None'
+      }
+      
+      return PortDescription
     },
   },
   methods: {
@@ -109,20 +119,39 @@ export default {
 
       const vm = this
       const Context = vm.Context
-      const ObjectID = vm.StateSelected[Context].object_id
+      const ObjectID = vm.StateSelected.actual.object_id
+      const ObjectFace = vm.StateSelected.actual.object_face
+      const ObjectPartition = vm.StateSelected.actual.partition[ObjectFace]
+      const PortID = vm.StateSelected.actual.port_id[ObjectFace]
+      const Description = vm.PortDescription
 
       vm.$refs.validation.validate().then((Valid) => {
         if(Valid) {
 
           // PATCH object
-          const URL = '/api/objects/'+ObjectID
+          const URL = '/api/ports/'
           const data = {
-            name: vm.ObjectName
+            id: ObjectID,
+            face: ObjectFace,
+            partition: ObjectPartition,
+            port_id: PortID,
+            description: Description,
           }
-          vm.$http.patch(URL, data).then(response => {
+          vm.$http.post(URL, data).then(response => {
 
-            // Update node from store
-            vm.$store.commit('pcmObjects/UPDATE_Object', {pcmContext:Context, data:response.data})
+            const PortIndex = vm.Ports.findIndex((port) => port.object_id == ObjectID && port.object_face == ObjectFace && JSON.stringify(port.object_partition) == JSON.stringify(ObjectPartition) && port.port_id == PortID)
+            
+            if (PortIndex != -1) {
+
+              // Update port in store
+              vm.$store.commit('pcmPorts/UPDATE_Port', {data:response.data})
+
+            } else {
+              
+              // Add port in store
+              vm.$store.commit('pcmPorts/ADD_Port', {data:response.data})
+
+            }
 
           }).catch(error => {vm.DisplayError(error)})
 
@@ -139,7 +168,7 @@ export default {
 
       // Only trigger on intended modal
       if(modalId == vm.ModalID) {
-        vm.ObjectName = vm.ComputedObjectName
+        vm.PortDescription = vm.ComputedPortDescription
       }
     })
   },

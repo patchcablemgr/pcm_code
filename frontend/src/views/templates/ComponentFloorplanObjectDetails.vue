@@ -28,6 +28,14 @@
                 Delete
               </b-dropdown-item>
 
+              <b-dropdown-item
+                variant="danger"
+                @click=" Clear() "
+                :disabled="!ComputedObjectSelected"
+              >
+                Clear Trunk
+              </b-dropdown-item>
+
             </b-dropdown>
           </div>
         </div>
@@ -75,7 +83,7 @@
                 v-ripple.400="'rgba(40, 199, 111, 0.15)'"
                 variant="flat-success"
                 class="btn-icon"
-                v-b-modal.modal-port-select
+                v-b-modal.modal-trunk-select
                 :disabled="!ComputedObjectSelected || !Trunkable"
               >
                 <feather-icon icon="EditIcon" />
@@ -98,11 +106,11 @@
       :Context="Context"
     />
 
-    <!-- Modal Port Select -->
-    <modal-port-select
-      ModalID="modal-port-select"
+    <!-- Modal Tree Select -->
+    <modal-trunk-select
+      ModalID="modal-trunk-select"
       ModalTitle="Trunk"
-      TreeRef="PortSelect"
+      TreeRef="TrunkSelect"
       :Context="Context"
       PortSelectFunction="trunk"
     />
@@ -124,7 +132,7 @@ import {
 import Ripple from 'vue-ripple-directive'
 import { PCM } from '@/mixins/PCM.js'
 import ModalEditObjectName from '@/views/templates/ModalEditObjectName.vue'
-import ModalPortSelect from '@/views/templates/ModalPortSelect.vue'
+import ModalTrunkSelect from '@/views/templates/ModalTrunkSelect.vue'
 
 export default {
   mixins: [PCM],
@@ -139,7 +147,7 @@ export default {
 
     VBModal,
     ModalEditObjectName,
-    ModalPortSelect,
+    ModalTrunkSelect,
   },
 	directives: {
 		Ripple,
@@ -282,7 +290,7 @@ export default {
           vm.$http.delete(URL).then(response => {
 
             // Clear user selection
-            vm.$store.commit('pcmState/DEFAULT_Selected', {pcmContext:Context})
+            vm.$store.commit('pcmState/DEFAULT_Selected_Object', {pcmContext:Context})
 
             // Remove object from store
             vm.$store.commit('pcmObjects/REMOVE_Object', {pcmContext:Context, data:response.data})
@@ -294,6 +302,32 @@ export default {
         }
       })
     },
+    Clear: function() {
+
+      const vm = this
+      const Context = vm.Context
+      const SelectedObjectID = vm.StateSelected[Context].object_id
+      const SelectedObjectFace = vm.StateSelected[Context].object_face
+      const SelectedObjectPartition = vm.StateSelected[Context].partition[SelectedObjectFace]
+      const ConfirmMsg = "Clear trunk?"
+      const ConfirmOpts = {
+        title: "Confirm"
+      }
+      vm.$bvModal.msgBoxConfirm(ConfirmMsg, ConfirmOpts).then(result => {
+        if (result === true) {
+          const Trunks = vm.GetTrunks(SelectedObjectID, SelectedObjectFace, SelectedObjectPartition)
+          Trunks.forEach(function(trunk){
+            const TrunkID = trunk.id
+            // Delete Trunk
+            const URL = '/api/trunks/'+TrunkID
+            vm.$http.delete(URL).then(response => {
+              // Remove trunk from store
+              vm.$store.commit('pcmTrunks/REMOVE_Trunk', {data:response.data})
+            }).catch(error => {vm.DisplayError(error)})
+          })
+        }
+      })
+    }
   }
 }
 </script>

@@ -59,6 +59,16 @@ const router = new VueRouter({
     },
   },
   {
+    path: '/cables',
+    name: 'cables',
+    component: () => import('@/views/Cables.vue'),
+    meta: {
+      pageTitle: 'Cables',
+      resource: 'Operator',
+      action: 'read',
+    },
+  },
+  {
     path: '/admin',
     name: 'admin',
     component: () => import('@/views/Admin.vue'),

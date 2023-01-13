@@ -4,16 +4,16 @@
     :draggable="!IsPseudoObject && ObjectsAreDraggable"
     @dragstart.stop="StartDrag({ context: Context, object_id: ObjectID, template_id: GetTemplateID(ObjectID), template_face: CabinetFace, object_face: ObjectFace }, $event)"
     :class="{
-      pcm_template_partition_selected: PartitionIsSelected({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'PartitionAddress': InitialPartitionAddress}),
-      pcm_template_partition_hovered: PartitionIsHovered({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'PartitionAddress': InitialPartitionAddress}),
+      pcm_template_partition_selected: PartitionIsSelected({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'PartitionAddress': InitialPartitionAddress, 'PortID': null}),
+      pcm_template_partition_hovered: PartitionIsHovered({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'PartitionAddress': InitialPartitionAddress, 'PortID': null}),
     }"
     :style="{
       'background-color': TemplateColor(ObjectID),
       'height': '100%',
     }"
-    @click.stop=" PartitionClicked({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': InitialPartitionAddress, 'PortID': null}) "
-    @mouseover.stop=" PartitionHovered({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': InitialPartitionAddress, 'HoverState': true}) "
-    @mouseleave.stop=" PartitionHovered({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'TemplateID': GetTemplateID(ObjectID), 'PartitionAddress': InitialPartitionAddress, 'HoverState': false}) "
+    @click.stop=" PartitionClicked({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'PartitionAddress': InitialPartitionAddress, 'PortID': null}) "
+    @mouseover.stop=" PartitionHovered({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'PartitionAddress': InitialPartitionAddress, 'PortID': null, 'HoverState': true}) "
+    @mouseleave.stop=" PartitionHovered({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'PartitionAddress': InitialPartitionAddress, 'PortID': null, 'HoverState': false}) "
   >
     <component-template
       :TemplateRUSize="TemplateRUSize"
@@ -64,6 +64,9 @@ export default {
     },
     StateSelected() {
       return this.$store.state.pcmState.Selected
+    },
+    StateHovered() {
+      return this.$store.state.pcmState.Hovered
     },
     IsPseudoObject: function() {
 

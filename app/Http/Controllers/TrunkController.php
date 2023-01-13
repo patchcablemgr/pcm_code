@@ -235,13 +235,13 @@ class TrunkController extends Controller
             $trunk->a_id = $data['id'];
             $trunk->a_face = $data['face'];
             $trunk->a_partition = $data['partition'];
-            $trunk->a_port = $data['port_id'];
+            $trunk->a_port = ($floorplanType == null) ? null : $data['port_id'];
 
             // Store B side
             $trunk->b_id = $value['id'];
             $trunk->b_face = $value['face'];
             $trunk->b_partition = $value['partition'];
-            $trunk->b_port = $value['port_id'];
+            $trunk->b_port = ($floorplanType == null) ? null : $value['port_id'];
 
             // Save new trunk object
             $trunk->save();

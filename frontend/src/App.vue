@@ -61,33 +61,39 @@ export default {
     StateDataSyncIntervalID() {
       return this.$store.state.pcmState.DataSyncIntervalID
     },
+    CablePaths() {
+      return this.$store.state.pcmCablePaths.CablePaths
+    },
+    Cables() {
+      return this.$store.state.pcmCables.Cables
+    },
     Categories() {
       return this.$store.state.pcmCategories.Categories
-    },
-    Templates() {
-      return this.$store.state.pcmTemplates.Templates
-    },
-    Objects() {
-      return this.$store.state.pcmObjects.Objects
-    },
-    Locations() {
-      return this.$store.state.pcmLocations.Locations
     },
     Connections() {
       return this.$store.state.pcmConnections.Connections
     },
+    Locations() {
+      return this.$store.state.pcmLocations.Locations
+    },
+    Objects() {
+      return this.$store.state.pcmObjects.Objects
+    },
     Organization() {
       return this.$store.state.pcmOrganization.Organization
     },
-    CablePaths() {
-      return this.$store.state.pcmCablePaths.CablePaths
+    Ports() {
+      return this.$store.state.pcmPorts.Ports
+    },
+    Templates() {
+      return this.$store.state.pcmTemplates.Templates
     },
     Trunks() {
       return this.$store.state.pcmTrunks.Trunks
     },
   },
   methods: {
-    DataSync() {
+    DataSync(Initial) {
 
       const vm = this
       const timestamp = vm.StateDataSyncTimestamp
@@ -99,8 +105,11 @@ export default {
           'ready_mutation': 'pcmCategories/SET_Ready',
           'object': vm.Categories,
           'contexts': ['actual', 'workspace', 'template'],
-          'custom': function(responseData){
-            vm.SetDefaultCategory()
+          'onAdd': false,
+          'onComplete': function(responseData){
+            if(Initial) {
+              vm.SetDefaultCategory()
+            }
           }
         },{
           'name': 'locations',
@@ -109,7 +118,8 @@ export default {
           'ready_mutation': 'pcmLocations/SET_Ready',
           'object': vm.Locations,
           'contexts': ['actual', 'template'],
-          'custom': function(responseData){}
+          'onAdd': false,
+          'onComplete': false
         },
         {
           'name': 'objects',
@@ -118,7 +128,8 @@ export default {
           'ready_mutation': 'pcmObjects/SET_Ready',
           'object': vm.Objects,
           'contexts': ['actual'],
-          'custom': function(responseData){}
+          'onAdd': false,
+          'onComplete': false
         },
         {
           'name': 'templates',
@@ -127,12 +138,13 @@ export default {
           'ready_mutation': 'pcmTemplates/SET_Ready',
           'object': vm.Templates,
           'contexts': ['actual', 'template'],
-          'custom': function(responseData){
-            responseData.forEach(function(template) {
-              vm.GeneratePseudoData('template', template)
-              vm.$store.commit('pcmObjects/SET_Ready', {pcmContext:'template', ReadyState:true})
-              vm.$store.commit('pcmTemplates/SET_Ready', {pcmContext:'template', ReadyState:true})
-            })
+          'onAdd': function(tableContext, entry){
+            if(tableContext == 'template') {
+              vm.GeneratePseudoData(tableContext, entry)
+            }
+          },
+          'onComplete': function(responseData){
+            vm.$store.commit('pcmObjects/SET_Ready', {pcmContext:'template', ReadyState:true})
           }
         },
         {
@@ -142,7 +154,8 @@ export default {
           'ready_mutation': 'pcmConnections/SET_Ready',
           'object': vm.Connections,
           'contexts': [false],
-          'custom': function(responseData){}
+          'onAdd': false,
+          'custom': false
         },
         {
           'name': 'organization',
@@ -151,7 +164,8 @@ export default {
           'ready_mutation': 'pcmOrganization/SET_Ready',
           'object': vm.Organization,
           'contexts': [false],
-          'custom': function(responseData){}
+          'onAdd': false,
+          'onComplete': false
         },
         {
           'name': 'cable-paths',
@@ -160,7 +174,8 @@ export default {
           'ready_mutation': 'pcmCablePaths/SET_Ready',
           'object': vm.CablePaths,
           'contexts': ['actual'],
-          'custom': function(responseData){}
+          'onAdd': false,
+          'onComplete': false
         },
         {
           'name': 'trunks',
@@ -169,8 +184,29 @@ export default {
           'ready_mutation': 'pcmTrunks/SET_Ready',
           'object': vm.Trunks,
           'contexts': [false],
-          'custom': function(responseData){}
+          'onAdd': false,
+          'onComplete': false
         },
+        {
+          'name': 'cables',
+          'update_mutation': 'pcmCables/UPDATE_Cable',
+          'add_mutation': 'pcmCables/ADD_Cable',
+          'ready_mutation': 'pcmCables/SET_Ready',
+          'object': vm.Cables,
+          'contexts': [false],
+          'onAdd': false,
+          'onComplete': false
+        },
+        {
+          'name': 'ports',
+          'update_mutation': 'pcmPorts/UPDATE_Port',
+          'add_mutation': 'pcmPorts/ADD_Port',
+          'ready_mutation': 'pcmPorts/SET_Ready',
+          'object': vm.Ports,
+          'contexts': [false],
+          'onAdd': false,
+          'onComplete': false
+        }
       ]
 
       vm.$http.get('/api/data-sync/'+timestamp).then(response => {
@@ -203,6 +239,11 @@ export default {
                   // Add if it does not exist
                   vm.$store.commit(addMutation, {pcmContext:tableContext, data:tableEntry})
 
+                  // Call custom function
+                  if(table.onAdd) {
+                    table.onAdd(tableContext, tableEntry)
+                  }
+
                 } else {
                   // Update if it does exist
                   vm.$store.commit(updateMutation, {pcmContext:tableContext, data:tableEntry})
@@ -214,7 +255,9 @@ export default {
             })
 
             // Call custom function
-            table.custom(responseData.tables[tableName])
+            if(table.onComplete) {
+              table.onComplete(responseData.tables[tableName])
+            }
           }
         })
 
@@ -237,13 +280,35 @@ export default {
         vm.DisplayError(error)
       })
     },
-    GETMedium() {
+    GETCableConnectors() {
 
       const vm = this
 
-      vm.$http.get('/api/medium').then(response => {
-        vm.$store.commit('pcmProps/SET_Medium', response.data)
-        vm.$store.commit('pcmProps/SET_Ready', {Prop: 'medium', ReadyState: true})
+      vm.$http.get('/api/cable-connectors').then(response => {
+        vm.$store.commit('pcmProps/SET_CableConnectors', response.data)
+        vm.$store.commit('pcmProps/SET_Ready', {Prop: 'cableConnectors', ReadyState: true})
+      }).catch(error => {
+        vm.DisplayError(error)
+      })
+    },
+    GETMedia() {
+
+      const vm = this
+
+      vm.$http.get('/api/media').then(response => {
+        vm.$store.commit('pcmProps/SET_Media', response.data)
+        vm.$store.commit('pcmProps/SET_Ready', {Prop: 'media', ReadyState: true})
+      }).catch(error => {
+        vm.DisplayError(error)
+      })
+    },
+    GETMediaType() {
+
+      const vm = this
+
+      vm.$http.get('/api/media-type').then(response => {
+        vm.$store.commit('pcmProps/SET_MediaType', response.data)
+        vm.$store.commit('pcmProps/SET_Ready', {Prop: 'mediaType', ReadyState: true})
       }).catch(error => {
         vm.DisplayError(error)
       })
@@ -429,7 +494,9 @@ export default {
 
         // Get static data
         vm.GETConnectors()
-        vm.GETMedium()
+        vm.GETCableConnectors()
+        vm.GETMedia()
+        vm.GETMediaType()
         vm.GETOrientations()
         vm.GETFloorplanTemplates()
 
@@ -439,11 +506,11 @@ export default {
         vm.GenerateWorkspaceTemplates()
 
         // Get dynamic data
-        vm.DataSync()
+        vm.DataSync(true)
 
         // Get dynamic data at an interval
         const IntervalID = window.setInterval(() => {
-          vm.DataSync()
+          vm.DataSync(false)
         }, 5000)
 
         // Set Data Sync interval ID
@@ -451,32 +518,7 @@ export default {
       }
     }
   },
-  mounted() {
-
-    console.log('mounted')
-    /*
-    const vm = this
-
-    const UserData = localStorage.getItem('userData')
-    if(UserData !== null) {
-
-    // Get static data
-    vm.GETConnectors()
-    vm.GETMedium()
-    vm.GETOrientations()
-
-    // Get dynamic data
-    vm.DataSync()
-
-    // Get dynamic data at an interval
-    window.setInterval(() => {
-      
-      
-        vm.DataSync()
-      
-    }, 5000)
-  }*/
-  },
+  mounted() {},
   setup() {
     const { skin, skinClasses } = useAppConfig()
 

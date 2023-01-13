@@ -2,8 +2,15 @@
 
 <template>
 <div
+  :title="GeneratePortName(Context, ObjectID, ObjectFace, PartitionAddress, PortID)"
+  :class="{
+    pcm_template_port_selected: PartitionIsSelected({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'PartitionAddress': PartitionAddress, 'PortID': PortID}),
+    pcm_template_port_hovered: PartitionIsHovered({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'PartitionAddress': PartitionAddress, 'PortID': PortID}),
+  }"
   style="display:flex"
-  @click.stop=" PartitionClicked({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'TemplateID': TemplateID, 'PartitionAddress': PartitionAddress, 'PortID': PortID}) "
+  @click.stop=" PartitionClicked({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'PartitionAddress': PartitionAddress, 'PortID': PortID}) "
+  @mouseover.stop=" PartitionHovered({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'PartitionAddress': PartitionAddress, 'PortID': PortID, 'HoverState': true}) "
+  @mouseleave.stop=" PartitionHovered({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'PartitionAddress': PartitionAddress, 'PortID': PortID, 'HoverState': false}) "
 >
 
 <svg xmlns="http://www.w3.org/2000/svg"
@@ -43,8 +50,8 @@ export default {
     Locations() {
       return this.$store.state.pcmLocations.Locations
     },
-    Medium() {
-      return this.$store.state.pcmProps.Medium
+    Media() {
+      return this.$store.state.pcmProps.Media
     },
     Connectors() {
       return this.$store.state.pcmProps.Connectors
@@ -69,6 +76,9 @@ export default {
     },
     StateSelected() {
       return this.$store.state.pcmState.Selected
+    },
+    StateHovered() {
+      return this.$store.state.pcmState.Hovered
     },
     PortIsSelected: {
       get() {

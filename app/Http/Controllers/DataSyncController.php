@@ -11,6 +11,8 @@ use App\Models\TemplateModel;
 use App\Models\ConnectionModel;
 use App\Models\CablePathModel;
 use App\Models\TrunkModel;
+use App\Models\CableModel;
+use App\Models\PortModel;
 
 class DataSyncController extends Controller
 {
@@ -42,23 +44,28 @@ class DataSyncController extends Controller
         $dateFormatted = date('Y-m-d H:i:s', $timestamp);
 
         // Collect tables
+        $cablePaths = CablePathModel::where('updated_at', '>', $dateFormatted)->get();
+        $cables = CableModel::where('updated_at', '>', $dateFormatted)->get();
         $categories = CategoryModel::where('updated_at', '>', $dateFormatted)->get();
+        $connections = ConnectionModel::where('updated_at', '>', $dateFormatted)->get();
         $locations = LocationModel::where('updated_at', '>', $dateFormatted)->get();
         $objects = ObjectModel::where('updated_at', '>', $dateFormatted)->get();
+        $ports = PortModel::where('updated_at', '>', $dateFormatted)->get();
         $templates = TemplateModel::where('updated_at', '>', $dateFormatted)->get();
-        $connections = ConnectionModel::where('updated_at', '>', $dateFormatted)->get();
-        $cablePaths = CablePathModel::where('updated_at', '>', $dateFormatted)->get();
         $trunks = TrunkModel::where('updated_at', '>', $dateFormatted)->get();
+        
 
         // Compile tables
         $returnData = array(
             'tables' => array(
+                'cable-paths' => $cablePaths,
+                'cables' => $cables,
                 'categories' => $categories,
+                'connections' => $connections,
                 'locations' => $locations,
                 'objects' => $objects,
+                'ports' => $ports,
                 'templates' => $templates,
-                'connections' => $connections,
-                'cable-paths' => $cablePaths,
                 'trunks' => $trunks,
             ),
             'timestamp' => time()

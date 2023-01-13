@@ -322,7 +322,6 @@ class ObjectController extends Controller
             // Validate insert data
             $request->validate([
                 'floorplan_address' => [
-                    'required',
                     'array',
                 ]
             ]);

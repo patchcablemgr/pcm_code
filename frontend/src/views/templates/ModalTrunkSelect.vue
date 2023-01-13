@@ -1,13 +1,9 @@
 <template>
-    <!-- Template port select modal -->
+    <!-- Template tree select modal -->
     <b-modal
       :id="ModalID"
       :title="ModalTitle"
       size="lg"
-      ok-title="Submit"
-      @ok="Submit"
-      cancel-title="Clear"
-      @cancel="Clear"
     >
       <b-row>
         <b-col>
@@ -39,13 +35,6 @@
       </b-row>
 
       <template #modal-footer>
-        <b-button
-          variant="danger"
-          class="float-right"
-          @click="Clear"
-        >
-          Clear
-        </b-button>
         <b-button
           variant="secondary"
           class="float-right"
@@ -120,8 +109,8 @@ export default {
     Trunks() {
       return this.$store.state.pcmTrunks.Trunks
     },
-    Medium() {
-      return this.$store.state.pcmProps.Medium
+    Media() {
+      return this.$store.state.pcmProps.Media
     },
     Connectors() {
       return this.$store.state.pcmProps.Connectors
@@ -175,7 +164,6 @@ export default {
       const vm = this
       const Context = vm.Context
       const TreeRef = vm.TreeRef
-      const PortSelectFunction = vm.PortSelectFunction
       const Criteria = function(node){
         return node.states.selected == true
       }
@@ -204,100 +192,27 @@ export default {
       })
 
       // Compile POST data
-      const data = {'id':SelectedObjectID, 'face':SelectedObjectFace, 'partition':SelectedObjectPartition, 'port_id':SelectedObjectPortID, 'peer_data':PeerData}
-
-      if(PortSelectFunction == 'trunk') {
-
-        // POST Trunk
-        const URL = '/api/trunks'
-        vm.$http.post(URL, data).then(response => {
-
-          // Add trunk to store
-          response.data.add.forEach(add => vm.$store.commit('pcmTrunks/ADD_Trunk', {data:add}))
-          response.data.remove.forEach(remove => vm.$store.commit('pcmTrunks/REMOVE_Trunk', {data:remove}))
-
-          // Close modal
-          vm.$root.$emit('bv::hide::modal', vm.ModalID)
-
-        }).catch(error => {vm.DisplayError(error)})
-
-      } else if(PortSelectFunction == 'port') {
-
-        // POST Connection
-        const URL = '/api/connections'
-        vm.$http.post(URL, data).then(response => {
-
-          // Add connection to store
-          response.data.add.forEach(add => vm.$store.commit('pcmConnections/ADD_Connection', {data:add}))
-          response.data.remove.forEach(remove => vm.$store.commit('pcmConnections/REMOVE_Connection', {data:remove}))
-
-          // Close modal
-          vm.$root.$emit('bv::hide::modal', vm.ModalID)
-
-        }).catch(error => {vm.DisplayError(error)})
-
+      const data = {
+        'id':SelectedObjectID,
+        'face':SelectedObjectFace,
+        'partition':SelectedObjectPartition,
+        'port_id':SelectedObjectPortID,
+        'peer_data':PeerData
       }
+
+      // POST Trunk
+      const URL = '/api/trunks'
+      vm.$http.post(URL, data).then(response => {
+
+        // Add trunk to store
+        response.data.add.forEach(add => vm.$store.commit('pcmTrunks/ADD_Trunk', {data:add}))
+        response.data.remove.forEach(remove => vm.$store.commit('pcmTrunks/REMOVE_Trunk', {data:remove}))
+
+        // Close modal
+        vm.$root.$emit('bv::hide::modal', vm.ModalID)
+
+      }).catch(error => {vm.DisplayError(error)})
     },
-    Clear: function() {
-
-      const vm = this
-      const Context = vm.Context
-      const TreeRef = vm.TreeRef
-      const PortSelectFunction = vm.PortSelectFunction
-
-      const SelectedObjectID = vm.StateSelected[Context].object_id
-      const SelectedObjectFace = vm.StateSelected[Context].object_face
-      const SelectedObjectPartition = vm.StateSelected[Context].partition[SelectedObjectFace]
-
-      const ConfirmMsg = (PortSelectFunction == 'trunk') ? "Clear trunk?" : "Clear port connection?"
-      const ConfirmOpts = {
-        title: "Confirm"
-      }
-      vm.$bvModal.msgBoxConfirm(ConfirmMsg, ConfirmOpts).then(result => {
-
-        if (result === true) {
-
-          if(PortSelectFunction == 'trunk') {
-
-            const Trunks = vm.GetTrunks(SelectedObjectID, SelectedObjectFace, SelectedObjectPartition)
-
-            Trunks.forEach(function(trunk){
-
-              const TrunkID = trunk.id
-              // Delete Trunk
-              const URL = '/api/trunks/'+TrunkID
-              vm.$http.delete(URL).then(response => {
-
-                // Remove trunk from store
-                vm.$store.commit('pcmTrunks/REMOVE_Trunk', {data:response.data})
-
-              }).catch(error => {vm.DisplayError(error)})
-            })
-
-            // Close modal
-            vm.$root.$emit('bv::hide::modal', vm.ModalID)
-
-          } else if(PortSelectFunction == 'port') {
-
-            const SelectedPortID = vm.StateSelected[Context].port_id[SelectedObjectFace]
-            const Connection = vm.GetConnection(SelectedObjectID, SelectedObjectFace, SelectedObjectPartition, SelectedPortID)
-            const ConnectionID = Connection.data.id
-            
-            // Delete Connection
-            const URL = '/api/connections/'+ConnectionID
-            vm.$http.delete(URL).then(response => {
-
-              // Remove trunk from store
-              vm.$store.commit('pcmConnections/REMOVE_Connection', {data:response.data})
-
-              // Close modal
-              vm.$root.$emit('bv::hide::modal', vm.ModalID)
-
-            }).catch(error => {vm.DisplayError(error)})
-          }
-        }
-      })
-    }
   },
   mounted() {
 

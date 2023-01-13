@@ -2,12 +2,8 @@
   <div
     v-if="DependenciesReady"
   >
-    <b-container class="bv-example-row" fluid="xs">
-      <b-row
-        cols="1"
-        cols-md="2"
-        cols-xl="3"
-      >
+    <b-container class="bv-example-row" fluid>
+      <b-row>
         <b-col>
           <b-card
             title="Locations and Cabinets"
@@ -41,8 +37,10 @@
 
         </b-col>
         <b-col
-          cols="8"
           v-if=" PreviewDisplay == 'floorplan' "
+          col
+          cols="12"
+          sm="8"
         >
           <component-floorplan
             Context="actual"
@@ -57,6 +55,9 @@
         </b-col>
         <b-col
           v-if=" PreviewDisplay == 'cabinet' || PreviewDisplay == 'none' "
+          col
+          cols="12"
+          xl="4"
         >
           <b-card
             title="Cabinet"
@@ -373,7 +374,7 @@ export default {
       });
     },
     InsertObjectDropped: function(EmitData) {
-
+      
       const vm = this
       const Context = EmitData.context
       const ParentID = EmitData.parent_id

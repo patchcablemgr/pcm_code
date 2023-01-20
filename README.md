@@ -1,3 +1,8 @@
+## 1.3.1
+
+Fixes:
+- New tenant registration failing to seed database
+
 ## 1.3.0
 
 Features:

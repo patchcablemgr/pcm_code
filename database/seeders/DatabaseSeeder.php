@@ -24,19 +24,15 @@ class DatabaseSeeder extends Seeder
         }
 
         $org = OrganizationModel::where('id', 1)->first();
-        $orgVersion = $org->version;
 
         // 1.0.0 -> 1.0.1
-        if(version_compare($orgVersion, '1.0.0') === 0) {
+        if(version_compare($org->version, '1.0.0') === 0) {
             $org->version = '1.0.1';
             $org->save();
         }
 
-        $org = OrganizationModel::where('id', 1)->first();
-        $orgVersion = $org->version;
-
         // 1.0.1 -> 1.0.2
-        if(version_compare($orgVersion, '1.0.1') === 0) {
+        if(version_compare($org->version, '1.0.1') === 0) {
             $org->version = '1.0.2';
             $org->save();
         }
@@ -82,6 +78,12 @@ class DatabaseSeeder extends Seeder
         if(version_compare($org->version, '1.2.4') === 0) {
             $this->call([Seeder_1_3_0::class]);
             $org->version = '1.3.0';
+            $org->save();
+        }
+
+        // 1.3.0 -> 1.3.1
+        if(version_compare($org->version, '1.3.0') === 0) {
+            $org->version = '1.3.1';
             $org->save();
         }
 

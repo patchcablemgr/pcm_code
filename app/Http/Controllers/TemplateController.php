@@ -19,6 +19,9 @@ use Illuminate\Support\Facades\Gate;
 
 class TemplateController extends Controller
 {
+
+    public $archiveRow = NULL;
+
     /**
      * Display a listing of the resource.
      *
@@ -113,7 +116,7 @@ class TemplateController extends Controller
 
         foreach($faceArray as $face) {
 
-            $imgData = $template['image_'.$face];
+            $imgData = $template['img_'.$face];
 
             if($imgData) {
 
@@ -270,11 +273,15 @@ class TemplateController extends Controller
 
         $PCM = new PCM;
 
+        
+        $requestArray = $request->all();
+
         // Validate template ID
         $validatorInput = [
             'id' => $id,
-            'name' => $request->input('name'),
-            'category_id' => $request->input('category_id')
+            'name' => $requestArray['name'],
+            'category_id' => $requestArray['category_id'],
+            'blueprint' => $requestArray['blueprint']
         ];
         $validatorRules = [
             'id' => [
@@ -292,10 +299,30 @@ class TemplateController extends Controller
                 'required',
                 'numeric',
                 'exists:category,id'
+            ],
+            'blueprint' => [
+                'required',
+            ],
+            'blueprint.front' => [
+                'required',
+                'min:1',
+                'max:100',
+                new TemplateBlueprint($request->ru_size)
+            ],
+            'blueprint.rear' => [
+                'required',
+                'min:1',
+                'max:100',
+                new TemplateBlueprint($request->ru_size)
             ]
         ];
         $validatorMessages = [];
+        
         $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        if($this->archiveRow) {
+            Log::info($this->archiveRow);
+            $customValidator->getMessageBag()->add('archive', $this->archiveRow);
+        }
         $customValidator->stopOnFirstFailure();
         $customValidator->validate();
 

@@ -28,6 +28,9 @@ class ImageController extends Controller
             abort(403);
         }
 
+        Log::info($request);
+        Log::info($request->file('file')->getMimeType());
+
         // Prepare variables
         $validatorInput = [
             'id' => $id,
@@ -40,7 +43,7 @@ class ImageController extends Controller
             ],
             'file' => [
                 'mimes:jpg,png,gif',
-                'max:512'
+                'max:2048'
             ]
         ];
         $validatorMessages = [];
@@ -112,9 +115,9 @@ class ImageController extends Controller
         // Update template image
         $pathArray = explode('/', $path);
         if($request->face == 'front') {
-            $template->image_front = end($pathArray);
+            $template->img_front = end($pathArray);
         } else {
-            $template->image_rear = end($pathArray);
+            $template->img_rear = end($pathArray);
         }
             
         // Save record

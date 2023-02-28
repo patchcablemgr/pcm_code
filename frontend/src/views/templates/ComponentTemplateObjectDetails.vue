@@ -632,7 +632,7 @@ export default {
         const Face = vm.TemplateFaceSelected[Context]
         const Template = vm.GetTemplateSelected(Context)
 
-        return (Face == 'front') ? Template.image_front : Template.image_rear
+        return (Face == 'front') ? Template.img_front : Template.img_rear
       },
       set() {
         return true

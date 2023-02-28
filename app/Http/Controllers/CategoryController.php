@@ -12,6 +12,9 @@ use Illuminate\Support\Facades\Gate;
 
 class CategoryController extends Controller
 {
+
+    //public $archiveRow = NULL;
+
     /**
      * Display a listing of the resource.
      *
@@ -55,7 +58,6 @@ class CategoryController extends Controller
             'name' => [
                 'required',
                 'alpha_dash',
-                'unique:App\Models\CategoryModel,name',
                 'min:1',
                 'max:255'
             ],
@@ -137,7 +139,6 @@ class CategoryController extends Controller
             ],
             'name' => [
                 'alpha_dash',
-                'unique:App\Models\CategoryModel,name',
                 'min:1',
                 'max:255',
             ],
@@ -149,8 +150,17 @@ class CategoryController extends Controller
             ]
         ];
         $validatorMessages = [];
+        
         $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        //$customValidator->getMessageBag()->add('name', $this->archiveRow);
         $customValidator->stopOnFirstFailure();
+        /*
+        $customValidator->after(function ($validator) {
+            if($this->archiveRow) {
+                //$validator->errors()->add('archive', $this->archiveRow);
+            }
+        });
+        */
         $customValidator->validate();
 
         // Store category

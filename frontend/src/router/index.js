@@ -69,6 +69,16 @@ const router = new VueRouter({
     },
   },
   {
+    path: '/archive',
+    name: 'archive',
+    component: () => import('@/views/Archive.vue'),
+    meta: {
+      pageTitle: 'Archive',
+      resource: 'Operator',
+      action: 'read',
+    },
+  },
+  {
     path: '/admin',
     name: 'admin',
     component: () => import('@/views/Admin.vue'),

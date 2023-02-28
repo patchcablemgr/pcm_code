@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use App\Models\LocationModel;
+use App\Models\LocationModelNoImgData;
 use App\Models\CablePathModel;
 use App\Models\ObjectModel;
 use App\Http\Controllers\PCM;
@@ -15,6 +16,9 @@ use Illuminate\Support\Facades\Gate;
 
 class LocationController extends Controller
 {
+
+    public $archiveRow = NULL;
+
     /**
      * Display a listing of the resource.
      *
@@ -248,12 +252,17 @@ class LocationController extends Controller
             ]
         ];
         $validatorMessages = [];
+        
         $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        if($this->archiveRow) {
+            Log::info($this->archiveRow);
+            $customValidator->getMessageBag()->add('archive', $this->archiveRow);
+        }
         $customValidator->stopOnFirstFailure();
         $customValidator->validate();
 
         // Retrieve location record
-        $location = LocationModel::where('id', $id)->first();
+        $location = LocationModelNoImgData::where('id', $id)->first();
         $locationType = $location['type'];
         $locationParentID = $location['parent_id'];
 
@@ -273,7 +282,7 @@ class LocationController extends Controller
         foreach($data as $key => $value) {
 
             if(!in_array($key, $keyArray)) {
-                throw ValidationException::withMessages(['attribute_name' => 'Invalid attribute name.']);
+                //throw ValidationException::withMessages(['attribute_name' => 'Invalid attribute name.']);
             }
 
             // Node text
@@ -379,8 +388,6 @@ class LocationController extends Controller
                 Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
 
                 // Validate location is cabinet
-                $location = LocationModel::where('id', $id)->first();
-                $locationType = $location['type'];
                 if($locationType != 'cabinet') {
                     throw ValidationException::withMessages([$key => 'Location type is incompatible.']);
                 }
@@ -427,8 +434,6 @@ class LocationController extends Controller
                 $validatorMessages = [];
                 Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
 
-                $location = LocationModel::where('id', $id)->first();
-                $locationType = $location['type'];
                 if($locationType != 'cabinet') {
                     throw ValidationException::withMessages([$key => 'Location type is incompatible.']);
                 }

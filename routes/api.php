@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ArchiveController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\CategoryController;
@@ -53,6 +54,7 @@ Route::group(['prefix' => 'auth'], function () {
 Route::group(['middleware' => 'auth:sanctum'], function(){
 
   // Only POST
+  Route::post('archive', [ArchiveController::class, 'import'])->middleware('archiveUpload');
   Route::post('cables', [CableController::class, 'store']);
   Route::post('cable-paths', [CablePathController::class, 'store']);
   Route::post('config/app/update', [ConfigController::class, 'updateApp']);
@@ -69,6 +71,7 @@ Route::group(['middleware' => 'auth:sanctum'], function(){
   Route::post('templates/{id}/image', [ImageController::class, 'storeTemplateImage']);
 
   // Only GET
+  Route::get('archive', [ArchiveController::class, 'export']);
   Route::get('cables', [CableController::class, 'index']);
   Route::get('cable-paths', [CablePathController::class, 'index']);
   Route::get('catalog/categories', [CategoryController::class, 'indexCatalogCategories']);

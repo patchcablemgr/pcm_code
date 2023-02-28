@@ -6,6 +6,7 @@ use Illuminate\Contracts\Validation\Rule;
 use App\Models\MediaModel;
 use App\Models\PortConnectorModel;
 use App\Models\PortOrientation;
+use Illuminate\Support\Facades\Log;
 
 class TemplateBlueprint implements Rule
 {

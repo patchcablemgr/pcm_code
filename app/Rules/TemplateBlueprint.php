@@ -4,6 +4,7 @@ namespace App\Rules;
 
 use Illuminate\Contracts\Validation\Rule;
 use App\Models\MediaModel;
+use App\Models\TemplateModel;
 use App\Models\PortConnectorModel;
 use App\Models\PortOrientation;
 use Illuminate\Support\Facades\Log;
@@ -15,11 +16,43 @@ class TemplateBlueprint implements Rule
      *
      * @return void
      */
-    public function __construct($RUSize)
+    public function __construct($request, $id, $face)
     {
+
+        $this->ignore = false;
+
+        if(!is_null($id)) {
+            
+            // Update operation
+            $template = TemplateModel::where('id', $id)->first();
+            if($template['type'] == 'standard') {
+                $width = 24;
+                $height = $template['ru_size']*2;
+            } else {
+                if($face == 'rear') {
+                    $this->ignore = true;
+                }
+                $width = $template['insert_constraints'][0]['part_layout']['width'];
+                $height = $template['insert_constraints'][0]['part_layout']['height'];
+            }
+        } else {
+
+            // Create operation
+            if($request->type == 'standard') {
+                $width = 24;
+                $height = $request->ru_size*2;
+            } else {
+                if($face == 'rear') {
+                    $this->ignore = true;
+                }
+                $width = $request->insert_constraints[0]['part_layout']['width'];
+                $height = $request->insert_constraints[0]['part_layout']['height'];
+            }
+        }
+
         $this->unitsAvailable = array(
-            24,
-            $RUSize*2
+            $width,
+            $height
         );
 
         $this->returnMessage = 'Unknown error.';
@@ -34,7 +67,11 @@ class TemplateBlueprint implements Rule
      */
     public function passes($attribute, $value)
     {
-        return $this->validatePartition($value, $this->unitsAvailable);
+        if($this->ignore) {
+            return true;
+        } else {
+            return $this->validatePartition($value, $this->unitsAvailable);
+        }
     }
 
     /**
@@ -235,7 +272,7 @@ class TemplateBlueprint implements Rule
                                     $valid = false;
                                 }
                             } else {
-                                $this->returnMessage = 'Invalid partition size.  Depth: '.$depth;
+                                $this->returnMessage = 'Invalid partition type.  Depth: '.$depth;
                                 $valid = false;
                             }
                         } else {

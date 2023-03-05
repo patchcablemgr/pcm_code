@@ -28,9 +28,6 @@ class ImageController extends Controller
             abort(403);
         }
 
-        Log::info($request);
-        Log::info($request->file('file')->getMimeType());
-
         // Prepare variables
         $validatorInput = [
             'id' => $id,

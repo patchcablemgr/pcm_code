@@ -371,23 +371,37 @@ class ArchiveController extends Controller
             'category' => array(
                 'filename' => 'category.csv',
                 'controller' => new CategoryController,
+                'model' => new CategoryModel,
                 'post_method' => 'store',
                 'patch_method' => 'update'
             ),
             'template' => array(
                 'filename' => 'template.csv',
                 'controller' => new TemplateController,
+                'model' => new TemplateModel,
                 'post_method' => 'store',
                 'patch_method' => 'update'
             ),
             'location' => array(
                 'filename' => 'location.csv',
                 'controller' => new LocationController,
+                'model' => new LocationModel,
                 'post_method' => 'store',
                 'patch_method' => 'update',
                 'image_controller' => new ImageController,
                 'image_controller_method' => 'storeLocationImage'
-            )
+            ),
+            'object' => array(
+                'filename' => 'object.csv',
+                'controller' => new ObjectController,
+                'model' => new ObjectModel,
+                'post_method' => array(
+                    'standard' => 'storeStandard',
+                    'insert' => 'storeInsert',
+                    'floorplan' => 'storeFloorplan'
+                ),
+                'patch_method' => 'update'
+            ),
         );
 
         $zip = new \ZipArchive();
@@ -419,29 +433,47 @@ class ArchiveController extends Controller
 
                             if($row == 1){
 
-                                $IDIndex = array_search('id', $data);
-
                                 // Process header
-                                $attrMap = $this->processCSVHeader($tableName, $IDIndex, $data);
+                                $attrMap = $this->processCSVHeader($tableName, $data);
 
                             } else {
 
                                 // Create request
                                 $importRequest = new Request;
 
-                                // Is row an update or insertion?
-                                if($data[$IDIndex]) {
-                                    // Update
-                                    $tableAttributes = $this->updateAttributes[$tableName];
-                                    $importRequest->setMethod('PATCH');
-                                    $controllerMethod = $tableSchema['patch_method'];
-                                    $entryID = $data[$IDIndex];
-                                } else {
-                                    // Insertion
-                                    $tableAttributes = $this->insertAttributes[$tableName];
-                                    $importRequest->setMethod('POST');
-                                    $controllerMethod = $tableSchema['post_method'];
-                                    $entryID = NULL;
+                                // Get entry ID
+                                $entryID = $data[$attrMap['id']];
+
+                                // Determine if entry should be created or updated
+                                $entryAction = ($tableSchema['model']::firstWhere('id', $entryID)) ? 'update' : 'create';
+
+                                // Prepare request
+                                switch($entryAction) {
+
+                                    case 'create':
+                                        $tableAttributes = $this->insertAttributes[$tableName];
+                                        $importRequest->setMethod('POST');
+                                        $controllerMethod = $tableSchema['post_method'];
+
+                                        // Determine controller method
+                                        if($tableName == 'object') {
+
+                                            // Object controller
+                                            if($data[$attrMap['parent_id']] != NULL) {
+                                                $controllerMethod = $tableSchema['post_method']['insert'];
+                                            } else if($data[$attrMap['floorplan_address']] != NULL) {
+                                                $controllerMethod = $tableSchema['post_method']['floorplan'];
+                                            } else {
+                                                $controllerMethod = $tableSchema['post_method']['standard'];
+                                            }
+                                        }
+                                        break;
+
+                                    case 'update':
+                                        $tableAttributes = $this->insertAttributes[$tableName];
+                                        $importRequest->setMethod('PATCH');
+                                        $controllerMethod = $tableSchema['patch_method'];
+                                        break;
                                 }
 
                                 // Compile request data
@@ -460,7 +492,8 @@ class ArchiveController extends Controller
 
                                 // Submit request
                                 $importRequest->request->add($requestData);
-                                //$tableSchema['controller']->archiveRow = $tableFileName.":".$row;
+                                $tableSchema['controller']->archiveAddress = $tableFileName.":".$row;
+                                Log::info($entryID.' - '.$controllerMethod.' - '.$tableFileName.":".$row);
                                 $importResponse = call_user_func(array($tableSchema['controller'], $controllerMethod), $importRequest, $entryID);
                                 $importID = $importResponse['id'];
 
@@ -503,7 +536,7 @@ class ArchiveController extends Controller
      * @param   array $data
      * @return  array
      */
-    private function processCSVHeader($tableName, $IDIndex, $data)
+    private function processCSVHeader($tableName, $data)
     {
 
         $attrMap = array();

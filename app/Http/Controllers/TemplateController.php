@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Gate;
 class TemplateController extends Controller
 {
 
-    public $archiveRow = NULL;
+    public $archiveAddress = NULL;
 
     /**
      * Display a listing of the resource.
@@ -169,7 +169,7 @@ class TemplateController extends Controller
 
 		$PCM = new PCM;
 
-        $request->validate([
+        $validatorRules = [
             'name' => [
                 'required',
                 'alpha_dash',
@@ -185,7 +185,7 @@ class TemplateController extends Controller
                 'in:standard,insert',
             ],
             'ru_size' => [
-                'exclude_unless:type,standard',
+                'exclude_if:type,insert',
                 'integer',
                 'min:1',
                 'max:25'
@@ -195,23 +195,23 @@ class TemplateController extends Controller
                 'in:endpoint,passive',
             ],
             'mount_config' => [
-                'exclude_unless:type,standard',
+                'exclude_if:type,insert',
                 'in:2-post,4-post',
             ],
             'insert_constraints.part_layout.height' => [
-                'exclude_unless:type,insert',
+                'exclude_if:type,standard',
                 'integer'
             ],
             'insert_constraints.part_layout.width' => [
-                'exclude_unless:type,insert',
+                'exclude_if:type,standard',
                 'integer'
             ],
             'insert_constraints.enc_layout.cols' => [
-                'exclude_unless:type,insert',
+                'exclude_if:type,standard',
                 'integer'
             ],
             'insert_constraints.enc_layout.rows' => [
-                'exclude_unless:type,insert',
+                'exclude_if:type,standard',
                 'integer'
             ],
             'blueprint' => [
@@ -221,15 +221,20 @@ class TemplateController extends Controller
                 'required',
                 'min:1',
                 'max:100',
-                new TemplateBlueprint($request->ru_size)
+                new TemplateBlueprint($request, null, 'front')
             ],
             'blueprint.rear' => [
                 'required',
                 'min:1',
                 'max:100',
-                new TemplateBlueprint($request->ru_size)
+                new TemplateBlueprint($request, null, 'rear')
             ]
-        ]);
+        ];
+
+        $validatorMessages = $PCM->transformValidationMessages($validatorRules, $this->archiveAddress);
+        $customValidator = Validator::make($request->all(), $validatorRules, $validatorMessages);
+        $customValidator->stopOnFirstFailure();
+        $customValidator->validate();
 				
         $template = new TemplateModel;
 
@@ -273,16 +278,7 @@ class TemplateController extends Controller
 
         $PCM = new PCM;
 
-        
-        $requestArray = $request->all();
-
-        // Validate template ID
-        $validatorInput = [
-            'id' => $id,
-            'name' => $requestArray['name'],
-            'category_id' => $requestArray['category_id'],
-            'blueprint' => $requestArray['blueprint']
-        ];
+        $request->request->add(['id' => $id]);
         $validatorRules = [
             'id' => [
                 'required',
@@ -307,22 +303,17 @@ class TemplateController extends Controller
                 'required',
                 'min:1',
                 'max:100',
-                new TemplateBlueprint($request->ru_size)
+                new TemplateBlueprint(null, $id, 'front')
             ],
             'blueprint.rear' => [
                 'required',
                 'min:1',
                 'max:100',
-                new TemplateBlueprint($request->ru_size)
+                new TemplateBlueprint(null, $id, 'rear')
             ]
         ];
-        $validatorMessages = [];
-        
-        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
-        if($this->archiveRow) {
-            Log::info($this->archiveRow);
-            $customValidator->getMessageBag()->add('archive', $this->archiveRow);
-        }
+        $validatorMessages = $PCM->transformValidationMessages($validatorRules, $this->archiveAddress);
+        $customValidator = Validator::make($request->all(), $validatorRules, $validatorMessages);
         $customValidator->stopOnFirstFailure();
         $customValidator->validate();
 

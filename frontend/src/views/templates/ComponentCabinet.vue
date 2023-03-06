@@ -194,6 +194,7 @@ export default {
       const TemplateFace = event.dataTransfer.getData('template_face')
 
       const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+      console.log(TemplateIndex)
       const Template = vm.Templates[Context][TemplateIndex]
       const TemplateType = Template.type
 

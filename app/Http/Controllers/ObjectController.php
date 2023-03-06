@@ -205,29 +205,26 @@ class ObjectController extends Controller
             abort(403);
         }
 
-        $validatorInput = [
-            'locationID' => $request->location_id,
-            'floorplanObjectType' => $request->floorplan_object_type,
-            'floorplanAddress' => $request->floorplan_address
-        ];
+        $PCM = new PCM;
+
         $validatorRules = [
-            'locationID' => [
+            'location_id' => [
                 'required',
                 'integer',
                 'exists:location,id'
             ],
-            'floorplanObjectType' => [
+            'floorplan_object_type' => [
                 'required',
                 'in:device,wap,camera,walljack',
             ],
-            'floorplanAddress' => [
+            'floorplan_address' => [
                 'required',
                 'array',
             ]
         ];
 
-        $validatorMessages = [];
-        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        $validatorMessages = $PCM->transformValidationMessages($validatorRules, $this->archiveAddress);
+        $customValidator = Validator::make($request->all(), $validatorRules, $validatorMessages);
         $customValidator->stopOnFirstFailure();
         $customValidator->validate();
 
@@ -277,31 +274,7 @@ class ObjectController extends Controller
                 'regex:/^[A-Za-z0-9\/\_]+$/',
                 'min:1',
                 'max:255'
-            ],
-            'parent_id' => [
-                'sometimes',
-                'integer',
-                'exists:object,id'
-            ],'parent_face' => [
-                'required_with:parent_id',
-                'in:front,rear',
-            ],'parent_partition_address' => [
-                'required_with:parent_id',
-                'array'
-            ],'parent_enclosure_address' => [
-                'required_with:parent_id',
-                'array'
-            ],
-            'floorplan_address' => [
-                'sometimes',
-                'array',
-            ],
-            'cabinet_ru' => [
-                'sometimes',
-                'integer',
-                'between:1,52',
-                new RUOccupancy($request->id, $request->location_id, $request->template_id, $request->cabinet_ru, $request->cabinet_face, $this->archiveAddress)
-            ],
+            ]
         ];
         $validatorMessages = $PCM->transformValidationMessages($validatorRules, $this->archiveAddress);
         $customValidator = Validator::make($request->all(), $validatorRules, $validatorMessages);
@@ -330,8 +303,40 @@ class ObjectController extends Controller
 
             // Validate floorplan data
 
+            $validatorRules = [
+                'floorplan_address' => [
+                    'sometimes',
+                    'array',
+                ]
+            ];
+            $validatorMessages = $PCM->transformValidationMessages($validatorRules, $this->archiveAddress);
+            $customValidator = Validator::make($request->all(), $validatorRules, $validatorMessages);
+            $customValidator->stopOnFirstFailure();
+            $customValidator->validate();
+
         } else if($objectType == 'insert') {
             // Validate insert data
+
+            $validatorRules = [
+                'parent_id' => [
+                    'sometimes',
+                    'integer',
+                    'exists:object,id'
+                ],'parent_face' => [
+                    'required_with:parent_id',
+                    'in:front,rear',
+                ],'parent_partition_address' => [
+                    'required_with:parent_id',
+                    'array'
+                ],'parent_enclosure_address' => [
+                    'required_with:parent_id',
+                    'array'
+                ],
+            ];
+            $validatorMessages = $PCM->transformValidationMessages($validatorRules, $this->archiveAddress);
+            $customValidator = Validator::make($request->all(), $validatorRules, $validatorMessages);
+            $customValidator->stopOnFirstFailure();
+            $customValidator->validate();
 
             // Collect request variables required for validation
             $parentObject = ObjectModel::where('id', $objectParentID)->first();
@@ -344,13 +349,26 @@ class ObjectController extends Controller
             }
 
             // Validate parent object enclosure occupancy
-            $Err = $PCM->validateEnclosureOccupancy($objectParentID, $objectParentFace, $objectParentPartitionAddress, $objectParentEnclosureAddress);
+            $Err = $PCM->validateEnclosureOccupancy($id, $objectParentID, $objectParentFace, $objectParentPartitionAddress, $objectParentEnclosureAddress);
             if($Err !== true) {
                 throw ValidationException::withMessages($Err);
             }
 
         } else if($objectType == 'standard') {
             // Validate standard data
+
+            $validatorRules = [
+                'cabinet_ru' => [
+                    'sometimes',
+                    'integer',
+                    'between:1,52',
+                    new RUOccupancy($request->id, $request->location_id, $request->template_id, $request->cabinet_ru, $request->cabinet_face, $this->archiveAddress)
+                ],
+            ];
+            $validatorMessages = $PCM->transformValidationMessages($validatorRules, $this->archiveAddress);
+            $customValidator = Validator::make($request->all(), $validatorRules, $validatorMessages);
+            $customValidator->stopOnFirstFailure();
+            $customValidator->validate();
 
             if($request->cabinet_ru) {
 
@@ -369,37 +387,52 @@ class ObjectController extends Controller
 
         // Update object record
         foreach($data as $key => $value) {
-            if($key == 'cabinet_ru') {
 
-                $cabinet = LocationModel::where('id', $request->location_id)->first();
-
-                // Update object RU
-                $object->cabinet_ru = $PCM->getRUIndex($value, $cabinet->size, $cabinet->ru_orientation);
-            } else if($key == 'name') {
+            if($key == 'name') {
 
                 // Update object name
                 $object->name = $value;
-            } else if($key == 'parent_id') {
-
-                // Update parent ID
-                $object->parent_id = $value;
-            } else if($key == 'parent_face') {
-
-                // Update parent face
-                $object->parent_face = $value;
-            } else if($key == 'parent_partition_address') {
-
-                // Update parent partition address
-                $object->parent_partition_address = $value;
-            } else if($key == 'parent_enclosure_address') {
-
-                // Update parent enclosure address
-                $object->parent_enclosure_address = $value;
-            } else if($key == 'floorplan_address') {
-
-                // Update parent enclosure address
-                $object->floorplan_address = $value;
             }
+
+            if($objectType == 'floorplan') {
+
+                if($key == 'floorplan_address') {
+
+                    // Update parent enclosure address
+                    $object->floorplan_address = $value;
+                }
+
+            } else if($objectType == 'insert') {
+
+                if($key == 'parent_id') {
+
+                    // Update parent ID
+                    $object->parent_id = $value;
+                } else if(isset($data['parent_id']) && $key == 'parent_face') {
+    
+                    // Update parent face
+                    $object->parent_face = $value;
+                } else if(isset($data['parent_id']) && $key == 'parent_partition_address') {
+    
+                    // Update parent partition address
+                    $object->parent_partition_address = $value;
+                } else if(isset($data['parent_id']) && $key == 'parent_enclosure_address') {
+    
+                    // Update parent enclosure address
+                    $object->parent_enclosure_address = $value;
+                }
+
+            } else if($objectType == 'standard') {
+
+                if($key == 'cabinet_ru') {
+
+                    $cabinet = LocationModel::where('id', $request->location_id)->first();
+    
+                    // Update object RU
+                    $object->cabinet_ru = $PCM->getRUIndex($value, $cabinet->size, $cabinet->ru_orientation);
+                }
+            }
+            
         }
 
         // Save object record
@@ -435,7 +468,7 @@ class ObjectController extends Controller
                 'exists:object'
             ]
         ];
-        $validatorMessages = [];
+        $validatorMessages = $PCM->transformValidationMessages($validatorRules, $this->archiveAddress);
         $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
         $customValidator->stopOnFirstFailure();
         $customValidator->validate();

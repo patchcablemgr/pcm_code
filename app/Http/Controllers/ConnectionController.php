@@ -16,6 +16,9 @@ use Illuminate\Support\Facades\Gate;
 
 class ConnectionController extends Controller
 {
+
+    public $archiveAddress = NULL;
+    
     /**
      * Display a listing of the resource.
      *
@@ -134,8 +137,6 @@ class ConnectionController extends Controller
         } else {
             $peerData = $data['peer_data'];
         }
-
-        Log::info(json_encode($peerData));
 
         // Ensure connection does not introduce loops
         $portA = array(

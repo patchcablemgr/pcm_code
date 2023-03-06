@@ -14,6 +14,9 @@ use Illuminate\Support\Facades\Gate;
 
 class CablePathController extends Controller
 {
+
+    public $archiveAddress = NULL;
+
     /**
      * Display a listing of the resource.
      *
@@ -40,12 +43,7 @@ class CablePathController extends Controller
             abort(403);
         }
 
-        $validatorInput = [
-            'cabinet_a_id' => $request->cabinet_a_id,
-            'cabinet_b_id' => $request->cabinet_b_id,
-            'distance' => $request->distance,
-            'notes' => $request->notes,
-        ];
+        $PCM = new PCM;
 
         $validatorRules = [
             'cabinet_a_id' => [
@@ -72,8 +70,8 @@ class CablePathController extends Controller
             ],
         ];
 
-        $validatorMessages = [];
-        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        $validatorMessages = $PCM->transformValidationMessages($validatorRules, $this->archiveAddress);
+        $customValidator = Validator::make($request->all(), $validatorRules, $validatorMessages);
         $customValidator->stopOnFirstFailure();
         $customValidator->validate();
 
@@ -145,7 +143,7 @@ class CablePathController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Update resource.
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
@@ -159,13 +157,7 @@ class CablePathController extends Controller
             abort(403);
         }
 
-        $validatorInput = [
-            'id' => $id,
-            'cabinet_a_id' => $request->cabinet_a_id,
-            'cabinet_b_id' => $request->cabinet_b_id,
-            'distance' => $request->distance,
-            'notes' => $request->notes,
-        ];
+        $PCM = new PCM;
 
         $validatorRules = [
             'id' => [
@@ -197,8 +189,8 @@ class CablePathController extends Controller
             ],
         ];
 
-        $validatorMessages = [];
-        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        $validatorMessages = $PCM->transformValidationMessages($validatorRules, $this->archiveAddress);
+        $customValidator = Validator::make($request->all(), $validatorRules, $validatorMessages);
         $customValidator->stopOnFirstFailure();
         $customValidator->validate();
 

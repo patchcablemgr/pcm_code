@@ -182,12 +182,12 @@ class PCM extends Controller
 	 * @param  arr  $objectParentEnclosureAddress
      * @return arr
      */
-    public function validateEnclosureOccupancy($objectParentID, $objectParentFace, $objectParentPartitionAddress, $objectParentEnclosureAddress)
+    public function validateEnclosureOccupancy($objectID, $objectParentID, $objectParentFace, $objectParentPartitionAddress, $objectParentEnclosureAddress)
     {
         // Validate parent object enclosure occupancy
-        $parentsFound = ObjectModel::where(['parent_id' => $objectParentID, 'parent_face' => $objectParentFace])->get();
-        foreach($parentsFound as $parent) {
-            if($parent['parent_partition_address'] == $objectParentPartitionAddress && $parent['parent_enclosure_address'] == $objectParentEnclosureAddress) {
+        $insertsFound = ObjectModel::where(['parent_id' => $objectParentID, 'parent_face' => $objectParentFace])->get();
+        foreach($insertsFound as $insert) {
+            if($insert['parent_partition_address'] == $objectParentPartitionAddress && $insert['parent_enclosure_address'] == $objectParentEnclosureAddress && $insert['id'] != $objectID) {
                 return ['parentEnclosureAddress' => 'Destination enclosure slot is occupied.'];
             }
         }

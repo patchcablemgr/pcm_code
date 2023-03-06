@@ -17,6 +17,9 @@ use Illuminate\Support\Facades\Gate;
 
 class TrunkController extends Controller
 {
+
+    public $archiveAddress = NULL;
+    
     /**
      * Display a listing of the resource.
      *
@@ -45,12 +48,6 @@ class TrunkController extends Controller
         
         $PCM = new PCM;
 
-        // Validate
-        $validatorInput = [
-            'id' => $request->id,
-            'face' => $request->face,
-            'peer_data' => $request->peer_data,
-        ];
         $validatorRules = [
             'id' => [
                 'required',
@@ -67,8 +64,8 @@ class TrunkController extends Controller
             ],
         ];
 
-        $validatorMessages = [];
-        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        $validatorMessages = $PCM->transformValidationMessages($validatorRules, $this->archiveAddress);
+        $customValidator = Validator::make($request->all(), $validatorRules, $validatorMessages);
         $customValidator->stopOnFirstFailure();
         $customValidator->validate();
 
@@ -250,6 +247,41 @@ class TrunkController extends Controller
         }
 
         return $returnData;
+    }
+
+    /**
+     * Update the specified resource.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request, $id)
+    {
+
+        // RBAC
+        if (! Gate::allows('operator')) {
+            abort(403);
+        }
+
+        $PCM = new PCM;
+        
+        $request->request->add(['id' => $id]);
+        $validatorRules = [
+            'id' => [
+                'required',
+                'exists:trunk'
+            ]
+        ];
+        $validatorMessages = $PCM->transformValidationMessages($validatorRules, $this->archiveAddress);
+        $customValidator = Validator::make($request->all(), $validatorRules, $validatorMessages);
+        $customValidator->stopOnFirstFailure();
+        $customValidator->validate();
+
+        $trunk = TrunkModel::where('id', $id)->first();
+
+        return $trunk;
+
     }
 
     /**

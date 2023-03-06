@@ -12,6 +12,9 @@ use App\Models\PortModel;
 
 class PortController extends Controller
 {
+
+    public $archiveAddress = NULL;
+
     /**
      * Display a listing of the resource.
      *
@@ -38,16 +41,8 @@ class PortController extends Controller
             abort(403);
         }
 
-        // Store request data
-        $data = $request->all();
-
-        $validatorInput = [
-            'id' => $data['id'],
-            'face' => $data['face'],
-            'partition' => $data['partition'],
-            'port-id' => $data['port_id'],
-            'description' => $data['description'],
-        ];
+        $PCM = new PCM;
+        
         $validatorRules = [
             'id' => [
                 'required',
@@ -61,7 +56,7 @@ class PortController extends Controller
                 'required',
                 'array'
             ],
-            'port-id' => [
+            'port_id' => [
                 'required',
                 'numeric'
             ],
@@ -71,10 +66,12 @@ class PortController extends Controller
                 'nullable'
             ],
         ];
-        $validatorMessages = [];
-        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        $validatorMessages = $PCM->transformValidationMessages($validatorRules, $this->archiveAddress);
+        $customValidator = Validator::make($request->all(), $validatorRules, $validatorMessages);
         $customValidator->stopOnFirstFailure();
         $customValidator->validate();
+
+        $data = $request->all();
 
         // Find connections associated with selected object to be removed
         $port = portModel::where('object_id', $data['id'])

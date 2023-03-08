@@ -93,6 +93,8 @@ class ArchiveController extends Controller
             abort(403);
         }
 
+        $PCM = new PCM;
+
         $tables = array(
             'category' => new CategoryModel,
             'template' => new TemplateModelNoImgData,
@@ -133,6 +135,18 @@ class ArchiveController extends Controller
 
                 // Add CSV rows
                 foreach ($table->all() as $entry) {
+
+                    // Convert object cabinet_ru according to cabinet orientation
+                    if($tableName == 'object') {
+                        if($entry->cabinet_ru) {
+                            $locationID = $entry->location_id;
+                            $location = $tables['location']::where('id', $locationID)->first();
+                            $cabinetRU = $entry->cabinet_ru;
+                            $cabinetSize = $location->size;
+                            $cabinetOrientation = $location->ru_orientation;
+                            $entry->cabinet_ru = $PCM->getRUIndex($cabinetRU, $cabinetSize, $cabinetOrientation);
+                        }
+                    }
 
                     // Add row to CSV
                     fputcsv($csvFile, array_values(array_map($tableEntryCallback, $entry->toArray($entry))));
@@ -224,7 +238,7 @@ class ArchiveController extends Controller
                 'model' => new CategoryModel,
                 'post_method' => 'store',
                 'patch_method' => 'update',
-                'dependencies' => array()
+                'dependentAttrs' => array()
             ),
             'template' => array(
                 'filename' => 'template.csv',
@@ -232,7 +246,7 @@ class ArchiveController extends Controller
                 'model' => new TemplateModel,
                 'post_method' => 'store',
                 'patch_method' => 'update',
-                'dependencies' => array()
+                'dependentAttrs' => array()
             ),
             'location' => array(
                 'filename' => 'location.csv',
@@ -242,8 +256,8 @@ class ArchiveController extends Controller
                 'patch_method' => 'update',
                 'image_controller' => new ImageController,
                 'image_controller_method' => 'storeLocationImage',
-                'dependencies' => array(
-                    array('parent_id', 'id')
+                'dependentAttrs' => array(
+                    'parent_id'
                 )
             ),
             'object' => array(
@@ -256,8 +270,8 @@ class ArchiveController extends Controller
                     'floorplan' => 'storeFloorplan'
                 ),
                 'patch_method' => 'update',
-                'dependencies' => array(
-                    array('parent_id', 'id')
+                'dependentAttrs' => array(
+                    'parent_id'
                 )
             ),
             'trunk' => array(
@@ -266,7 +280,7 @@ class ArchiveController extends Controller
                 'model' => new TrunkModel,
                 'post_method' => 'store',
                 'patch_method' => 'update',
-                'dependencies' => array()
+                'dependentAttrs' => array()
             ),
             'port' => array(
                 'filename' => 'port.csv',
@@ -274,7 +288,7 @@ class ArchiveController extends Controller
                 'model' => new PortModel,
                 'post_method' => 'store',
                 'patch_method' => 'store',
-                'dependencies' => array()
+                'dependentAttrs' => array()
             ),
             'connection' => array(
                 'filename' => 'connection.csv',
@@ -282,7 +296,7 @@ class ArchiveController extends Controller
                 'model' => new ConnectionModel,
                 'post_method' => 'store',
                 'patch_method' => 'store',
-                'dependencies' => array()
+                'dependentAttrs' => array()
             ),
             'cable_path' => array(
                 'filename' => 'cable_path.csv',
@@ -290,7 +304,7 @@ class ArchiveController extends Controller
                 'model' => new CablePathModel,
                 'post_method' => 'store',
                 'patch_method' => 'update',
-                'dependencies' => array()
+                'dependentAttrs' => array()
             ),
             'cable' => array(
                 'filename' => 'cable.csv',
@@ -298,7 +312,7 @@ class ArchiveController extends Controller
                 'model' => new CableModel,
                 'post_method' => 'store',
                 'patch_method' => 'update',
-                'dependencies' => array()
+                'dependentAttrs' => array()
             ),
         );
 
@@ -328,6 +342,7 @@ class ArchiveController extends Controller
                     $row = 1;
                     if($file !== FALSE) {
                         $entryIDArray = array();
+                        //$postponedEntries = array();
                         while (($data = fgetcsv($file, 100000, ",")) !== FALSE) {
 
                             if($row == 1){
@@ -337,8 +352,28 @@ class ArchiveController extends Controller
 
                             } else {
 
+                                /*
+                                // Postpone processing entries that depend on other entries which have not been processed yet
+                                foreach($tableSchema['dependentAttrs'] as $dependentAttr) {
+                                    $depAttrIdx = $attrMap[$dependentAttr];
+                                    $depID = $data[$depAttrIdx];
+                                    if(!in_array($depID, $entryIDArray)) {
+                                        $postponedEntries[$row] = $data;
+                                        $row++;
+                                        continue;
+                                    }
+                                }
+                                */
+
+                                // Prevent entries with duplicate IDs
+                                $entryIDIdx = $attrMap['id'];
+                                $entryID = $data[$entryIDIdx];
+                                if(in_array($entryID, $entryIDArray)) {
+                                    throw ValidationException::withMessages(['error' => 'Duplicate entry ID found. '.$tableFileName.":".$row]);
+                                }
+
                                 // Process entry
-                                $importID = $this->processCSVEntry($data, $attrMap, $tableSchema, $tableName, $tableFilename, $row);
+                                $importID = $this->processCSVEntry($data, $attrMap, $tableSchema, $tableName, $tableFileName, $row);
 
                                 // Add to entry array
                                 array_push($entryIDArray, $importID);
@@ -401,11 +436,11 @@ class ArchiveController extends Controller
      * @param   array $attrMap
      * @param   array $tableSchema
      * @param   string $tableName
-     * @param   string $tableFilename
+     * @param   string $tableFileName
      * @param   integer $row
      * @return  integer
      */
-    private function processCSVEntry($data, $attrMap, $tableSchema, $tableName, $tableFilename, $row)
+    private function processCSVEntry($data, $attrMap, $tableSchema, $tableName, $tableFileName, $row)
     {
 
         // Create request
@@ -415,12 +450,13 @@ class ArchiveController extends Controller
         $entryID = $data[$attrMap['id']];
 
         // Determine if entry should be created or updated
-        $entryAction = ($tableSchema['model']::firstWhere('id', $entryID)) ? 'update' : 'create';
+        $entryAction = ($entryID) ? 'update' : 'create';
 
         // Prepare request
         switch($entryAction) {
 
             case 'create':
+                Log::info('Create: '.$tableFileName.":".$row);
                 $importRequest->setMethod('POST');
                 $controllerMethod = $tableSchema['post_method'];
 
@@ -439,6 +475,7 @@ class ArchiveController extends Controller
                 break;
 
             case 'update':
+                Log::info('Update: '.$tableFileName.":".$row);
                 $importRequest->setMethod('PATCH');
                 $controllerMethod = $tableSchema['patch_method'];
                 break;

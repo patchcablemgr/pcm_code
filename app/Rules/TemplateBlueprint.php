@@ -19,6 +19,7 @@ class TemplateBlueprint implements Rule
     public function __construct($request, $id, $face)
     {
 
+        $this->returnMessage = 'Unknown error.';
         $this->ignore = false;
 
         if(!is_null($id)) {
@@ -55,7 +56,6 @@ class TemplateBlueprint implements Rule
             $height
         );
 
-        $this->returnMessage = 'Unknown error.';
     }
 
     /**
@@ -145,7 +145,7 @@ class TemplateBlueprint implements Rule
 
                                     // Recurse
                                     $unitsAvailable[round($depth%2)] = $units;
-                                    return $this->validatePartition($partition['children'], $unitsAvailable, $depth++);
+                                    return $this->validatePartition($partition['children'], $unitsAvailable, $depth+1);
                                 } else {
                                     $this->returnMessage = 'Invalid blueprint depth.  Depth: '.$depth;
                                     $valid = false;

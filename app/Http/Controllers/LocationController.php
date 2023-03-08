@@ -57,6 +57,8 @@ class LocationController extends Controller
             abort(403);
         }
 
+        $PCM = new PCM;
+
         // Prepare variables
         $locationTypeArray = [
             'location',

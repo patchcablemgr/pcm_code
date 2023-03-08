@@ -18,6 +18,7 @@ class ObjectController extends Controller
 {
 
     public $archiveAddress = NULL;
+    private $defaultObjectName = 'New_Object';
     
     /**
      * Display a listing of the resource.
@@ -46,9 +47,14 @@ class ObjectController extends Controller
         }
 
         $PCM = new PCM;
-        Log::info($request);
 
         $validatorRules = [
+            'name' => [
+                'sometimes',
+                'regex:/^[A-Za-z0-9\/\_]+$/',
+                'min:1',
+                'max:255'
+            ],
             'template_id' => [
                 'required',
                 'integer',
@@ -67,7 +73,7 @@ class ObjectController extends Controller
                 'required',
                 'integer',
                 'between:1,52',
-                new RUOccupancy(null, $request->location_id, $request->template_id, $request->cabinet_ru, $request->cabinet_face, $this->archiveAddress)
+                new RUOccupancy(null, $request->location_id, $request->template_id, $request->cabinet_ru, $request->cabinet_front, $this->archiveAddress)
             ]
         ];
 
@@ -79,7 +85,6 @@ class ObjectController extends Controller
         $cabinet = LocationModel::where('id', $request->location_id)->first();
 
         // Store new object variables
-        $objectName = "New_Object";
         $templateID = $request->template_id;
         $locationID = $request->location_id;
         $cabinetRU = $PCM->getRUIndex($request->cabinet_ru, $cabinet->size, $cabinet->ru_orientation);
@@ -87,7 +92,7 @@ class ObjectController extends Controller
 
         $object = new ObjectModel;
 
-        $object->name = $objectName;
+        $object->name = isset($request->name) ? $request->name : $this->defaultObjectName;
         $object->template_id = $templateID;
         $object->location_id = $locationID;
         $object->cabinet_ru = $cabinetRU;
@@ -123,6 +128,12 @@ class ObjectController extends Controller
             'parentEnclosureAddress' => $request->parent_enclosure_address
         ];
         $validatorRules = [
+            'name' => [
+                'sometimes',
+                'regex:/^[A-Za-z0-9\/\_]+$/',
+                'min:1',
+                'max:255'
+            ],
             'templateID' => [
                 'required',
                 'integer',
@@ -144,7 +155,7 @@ class ObjectController extends Controller
             'parentEnclosureAddress' => [
                 'array',
                 'required'
-            ],
+            ]
         ];
 
         $validatorMessages = $PCM->transformValidationMessages($validatorRules, $this->archiveAddress);
@@ -153,7 +164,6 @@ class ObjectController extends Controller
         $customValidator->validate();
 
         // Store new object variables
-        $objectName = "New_Object";
         $objectTemplateID = $request->template_id;
         $objectParentID = $request->parent_id;
         $objectParentFace = $request->parent_face;
@@ -177,7 +187,7 @@ class ObjectController extends Controller
 
         $object = new ObjectModel;
 
-        $object->name = $objectName;
+        $object->name = isset($request->name) ? $request->name : $this->defaultObjectName;
         $object->template_id = $objectTemplateID;
         $object->location_id = $objectLocationID;
         $object->parent_id = $objectParentID;
@@ -208,6 +218,12 @@ class ObjectController extends Controller
         $PCM = new PCM;
 
         $validatorRules = [
+            'name' => [
+                'sometimes',
+                'regex:/^[A-Za-z0-9\/\_]+$/',
+                'min:1',
+                'max:255'
+            ],
             'location_id' => [
                 'required',
                 'integer',
@@ -235,7 +251,7 @@ class ObjectController extends Controller
 
         $object = new ObjectModel;
 
-        $object->name = "New_Object";
+        $object->name = isset($request->name) ? $request->name : $this->defaultObjectName;
         $object->location_id = $request->location_id;
         $object->floorplan_object_type = $request->floorplan_object_type;
         $object->floorplan_address = $request->floorplan_address;
@@ -362,7 +378,7 @@ class ObjectController extends Controller
                     'sometimes',
                     'integer',
                     'between:1,52',
-                    new RUOccupancy($request->id, $request->location_id, $request->template_id, $request->cabinet_ru, $request->cabinet_face, $this->archiveAddress)
+                    new RUOccupancy($request->id, $request->location_id, $object['template_id'], $request->cabinet_ru, $request->cabinet_face, $this->archiveAddress)
                 ],
             ];
             $validatorMessages = $PCM->transformValidationMessages($validatorRules, $this->archiveAddress);

@@ -495,11 +495,11 @@ export default {
           const PortID = vm.StateSelected[Context].port_id[Face]
           const CableID = vm.CableEndID
           const data = {
-            'id': ObjectID,
-            'face': Face,
-            'partition': Partition,
-            'port_id': PortID,
-            'cable_id': CableID,
+            'a_id': ObjectID,
+            'a_face': Face,
+            'a_partition': Partition,
+            'a_port': PortID,
+            'a_cable_id': CableID,
           }
           vm.$http.post('/api/connections', data).then(response => {
 

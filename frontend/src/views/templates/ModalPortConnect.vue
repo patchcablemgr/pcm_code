@@ -182,15 +182,47 @@ export default {
       const SelectedObjectPartition = (SelectedObjectIsFloorplan) ? [0] : vm.StateSelected[Context].partition[SelectedObjectFace]
       const SelectedObjectPortID = (SelectedObjectIsFloorplan) ? null : vm.StateSelected[Context].port_id[SelectedObjectFace]
 
-      let PeerData = []
+      // Compile POST data
+      const data = {
+        'a_id':SelectedObjectID,
+        'a_face':SelectedObjectFace,
+        'a_partition':SelectedObjectPartition,
+        'a_port':SelectedObjectPortID
+      }
+
+      if(TreeSelection.length > 1) {
+        data['group_id'] = Date.now()
+      }
+
+      //let PeerData = []
       TreeSelection.forEach(function(node){
+        data['b_id'] = node.data.object_id
+        data['b_face'] = node.data.face
+        data['b_partition'] = node.data.partition_address
+        data['b_port'] = node.data.port_id
+
+        // POST Connection
+        const URL = '/api/connections'
+        vm.$http.post(URL, data).then(response => {
+
+          // Add connection to store
+          response.data.add.forEach(add => vm.$store.commit('pcmConnections/ADD_Connection', {data:add}))
+          response.data.remove.forEach(remove => vm.$store.commit('pcmConnections/REMOVE_Connection', {data:remove}))
+
+          // Close modal
+          vm.$root.$emit('bv::hide::modal', vm.ModalID)
+
+        }).catch(error => {vm.DisplayError(error)})
+        /*
         const PeerObjectID = node.data.object_id
         const PeerObjectFace = node.data.face
         const PeerObjectPartition = node.data.partition_address
         const PeerObjectPortID = node.data.port_id
         PeerData.push({'id':PeerObjectID, 'face':PeerObjectFace, 'partition':PeerObjectPartition, 'port_id':PeerObjectPortID})
+        */
       })
 
+      /*
       // Compile POST data
       const data = {
         'id':SelectedObjectID,
@@ -199,19 +231,9 @@ export default {
         'port_id':SelectedObjectPortID,
         'peer_data':PeerData
       }
+      */
 
-      // POST Connection
-      const URL = '/api/connections'
-      vm.$http.post(URL, data).then(response => {
-
-        // Add connection to store
-        response.data.add.forEach(add => vm.$store.commit('pcmConnections/ADD_Connection', {data:add}))
-        response.data.remove.forEach(remove => vm.$store.commit('pcmConnections/REMOVE_Connection', {data:remove}))
-
-        // Close modal
-        vm.$root.$emit('bv::hide::modal', vm.ModalID)
-
-      }).catch(error => {vm.DisplayError(error)})
+      
     },
   },
   mounted() {

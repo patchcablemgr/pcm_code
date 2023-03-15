@@ -13,6 +13,7 @@ use App\Models\CablePathModel;
 use App\Models\TrunkModel;
 use App\Models\CableModel;
 use App\Models\PortModel;
+use Illuminate\Support\Facades\Log;
 
 class DataSyncController extends Controller
 {
@@ -23,55 +24,81 @@ class DataSyncController extends Controller
      * @param  int  $timestamp
      * @return \Illuminate\Http\Response
      */
-    public function getChanges(Request $request, $timestamp)
+    public function getChanges(Request $request)
     {
-        // Validate template ID
-        $validatorInput = [
-            'timestamp' => $timestamp,
-        ];
+        
         $validatorRules = [
             'timestamp' => [
                 'required',
                 'numeric',
             ],
+            'entries' => [
+                'required',
+                'array:cable-paths,cables,categories,connections,locations,objects,ports,templates,trunks',
+            ],
         ];
         $validatorMessages = [];
-        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        $customValidator = Validator::make($request->all(), $validatorRules, $validatorMessages);
         $customValidator->stopOnFirstFailure();
         $customValidator->validate();
 
         // Format timestamp
-        $dateFormatted = date('Y-m-d H:i:s', $timestamp);
+        $dateFormatted = date('Y-m-d H:i:s', $request->timestamp);
 
-        // Collect tables
-        $cablePaths = CablePathModel::where('updated_at', '>', $dateFormatted)->get();
-        $cables = CableModel::where('updated_at', '>', $dateFormatted)->get();
-        $categories = CategoryModel::where('updated_at', '>', $dateFormatted)->get();
-        $connections = ConnectionModel::where('updated_at', '>', $dateFormatted)->get();
-        $locations = LocationModel::where('updated_at', '>', $dateFormatted)->get();
-        $objects = ObjectModel::where('updated_at', '>', $dateFormatted)->get();
-        $ports = PortModel::where('updated_at', '>', $dateFormatted)->get();
-        $templates = TemplateModel::where('updated_at', '>', $dateFormatted)->get();
-        $trunks = TrunkModel::where('updated_at', '>', $dateFormatted)->get();
-        
+        $tableModels = array(
+            'cable-paths' => new CablePathModel,
+            'cables' => new CableModel,
+            'categories' => new CategoryModel,
+            'connections' => new ConnectionModel,
+            'locations' => new LocationModel,
+            'objects' => new ObjectModel,
+            'ports' => new PortModel,
+            'templates' => new TemplateModel,
+            'trunks' => new TrunkModel,
+        );
+
+        foreach($tableModels as $tableName => $tableModel) {
+
+            $presentArray = $tableModel->where('updated_at', '>', $dateFormatted)->get();
+            $absentArray = $this->getDeletes($tableModel, $request->entries[$tableName]);
+            $tables[$tableName] = array(
+                'present' => $presentArray,
+                'absent' => $absentArray
+            );
+        }
 
         // Compile tables
         $returnData = array(
-            'tables' => array(
-                'cable-paths' => $cablePaths,
-                'cables' => $cables,
-                'categories' => $categories,
-                'connections' => $connections,
-                'locations' => $locations,
-                'objects' => $objects,
-                'ports' => $ports,
-                'templates' => $templates,
-                'trunks' => $trunks,
-            ),
+            'tables' => $tables,
             'timestamp' => time()
         );
 
         // Return tables
         return $returnData;
+    }
+
+    /**
+     * Get creates/updates since timestamp
+     *
+     * @param  object   $tableModel
+     * @param  array    $entries
+     * @return array
+     */
+    private function getDeletes($tableModel, $entries)
+    {
+
+        // Initialize return array
+        $deleteArray = array();
+
+        // Iterate over entry IDs
+        foreach($entries as $entryID) {
+
+            // Push entry ID if it is not found in the database
+            if($tableModel->where('id', '=', $entryID)->count() == 0) {
+                array_push($deleteArray, $entryID);
+            }
+        }
+
+        return $deleteArray;
     }
 }

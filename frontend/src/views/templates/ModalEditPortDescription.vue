@@ -131,9 +131,9 @@ export default {
           // PATCH object
           const URL = '/api/ports/'
           const data = {
-            id: ObjectID,
-            face: ObjectFace,
-            partition: ObjectPartition,
+            object_id: ObjectID,
+            object_face: ObjectFace,
+            object_partition: ObjectPartition,
             port_id: PortID,
             description: Description,
           }

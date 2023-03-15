@@ -16,6 +16,9 @@ use Illuminate\Support\Facades\Gate;
 
 class CableController extends Controller
 {
+
+    public $archiveAddress = NULL;
+    
     /**
      * Display a listing of the resource.
      *

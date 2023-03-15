@@ -226,6 +226,8 @@ export const PCM = {
             const ParentID = Parent.data.id
             const ParentType = Parent.data.type
 
+            console.log('ParentID ('+ParentType+'): '+ParentID)
+
             let ChildrenFiltered = []
 
             if(ParentType == 'root' || ParentType == 'location' || ParentType == 'pod') {
@@ -237,12 +239,18 @@ export const PCM = {
                     ChildrenFiltered = vm.Objects[Context].filter(object => object.location_id == ParentID && object.parent_id == null)
                 }
             } else if(ParentType == 'object') {
+
+                console.log('ParentID: '+ParentID)
                 
                 if(Scope == 'partition' || Scope == 'port') {
+
+                    console.log('here1')
 
                     // Cannot trunk to self
                     const SelectedObjectID = vm.StateSelected[Context].object_id
                     if(ParentID != SelectedObjectID) {
+
+                        console.log('here2')
                         
                         // Collect connectable partitions
                         const ParentObjectIndex = vm.GetObjectIndex(ParentID, Context)
@@ -256,7 +264,7 @@ export const PCM = {
                         })
                         
                         ChildrenFiltered = ChildrenFiltered.concat(vm.GetInsertConnectablePartitions(ParentID))
-                        
+                        console.log(ChildrenFiltered)
                     }
                 }
             }
@@ -463,7 +471,6 @@ export const PCM = {
             HonorHover = (vm.$route.name == 'environment' && Context == 'template') ? false : HonorHover
 
             if(HonorHover) {
-
                 let WorkingHovered = vm.StateHovered[Context]
 
                 WorkingHovered.object_id = ObjectID
@@ -757,11 +764,13 @@ export const PCM = {
                     // Cannot trunk endpoint to endpoint
                     if(Scope == 'partition' && SelectedTemplateFunction == 'endpoint' && NodeTemplateFunction == 'endpoint') {
                         Compatible = false
+                        console.log('not compatible 1')
                     }
 
                     // Must have same number of ports
                     if(Scope == 'partition' && SelectedPortTotal != NodePortTotal && SelectedPortTotal != 0) {
                         Compatible = false
+                        console.log('not compatible 2')
                     }
 
                     // Media types must be compatible
@@ -773,6 +782,7 @@ export const PCM = {
                         const NodeMediaTypeID = NodeConnector.type_id
                         if((SelectedMediaTypeID != 4 && NodeMediaTypeID != 4) && (SelectedMediaTypeID != NodeMediaTypeID)) {
                             Compatible = false
+                            console.log('not compatible 3')
                         }
                     } else {
                         // Node and Selected templates are passive
@@ -782,6 +792,7 @@ export const PCM = {
                         const NodeMediaCategoryID = NodeMedia.category_id
                         if(SelectedMediaCategoryID != NodeMediaCategoryID) {
                             Compatible = false
+                            console.log('not compatible 4')
                         }
                     }
 
@@ -962,6 +973,7 @@ export const PCM = {
 
                         ConnectionPath.push(
                             {
+                                'uuid': vm.$uuid.v4(),
                                 'id': LocalObjectID,
                                 'face': LocalFace,
                                 'partition': LocalPartition,
@@ -986,6 +998,7 @@ export const PCM = {
 
                             ConnectionPath.push(
                                 {
+                                    'uuid': vm.$uuid.v4(),
                                     'id': RemoteObjectID,
                                     'face': RemoteFace,
                                     'partition': RemotePartition,
@@ -1037,6 +1050,7 @@ export const PCM = {
 
                             ConnectionPath.unshift(
                                 {
+                                    'uuid': vm.$uuid.v4(),
                                     'id': RemoteTrunkObjectID,
                                     'face': RemoteTrunkFace,
                                     'partition': RemoteTrunkPartition,
@@ -1061,6 +1075,7 @@ export const PCM = {
 
                                 ConnectionPath.unshift(
                                     {
+                                        'uuid': vm.$uuid.v4(),
                                         'id': RemoteConnectionObjectID,
                                         'face': RemoteConnectionFace,
                                         'partition': RemoteConnectionPartition,

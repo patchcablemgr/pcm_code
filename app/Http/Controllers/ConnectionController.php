@@ -47,66 +47,91 @@ class ConnectionController extends Controller
 
         $PCM = new PCM;
 
-        // Store request data
-        $data = $request->all();
-
-        $validatorInput = [
-            'id' => $data['id'],
-            'face' => $data['face'],
-            'partition' => $data['partition'],
-            'port-id' => $data['port_id'],
-            'peer-data' => (isset($data['peer_data'])) ? $data['peer_data'] : array(),
-            'cable-id' => (isset($data['cable_id'])) ? $data['cable_id'] : null,
-        ];
         $validatorRules = [
-            'id' => [
+            'a_id' => [
                 'required',
                 'integer',
-                'exists:object'
+                'exists:object,id'
             ],
-            'face' => [
+            'a_face' => [
                 'required',
                 'in:front,rear'
             ],
-            'partition' => [
+            'a_partition' => [
                 'required',
                 'array'
             ],
-            'port-id' => [
+            'a_port' => [
                 'required',
                 'numeric'
             ],
-            'peer-data' => [
-                'required_without:cable-id',
-                'array',
-                new ConnectionPeerData
-            ],
-            'cable-id' => [
-                'required_without:peer-data',
+            'a_cable_id' => [
+                'sometimes',
                 'string',
                 'nullable',
                 new CableID
             ],
+            'b_id' => [
+                'sometimes',
+                'integer',
+                'exists:object,id',
+                'nullable',
+            ],
+            'b_face' => [
+                'in:front,rear',
+                'nullable',
+            ],
+            'b_partition' => [
+                'array',
+                'nullable',
+            ],
+            'b_port' => [
+                'numeric',
+                'nullable',
+            ],
+            'b_cable_id' => [
+                'string',
+                'nullable',
+                new CableID
+            ],
+            'group_id' => [
+                'sometimes',
+                'integer',
+            ],
         ];
-        $validatorMessages = [];
-        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        $validatorMessages = $PCM->transformValidationMessages($validatorRules, $this->archiveAddress);
+        $customValidator = Validator::make($request->all(), $validatorRules, $validatorMessages);
+        $customValidator->sometimes(['b_face', 'b_partition', 'b_port'], 'required', function ($input) {
+            if(isset($input->b_id)) {
+                if($input->b_id != Null) {
+                    return true;
+                }
+            }
+            return false;
+        });
+        $customValidator->sometimes(['b_id', 'b_face', 'b_partition', 'b_port'], 'required', function ($input) {
+            if(isset($input->b_cable_id)) {
+                if($input->b_cable_id != Null) {
+                    return true;
+                }
+            }
+            return false;
+        });
         $customValidator->stopOnFirstFailure();
         $customValidator->validate();
 
-        if(isset($data['cable_id'])) {
+        $data = $request->all();
+
+        // Remote port is not defined and must be found
+        if(isset($data['a_cable_id']) and !isset($data['b_cable_id'])) {
 
             // Get cable
-            $cable = CableModel::where('a_id', $data['cable_id'])
-                ->orwhere('b_id', $data['cable_id'])
+            $cable = CableModel::where('a_id', $data['a_cable_id'])
+                ->orwhere('b_id', $data['a_cable_id'])
                 ->first();
 
-            // Validate cable
-            if(!$cable) {
-                throw ValidationException::withMessages(['cable_id' => 'Cable not found.']);
-            }
-
             // Get remote cable ID
-            $remoteSide = ($cable['a_id'] == $data['cable_id']) ? 'b' : 'a';
+            $remoteSide = ($cable['a_id'] == $data['a_cable_id']) ? 'b' : 'a';
             $remoteCableID = $cable[$remoteSide.'_id'];
 
             // Get connection
@@ -117,44 +142,51 @@ class ConnectionController extends Controller
             // Generate peer data
             if($remoteConnection) {
                 $localSide = ($remoteConnection['a_cable_id'] == $remoteCableID) ? 'a' : 'b';
-                $remoteSide = ($remoteConnection['a_cable_id'] == $remoteCableID) ? 'b' : 'a';
-                $peerData = array(array(
-                    'id' => $remoteConnection[$localSide.'_id'],
-                    'face' => $remoteConnection[$localSide.'_face'],
-                    'partition' => $remoteConnection[$localSide.'_partition'],
-                    'port_id' => $remoteConnection[$localSide.'_port'],
-                    'cable_id' => $remoteCableID
-                ));
+
+                $data['b_id'] = $remoteConnection[$localSide.'_id'];
+                $data['b_face'] = $remoteConnection[$localSide.'_face'];
+                $data['b_partition'] = $remoteConnection[$localSide.'_partition'];
+                $data['b_port'] = $remoteConnection[$localSide.'_port'];
+                $data['b_cable_id'] = $remoteCableID;
             } else {
-                $peerData = array(array(
-                    'id' => null,
-                    'face' => null,
-                    'partition' => null,
-                    'port_id' => null,
-                    'cable_id' => null
-                ));
+                $data['b_id'] = NULL;
+                $data['b_face'] = NULL;
+                $data['b_partition'] = NULL;
+                $data['b_port'] = NULL;
+                $data['b_cable_id'] = NULL;
             }
-        } else {
-            $peerData = $data['peer_data'];
+        }
+
+        // Fill in b_ side data if not set
+        if(!isset($data['b_id'])) {
+            $data['b_id'] = NULL;
+            $data['b_face'] = NULL;
+            $data['b_partition'] = NULL;
+            $data['b_port'] = NULL;
+            $data['b_cable_id'] = NULL;
+        } else if($data['b_id'] == NULL) {
+            $data['b_id'] = NULL;
+            $data['b_face'] = NULL;
+            $data['b_partition'] = NULL;
+            $data['b_port'] = NULL;
+            $data['b_cable_id'] = NULL;
         }
 
         // Ensure connection does not introduce loops
         $portA = array(
-            'id' => $data['id'],
-            'face' => $data['face'],
-            'partition' => $data['partition'],
-            'port_id' => $data['port_id'],
+            'id' => $data['a_id'],
+            'face' => $data['a_face'],
+            'partition' => $data['a_partition'],
+            'port_id' => $data['a_port'],
         );
-        foreach($peerData as $key => $value) {
-            $portB = array(
-                'id' => $value['id'],
-                'face' => $value['face'],
-                'partition' => $value['partition'],
-                'port_id' => $value['port_id'],
-            );
-            if (!$PCM->validateConnectionPath($portA, $portB)) {
-                throw ValidationException::withMessages(['path_validation' => 'Loop detected.']);
-            }
+        $portB = array(
+            'id' => $data['b_id'],
+            'face' => $data['b_face'],
+            'partition' => $data['b_partition'],
+            'port_id' => $data['b_port'],
+        );
+        if (!$PCM->validateConnectionPath($portA, $portB)) {
+            throw ValidationException::withMessages(['path_validation' => 'Loop detected. '.$this->archiveAddress]);
         }
 
         $returnData = array('add' => array(), 'remove' => array());
@@ -162,45 +194,38 @@ class ConnectionController extends Controller
         // Find connections associated with selected object to be removed
         $filteredConnections = ConnectionModel::where(
             [
-                ['a_id', $data['id']],
-                ['a_face', $data['face']],
-                ['a_partition', json_encode($data['partition'])],
-                ['a_port', $data['port_id']]
+                ['a_id', $data['a_id']],
+                ['a_face', $data['a_face']],
+                ['a_partition', json_encode($data['a_partition'])],
+                ['a_port', $data['a_port']]
             ]
         )->orwhere(
             [
-                ['b_id', $data['id']],
-                ['b_face', $data['face']],
-                ['b_partition', json_encode($data['partition'])],
-                ['b_port', $data['port_id']]
+                ['b_id', $data['a_id']],
+                ['b_face', $data['a_face']],
+                ['b_partition', json_encode($data['a_partition'])],
+                ['b_port', $data['a_port']]
             ]
-        )->get();
-        $connectionDeleteArray = $filteredConnections->all();
+        )->get()->toArray();
+        $connectionDeleteArray = $filteredConnections;
 
         // Find connections associated with selected node(s) to be removed
-        foreach($peerData as $key => $value) {
-
-            $aAttributes = array(
-                ['a_id', $value['id']],
-                ['a_face', $value['face']],
-                ['a_partition', json_encode($value['partition'])],
-                ['a_port', json_encode($value['port_id'])]
-            );
-            $bAttributes = array(
-                ['b_id', $value['id']],
-                ['b_face', $value['face']],
-                ['b_partition', json_encode($value['partition'])],
-                ['b_port', json_encode($value['port_id'])]
-            );
-
-            $filteredConnections = ConnectionModel::where(
-                $aAttributes
-            )->orwhere(
-                $bAttributes
-            )->get();
-            $connectionDeleteArray = array_merge($connectionDeleteArray, $filteredConnections->all());
-
-        }
+        $filteredConnections = ConnectionModel::where(
+            [
+                ['a_id', $data['b_id']],
+                ['a_face', $data['b_face']],
+                ['a_partition', json_encode($data['b_partition'])],
+                ['a_port', $data['b_port']]
+            ]
+        )->orwhere(
+            [
+                ['b_id', $data['b_id']],
+                ['b_face', $data['b_face']],
+                ['b_partition', json_encode($data['b_partition'])],
+                ['b_port', $data['b_port']]
+            ]
+        )->get()->toArray();
+        $connectionDeleteArray = array_merge($connectionDeleteArray, $filteredConnections);
 
         // Delete any existing connection records
         foreach($connectionDeleteArray as $connectionDelete) {
@@ -208,33 +233,27 @@ class ConnectionController extends Controller
             ConnectionModel::where('id', $connectionDelete['id'])->delete();
         }
 
-        // Create new connection record(s)
-        foreach($peerData as $key => $value) {
+        // Create new connection object
+        $connection = new ConnectionModel;
 
-            // Create new connection object
-            $connection = new ConnectionModel;
+        // Store A side
+        $connection->a_id = $data['a_id'];
+        $connection->a_face = $data['a_face'];
+        $connection->a_partition = $data['a_partition'];
+        $connection->a_port = $data['a_port'];
+        $connection->a_cable_id = (isset($data['a_cable_id'])) ? $data['a_cable_id'] : null;
 
-            // Store A side
-            $connection->a_id = $data['id'];
-            $connection->a_face = $data['face'];
-            $connection->a_partition = $data['partition'];
-            $connection->a_port = $data['port_id'];
-            $connection->a_cable_id = (isset($data['cable_id'])) ? $data['cable_id'] : null;
+        // Store B side
+        $connection->b_id = $data['b_id'];
+        $connection->b_face = $data['b_face'];
+        $connection->b_partition = $data['b_partition'];
+        $connection->b_port = $data['b_port'];
+        $connection->b_cable_id = (isset($data['b_cable_id'])) ? $data['b_cable_id'] : null;
 
-            // Store B side
-            $connection->b_id = $value['id'];
-            $connection->b_face = $value['face'];
-            $connection->b_partition = $value['partition'];
-            $connection->b_port = $value['port_id'];
-            $connection->b_cable_id = (isset($value['cable_id'])) ? $value['cable_id'] : null;
+        // Save new connection object
+        $connection->save();
 
-            
-
-            // Save new connection object
-            $connection->save();
-
-            array_push($returnData['add'], $connection->toArray());
-        }
+        array_push($returnData['add'], $connection->toArray());
 
         return $returnData;
     }

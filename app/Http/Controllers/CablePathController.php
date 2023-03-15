@@ -175,7 +175,7 @@ class CablePathController extends Controller
                 'required',
                 'integer',
                 'exists:location,id',
-                'different:cabinet_b_id'
+                'different:cabinet_a_id'
             ],
             'distance' => [
                 'required',
@@ -190,6 +190,7 @@ class CablePathController extends Controller
         ];
 
         $validatorMessages = $PCM->transformValidationMessages($validatorRules, $this->archiveAddress);
+        Log::info($validatorMessages);
         $customValidator = Validator::make($request->all(), $validatorRules, $validatorMessages);
         $customValidator->stopOnFirstFailure();
         $customValidator->validate();

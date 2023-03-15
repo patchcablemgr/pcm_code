@@ -337,6 +337,7 @@ class ArchiveController extends Controller
 
                 foreach($tableSchemas as $tableName => $tableSchema) {
                     $tableFileName = $tableSchema['filename'];
+                    Log::info($tableFileName);
                     $tableFilePath = Storage::disk('local')->path('imports/'.$tableFileName);
                     $file = fopen($tableFilePath, 'r');
                     $row = 1;
@@ -373,10 +374,12 @@ class ArchiveController extends Controller
                                 }
 
                                 // Process entry
-                                $importID = $this->processCSVEntry($data, $attrMap, $tableSchema, $tableName, $tableFileName, $row);
+                                $importIDArray = $this->processCSVEntry($data, $attrMap, $tableSchema, $tableName, $tableFileName, $row);
 
-                                // Add to entry array
-                                array_push($entryIDArray, $importID);
+                                // Add IDs to entry array
+                                foreach($importIDArray as $importID) {
+                                    array_push($entryIDArray, $importID);
+                                }
                             }
                             $row++;
                         }
@@ -501,7 +504,16 @@ class ArchiveController extends Controller
         // Submit request
         $importRequest->request->add($requestData);
         $importResponse = call_user_func(array($tableSchema['controller'], $controllerMethod), $importRequest, $entryID);
-        $importID = $importResponse['id'];
+        $importIDArray = array();
+
+        // Store added row IDs
+        if(isset($importResponse['add'])) {
+            foreach($importResponse['add'] as $import) {
+                array_push($importIDArray, $import['id']);
+            }
+        } else {
+            array_push($importIDArray, $importResponse['id']);
+        }
 
         // Process images
         foreach($this->imgAttributes[$tableName] as $imgAttr) {
@@ -512,10 +524,10 @@ class ArchiveController extends Controller
                 $imgMimeType = Storage::mimeType('imports/images/'.$imgFileName);
                 $imgFile = array('file' => new UploadedFile($imgFilePath, $imgFileName, $imgMimeType, null, true));
                 $imgRequest = (new Request())->duplicate([], [], [], [], $imgFile);
-                $imageResponse = call_user_func(array($tableSchema['image_controller'], $tableSchema['image_controller_method']), $imgRequest, $importID);
+                $imageResponse = call_user_func(array($tableSchema['image_controller'], $tableSchema['image_controller_method']), $imgRequest, $importIDArray[0]);
             }
         }
 
-        return $importID;
+        return $importIDArray;
     }
 }

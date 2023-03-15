@@ -36,7 +36,7 @@
       <table>
         <tr
           v-for="(Element) in ConnectionPath"
-          v-bind:key="Element.id"
+          v-bind:key="Element.uuid"
         >
           <td>
             <div

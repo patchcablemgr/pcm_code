@@ -62,6 +62,7 @@ Route::group(['middleware' => 'auth:sanctum'], function(){
   Route::post('config/csr/{id}/cert', [ConfigController::class, 'storeCert']);
   Route::post('config/csr/{id}/self-signed', [ConfigController::class, 'generateSelfSigned']);
   Route::post('config/network', [ConfigController::class, 'networkConfig']);
+  Route::post('data-sync', [DataSyncController::class, 'getChanges']);
   Route::post('locations/{id}/image', [ImageController::class, 'storeLocationImage']);
   Route::post('objects/floorplan', [ObjectController::class, 'storeFloorplan']);
   Route::post('objects/insert', [ObjectController::class, 'storeInsert']);
@@ -80,7 +81,6 @@ Route::group(['middleware' => 'auth:sanctum'], function(){
   Route::get('config/network', [ConfigController::class, 'indexNetwork']);
   Route::get('config/csr', [ConfigController::class, 'indexCSR']);
   Route::get('config/cert', [ConfigController::class, 'indexCert']);
-  Route::get('data-sync/{timestamp}', [DataSyncController::class, 'getChanges']);
   Route::get('floorplan-templates', [FloorplanTemplateController::class, 'index']);
   Route::get('media', [AttributesMedia::class, 'index']);
   Route::get('media-type', [AttributesMediaType::class, 'index']);

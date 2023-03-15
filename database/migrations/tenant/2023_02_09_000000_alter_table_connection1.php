@@ -15,7 +15,9 @@ class AlterTableConnection1 extends Migration
     public function up()
     {
         DB::statement("ALTER TABLE connection MODIFY a_cable_id varchar(255) NULL AFTER a_port");
-
+        Schema::table('connection', function (Blueprint $table) {
+            $table->integer('group_id')->nullable();
+        });
     }
 
     /**

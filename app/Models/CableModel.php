@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class CableModel extends Model
 {
+    protected $primaryKey = 'id';
     protected $table = 'cable';
 
 }

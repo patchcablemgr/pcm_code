@@ -252,18 +252,17 @@ export const PCM = {
 
             // Object or floorplan
             let TemplatesData
-            if(TemplateID) {
-                if(typeof TemplateID == 'number') {
+            if(typeof TemplateID == 'number') {
+                TemplatesData = vm.Templates[Context]
+                console.log('here1')
+            } else {
+                if(TemplateID.toString().startsWith('pseudo')) {
+                    console.log('here2')
                     TemplatesData = vm.Templates[Context]
                 } else {
-                    if(TemplateID.startsWith('pseudo')) {
-                        TemplatesData = vm.Templates[Context]
-                    } else {
-                        TemplatesData = vm.FloorplanTemplates
-                    }
+                    console.log('here3')
+                    TemplatesData = vm.FloorplanTemplates
                 }
-            } else {
-                TemplatesData = vm.Templates[Context]
             }
 
             return TemplatesData.findIndex((template) => template.id == TemplateID )
@@ -599,10 +598,9 @@ export const PCM = {
             const PortID = EmitData.PortID
                 
             // Hovered partition should not be highlighted if it is a preview insert parent
-            const TemplateID = vm.GetTemplateID(ObjectID, Context)
-            const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+            const Template = vm.GetTemplate({ObjectID, Context})
             let HonorHover
-            HonorHover = (vm.Templates[Context][TemplateIndex].id.toString().includes('pseudo')) ? false : true
+            HonorHover = (Template.id.toString().startsWith('pseudo')) ? false : true
             HonorHover = (vm.$route.name == 'environment' && Context == 'template') ? false : HonorHover
 
             if(HonorHover) {
@@ -647,18 +645,18 @@ export const PCM = {
             const PartitionAddress = EmitData.PartitionAddress
             const PortID = EmitData.PortID
             const ObjectID = EmitData.ObjectID
-            const TemplateID = vm.GetTemplateID(ObjectID, Context)
-            const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
 
             // Get partition type
-            const Template = vm.Templates[Context][TemplateIndex]
+            //const Template = vm.Templates[Context][TemplateIndex]
+            const Template = vm.GetTemplate({ObjectID, Context})
             const Blueprint = Template.blueprint[Face]
             const Partition = vm.GetPartition(Blueprint, PartitionAddress)
             const PartitionType = Partition.type
                   
             // Clicked partition should not be highlighted if it is a preview insert parent
             let HonorClick
-            HonorClick = (vm.Templates[Context][TemplateIndex].id.toString().includes('pseudo')) ? false : true
+            //HonorClick = (vm.Templates[Context][TemplateIndex].id.toString().includes('pseudo')) ? false : true
+            HonorClick = (Template.id.toString().includes('pseudo')) ? false : true
             HonorClick = (Context == 'workspace' && PartitionAddress.length == 0) ? false : HonorClick
             HonorClick = (vm.$route.name == 'environment' && Context == 'template') ? false : HonorClick
 

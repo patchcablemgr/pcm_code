@@ -19,11 +19,11 @@
         <app-collapse-item
           v-for="FloorplanTemplate in FloorplanTemplates"
           :key="FloorplanTemplate.id"
-          :title="FloorplanTemplate.name+' ('+FloorplanObjectsCount(FloorplanTemplate.type)+')'"
+          :title="FloorplanTemplate.name+' ('+FloorplanObjectsCount(FloorplanTemplate.floorplan_object_type)+')'"
         >
           <b-list-group>
             <b-list-group-item
-              v-for="FloorplanObject in FilteredFloorplanObjects(FloorplanTemplate.type)"
+              v-for="FloorplanObject in FilteredFloorplanObjects(FloorplanTemplate.floorplan_object_type)"
               :key="FloorplanObject.id"
               @click.stop=" FloorplanClicked({'ObjectID': FloorplanObject.id, Context}) "
               @mouseover.stop=" FloorplanHovered({'ObjectID': FloorplanObject.id, 'HoverState': true, Context}) "

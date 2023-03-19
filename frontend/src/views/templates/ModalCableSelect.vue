@@ -442,6 +442,7 @@ export default {
     RemoteCategoryColor() {
 
       const vm = this
+      const Context = vm.Context
       const Cable = vm.SelectedCable
 
       if(Cable !== null) {
@@ -456,8 +457,9 @@ export default {
           const Connection = vm.Connections[ConnectionIndex]
           const RemoteSide = (Connection.a_cable_id == RemoteCableEndID) ? 'a' : 'b'
           const ObjectID = Connection[RemoteSide+'_id']
+          const Category = vm.GetCategory({ObjectID, Context})
 
-          return vm.GetObjectCategoryColor(ObjectID)
+          return Category.color
         } else {
           return 'N/A'
         }
@@ -471,7 +473,8 @@ export default {
       const vm = this
       const Context = vm.Context
       const ObjectID = vm.StateSelected[Context].object_id
-      return vm.GetObjectCategoryColor(ObjectID)
+      const Category = vm.GetCategory({ObjectID, Context})
+      return Category.color
     },
   },
   methods: {

@@ -504,12 +504,9 @@ export default {
         const Context = vm.Context
         let ReturnData = '-'
         const ObjectID = vm.StateSelected[Context].object_id
-        const Template = vm.GetTemplate({ObjectID, Context})
-        if(Template) {
-          const CategoryID = Template.category_id
-          const CategoryIndex = vm.GetCategoryIndex(CategoryID)
-          ReturnData = vm.Categories[Context][CategoryIndex].name
-        }
+        const Category = vm.GetCategory({ObjectID, Context})
+        
+        ReturnData = (Category) ? Category.name : ReturnData
 
         return ReturnData
       },

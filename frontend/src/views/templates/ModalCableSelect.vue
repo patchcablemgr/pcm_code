@@ -504,7 +504,7 @@ export default {
           vm.$http.post('/api/connections', data).then(response => {
 
             // Add connection to store
-            response.data.add.forEach(add => vm.$store.commit('pcmConnections/ADD_Connection', {data:add}))
+            vm.$store.commit('pcmConnections/ADD_Connection', {data:response.data.add})
             response.data.remove.forEach(remove => vm.$store.commit('pcmConnections/REMOVE_Connection', {data:remove}))
 
           }).catch(error => {vm.DisplayError(error)})

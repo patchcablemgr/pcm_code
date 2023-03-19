@@ -189,7 +189,7 @@ class ConnectionController extends Controller
             throw ValidationException::withMessages(['path_validation' => 'Loop detected. '.$this->archiveAddress]);
         }
 
-        $returnData = array('add' => array(), 'remove' => array());
+        $returnData = array('remove' => array());
 
         // Find connections associated with selected object to be removed
         $filteredConnections = ConnectionModel::where(
@@ -253,7 +253,7 @@ class ConnectionController extends Controller
         // Save new connection object
         $connection->save();
 
-        array_push($returnData['add'], $connection->toArray());
+        $returnData['add'] = $connection->toArray();
 
         return $returnData;
     }

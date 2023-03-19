@@ -246,7 +246,7 @@ class ObjectController extends Controller
 
         $location = LocationModel::where('id', $request->location_id)->first();
         if($location['type'] != 'floorplan') {
-            throw ValidationException::withMessages(['location_id' => 'Object is not compatible with location type.']);
+            throw ValidationException::withMessages(['location_id' => 'Object is not compatible with location type. '.$this->archiveAddress]);
         }
 
         $object = new ObjectModel;
@@ -361,13 +361,13 @@ class ObjectController extends Controller
             // Validate parent object partition
             $Err = $PCM->validateParentPartition($parentObjectTemplateID, $objectParentFace, $objectParentPartitionAddress, $objectParentEnclosureAddress);
             if($Err !== true) {
-                throw ValidationException::withMessages($Err);
+                throw ValidationException::withMessages($Err.' '.$this->archiveAddress);
             }
 
             // Validate parent object enclosure occupancy
             $Err = $PCM->validateEnclosureOccupancy($id, $objectParentID, $objectParentFace, $objectParentPartitionAddress, $objectParentEnclosureAddress);
             if($Err !== true) {
-                throw ValidationException::withMessages($Err);
+                throw ValidationException::withMessages($Err.' '.$this->archiveAddress);
             }
 
         } else if($objectType == 'standard') {

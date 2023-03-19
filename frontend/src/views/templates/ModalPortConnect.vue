@@ -191,10 +191,9 @@ export default {
       }
 
       if(TreeSelection.length > 1) {
-        data['group_id'] = Date.now()
+        const GroupId = Math.floor(Date.now() / 1000)
       }
 
-      //let PeerData = []
       TreeSelection.forEach(function(node){
         data['b_id'] = node.data.object_id
         data['b_face'] = node.data.face
@@ -206,34 +205,14 @@ export default {
         vm.$http.post(URL, data).then(response => {
 
           // Add connection to store
-          response.data.add.forEach(add => vm.$store.commit('pcmConnections/ADD_Connection', {data:add}))
+          vm.$store.commit('pcmConnections/ADD_Connection', {data:response.data.add})
           response.data.remove.forEach(remove => vm.$store.commit('pcmConnections/REMOVE_Connection', {data:remove}))
 
           // Close modal
           vm.$root.$emit('bv::hide::modal', vm.ModalID)
 
         }).catch(error => {vm.DisplayError(error)})
-        /*
-        const PeerObjectID = node.data.object_id
-        const PeerObjectFace = node.data.face
-        const PeerObjectPartition = node.data.partition_address
-        const PeerObjectPortID = node.data.port_id
-        PeerData.push({'id':PeerObjectID, 'face':PeerObjectFace, 'partition':PeerObjectPartition, 'port_id':PeerObjectPortID})
-        */
       })
-
-      /*
-      // Compile POST data
-      const data = {
-        'id':SelectedObjectID,
-        'face':SelectedObjectFace,
-        'partition':SelectedObjectPartition,
-        'port_id':SelectedObjectPortID,
-        'peer_data':PeerData
-      }
-      */
-
-      
     },
   },
   mounted() {

@@ -23,19 +23,19 @@
             <b-dropdown-item
               v-if="Context == 'template'"
               @click="CloneTemplate()"
-              :disabled="!TemplateSelected"
+              :disabled="!ComputedObjectSelected"
             >Clone
             </b-dropdown-item>
 
             <b-dropdown-item
               v-if="Context == 'template'"
-              :disabled="!TemplateSelected"
+              :disabled="!ComputedObjectSelected"
             >Where Used</b-dropdown-item>
 
             <b-dropdown-item
               v-if="Context == 'catalog'"
               @click=" ImportTemplate() "
-              :disabled="!TemplateSelected"
+              :disabled="!ComputedObjectSelected"
             >Import</b-dropdown-item>
 
             <b-dropdown-divider />
@@ -44,14 +44,14 @@
               v-if="Context == 'template' || Context == 'actual'"
               variant="danger"
               @click=" DeleteTemplate() "
-              :disabled="!TemplateSelected"
+              :disabled="!ComputedObjectSelected"
             >Delete</b-dropdown-item>
 
             <b-dropdown-item
               v-if="Context == 'template' || Context == 'actual'"
               variant="danger"
               @click=" Clear() "
-              :disabled="!TemplateSelected"
+              :disabled="!ComputedObjectSelected"
             >Clear Trunk</b-dropdown-item>
 
           </b-dropdown>
@@ -451,12 +451,6 @@ export default {
       const Context = vm.Context
       return (vm.StateSelected[Context].object_id) ? true : false
     },
-    TemplateSelected: function(){
-
-      const vm = this
-      const Context = vm.Context
-      return (vm.GetTemplateSelected(Context)) ? true : false
-    },
     PortRangeEditable: function(){
 
       const vm = this
@@ -497,7 +491,8 @@ export default {
 
         const vm = this
         const Context = vm.Context
-        const Template = vm.GetTemplateSelected(Context)
+        const ObjectID = vm.StateSelected[Context].object_id
+        const Template = vm.GetTemplate({ObjectID, Context})
 
         return (Template) ? Template.name : '-'
       },
@@ -508,7 +503,8 @@ export default {
         const vm = this
         const Context = vm.Context
         let ReturnData = '-'
-        const Template = vm.GetTemplateSelected(Context)
+        const ObjectID = vm.StateSelected[Context].object_id
+        const Template = vm.GetTemplate({ObjectID, Context})
         if(Template) {
           const CategoryID = Template.category_id
           const CategoryIndex = vm.GetCategoryIndex(CategoryID)
@@ -577,7 +573,8 @@ export default {
 
         const vm = this
         const Context = vm.Context
-        const Template = vm.GetTemplateSelected(Context)
+        const ObjectID = vm.StateSelected[Context].object_id
+        const Template = vm.GetTemplate({ObjectID, Context})
 
         const TemplateType = (Template) ? Template.type : '-'
         return TemplateType.charAt(0).toUpperCase() + TemplateType.slice(1)
@@ -588,7 +585,8 @@ export default {
 
         const vm = this
         const Context = vm.Context
-        const Template = vm.GetTemplateSelected(Context)
+        const ObjectID = vm.StateSelected[Context].object_id
+        const Template = vm.GetTemplate({ObjectID, Context})
 
         const TemplateFunction = (Template) ? Template.function : '-'
         return TemplateFunction.charAt(0).toUpperCase() + TemplateFunction.slice(1)
@@ -599,13 +597,18 @@ export default {
 
         const vm = this
         const Context = vm.Context
-        const Template = vm.GetTemplateSelected(Context)
-        const TemplateType = Template.type
+        const ObjectID = vm.StateSelected[Context].object_id
+        const Template = vm.GetTemplate({ObjectID, Context})
 
-        if(TemplateType == 'insert') {
-          return 'N/A'
+        if(Template) {
+          const TemplateType = Template.type
+          if(TemplateType == 'insert') {
+            return 'N/A'
+          } else {
+            return Template.ru_size
+          }
         } else {
-          return (Template) ? Template.ru_size : '-'
+          return '-'
         }
       },
     },
@@ -614,13 +617,18 @@ export default {
 
         const vm = this
         const Context = vm.Context
-        const Template = vm.GetTemplateSelected(Context)
-        const TemplateType = Template.type
-
-        if(TemplateType == 'insert') {
-          return 'N/A'
+        const ObjectID = vm.StateSelected[Context].object_id
+        const Template = vm.GetTemplate({ObjectID, Context})
+        
+        if(Template) {
+          const TemplateType = Template.type
+          if(TemplateType == 'insert') {
+            return 'N/A'
+          } else {
+            return Template.mount_config
+          }
         } else {
-          return (Template) ? Template.mount_config : '-'
+          return '-'
         }
       },
     },
@@ -630,9 +638,11 @@ export default {
         const vm = this
         const Context = vm.Context
         const Face = vm.TemplateFaceSelected[Context]
-        const Template = vm.GetTemplateSelected(Context)
+        const ObjectID = vm.StateSelected[Context].object_id
+        const Template = vm.GetTemplate({ObjectID, Context})
+        const imgAttr = (Face == 'front') ? 'img_front' : 'img_rear'
 
-        return (Face == 'front') ? Template.img_front : Template.img_rear
+        return (Template) ? Template[imgAttr] : false
       },
       set() {
         return true
@@ -745,7 +755,8 @@ export default {
         if(Partition) {
 
           // Get template
-          const Template = vm.GetTemplateSelected(Context)
+          const ObjectID = vm.StateSelected[Context].object_id
+          const Template = vm.GetTemplate({ObjectID, Context})
           const TemplateType = Template.type
 
           if(TemplateType == 'passive') {
@@ -800,7 +811,8 @@ export default {
       const vm = this
       const Context = vm.Context
 
-      const Template = vm.GetTemplateSelected(Context)
+      const ObjectID = vm.StateSelected[Context].object_id
+      const Template = vm.GetTemplate({ObjectID, Context})
       const TemplateID = Template.id
 
       vm.$http.get('/api/catalog/template/'+TemplateID).then(response => {
@@ -821,17 +833,15 @@ export default {
 
       const vm = this
       const Context = vm.Context
+      const ObjectID = vm.StateSelected[Context].object_id
 
-      const Object = vm.GetObjectSelected(Context)
-      const ObjectID = Object.id
+      const Object = vm.GetObject({ObjectID, Context})
       const ObjectName = (Context == 'actual') ? Object.name : 'N/A'
 
-      const Template = vm.GetTemplateSelected(Context)
+      const Template = vm.GetTemplate({ObjectID, Context})
       const TemplateName = Template.name
 
-      const CategoryID = Template.category_id
-      const CategoryIndex = vm.Categories[Context].findIndex((category) => category.id == CategoryID)
-      const Category = vm.Categories[Context][CategoryIndex]
+      const Category = vm.GetCategory({ObjectID, Context})
       const CategoryName = Category.name
 
       // Confirm Deletion
@@ -923,7 +933,8 @@ export default {
       }
 
       // Get cloned template
-      const Template = vm.GetTemplateSelected(TemplateContext)
+      const ObjectID = vm.StateSelected[TemplateContext].object_id
+      const Template = vm.GetTemplate({ObjectID, Context:TemplateContext})
 
       // Set active preview template
       const PreviewTemplateID = (Template.type == 'standard') ? StandardTemplateID : InsertTemplateID

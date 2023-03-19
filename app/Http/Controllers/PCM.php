@@ -635,6 +635,12 @@ class PCM extends Controller
                 }
             }
         }
+
+        // This is a hack
+        foreach($msgArray as $key => $message) {
+            $msgArray[explode(':', $key)[0]] = $message;
+        }
+
         return $msgArray;
     }
 }

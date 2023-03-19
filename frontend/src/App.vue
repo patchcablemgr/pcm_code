@@ -111,8 +111,7 @@ export default {
             if(Initial) {
               vm.SetDefaultCategory()
             }
-          },
-          'skipDelete': false
+          }
         },{
           'name': 'locations',
           'update_mutation': 'pcmLocations/UPDATE_Location',
@@ -122,8 +121,7 @@ export default {
           'object': vm.Locations,
           'contexts': ['actual', 'template'],
           'onAdd': false,
-          'onComplete': false,
-          'skipDelete': false
+          'onComplete': false
         },
         {
           'name': 'objects',
@@ -134,8 +132,7 @@ export default {
           'object': vm.Objects,
           'contexts': ['actual'],
           'onAdd': false,
-          'onComplete': false,
-          'skipDelete': false
+          'onComplete': false
         },
         {
           'name': 'templates',
@@ -152,8 +149,7 @@ export default {
           },
           'onComplete': function(responseData){
             vm.$store.commit('pcmObjects/SET_Ready', {pcmContext:'template', ReadyState:true})
-          },
-          'skipDelete': false
+          }
         },
         {
           'name': 'connections',
@@ -164,8 +160,7 @@ export default {
           'object': vm.Connections,
           'contexts': [false],
           'onAdd': false,
-          'onComplete': false,
-          'skipDelete': false
+          'onComplete': false
         },
         {
           'name': 'cable-paths',
@@ -176,8 +171,7 @@ export default {
           'object': vm.CablePaths,
           'contexts': ['actual'],
           'onAdd': false,
-          'onComplete': false,
-          'skipDelete': false
+          'onComplete': false
         },
         {
           'name': 'trunks',
@@ -188,8 +182,7 @@ export default {
           'object': vm.Trunks,
           'contexts': [false],
           'onAdd': false,
-          'onComplete': false,
-          'skipDelete': false
+          'onComplete': false
         },
         {
           'name': 'cables',
@@ -200,8 +193,7 @@ export default {
           'object': vm.Cables,
           'contexts': [false],
           'onAdd': false,
-          'onComplete': false,
-          'skipDelete': false
+          'onComplete': false
         },
         {
           'name': 'ports',
@@ -212,18 +204,13 @@ export default {
           'object': vm.Ports,
           'contexts': [false],
           'onAdd': false,
-          'onComplete': false,
-          'skipDelete': false
+          'onComplete': false
         }
       ]
 
       // Loop over tables
       let CurrentIDs = {}
       tables.forEach(function(table){
-
-        
-
-        if(!table.skipDelete) {
           
           CurrentIDs[table.name] = []
 
@@ -237,7 +224,6 @@ export default {
               CurrentIDs[table.name].push(entry.id)
             })
           }
-        }
       })
 
       const data = {
@@ -543,7 +529,7 @@ export default {
         vm.GETMedia()
         vm.GETMediaType()
         vm.GETOrientations()
-        vm.GETFloorplanTemplates()
+        //vm.GETFloorplanTemplates()
 
         //vm.SetDefaultCategory()
         vm.GenerateWorkspaceLocations()

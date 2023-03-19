@@ -1,7 +1,34 @@
 export const PCM = {
+    computed: {
+        Categories() {
+            return this.$store.state.pcmCategories.Categories
+        },
+        Templates() {
+            return this.$store.state.pcmTemplates.Templates
+        },
+        Objects() {
+            return this.$store.state.pcmObjects.Objects
+        },
+        FloorplanTemplates() {
+            return this.$store.state.pcmFloorplanTemplates.FloorplanTemplates
+        },
+        FloorplanCategories() {
+            return this.$store.state.pcmFloorplanCategories.FloorplanCategories
+        },
+    },
     methods: {
 
 // Object
+        GetObject: function({ObjectID, Context}) {
+                    
+            // Initial variables
+            const vm = this
+
+            const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
+            const Object = vm.Objects[Context][ObjectIndex]
+
+            return Object
+        },
         GetObjectIndex: function(ObjectID, Context=false) {
 
             // Initial variables
@@ -100,16 +127,121 @@ export const PCM = {
             return CategoryColor
         },
 
+// Category
+        GetCategory: function({ObjectID, TemplateID, CategoryID, Context}) {
+            
+            // Initial variables
+            const vm = this
+
+            if(ObjectID) {
+                CategoryID = vm.GetCategoryID({ObjectID, Context})
+            } else if(TemplateID) {
+                CategoryID = vm.GetCategoryID({TemplateID, Context})
+            }
+
+            // Get category index
+            const CategoryIndex = vm.GetCategoryIndex(CategoryID, Context)
+
+            // Object or floorplan
+            let CategoriesData
+            if(CategoryID) {
+                if(typeof CategoryID == 'number') {
+                    CategoriesData = vm.Categories[Context]
+                } else {
+                    if(CategoryID.startsWith('pseudo')) {
+                        CategoriesData = vm.Categories[Context]
+                    } else {
+                        CategoriesData = vm.FloorplanCategories
+                    }
+                }
+            } else {
+                CategoriesData = vm.Categories[Context]
+            }
+
+            return (CategoryIndex != -1) ? CategoriesData[CategoryIndex] : false
+        },
+        GetCategoryID: function({ObjectID, TemplateID, Context}) {
+
+            // Initial variables
+            const vm = this
+            let Template
+        
+            if(ObjectID) {
+                Template = vm.GetTemplate({ObjectID, Context})
+            } else if(TemplateID) {
+                Template = vm.GetTemplate({TemplateID, Context})
+            }
+
+            return Template.category_id
+    
+        },
+        GetCategoryIndex: function(CategoryID, Context) {
+            
+            // Initial variables
+            const vm = this
+
+            // Object or floorplan
+            let CategoriesData
+            if(CategoryID) {
+                if(typeof CategoryID == 'number') {
+                    CategoriesData = vm.Categories[Context]
+                } else {
+                    if(CategoryID.startsWith('pseudo')) {
+                        CategoriesData = vm.Categories[Context]
+                    } else {
+                        CategoriesData = vm.FloorplanCategories
+                    }
+                }
+            } else {
+                CategoriesData = vm.Categories[Context]
+            }
+      
+            // Return category index
+            return CategoriesData.findIndex((category) => category.id == CategoryID )
+        },
+
 // Template
+        GetTemplate: function({ObjectID, TemplateID, Context}) {
+
+            // Initial variables
+            const vm = this
+
+            if(ObjectID) {
+                TemplateID = vm.GetTemplateID(ObjectID, Context)
+            }
+
+            const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+
+            // Object or floorplan
+            let TemplatesData
+            if(TemplateID) {
+                if(typeof TemplateID == 'number') {
+                    TemplatesData = vm.Templates[Context]
+                } else {
+                    if(TemplateID.startsWith('pseudo')) {
+                        TemplatesData = vm.Templates[Context]
+                    } else {
+                        TemplatesData = vm.FloorplanTemplates
+                    }
+                }
+            } else {
+                TemplatesData = vm.Templates[Context]
+            }
+            
+            return (TemplateIndex != -1) ? TemplatesData[TemplateIndex] : false
+        },
         GetTemplateID: function(ObjectID, Context=false) {
 
+            // Initial variables
             const vm = this
             Context = (Context) ? Context : vm.Context
         
-            const ObjectIndex = vm.Objects[Context].findIndex((object) => object.id == ObjectID )
-            const TemplateID = (ObjectIndex !== -1) ? vm.Objects[Context][ObjectIndex].template_id : false
-        
-            return TemplateID
+            const Object = vm.GetObject({ObjectID, Context})
+            if(Object) {
+                return (Object.template_id) ? Object.template_id : Object.floorplan_object_type
+            } else {
+                return false
+            }
     
         },
         GetTemplateIndex: function(TemplateID, Context=false) {
@@ -117,13 +249,26 @@ export const PCM = {
             // Initial variables
             const vm = this
             Context = (Context) ? Context : vm.Context
-      
-            // Get object index
-            const TemplateIndex = vm.Templates[Context].findIndex((template) => template.id == TemplateID )
-      
-            return TemplateIndex
+
+            // Object or floorplan
+            let TemplatesData
+            if(TemplateID) {
+                if(typeof TemplateID == 'number') {
+                    TemplatesData = vm.Templates[Context]
+                } else {
+                    if(TemplateID.startsWith('pseudo')) {
+                        TemplatesData = vm.Templates[Context]
+                    } else {
+                        TemplatesData = vm.FloorplanTemplates
+                    }
+                }
+            } else {
+                TemplatesData = vm.Templates[Context]
+            }
+
+            return TemplatesData.findIndex((template) => template.id == TemplateID )
         },
-        GetSelectedTemplateIndex: function(Context){
+        GetSelectedTemplateIndex: function(Context) {
 
             const vm = this
             const ObjectID = vm.StateSelected[Context].object_id
@@ -137,10 +282,9 @@ export const PCM = {
 
             // Store variables
             const vm = this
-            const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
-            const Template = (TemplateIndex !== -1) ? vm.Templates[Context][TemplateIndex] : false
-    
-            return Template
+            const ObjectID = vm.StateSelected[Context].object_id
+
+            return vm.GetTemplate({ObjectID, Context})
         },
 
 // Location
@@ -226,8 +370,6 @@ export const PCM = {
             const ParentID = Parent.data.id
             const ParentType = Parent.data.type
 
-            console.log('ParentID ('+ParentType+'): '+ParentID)
-
             let ChildrenFiltered = []
 
             if(ParentType == 'root' || ParentType == 'location' || ParentType == 'pod') {
@@ -239,18 +381,12 @@ export const PCM = {
                     ChildrenFiltered = vm.Objects[Context].filter(object => object.location_id == ParentID && object.parent_id == null)
                 }
             } else if(ParentType == 'object') {
-
-                console.log('ParentID: '+ParentID)
                 
                 if(Scope == 'partition' || Scope == 'port') {
-
-                    console.log('here1')
 
                     // Cannot trunk to self
                     const SelectedObjectID = vm.StateSelected[Context].object_id
                     if(ParentID != SelectedObjectID) {
-
-                        console.log('here2')
                         
                         // Collect connectable partitions
                         const ParentObjectIndex = vm.GetObjectIndex(ParentID, Context)
@@ -264,7 +400,6 @@ export const PCM = {
                         })
                         
                         ChildrenFiltered = ChildrenFiltered.concat(vm.GetInsertConnectablePartitions(ParentID))
-                        console.log(ChildrenFiltered)
                     }
                 }
             }
@@ -656,13 +791,13 @@ export const PCM = {
             // Store variables
             const vm = this
             Context = (Context) ? Context : vm.Context
+            const ObjectID = vm.StateSelected[Context].object_id
             const Face = vm.StateSelected[Context].object_face
             const PartitionAddress = vm.StateSelected[Context].partition[Face]
+            const Template = vm.GetTemplate({ObjectID, Context})
             let Partition = false
 
-            const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
-            if(TemplateIndex !== -1) {
-                const Template = vm.Templates[Context][TemplateIndex]
+            if(Template) {
                 const Blueprint = Template.blueprint[Face]
                 Partition = vm.GetPartition(Blueprint, PartitionAddress)
             }
@@ -764,13 +899,11 @@ export const PCM = {
                     // Cannot trunk endpoint to endpoint
                     if(Scope == 'partition' && SelectedTemplateFunction == 'endpoint' && NodeTemplateFunction == 'endpoint') {
                         Compatible = false
-                        console.log('not compatible 1')
                     }
 
                     // Must have same number of ports
                     if(Scope == 'partition' && SelectedPortTotal != NodePortTotal && SelectedPortTotal != 0) {
                         Compatible = false
-                        console.log('not compatible 2')
                     }
 
                     // Media types must be compatible
@@ -782,7 +915,6 @@ export const PCM = {
                         const NodeMediaTypeID = NodeConnector.type_id
                         if((SelectedMediaTypeID != 4 && NodeMediaTypeID != 4) && (SelectedMediaTypeID != NodeMediaTypeID)) {
                             Compatible = false
-                            console.log('not compatible 3')
                         }
                     } else {
                         // Node and Selected templates are passive
@@ -792,7 +924,6 @@ export const PCM = {
                         const NodeMediaCategoryID = NodeMedia.category_id
                         if(SelectedMediaCategoryID != NodeMediaCategoryID) {
                             Compatible = false
-                            console.log('not compatible 4')
                         }
                     }
 
@@ -1319,10 +1450,11 @@ export const PCM = {
             const vm = this
             const NameList = []
 
-            const TemplateID = vm.GetTemplateID(ObjectID, Context)
-            const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-            if(TemplateIndex != -1) {
-                const Template = vm.Templates[Context][TemplateIndex]
+            //const TemplateID = vm.GetTemplateID(ObjectID, Context)
+            //const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+            const Template = vm.GetTemplate({ObjectID, Context})
+            if(Template) {
+                //const Template = vm.Templates[Context][TemplateIndex]
                 const TemplateType = Template.type
                 const TemplateFunction = Template.function
                 const Blueprint = Template.blueprint[ObjectFace]
@@ -1428,9 +1560,12 @@ export const PCM = {
                 const ObjectName = Object.name
 
                 // Get template
+                const Template = vm.GetTemplate({ObjectID, Context})
+                /*
                 const TemplateID = Object.template_id
                 const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
                 const Template = vm.Templates[Context][TemplateIndex]
+                */
                 const TemplateFunction = Template.function
 
                 // Get template partition

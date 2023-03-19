@@ -243,7 +243,7 @@ class ArchiveController extends Controller
             'template' => array(
                 'filename' => 'template.csv',
                 'controller' => new TemplateController,
-                'model' => new TemplateModel,
+                'model' => new TemplateModelNoImgData,
                 'post_method' => 'store',
                 'patch_method' => 'update',
                 'dependentAttrs' => array()
@@ -251,7 +251,7 @@ class ArchiveController extends Controller
             'location' => array(
                 'filename' => 'location.csv',
                 'controller' => new LocationController,
-                'model' => new LocationModel,
+                'model' => new LocationModelNoImgData,
                 'post_method' => 'store',
                 'patch_method' => 'update',
                 'image_controller' => new ImageController,
@@ -337,7 +337,6 @@ class ArchiveController extends Controller
 
                 foreach($tableSchemas as $tableName => $tableSchema) {
                     $tableFileName = $tableSchema['filename'];
-                    Log::info($tableFileName);
                     $tableFilePath = Storage::disk('local')->path('imports/'.$tableFileName);
                     $file = fopen($tableFilePath, 'r');
                     $row = 1;
@@ -453,13 +452,20 @@ class ArchiveController extends Controller
         $entryID = $data[$attrMap['id']];
 
         // Determine if entry should be created or updated
-        $entryAction = ($entryID) ? 'update' : 'create';
+        if($entryID) {
+            if($tableSchema['model']->where('id', '=', $entryID)->first()) {
+                $entryAction = 'update';
+            } else {
+                $entryAction = 'create';
+            }
+        } else {
+            $entryAction = 'create';
+        }
 
         // Prepare request
         switch($entryAction) {
 
             case 'create':
-                Log::info('Create: '.$tableFileName.":".$row);
                 $importRequest->setMethod('POST');
                 $controllerMethod = $tableSchema['post_method'];
 
@@ -478,7 +484,6 @@ class ArchiveController extends Controller
                 break;
 
             case 'update':
-                Log::info('Update: '.$tableFileName.":".$row);
                 $importRequest->setMethod('PATCH');
                 $controllerMethod = $tableSchema['patch_method'];
                 break;
@@ -501,6 +506,8 @@ class ArchiveController extends Controller
         // Set a reference to the archive for helpful error reporting
         $tableSchema['controller']->archiveAddress = $tableFileName.":".$row;
 
+        Log::info($entryAction.' '.$tableFileName.":".$row);
+
         // Submit request
         $importRequest->request->add($requestData);
         $importResponse = call_user_func(array($tableSchema['controller'], $controllerMethod), $importRequest, $entryID);
@@ -508,23 +515,41 @@ class ArchiveController extends Controller
 
         // Store added row IDs
         if(isset($importResponse['add'])) {
-            foreach($importResponse['add'] as $import) {
-                array_push($importIDArray, $import['id']);
-            }
+            array_push($importIDArray, $importResponse['add']['id']);
         } else {
             array_push($importIDArray, $importResponse['id']);
         }
 
         // Process images
         foreach($this->imgAttributes[$tableName] as $imgAttr) {
+
+            // Get image file name
             $attrIdx = $attrMap[$imgAttr];
             $imgFileName = $data[$attrIdx];
+
             if($imgFileName) {
+
+                // Get image file path
                 $imgFilePath = Storage::disk('local')->path('imports/images/'.$imgFileName);
-                $imgMimeType = Storage::mimeType('imports/images/'.$imgFileName);
-                $imgFile = array('file' => new UploadedFile($imgFilePath, $imgFileName, $imgMimeType, null, true));
-                $imgRequest = (new Request())->duplicate([], [], [], [], $imgFile);
-                $imageResponse = call_user_func(array($tableSchema['image_controller'], $tableSchema['image_controller_method']), $imgRequest, $importIDArray[0]);
+
+                // Determine if image file is the same
+                $fileIsSame = false;
+                $imageEntry = $tableSchema['model']->where('id', '=', $importIDArray[0])->first();
+                if($imageEntry[$imgAttr]) {
+                    $origImgFilePath = Storage::disk('local')->path('images/'.$imageEntry[$imgAttr]);
+                    if(file_exists($origImgFilePath)) {
+                        if(md5_file($origImgFilePath) == md5_file($imgFilePath)) {
+                            $fileIsSame = true;
+                        }
+                    }
+                }
+
+                if(!$fileIsSame) {
+                    $imgMimeType = Storage::mimeType('imports/images/'.$imgFileName);
+                    $imgFile = array('file' => new UploadedFile($imgFilePath, $imgFileName, $imgMimeType, null, true));
+                    $imgRequest = (new Request())->duplicate([], [], [], [], $imgFile);
+                    $imageResponse = call_user_func(array($tableSchema['image_controller'], $tableSchema['image_controller_method']), $imgRequest, $importIDArray[0]);
+                }
             }
         }
 

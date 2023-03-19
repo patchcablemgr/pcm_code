@@ -17,7 +17,7 @@
             >
               <div
                 draggable="true"
-                @dragstart.stop="StartDrag({ 'context': 'template', 'floorplan_object_type': FloorplanTemplate.type }, $event)"
+                @dragstart.stop="StartDrag({ 'context': 'template', 'floorplan_object_type': FloorplanTemplate.floorplan_object_type }, $event)"
                 class="pcm_floorplan_object mr-1"
                 style="cursor:grab;"
               >
@@ -158,19 +158,14 @@ export default {
     }
   },
   methods: {
-    GetFloorplanIcon: function(FloorplanObjectID) {
+    GetFloorplanIcon: function(ObjectID) {
 
       const vm = this
       const Context = vm.Context
 
-      const ObjectIndex = vm.GetObjectIndex(FloorplanObjectID, Context)
-      const Object = vm.Objects[Context][ObjectIndex]
-      const FloorplanObjectType = Object.floorplan_object_type
-      const FloorplanTemplateIndex = vm.FloorplanTemplates.findIndex((floorplanTemplate) => floorplanTemplate.type == FloorplanObjectType)
-      const FloorplanTemplate = vm.FloorplanTemplates[FloorplanTemplateIndex]
-      const FloorplanTemplateIcon = FloorplanTemplate.icon
+      const Template = vm.GetTemplate({ObjectID, Context})
 
-      return FloorplanTemplateIcon
+      return Template.icon
 
     },
     StartDrag: function(TransferData, e) {

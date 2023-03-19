@@ -180,38 +180,43 @@ export default {
       const SelectedObjectIsFloorplan = (FloorplanObjectType == 'camera' || FloorplanObjectType == 'wap' || FloorplanObjectType == 'walljack') ? true : false
       const SelectedObjectFace = (SelectedObjectIsFloorplan) ? 'front' : vm.StateSelected[Context].object_face
       const SelectedObjectPartition = (SelectedObjectIsFloorplan) ? [0] : vm.StateSelected[Context].partition[SelectedObjectFace]
-      const SelectedObjectPortID = (SelectedObjectIsFloorplan) ? null : vm.StateSelected[Context].port_id[SelectedObjectFace]
+      const SelectedObjectPortID = (SelectedObjectIsFloorplan) ? 0 : vm.StateSelected[Context].port_id[SelectedObjectFace]
 
-      let PeerData = []
+      const GroupId = Math.floor(Date.now() / 1000)
       TreeSelection.forEach(function(node){
         const PeerObjectID = node.data.object_id
         const PeerObjectFace = node.data.face
         const PeerObjectPartition = node.data.partition_address
         const PeerObjectPortID = node.data.port_id
-        PeerData.push({'id':PeerObjectID, 'face':PeerObjectFace, 'partition':PeerObjectPartition, 'port_id':PeerObjectPortID})
+        
+        // Compile POST data
+        const data = {
+          'a_id':SelectedObjectID,
+          'a_face':SelectedObjectFace,
+          'a_partition':SelectedObjectPartition,
+          'a_port':SelectedObjectPortID,
+          'b_id':PeerObjectID,
+          'b_face':PeerObjectFace,
+          'b_partition':PeerObjectPartition,
+          'b_port':PeerObjectPortID,
+          'group_id':GroupId
+        }
+
+        // POST Trunk
+        const URL = '/api/trunks'
+        vm.$http.post(URL, data).then(response => {
+
+          // Add trunk to store
+          vm.$store.commit('pcmTrunks/ADD_Trunk', {data:response.data.add})
+
+          // Delete any trunks that were overwritten
+          response.data.remove.forEach(remove => vm.$store.commit('pcmTrunks/REMOVE_Trunk', {data:remove}))
+
+          // Close modal
+          vm.$root.$emit('bv::hide::modal', vm.ModalID)
+
+        }).catch(error => {vm.DisplayError(error)})
       })
-
-      // Compile POST data
-      const data = {
-        'id':SelectedObjectID,
-        'face':SelectedObjectFace,
-        'partition':SelectedObjectPartition,
-        'port_id':SelectedObjectPortID,
-        'peer_data':PeerData
-      }
-
-      // POST Trunk
-      const URL = '/api/trunks'
-      vm.$http.post(URL, data).then(response => {
-
-        // Add trunk to store
-        response.data.add.forEach(add => vm.$store.commit('pcmTrunks/ADD_Trunk', {data:add}))
-        response.data.remove.forEach(remove => vm.$store.commit('pcmTrunks/REMOVE_Trunk', {data:remove}))
-
-        // Close modal
-        vm.$root.$emit('bv::hide::modal', vm.ModalID)
-
-      }).catch(error => {vm.DisplayError(error)})
     },
   },
   mounted() {

@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Gate;
 class ImageController extends Controller
 {
 
+    public $archiveAddress = NULL;
+
     /**
      * Store a newly created resource in storage.
      *
@@ -27,6 +29,8 @@ class ImageController extends Controller
         if (! Gate::allows('operator')) {
             abort(403);
         }
+
+        $PCM = new PCM;
 
         // Prepare variables
         $validatorInput = [
@@ -43,7 +47,7 @@ class ImageController extends Controller
                 'max:2048'
             ]
         ];
-        $validatorMessages = [];
+        $validatorMessages = $PCM->transformValidationMessages($validatorRules, $this->archiveAddress);
         $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
         $customValidator->stopOnFirstFailure();
         $customValidator->validate();
@@ -79,6 +83,8 @@ class ImageController extends Controller
             abort(403);
         }
 
+        $PCM = new PCM;
+
         // Prepare variables
         $validatorInput = [
             'id' => $id,
@@ -98,7 +104,7 @@ class ImageController extends Controller
                 'in:front,rear'
             ]
         ];
-        $validatorMessages = [];
+        $validatorMessages = $PCM->transformValidationMessages($validatorRules, $this->archiveAddress);
         $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
         $customValidator->stopOnFirstFailure();
         $customValidator->validate();

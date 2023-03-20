@@ -317,7 +317,6 @@ export default {
       const URL = '/api/organization/license/portal'
 
       vm.$http.get(URL).then(response => {
-        console.log(response.data.url)
         window.open(response.data.url, '_blank');
       }).catch(error => {
         vm.DisplayError(error)

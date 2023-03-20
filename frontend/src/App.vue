@@ -103,6 +103,7 @@ export default {
           'update_mutation': 'pcmCategories/UPDATE_Category',
           'add_mutation': 'pcmCategories/ADD_Category',
           'ready_mutation': 'pcmCategories/SET_Ready',
+          'delete_mutation': 'pcmCategories/DELETE_Category',
           'object': vm.Categories,
           'contexts': ['actual', 'workspace', 'template'],
           'onAdd': false,
@@ -116,6 +117,7 @@ export default {
           'update_mutation': 'pcmLocations/UPDATE_Location',
           'add_mutation': 'pcmLocations/ADD_Location',
           'ready_mutation': 'pcmLocations/SET_Ready',
+          'delete_mutation': 'pcmLocations/REMOVE_Location',
           'object': vm.Locations,
           'contexts': ['actual', 'template'],
           'onAdd': false,
@@ -126,6 +128,7 @@ export default {
           'update_mutation': 'pcmObjects/UPDATE_Object',
           'add_mutation': 'pcmObjects/ADD_Object',
           'ready_mutation': 'pcmObjects/SET_Ready',
+          'delete_mutation': 'pcmObjects/REMOVE_Object',
           'object': vm.Objects,
           'contexts': ['actual'],
           'onAdd': false,
@@ -136,6 +139,7 @@ export default {
           'update_mutation': 'pcmTemplates/UPDATE_Template',
           'add_mutation': 'pcmTemplates/ADD_Template',
           'ready_mutation': 'pcmTemplates/SET_Ready',
+          'delete_mutation': 'pcmTemplates/REMOVE_Template',
           'object': vm.Templates,
           'contexts': ['actual', 'template'],
           'onAdd': function(tableContext, entry){
@@ -152,17 +156,8 @@ export default {
           'update_mutation': 'pcmConnections/UPDATE_Connection',
           'add_mutation': 'pcmConnections/ADD_Connection',
           'ready_mutation': 'pcmConnections/SET_Ready',
+          'delete_mutation': 'pcmConnections/REMOVE_Connection',
           'object': vm.Connections,
-          'contexts': [false],
-          'onAdd': false,
-          'custom': false
-        },
-        {
-          'name': 'organization',
-          'update_mutation': 'pcmOrganization/UPDATE_Organization',
-          'add_mutation': 'pcmOrganization/ADD_Organization',
-          'ready_mutation': 'pcmOrganization/SET_Ready',
-          'object': vm.Organization,
           'contexts': [false],
           'onAdd': false,
           'onComplete': false
@@ -172,6 +167,7 @@ export default {
           'update_mutation': 'pcmCablePaths/UPDATE_CablePath',
           'add_mutation': 'pcmCablePaths/ADD_CablePath',
           'ready_mutation': 'pcmCablePaths/SET_Ready',
+          'delete_mutation': 'pcmCablePaths/REMOVE_CablePath',
           'object': vm.CablePaths,
           'contexts': ['actual'],
           'onAdd': false,
@@ -182,6 +178,7 @@ export default {
           'update_mutation': 'pcmTrunks/UPDATE_Trunk',
           'add_mutation': 'pcmTrunks/ADD_Trunk',
           'ready_mutation': 'pcmTrunks/SET_Ready',
+          'delete_mutation': 'pcmTrunks/REMOVE_Trunk',
           'object': vm.Trunks,
           'contexts': [false],
           'onAdd': false,
@@ -192,6 +189,7 @@ export default {
           'update_mutation': 'pcmCables/UPDATE_Cable',
           'add_mutation': 'pcmCables/ADD_Cable',
           'ready_mutation': 'pcmCables/SET_Ready',
+          'delete_mutation': 'pcmCables/REMOVE_Cable',
           'object': vm.Cables,
           'contexts': [false],
           'onAdd': false,
@@ -202,6 +200,7 @@ export default {
           'update_mutation': 'pcmPorts/UPDATE_Port',
           'add_mutation': 'pcmPorts/ADD_Port',
           'ready_mutation': 'pcmPorts/SET_Ready',
+          'delete_mutation': 'pcmPorts/REMOVE_Port',
           'object': vm.Ports,
           'contexts': [false],
           'onAdd': false,
@@ -209,7 +208,30 @@ export default {
         }
       ]
 
-      vm.$http.get('/api/data-sync/'+timestamp).then(response => {
+      // Loop over tables
+      let CurrentIDs = {}
+      tables.forEach(function(table){
+          
+          CurrentIDs[table.name] = []
+
+          const tableContexts = table.contexts
+          if(tableContexts[0]) {
+            table.object.actual.forEach(function(entry){
+              CurrentIDs[table.name].push(entry.id)
+            })
+          } else {
+            table.object.forEach(function(entry){
+              CurrentIDs[table.name].push(entry.id)
+            })
+          }
+      })
+
+      const data = {
+        'timestamp':timestamp,
+        'entries':CurrentIDs
+      }
+
+      vm.$http.post('/api/data-sync', data).then(response => {
 
         const responseData = response.data
 
@@ -221,6 +243,7 @@ export default {
           const updateMutation = table.update_mutation
           const addMutation = table.add_mutation
           const readyMutation = table.ready_mutation
+          const deleteMutation = table.delete_mutation
           const tableObject = table.object
           const tableContexts = table.contexts
 
@@ -228,8 +251,9 @@ export default {
           if(tableName in responseData.tables) {
             // Loop over table contexts
             tableContexts.forEach(function(tableContext){
-              // Loop over table items
-              responseData.tables[tableName].forEach(function(tableEntry){
+
+              // Loop over present items
+              responseData.tables[tableName].present.forEach(function(tableEntry){
               
                 // Look for table item in local store
                 const tableObjectContext = (tableContext) ? tableObject[tableContext] : tableObject
@@ -250,13 +274,20 @@ export default {
                 }
                 
               })
+
+              // Loop over absent items
+              responseData.tables[tableName].absent.forEach(function(tableEntry){
+                // Delete old records no longer present in the database
+                vm.$store.commit(deleteMutation, {pcmContext:tableContext, data:{'id': tableEntry}})
+              })
+
               // Set store ReadyState to true
               vm.$store.commit(readyMutation, {pcmContext:tableContext, ReadyState:true})
             })
 
             // Call custom function
             if(table.onComplete) {
-              table.onComplete(responseData.tables[tableName])
+              table.onComplete(responseData.tables[tableName].present)
             }
           }
         })
@@ -322,15 +353,6 @@ export default {
         vm.$store.commit('pcmProps/SET_Ready', {Prop: 'orientations', ReadyState: true})
       }).catch(error => {
         vm.DisplayError(error)
-      })
-    },
-    GETFloorplanTemplates: function() {
-
-      const vm = this
-
-      vm.$http.get('/api/floorplan-templates').then(function(response){
-        vm.$store.commit('pcmFloorplanTemplates/SET_FloorplanTemplates', {data: response.data})
-        vm.$store.commit('pcmFloorplanTemplates/SET_Ready', {ReadyState:true})
       })
     },
     SetDefaultCategory() {
@@ -498,9 +520,7 @@ export default {
         vm.GETMedia()
         vm.GETMediaType()
         vm.GETOrientations()
-        vm.GETFloorplanTemplates()
 
-        //vm.SetDefaultCategory()
         vm.GenerateWorkspaceLocations()
         vm.GenerateWorkspaceObjects()
         vm.GenerateWorkspaceTemplates()

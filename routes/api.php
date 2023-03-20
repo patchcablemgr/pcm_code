@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ArchiveController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\CategoryController;
@@ -53,6 +54,7 @@ Route::group(['prefix' => 'auth'], function () {
 Route::group(['middleware' => 'auth:sanctum'], function(){
 
   // Only POST
+  Route::post('archive', [ArchiveController::class, 'import'])->middleware('archiveUpload');
   Route::post('cables', [CableController::class, 'store']);
   Route::post('cable-paths', [CablePathController::class, 'store']);
   Route::post('config/app/update', [ConfigController::class, 'updateApp']);
@@ -60,6 +62,7 @@ Route::group(['middleware' => 'auth:sanctum'], function(){
   Route::post('config/csr/{id}/cert', [ConfigController::class, 'storeCert']);
   Route::post('config/csr/{id}/self-signed', [ConfigController::class, 'generateSelfSigned']);
   Route::post('config/network', [ConfigController::class, 'networkConfig']);
+  Route::post('data-sync', [DataSyncController::class, 'getChanges']);
   Route::post('locations/{id}/image', [ImageController::class, 'storeLocationImage']);
   Route::post('objects/floorplan', [ObjectController::class, 'storeFloorplan']);
   Route::post('objects/insert', [ObjectController::class, 'storeInsert']);
@@ -69,6 +72,7 @@ Route::group(['middleware' => 'auth:sanctum'], function(){
   Route::post('templates/{id}/image', [ImageController::class, 'storeTemplateImage']);
 
   // Only GET
+  Route::get('archive', [ArchiveController::class, 'export']);
   Route::get('cables', [CableController::class, 'index']);
   Route::get('cable-paths', [CablePathController::class, 'index']);
   Route::get('catalog/categories', [CategoryController::class, 'indexCatalogCategories']);
@@ -77,7 +81,6 @@ Route::group(['middleware' => 'auth:sanctum'], function(){
   Route::get('config/network', [ConfigController::class, 'indexNetwork']);
   Route::get('config/csr', [ConfigController::class, 'indexCSR']);
   Route::get('config/cert', [ConfigController::class, 'indexCert']);
-  Route::get('data-sync/{timestamp}', [DataSyncController::class, 'getChanges']);
   Route::get('floorplan-templates', [FloorplanTemplateController::class, 'index']);
   Route::get('media', [AttributesMedia::class, 'index']);
   Route::get('media-type', [AttributesMediaType::class, 'index']);

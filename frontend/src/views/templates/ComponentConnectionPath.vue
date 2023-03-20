@@ -36,7 +36,7 @@
       <table>
         <tr
           v-for="(Element) in ConnectionPath"
-          v-bind:key="Element.id"
+          v-bind:key="Element.uuid"
         >
           <td>
             <div
@@ -48,7 +48,7 @@
                 pcm_template_partition_selected: PartitionIsSelected({'Context': Context, 'ObjectID': Element.id, 'ObjectFace': Element.face, 'PartitionAddress': Element.partition, 'PortID': Element.port_id}),
                 pcm_template_partition_hovered: PartitionIsHovered({'Context': Context, 'ObjectID': Element.id, 'ObjectFace': Element.face, 'PartitionAddress': Element.partition, 'PortID': Element.port_id}),
               }"
-              :style="{ background: GetCategory(Element.id).color}"
+              :style="{ background: GetCategory({ObjectID:Element.id, Context}).color}"
               @click.stop=" PartitionClicked({'Context': Context, 'ObjectID': Element.id, 'ObjectFace': Element.face, 'PartitionAddress': Element.partition, 'PortID': Element.port_id}) "
               @mouseover.stop="PartitionHovered({'Context': Context, 'ObjectID': Element.id, 'ObjectFace': Element.face, 'PartitionAddress': Element.partition, 'HoverState': true})"
               @mouseleave.stop="PartitionHovered({'Context': Context, 'ObjectID': Element.id, 'ObjectFace': Element.face, 'PartitionAddress': Element.partition, 'HoverState': false})"
@@ -205,20 +205,38 @@ export default {
     },
   },
   methods: {
+    /*
     GetCategory: function(ObjectID){
 
       const vm = this
       const Context = vm.Context
       const TemplateID = vm.GetTemplateID(ObjectID, Context)
-      const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-      const Template = vm.Templates[Context][TemplateIndex]
-      const CategoryID = Template.category_id
-      const CategoryIndex = vm.Categories[Context].findIndex((cateogry) => cateogry.id == CategoryID )
-      const Category = vm.Categories[Context][CategoryIndex]
+      let Category
+
+      return vm.GetCategory({ObjectID})
+      
+      if(TemplateID) {
+
+        // Get template category
+        const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+        const Template = vm.Templates[Context][TemplateIndex]
+        const CategoryID = Template.category_id
+        const CategoryIndex = vm.Categories[Context].findIndex((category) => category.id == CategoryID )
+        Category = vm.Categories[Context][CategoryIndex]
+      } else {
+
+        // Get floorplan category
+        const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
+        const Object = vm.Objects[Context][ObjectIndex]
+        const FloorplanObjectType = Object['floorplan_object_type']
+        const CategoryIndex = vm.Categories['floorplan'].findIndex((category) => category.id == FloorplanObjectType )
+        Category = vm.Categories['floorplan'][CategoryIndex]
+      }
 
       return Category
 
     },
+    */
   },
   watch: {
     ConnectionPath: {

@@ -302,10 +302,14 @@ export default {
           //const Connection = vm.GetConnection(ObjectID, Face, PartitionAddress, PortID)
 
           if(NewValue) {
-            const PeerData = [{'id':null, 'face':null, 'partition':null, 'port_id':null}]
 
             // Compile POST data
-            const data = {'id':ObjectID, 'face':Face, 'partition':PartitionAddress, 'port_id':PortID, 'peer_data':PeerData}
+            const data = {
+              'a_id':ObjectID,
+              'a_face':Face,
+              'a_partition':PartitionAddress,
+              'a_port':PortID
+            }
 
             // POST Connection
             const URL = '/api/connections'

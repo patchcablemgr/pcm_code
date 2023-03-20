@@ -12,6 +12,9 @@ use Illuminate\Support\Facades\Gate;
 
 class CategoryController extends Controller
 {
+
+    public $archiveAddress = NULL;
+
     /**
      * Display a listing of the resource.
      *
@@ -51,11 +54,12 @@ class CategoryController extends Controller
             abort(403);
         }
 
-        $request->validate([
+        $PCM = new PCM;
+
+        $validatorRules = [
             'name' => [
                 'required',
                 'alpha_dash',
-                'unique:App\Models\CategoryModel,name',
                 'min:1',
                 'max:255'
             ],
@@ -67,7 +71,12 @@ class CategoryController extends Controller
                 'required',
                 'boolean'
             ],
-        ]);
+        ];
+
+        $validatorMessages = $PCM->transformValidationMessages($validatorRules, $this->archiveAddress);
+        $customValidator = Validator::make($request->all(), $validatorRules, $validatorMessages);
+        $customValidator->stopOnFirstFailure();
+        $customValidator->validate();
 
         $category = new CategoryModel;
 
@@ -120,15 +129,12 @@ class CategoryController extends Controller
             abort(403);
         }
 
+        $PCM = new PCM;
+
         $defaultCategory = CategoryModel::where('default', '=', 1)->first();
 
-        // Validate template ID
-        $validatorInput = [
-            'id' => $id,
-            'name' => $request->input('name'),
-            'color' => $request->input('color'),
-            'default' => $request->input('default')
-        ];
+        $request->request->add(['id' => $id]);
+
         $validatorRules = [
             'id' => [
                 'required',
@@ -137,7 +143,6 @@ class CategoryController extends Controller
             ],
             'name' => [
                 'alpha_dash',
-                'unique:App\Models\CategoryModel,name',
                 'min:1',
                 'max:255',
             ],
@@ -148,8 +153,8 @@ class CategoryController extends Controller
                 'boolean'
             ]
         ];
-        $validatorMessages = [];
-        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        $validatorMessages = $PCM->transformValidationMessages($validatorRules, $this->archiveAddress);
+        $customValidator = Validator::make($request->all(), $validatorRules, $validatorMessages);
         $customValidator->stopOnFirstFailure();
         $customValidator->validate();
 

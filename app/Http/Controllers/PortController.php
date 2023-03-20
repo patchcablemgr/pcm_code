@@ -12,6 +12,9 @@ use App\Models\PortModel;
 
 class PortController extends Controller
 {
+
+    public $archiveAddress = NULL;
+
     /**
      * Display a listing of the resource.
      *
@@ -38,30 +41,22 @@ class PortController extends Controller
             abort(403);
         }
 
-        // Store request data
-        $data = $request->all();
-
-        $validatorInput = [
-            'id' => $data['id'],
-            'face' => $data['face'],
-            'partition' => $data['partition'],
-            'port-id' => $data['port_id'],
-            'description' => $data['description'],
-        ];
+        $PCM = new PCM;
+        
         $validatorRules = [
-            'id' => [
+            'object_id' => [
                 'required',
-                'exists:object',
+                'exists:object,id',
             ],
-            'face' => [
+            'object_face' => [
                 'required',
                 'in:front,rear'
             ],
-            'partition' => [
+            'object_partition' => [
                 'required',
                 'array'
             ],
-            'port-id' => [
+            'port_id' => [
                 'required',
                 'numeric'
             ],
@@ -71,15 +66,17 @@ class PortController extends Controller
                 'nullable'
             ],
         ];
-        $validatorMessages = [];
-        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        $validatorMessages = $PCM->transformValidationMessages($validatorRules, $this->archiveAddress);
+        $customValidator = Validator::make($request->all(), $validatorRules, $validatorMessages);
         $customValidator->stopOnFirstFailure();
         $customValidator->validate();
 
+        $data = $request->all();
+
         // Find connections associated with selected object to be removed
-        $port = portModel::where('object_id', $data['id'])
-            ->where('object_face', $data['face'])
-            ->where('object_partition', json_encode($data['partition']))
+        $port = portModel::where('object_id', $data['object_id'])
+            ->where('object_face', $data['object_face'])
+            ->where('object_partition', json_encode($data['object_partition']))
             ->where('port_id', $data['port_id'])
             ->first();
 
@@ -91,9 +88,9 @@ class PortController extends Controller
         }
 
         // Store data
-        $port->object_id = $data['id'];
-        $port->object_face = $data['face'];
-        $port->object_partition = $data['partition'];
+        $port->object_id = $data['object_id'];
+        $port->object_face = $data['object_face'];
+        $port->object_partition = $data['object_partition'];
         $port->port_id = $data['port_id'];
         $port->description = $data['description'];
         $port->save();

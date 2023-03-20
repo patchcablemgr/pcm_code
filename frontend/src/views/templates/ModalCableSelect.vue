@@ -442,6 +442,7 @@ export default {
     RemoteCategoryColor() {
 
       const vm = this
+      const Context = vm.Context
       const Cable = vm.SelectedCable
 
       if(Cable !== null) {
@@ -456,8 +457,9 @@ export default {
           const Connection = vm.Connections[ConnectionIndex]
           const RemoteSide = (Connection.a_cable_id == RemoteCableEndID) ? 'a' : 'b'
           const ObjectID = Connection[RemoteSide+'_id']
+          const Category = vm.GetCategory({ObjectID, Context})
 
-          return vm.GetObjectCategoryColor(ObjectID)
+          return Category.color
         } else {
           return 'N/A'
         }
@@ -471,7 +473,8 @@ export default {
       const vm = this
       const Context = vm.Context
       const ObjectID = vm.StateSelected[Context].object_id
-      return vm.GetObjectCategoryColor(ObjectID)
+      const Category = vm.GetCategory({ObjectID, Context})
+      return Category.color
     },
   },
   methods: {
@@ -495,16 +498,16 @@ export default {
           const PortID = vm.StateSelected[Context].port_id[Face]
           const CableID = vm.CableEndID
           const data = {
-            'id': ObjectID,
-            'face': Face,
-            'partition': Partition,
-            'port_id': PortID,
-            'cable_id': CableID,
+            'a_id': ObjectID,
+            'a_face': Face,
+            'a_partition': Partition,
+            'a_port': PortID,
+            'a_cable_id': CableID,
           }
           vm.$http.post('/api/connections', data).then(response => {
 
             // Add connection to store
-            response.data.add.forEach(add => vm.$store.commit('pcmConnections/ADD_Connection', {data:add}))
+            vm.$store.commit('pcmConnections/ADD_Connection', {data:response.data.add})
             response.data.remove.forEach(remove => vm.$store.commit('pcmConnections/REMOVE_Connection', {data:remove}))
 
           }).catch(error => {vm.DisplayError(error)})

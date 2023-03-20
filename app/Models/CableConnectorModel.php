@@ -8,5 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 class CableConnectorModel extends Model
 {
     use HasFactory;
+    protected $primaryKey = 'id';
     protected $table = 'attributes_cable_connector';
 }

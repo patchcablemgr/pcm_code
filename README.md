@@ -1,3 +1,12 @@
+## 1.4.0
+
+Features:
+- Archive import/export
+
+Fixes:
+- Resolved "Invalid partition size" error when creating templates
+- Not able to clone insert templates
+
 ## 1.3.1
 
 Fixes:

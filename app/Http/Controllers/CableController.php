@@ -16,6 +16,9 @@ use Illuminate\Support\Facades\Gate;
 
 class CableController extends Controller
 {
+
+    public $archiveAddress = NULL;
+    
     /**
      * Display a listing of the resource.
      *
@@ -42,17 +45,9 @@ class CableController extends Controller
             abort(403);
         }
 
-        // Store request data
-        $data = $request->all();
+        $PCM = new PCM;
 
-        $validatorInput = [
-            'a_id' => $data['a_id'],
-            'a_connector_id' => $data['a_connector_id'],
-            'b_id' => $data['b_id'],
-            'b_connector_id' => $data['b_connector_id'],
-            'media_id' => $data['media_id'],
-            'length' => $data['length'],
-        ];
+        // Store request data
         $validatorRules = [
             'a_id' => [
                 'required',
@@ -86,10 +81,12 @@ class CableController extends Controller
                 'integer',
             ],
         ];
-        $validatorMessages = [];
-        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        $validatorMessages = $PCM->transformValidationMessages($validatorRules, $this->archiveAddress);
+        $customValidator = Validator::make($request->all(), $validatorRules, $validatorMessages);
         $customValidator->stopOnFirstFailure();
         $customValidator->validate();
+
+        $data = $request->all();
 
         $aID = $data['a_id'];
         $aConnectorID = $data['a_connector_id'];
@@ -118,7 +115,6 @@ class CableController extends Controller
 
         $mediaType = MediaTypeModel::where('value', $media->type_id)->first();
 
-        $PCM = new PCM;
         if($mediaType->name == 'Copper') {
             $cmLength = $PCM->converFeetToCm($length);
         } else {
@@ -139,6 +135,44 @@ class CableController extends Controller
         $cable->save();
 
         return $cable;
+    }
+
+    /**
+     * Update resource.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request, $id)
+    {
+
+        // RBAC
+        if (! Gate::allows('operator')) {
+            abort(403);
+        }
+
+        $PCM = new PCM;
+
+        $request->request->add(['id' => $id]);
+        $validatorRules = [
+            'id' => [
+                'required',
+                'integer',
+                'exists:cable,id'
+            ]
+        ];
+
+        $validatorMessages = $PCM->transformValidationMessages($validatorRules, $this->archiveAddress);
+        $customValidator = Validator::make($request->all(), $validatorRules, $validatorMessages);
+        $customValidator->stopOnFirstFailure();
+        $customValidator->validate();
+
+        // Validate location is type cabinet
+        $cable = CableModel::where('id', $request->id)->first();
+
+        return $cable;
+
     }
 
     /**

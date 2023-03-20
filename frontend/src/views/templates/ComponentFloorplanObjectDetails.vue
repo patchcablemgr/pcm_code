@@ -220,13 +220,8 @@ export default {
       let TemplateName = '-'
 
       if(ObjectID) {
-        const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
-        const Object = vm.Objects[Context][ObjectIndex]
-        const FloorplanObjectType = Object.floorplan_object_type
-        const FloorplanTemplateIndex = vm.FloorplanTemplates.findIndex((floorplanTemplate) => floorplanTemplate.type == FloorplanObjectType)
-        const FloorplanTemplate = vm.FloorplanTemplates[FloorplanTemplateIndex]
-
-        TemplateName = FloorplanTemplate.name
+        const Template = vm.GetTemplate({ObjectID, Context})
+        TemplateName = Template.name
       }
 
       return TemplateName

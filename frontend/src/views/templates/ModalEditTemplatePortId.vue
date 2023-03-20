@@ -404,12 +404,10 @@ export default {
       const Context = vm.Context
       let PortFormat = null
       const ObjectID = vm.StateSelected[Context].object_id
+      const Template = vm.GetTemplate({ObjectID, Context})
       if(ObjectID) {
-        const TemplateID = vm.GetTemplateID(ObjectID, Context)
         const Face = vm.StateSelected[Context].object_face
         const PartitionAddress = vm.StateSelected[Context].partition[Face]
-        const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-        const Template = vm.Templates[Context][TemplateIndex]
         const Blueprint = Template.blueprint[Face]
         const Partition = vm.GetPartition(Blueprint, PartitionAddress)
         PortFormat = (Partition.type == 'connectable') ? Partition.port_format : null

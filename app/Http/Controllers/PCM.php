@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\App;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
@@ -29,7 +30,7 @@ class PCM extends Controller
      * @param  int  $locationID
      * @return arr
      */
-    private function generateOccupiedRUArray($locationID)
+    public function generateOccupiedRUArray($locationID)
     {
         
         // Initialize some variables
@@ -38,6 +39,7 @@ class PCM extends Controller
         // Populate occupied RU array
         $cabinetObjects = ObjectModel::where('location_id', $locationID)->get();
         foreach($cabinetObjects as $cabinetObject) {
+            $cabinetObjectID = $cabinetObject['id'];
             $cabinetObjectTemplateID = $cabinetObject['template_id'];
             $cabinetObjectCabinetFront = $cabinetObject['cabinet_front'];
             $cabinetObjectCabinetRU = $cabinetObject['cabinet_ru'];
@@ -47,10 +49,10 @@ class PCM extends Controller
             for($x=0; $x<$cabinetObjectRUSize; $x++) {
                 $ruPosition = $cabinetObjectCabinetRU + $x;
                 if($cabinetObjectMountConfig == '4-post') {
-                    array_push($occupiedRUArray['front'], $ruPosition);
-                    array_push($occupiedRUArray['rear'], $ruPosition);
+                    $occupiedRUArray['front'][$ruPosition] = $cabinetObjectID;
+                    $occupiedRUArray['rear'][$ruPosition] = $cabinetObjectID;
                 } else {
-                    array_push($occupiedRUArray[$cabinetObjectCabinetFront], $ruPosition);
+                    $occupiedRUArray[$cabinetObjectCabinetFront][$ruPosition] = $cabinetObjectID;
                 }
             }
         }
@@ -180,12 +182,12 @@ class PCM extends Controller
 	 * @param  arr  $objectParentEnclosureAddress
      * @return arr
      */
-    public function validateEnclosureOccupancy($objectParentID, $objectParentFace, $objectParentPartitionAddress, $objectParentEnclosureAddress)
+    public function validateEnclosureOccupancy($objectID, $objectParentID, $objectParentFace, $objectParentPartitionAddress, $objectParentEnclosureAddress)
     {
         // Validate parent object enclosure occupancy
-        $parentsFound = ObjectModel::where(['parent_id' => $objectParentID, 'parent_face' => $objectParentFace])->get();
-        foreach($parentsFound as $parent) {
-            if($parent['parent_partition_address'] == $objectParentPartitionAddress && $parent['parent_enclosure_address'] == $objectParentEnclosureAddress) {
+        $insertsFound = ObjectModel::where(['parent_id' => $objectParentID, 'parent_face' => $objectParentFace])->get();
+        foreach($insertsFound as $insert) {
+            if($insert['parent_partition_address'] == $objectParentPartitionAddress && $insert['parent_enclosure_address'] == $objectParentEnclosureAddress && $insert['id'] != $objectID) {
                 return ['parentEnclosureAddress' => 'Destination enclosure slot is occupied.'];
             }
         }
@@ -608,5 +610,37 @@ class PCM extends Controller
         $cmLength = $length * 100;
         return round($cmLength);
         
+    }
+
+    /**
+     * 
+     * @param  array  $validatorRules
+     * @param  string $archiveAddress
+     * Return transformed validation messags
+     *
+     * @return array
+     */
+    public function transformValidationMessages($validatorRules, $archiveAddress)
+    {
+
+        $msgArray = [];
+        foreach($validatorRules as $validatorField => $validatorRule){
+            foreach($validatorRule as $rule) {
+                if(is_string($rule)) {
+                    $msgID = explode(':', $rule);
+                    $msgID = $msgID[0];
+                    $msg = __('validation.'.$msgID);
+                    $msg = (is_array($msg)) ? reset($msg) : $msg;
+                    $msgArray[$validatorField.'.'.$rule] = $msg.' '.$archiveAddress;
+                }
+            }
+        }
+
+        // This is a hack
+        foreach($msgArray as $key => $message) {
+            $msgArray[explode(':', $key)[0]] = $message;
+        }
+
+        return $msgArray;
     }
 }

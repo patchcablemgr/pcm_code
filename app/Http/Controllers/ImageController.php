@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Gate;
 class ImageController extends Controller
 {
 
+    public $archiveAddress = NULL;
+
     /**
      * Store a newly created resource in storage.
      *
@@ -28,6 +30,8 @@ class ImageController extends Controller
             abort(403);
         }
 
+        $PCM = new PCM;
+
         // Prepare variables
         $validatorInput = [
             'id' => $id,
@@ -40,10 +44,10 @@ class ImageController extends Controller
             ],
             'file' => [
                 'mimes:jpg,png,gif',
-                'max:512'
+                'max:2048'
             ]
         ];
-        $validatorMessages = [];
+        $validatorMessages = $PCM->transformValidationMessages($validatorRules, $this->archiveAddress);
         $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
         $customValidator->stopOnFirstFailure();
         $customValidator->validate();
@@ -79,6 +83,8 @@ class ImageController extends Controller
             abort(403);
         }
 
+        $PCM = new PCM;
+
         // Prepare variables
         $validatorInput = [
             'id' => $id,
@@ -98,7 +104,7 @@ class ImageController extends Controller
                 'in:front,rear'
             ]
         ];
-        $validatorMessages = [];
+        $validatorMessages = $PCM->transformValidationMessages($validatorRules, $this->archiveAddress);
         $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
         $customValidator->stopOnFirstFailure();
         $customValidator->validate();
@@ -112,9 +118,9 @@ class ImageController extends Controller
         // Update template image
         $pathArray = explode('/', $path);
         if($request->face == 'front') {
-            $template->image_front = end($pathArray);
+            $template->img_front = end($pathArray);
         } else {
-            $template->image_rear = end($pathArray);
+            $template->img_rear = end($pathArray);
         }
             
         // Save record

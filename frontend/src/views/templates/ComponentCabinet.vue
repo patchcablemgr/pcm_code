@@ -130,9 +130,7 @@ export default {
         if(Object.location_id == LocationID && Object.cabinet_ru == CabinetRU) {
           const ObjectCabinetFace = Object.cabinet_front
           const ObjectID = Object.id
-          const TemplateID = vm.GetTemplateID(ObjectID, Context)
-          const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-          const Template = vm.Templates[Context][TemplateIndex]
+          const Template = vm.GetTemplate({ObjectID, Context})
           const TemplateMountConfig = Template.mount_config
 
           if(ObjectCabinetFace == TemplateFace || TemplateMountConfig == "4-post") {
@@ -200,12 +198,22 @@ export default {
       if(TemplateType == 'standard') {
         const LocationID = vm.LocationID
         const CabinetFace = vm.TemplateFaceSelected[Context]
+        let CabinetFront
+        if(CabinetFace == 'front') {
+          CabinetFront = TemplateFace
+        } else {
+          if(TemplateFace == 'front') {
+            CabinetFront = 'rear'
+          } else {
+            CabinetFront = 'front'
+          }
+        }
         let data
         let url
 
         data = {
           "location_id": LocationID,
-          "cabinet_face": CabinetFace,
+          "cabinet_front": CabinetFront,
           "cabinet_ru": vm.GetRUNumber(CabinetRU),
         }
 
@@ -213,7 +221,6 @@ export default {
         if(ObjectContext == 'template') {
 
           data.template_id = TemplateID
-          data.template_face = TemplateFace
 
           url = '/api/objects/standard'
 

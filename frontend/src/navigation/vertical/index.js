@@ -35,6 +35,13 @@ export default [
 		action:'read',
 	},
 	{
+		title: 'Archive',
+		route: 'archive',
+		icon: 'ArchiveIcon',
+		resource: 'Operator',
+		action:'read',
+	},
+	{
 		title: 'Admin',
 		route: 'admin',
 		icon: 'KeyIcon',

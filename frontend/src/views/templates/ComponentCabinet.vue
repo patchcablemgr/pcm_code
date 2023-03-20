@@ -131,12 +131,6 @@ export default {
           const ObjectCabinetFace = Object.cabinet_front
           const ObjectID = Object.id
           const Template = vm.GetTemplate({ObjectID, Context})
-          console.log('ObjectID: '+ObjectID)
-          /*
-          const TemplateID = vm.GetTemplateID(ObjectID, Context)
-          const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-          const Template = vm.Templates[Context][TemplateIndex]
-          */
           const TemplateMountConfig = Template.mount_config
 
           if(ObjectCabinetFace == TemplateFace || TemplateMountConfig == "4-post") {

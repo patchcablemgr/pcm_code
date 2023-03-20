@@ -974,24 +974,24 @@ export default {
             }
           } else if (Key == 'ru_size') {
             // Set pseudo template RU size if this is the insert constraint origin ('standard' template type)
-            return Math.ceil(InsertConstraints.part_layout.height / 2)
+            return Math.ceil(InsertConstraints[Template.insert_constraints.length-1].part_layout.height / 2)
           } else if (Key == 'blueprint') {
 
-            Value.front[0].units = InsertConstraints.part_layout.width
+            Value.front[0].units = InsertConstraints[Template.insert_constraints.length-1].part_layout.width
 
             // Generate enclosure partition
             let EnclosurePartition = {
               'type': 'enclosure',
-              'units': InsertConstraints.part_layout.height,
+              'units': InsertConstraints[Template.insert_constraints.length-1].part_layout.height,
               'enc_layout': {
-                'cols': InsertConstraints.enc_layout.cols,
-                'rows': InsertConstraints.enc_layout.rows
+                'cols': InsertConstraints[Template.insert_constraints.length-1].enc_layout.cols,
+                'rows': InsertConstraints[Template.insert_constraints.length-1].enc_layout.rows
               },
               'children': []
             }
 
             // Set pseudo template partition attributes
-            Value.front[0].units = InsertConstraints.part_layout.width
+            Value.front[0].units = InsertConstraints[Template.insert_constraints.length-1].part_layout.width
             Value.front[0].children.push(EnclosurePartition)
             
             return Value

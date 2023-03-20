@@ -408,9 +408,6 @@ export default {
       if(ObjectID) {
         const Face = vm.StateSelected[Context].object_face
         const PartitionAddress = vm.StateSelected[Context].partition[Face]
-        console.log(ObjectID)
-        console.log(Template)
-        console.log(Face)
         const Blueprint = Template.blueprint[Face]
         const Partition = vm.GetPartition(Blueprint, PartitionAddress)
         PortFormat = (Partition.type == 'connectable') ? Partition.port_format : null

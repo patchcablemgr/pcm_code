@@ -5,6 +5,7 @@ Features:
 
 Fixes:
 - Resolved "Invalid partition size" error when creating templates
+- Not able to clone insert templates
 
 ## 1.3.1
 

@@ -355,15 +355,6 @@ export default {
         vm.DisplayError(error)
       })
     },
-    GETFloorplanTemplates: function() {
-
-      const vm = this
-
-      vm.$http.get('/api/floorplan-templates').then(function(response){
-        vm.$store.commit('pcmFloorplanTemplates/SET_FloorplanTemplates', {data: response.data})
-        vm.$store.commit('pcmFloorplanTemplates/SET_Ready', {ReadyState:true})
-      })
-    },
     SetDefaultCategory() {
 
       const vm = this
@@ -529,9 +520,7 @@ export default {
         vm.GETMedia()
         vm.GETMediaType()
         vm.GETOrientations()
-        //vm.GETFloorplanTemplates()
 
-        //vm.SetDefaultCategory()
         vm.GenerateWorkspaceLocations()
         vm.GenerateWorkspaceObjects()
         vm.GenerateWorkspaceTemplates()

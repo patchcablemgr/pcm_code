@@ -85,13 +85,15 @@ export const PCM = {
             const Context = vm.Context
 
             // Get Object
-            const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
-            const Object = vm.Objects[Context][ObjectIndex]
+            //const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
+            //const Object = vm.Objects[Context][ObjectIndex]
+            const Object = vm.GetObject({ObjectID, Context})
 
             // Get Template
-            const TemplateID = Object.template_id
-            const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-            const Template = vm.Templates[Context][TemplateIndex]
+            const Template = vm.GetTemplate({ObjectID, Context})
+            //const TemplateID = Object.template_id
+            //const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
+            //const Template = vm.Templates[Context][TemplateIndex]
 
             // Get Object Face
             let ObjectFace
@@ -252,17 +254,18 @@ export const PCM = {
 
             // Object or floorplan
             let TemplatesData
-            if(typeof TemplateID == 'number') {
-                TemplatesData = vm.Templates[Context]
-                console.log('here1')
-            } else {
-                if(TemplateID.toString().startsWith('pseudo')) {
-                    console.log('here2')
+            if(TemplateID) {
+                if(typeof TemplateID == 'number') {
                     TemplatesData = vm.Templates[Context]
                 } else {
-                    console.log('here3')
-                    TemplatesData = vm.FloorplanTemplates
+                    if(TemplateID.toString().startsWith('pseudo')) {
+                        TemplatesData = vm.Templates[Context]
+                    } else {
+                        TemplatesData = vm.FloorplanTemplates
+                    }
                 }
+            } else {
+                TemplatesData = vm.Templates[Context]
             }
 
             return TemplatesData.findIndex((template) => template.id == TemplateID )

@@ -55,6 +55,7 @@ Route::group(['middleware' => 'auth:sanctum'], function(){
 
   // Only POST
   Route::post('archive', [ArchiveController::class, 'import'])->middleware('archiveUpload');
+  Route::post('archive/convert', [ArchiveController::class, 'convert']);
   Route::post('cables', [CableController::class, 'store']);
   Route::post('cable-paths', [CablePathController::class, 'store']);
   Route::post('config/app/update', [ConfigController::class, 'updateApp']);

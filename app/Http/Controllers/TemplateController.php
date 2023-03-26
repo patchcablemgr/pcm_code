@@ -221,13 +221,13 @@ class TemplateController extends Controller
                 'required',
                 'min:1',
                 'max:100',
-                new TemplateBlueprint($request, null, 'front')
+                new TemplateBlueprint($request, null, 'front', $this->archiveAddress)
             ],
             'blueprint.rear' => [
                 'required',
                 'min:1',
                 'max:100',
-                new TemplateBlueprint($request, null, 'rear')
+                new TemplateBlueprint($request, null, 'rear', $this->archiveAddress)
             ]
         ];
 
@@ -303,13 +303,13 @@ class TemplateController extends Controller
                 'required',
                 'min:1',
                 'max:100',
-                new TemplateBlueprint(null, $id, 'front')
+                new TemplateBlueprint(null, $id, 'front', $this->archiveAddress)
             ],
             'blueprint.rear' => [
                 'required',
                 'min:1',
                 'max:100',
-                new TemplateBlueprint(null, $id, 'rear')
+                new TemplateBlueprint(null, $id, 'rear', $this->archiveAddress)
             ]
         ];
         $validatorMessages = $PCM->transformValidationMessages($validatorRules, $this->archiveAddress);

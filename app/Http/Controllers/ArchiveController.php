@@ -38,7 +38,8 @@ class ArchiveController extends Controller
     protected $jsonAttributes = array(
         'category' => array(),
         'template' => array(
-            'blueprint'
+            'blueprint',
+            'insert_constraints'
         ),
         'location' => array(),
         'object' => array(
@@ -76,6 +77,187 @@ class ArchiveController extends Controller
         'connection' => array(),
         'port' => array(),
         'trunk' => array()
+    );
+
+    protected $staticAttributes = array(
+        'category' => array(),
+        'template' => array(
+            'type',
+            'ru_size',
+            'function',
+            'mount_config',
+            'insert_constraints',
+        ),
+        'location' => array(
+            'type',
+        ),
+        'object' => array(
+            'template_id',
+            'floorplan_object_type'
+        ),
+        'cable' => array(),
+        'cable_path' => array(),
+        'connection' => array(),
+        'port' => array(),
+        'trunk' => array()
+    );
+
+    protected $tableSchemas = array(
+        'category' => array(
+            'filename' => 'category.csv',
+            'controller' => 'App\Http\Controllers\CategoryController',
+            'model' => 'App\Models\CategoryModel',
+            'post_method' => 'store',
+            'patch_method' => 'update',
+            'image_controller' => false,
+            'image_controller_method' => false,
+            'dependent_attr' => array(
+                'id' => array(
+                    'template' => array(
+                        'category_id'
+                    )
+                )
+            ),
+            'dependency_mapping' => array(),
+            'entryIDArray' => array()
+        ),
+        'template' => array(
+            'filename' => 'template.csv',
+            'controller' => 'App\Http\Controllers\TemplateController',
+            'model' => 'App\Models\TemplateModelNoImgData',
+            'post_method' => 'store',
+            'patch_method' => 'update',
+            'image_controller' => 'App\Http\Controllers\ImageController',
+            'image_controller_method' => 'storeTemplateImage',
+            'dependent_attr' => array('id' => array(
+                'object' => array(
+                    'template_id'
+                )
+            )),
+            'dependency_mapping' => array(),
+            'entryIDArray' => array()
+        ),
+        'location' => array(
+            'filename' => 'location.csv',
+            'controller' => 'App\Http\Controllers\LocationController',
+            'model' => 'App\Models\LocationModelNoImgData',
+            'post_method' => 'store',
+            'patch_method' => 'update',
+            'image_controller' => 'App\Http\Controllers\ImageController',
+            'image_controller_method' => 'storeLocationImage',
+            'dependent_attr' => array('id' => array(
+                'location' => array(
+                    'parent_id'
+                ),
+                'object' => array(
+                    'location_id'
+                ),
+                'cable_path' => array(
+                    'cabinet_a_id',
+                    'cabinet_b_id'
+                ),
+            )),
+            'dependency_mapping' => array(),
+            'entryIDArray' => array()
+        ),
+        'object' => array(
+            'filename' => 'object.csv',
+            'controller' => 'App\Http\Controllers\ObjectController',
+            'model' => 'App\Models\ObjectModel',
+            'post_method' => array(
+                'standard' => 'storeStandard',
+                'insert' => 'storeInsert',
+                'floorplan' => 'storeFloorplan'
+            ),
+            'patch_method' => 'update',
+            'image_controller' => false,
+            'image_controller_method' => false,
+            'dependent_attr' => array(
+                'id' => array(
+                    'object' => array(
+                        'parent_id'
+                    ),
+                    'trunk' => array(
+                        'a_id',
+                        'b_id'
+                    ),
+                    'connection' => array(
+                        'a_id',
+                        'b_id'
+                    ),
+                    'port' => array(
+                        'object_id'
+                    )
+                )
+            ),
+            'dependency_mapping' => array(),
+            'entryIDArray' => array()
+        ),
+        'trunk' => array(
+            'filename' => 'trunk.csv',
+            'controller' => 'App\Http\Controllers\TrunkController',
+            'model' => 'App\Models\TrunkModel',
+            'post_method' => 'store',
+            'patch_method' => 'update',
+            'image_controller' => false,
+            'image_controller_method' => false,
+            'dependent_attr' => array(),
+            'dependency_mapping' => array(),
+            'entryIDArray' => array()
+        ),
+        'port' => array(
+            'filename' => 'port.csv',
+            'controller' => 'App\Http\Controllers\PortController',
+            'model' => 'App\Models\PortModel',
+            'post_method' => 'store',
+            'patch_method' => 'store',
+            'image_controller' => false,
+            'image_controller_method' => false,
+            'dependent_attr' => array(),
+            'dependency_mapping' => array(),
+            'entryIDArray' => array()
+        ),
+        'cable' => array(
+            'filename' => 'cable.csv',
+            'controller' => 'App\Http\Controllers\CableController',
+            'model' => 'App\Models\CableModel',
+            'post_method' => 'store',
+            'patch_method' => 'update',
+            'image_controller' => false,
+            'image_controller_method' => false,
+            'dependent_attr' => array(),
+            'dependency_mapping' => array(),
+            'entryIDArray' => array()
+        ),
+        'connection' => array(
+            'filename' => 'connection.csv',
+            'controller' => 'App\Http\Controllers\ConnectionController',
+            'model' => 'App\Models\ConnectionModel',
+            'post_method' => 'store',
+            'patch_method' => 'store',
+            'image_controller' => false,
+            'image_controller_method' => false,
+            'dependent_attr' => array(),
+            'dependency_mapping' => array(),
+            'entryIDArray' => array()
+        ),
+        'cable_path' => array(
+            'filename' => 'cable_path.csv',
+            'controller' => 'App\Http\Controllers\CablePathController',
+            'model' => 'App\Models\CablePathModel',
+            'post_method' => 'store',
+            'patch_method' => 'update',
+            'image_controller' => false,
+            'image_controller_method' => false,
+            'dependent_attr' => array(),
+            'dependency_mapping' => array(),
+            'entryIDArray' => array()
+        ),
+    );
+
+    protected $conversionMap = array(
+        'category' => array(),
+        'template' => array()
     );
 
     /**
@@ -117,6 +299,7 @@ class ArchiveController extends Controller
         $zipFilePath = Storage::disk('local')->path($zipFilename);
         if($zip->open($zipFilePath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
 
+            // Callback functions
             $tableColumnCallback = fn($column) => $column->Field;
             $tableEntryCallback = fn($row) => is_array($row) ? json_encode($row) : $row;
 
@@ -231,91 +414,6 @@ class ArchiveController extends Controller
             'cable.csv'
         );
 
-        $tableSchemas = array(
-            'category' => array(
-                'filename' => 'category.csv',
-                'controller' => new CategoryController,
-                'model' => new CategoryModel,
-                'post_method' => 'store',
-                'patch_method' => 'update',
-                'dependentAttrs' => array()
-            ),
-            'template' => array(
-                'filename' => 'template.csv',
-                'controller' => new TemplateController,
-                'model' => new TemplateModelNoImgData,
-                'post_method' => 'store',
-                'patch_method' => 'update',
-                'dependentAttrs' => array()
-            ),
-            'location' => array(
-                'filename' => 'location.csv',
-                'controller' => new LocationController,
-                'model' => new LocationModelNoImgData,
-                'post_method' => 'store',
-                'patch_method' => 'update',
-                'image_controller' => new ImageController,
-                'image_controller_method' => 'storeLocationImage',
-                'dependentAttrs' => array(
-                    'parent_id'
-                )
-            ),
-            'object' => array(
-                'filename' => 'object.csv',
-                'controller' => new ObjectController,
-                'model' => new ObjectModel,
-                'post_method' => array(
-                    'standard' => 'storeStandard',
-                    'insert' => 'storeInsert',
-                    'floorplan' => 'storeFloorplan'
-                ),
-                'patch_method' => 'update',
-                'dependentAttrs' => array(
-                    'parent_id'
-                )
-            ),
-            'trunk' => array(
-                'filename' => 'trunk.csv',
-                'controller' => new TrunkController,
-                'model' => new TrunkModel,
-                'post_method' => 'store',
-                'patch_method' => 'update',
-                'dependentAttrs' => array()
-            ),
-            'port' => array(
-                'filename' => 'port.csv',
-                'controller' => new PortController,
-                'model' => new PortModel,
-                'post_method' => 'store',
-                'patch_method' => 'store',
-                'dependentAttrs' => array()
-            ),
-            'connection' => array(
-                'filename' => 'connection.csv',
-                'controller' => new ConnectionController,
-                'model' => new ConnectionModel,
-                'post_method' => 'store',
-                'patch_method' => 'store',
-                'dependentAttrs' => array()
-            ),
-            'cable_path' => array(
-                'filename' => 'cable_path.csv',
-                'controller' => new CablePathController,
-                'model' => new CablePathModel,
-                'post_method' => 'store',
-                'patch_method' => 'update',
-                'dependentAttrs' => array()
-            ),
-            'cable' => array(
-                'filename' => 'cable.csv',
-                'controller' => new CableController,
-                'model' => new CableModel,
-                'post_method' => 'store',
-                'patch_method' => 'update',
-                'dependentAttrs' => array()
-            ),
-        );
-
         $zip = new \ZipArchive();
         if($zip->open($filePath) === TRUE) {
             
@@ -335,50 +433,31 @@ class ArchiveController extends Controller
             }
             if($zip->extractTo($destPath, $manifest)) {
 
-                foreach($tableSchemas as $tableName => $tableSchema) {
+                // Create/update entries
+                foreach($this->tableSchemas as $tableName => $tableSchema) {
+
+                    $tableController = new $tableSchema['controller'];
+                    $tableModel = new $tableSchema['model'];
+                    $tableImgController = ($tableSchema['image_controller']) ? new $tableSchema['image_controller'] : false;
                     $tableFileName = $tableSchema['filename'];
                     $tableFilePath = Storage::disk('local')->path('imports/'.$tableFileName);
                     $file = fopen($tableFilePath, 'r');
                     $row = 1;
                     if($file !== FALSE) {
-                        $entryIDArray = array();
-                        //$postponedEntries = array();
+                        
                         while (($data = fgetcsv($file, 100000, ",")) !== FALSE) {
 
                             if($row == 1){
 
                                 // Process header
-                                $attrMap = $this->processCSVHeader($tableName, $data);
-
+                                $attrMap = $this->processCSVHeader($data);
                             } else {
 
-                                /*
-                                // Postpone processing entries that depend on other entries which have not been processed yet
-                                foreach($tableSchema['dependentAttrs'] as $dependentAttr) {
-                                    $depAttrIdx = $attrMap[$dependentAttr];
-                                    $depID = $data[$depAttrIdx];
-                                    if(!in_array($depID, $entryIDArray)) {
-                                        $postponedEntries[$row] = $data;
-                                        $row++;
-                                        continue;
-                                    }
-                                }
-                                */
-
-                                // Prevent entries with duplicate IDs
-                                $entryIDIdx = $attrMap['id'];
-                                $entryID = $data[$entryIDIdx];
-                                if(in_array($entryID, $entryIDArray)) {
-                                    throw ValidationException::withMessages(['error' => 'Duplicate entry ID found. '.$tableFileName.":".$row]);
-                                }
-
                                 // Process entry
-                                $importIDArray = $this->processCSVEntry($data, $attrMap, $tableSchema, $tableName, $tableFileName, $row);
+                                $importIDArray = $this->processCSVEntry($data, $attrMap, $tableController, $tableModel, $tableImgController, $tableName, $tableFileName, $row);
 
                                 // Add IDs to entry array
-                                foreach($importIDArray as $importID) {
-                                    array_push($entryIDArray, $importID);
-                                }
+                                $this->tableSchemas[$tableName]['entryIDArray'] = array_merge($this->tableSchemas[$tableName]['entryIDArray'], $importIDArray);
                             }
                             $row++;
                         }
@@ -387,19 +466,26 @@ class ArchiveController extends Controller
                         throw ValidationException::withMessages(['error' => 'Not able to open extracted file.']);
                     }
                     fclose($file);
+                }
 
-                    // Delete entries
-                    foreach($tableSchema['model']->all() as $dbEntry) {
+                // Delete entries
+                for($x=count($this->tableSchemas)-1; $x>1; $x--) {
+
+                    $tableModel = new $tableSchema['model'];
+
+                    // Find entries to delete
+                    foreach($tableModel->all() as $dbEntry) {
                         $dbEntryID = $dbEntry['id'];
-                        if(!in_array($dbEntryID, $entryIDArray)) {
+                        if(!in_array($dbEntryID, $this->tableSchemas[$tableName]['entryIDArray'])) {
 
                             // Set a reference to the archive for helpful error reporting
-                            $tableSchema['controller']->archiveAddress = $tableFileName.":".$row;
+                            $tableController->archiveAddress = $tableFileName.":".$row;
                             
                             // Submit DELETE request
-                            $newResponse = call_user_func(array($tableSchema['controller'], 'destroy'), $dbEntryID);
+                            $newResponse = call_user_func(array($tableController, 'destroy'), $dbEntryID);
                         }
                     }
+
                 }
             } else {
                 throw ValidationException::withMessages(['error' => 'Not able to extract archive.']);
@@ -412,13 +498,302 @@ class ArchiveController extends Controller
     }
 
     /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function convert(Request $request)
+    {
+
+        // RBAC
+        if (! Gate::allows('operator')) {
+            abort(403);
+        }
+
+        $PCM = new PCM;
+
+        // Prepare variables
+        $validatorInput = [
+            'file' => $request->file
+        ];
+        $validatorRules = [
+            'file' => [
+                'mimetypes:application/zip',
+                'max:2048'
+            ]
+        ];
+        $validatorMessages = [];
+        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        $customValidator->stopOnFirstFailure();
+        $customValidator->validate();
+
+        $headers = array(
+            'Content-Type' => 'application/zip'
+        );
+
+        $manifest = array(
+            '01 - Categories.csv',
+            '02 - Templates.csv',
+        );
+
+        // Store legacy archive
+        $legacyArchivePath = $request->file('file')->store('imports');
+
+        // Get legacy file paths
+        $legacyArchivePathArray = explode('/', $legacyArchivePath);
+        $legacyArchiveFilename = end($legacyArchivePathArray);
+        $legacyArchiveFilePath = Storage::disk('local')->path('imports/'.$legacyArchiveFilename);
+        $legacyArchiveDestPath = Storage::disk('local')->path('imports');
+
+        // Callback functions
+        $tableEntryCallback = fn($row) => is_array($row) ? json_encode($row) : $row;
+
+        // Extract legacy archive
+        $zip = new \ZipArchive();
+        if($zip->open($legacyArchiveFilePath) === TRUE) {
+            
+            for($x=0; $x<$zip->numFiles; $x++) {
+
+                // Validate image filenames and add to manifest
+                $zippedFilename = $zip->getNameIndex($x);
+                if(preg_match("/^images\/[a-zA-Z0-9]{40}\.(jpg|png|gif)$/", $zippedFilename)) {
+                    array_push($manifest, $zippedFilename);
+                }
+
+                // Validate file size
+                $fileStat = $zip->statIndex($x);
+                if($fileStat['size'] > 2048000) {
+                    throw ValidationException::withMessages(['error' => 'Not able to extract files larger than 2MB.']);
+                }
+            }
+            
+            // Extract legacy archive
+            if(!$zip->extractTo($legacyArchiveDestPath, $manifest)) {
+                throw ValidationException::withMessages(['error' => 'Not able to extract legacy archive.']);
+            }
+        }
+
+        // Open ZIP
+        $zip = new \ZipArchive();
+        $zipFilename = 'archive.zip';
+        $zipFilePath = Storage::disk('local')->path($zipFilename);
+        if($zip->open($zipFilePath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
+
+            $archiveSchemas = array(
+                'category' => array(
+                    'filename' => '01 - Categories.csv',
+                    'attr_mapping' => array(
+                        array(
+                            'new' => 'id',
+                            'old' => 'Name',
+                            'process' => function($data=null) {
+                                $ID = count($this->conversionMap['category'])+1;
+                                $this->conversionMap['category'][$data] = $ID;
+                                return $ID;
+                            }
+                        ),
+                        array(
+                            'new' => 'name',
+                            'old' => 'Name',
+                            'process' => function($data=null) {
+                                return ($data) ? $data : null;
+                            }
+                        ),
+                        array(
+                            'new' => 'color',
+                            'old' => 'Color',
+                            'process' => function($data=null) {
+                                return ($data) ? $data : null;
+                            }
+                        ),
+                        array(
+                            'new' => 'default',
+                            'old' => false,
+                            'process' => function($data=null) {
+                                return ($data) ? $data : null;
+                            }
+                        ),
+                        array(
+                            'new' => 'visible',
+                            'old' => false,
+                            'process' => function($data=null) {
+                                return ($data) ? $data : null;
+                            }
+                        ),
+                    )
+                ),
+                'template' => array(
+                    'filename' => '02 - Templates.csv',
+                    'attr_mapping' => array(
+                        array(
+                            'new' => 'id',
+                            'old' => 'Name',
+                            'process' => function($data=null) {
+                                $ID = count($this->conversionMap['category'])+1;
+                                $this->conversionMap['category'][$data] = $ID;
+                                return $ID;
+                            }
+                        ),
+                        array(
+                            'new' => 'name',
+                            'old' => 'Name',
+                            'process' => function($data=null) {
+                                return ($data) ? $data : null;
+                            }
+                        ),
+                        array(
+                            'new' => 'category_id',
+                            'old' => 'Category',
+                            'process' => function($data=null) {
+                                return $this->conversionMap['category'][$data];
+                            }
+                        ),
+                        array(
+                            'new' => 'type',
+                            'old' => '**Type',
+                            'process' => function($data=null) {
+                                return ($data) ? $data : null;
+                            }
+                        ),
+                        array(
+                            'new' => 'function',
+                            'old' => '**Function',
+                            'process' => function($data=null) {
+                                return ($data) ? $data : null;
+                            }
+                        ),
+                        array(
+                            'new' => 'ru_size',
+                            'old' => '**RU Size',
+                            'process' => function($data=null) {
+                                return ($data) ? $data : null;
+                            }
+                        ),
+                        array(
+                            'new' => 'mount_config',
+                            'old' => '**Mount Config',
+                            'process' => function($data=null) {
+                                return ($data) ? $data : null;
+                            }
+                        ),
+                        array(
+                            'new' => 'blueprint',
+                            'old' => '**Template Structure',
+                            'process' => function($data=null) {
+                                return ($data) ? $data : null;
+                            }
+                        ),
+                        array(
+                            'new' => 'img_front',
+                            'old' => '**Template Structure',
+                            'process' => function($data=null) {
+                                $data = json_decode($data, true);
+                                return ($data) ? $data['frontImage'] : null;
+                            }
+                        ),
+                        array(
+                            'new' => 'img_rear',
+                            'old' => '**Template Structure',
+                            'process' => function($data=null) {
+                                $data = json_decode($data, true);
+                                return ($data) ? $data['rearImage'] : null;
+                            }
+                        ),
+                    )
+                )
+            );
+
+            // Create/update entries
+            foreach($archiveSchemas as $tableName => $archiveSchema) {
+
+                // Open temp stream to write CSV
+                $csvFile = fopen('php://temp', 'w');
+
+                // Open legacy archive file
+                $archiveFilename = $archiveSchema['filename'];
+                $archiveFilePath = Storage::disk('local')->path('imports/'.$archiveFilename);
+                $file = fopen($archiveFilePath, 'r');
+                $row = 1;
+                if($file !== FALSE) {
+                    
+                    while (($data = fgetcsv($file, 100000, ",")) !== FALSE) {
+
+                        if($row == 1){
+
+                            // Process header
+                            $attrMap = $this->processCSVHeader($data);
+                            $workingArray = array();
+                            foreach($archiveSchema['attr_mapping'] as $attrIdx => $attrMapping) {
+                                array_push($workingArray, $attrMapping['new']);
+                            }
+
+                            // Add header to CSV file
+                            fputcsv($csvFile, $workingArray);
+                        } else {
+
+                            // Process entry
+                            $workingArray = array();
+                            foreach($archiveSchema['attr_mapping'] as $attrIdx => $attrMapping) {
+
+                                // Initialize legacy data
+                                $legacyData = null;
+
+                                // Retrieve legacy data
+                                if($attrMapping['old']) {
+                                    $legacyData = $data[$attrMap[$attrMapping['old']]];
+                                }
+
+                                if($attrMapping['new'] == 'id') {
+
+                                }
+
+                                // Process legacy data
+                                $processedData = $attrMapping['process']($legacyData);
+
+                                // Add processed data to row
+                                array_push($workingArray, $processedData);
+                            }
+
+                            // Add row to CSV file
+                            fputcsv($csvFile, $workingArray);
+                        }
+                        $row++;
+                    }
+
+                    // Store CSV to disk
+                    $filename = $tableName.'.csv';
+                    Storage::disk('local')->put($filename, $csvFile);
+                    fclose($csvFile);
+
+                    // Add CSV to ZIP
+                    $zip->addFile(Storage::disk('local')->path($filename), $filename);
+                    
+                } else {
+                    throw ValidationException::withMessages(['error' => 'Not able to open extracted file.']);
+                }
+                fclose($file);
+            }
+
+            // Close ZIP
+            $zip->close();
+
+            // Return ZIP
+            return response()->download(Storage::disk('local')->path($zipFilename));
+        } else {
+            throw ValidationException::withMessages(['error' => 'Not able to create archive.']);
+        }
+
+    }
+
+    /**
      * process CSV Header by mapping header to index value
      *
      * @param   string $tableName
      * @param   array $data
      * @return  array
      */
-    private function processCSVHeader($tableName, $data)
+    private function processCSVHeader($data)
     {
 
         $attrMap = array();
@@ -438,12 +813,16 @@ class ArchiveController extends Controller
      * @param   array $attrMap
      * @param   array $tableSchema
      * @param   string $tableName
+     * @param   object $tableController
+     * @param   object $tableModel
+     * @param   object $tableImgController
      * @param   string $tableFileName
      * @param   integer $row
      * @return  integer
      */
-    private function processCSVEntry($data, $attrMap, $tableSchema, $tableName, $tableFileName, $row)
+    private function processCSVEntry($data, $attrMap, $tableController, $tableModel, $tableImgController, $tableName, $tableFileName, $row)
     {
+        $tableSchema = $this->tableSchemas[$tableName];
 
         // Create request
         $importRequest = new Request;
@@ -453,8 +832,17 @@ class ArchiveController extends Controller
 
         // Determine if entry should be created or updated
         if($entryID) {
-            if($tableSchema['model']->where('id', '=', $entryID)->first()) {
+            if($original = $tableModel->where('id', '=', $entryID)->first()) {
+
+                // Update existing entry
                 $entryAction = 'update';
+
+                // Create new entry if static attributes do not match
+                foreach($this->staticAttributes[$tableName] as $attr) {
+                    if($data[$attrMap[$attr]] != $original[$attr]) {
+                        $entryAction = 'create';
+                    }
+                }
             } else {
                 $entryAction = 'create';
             }
@@ -496,24 +884,50 @@ class ArchiveController extends Controller
             // Get array index of attribute
             $attrIdx = $attrMap[$attr];
 
+            // Apply attribute value mapping
+            if(isset($tableSchema['dependency_mapping'][$attr])) {
+                if(isset($tableSchema['dependency_mapping'][$attr][$data[$attrIdx]])) {
+                    $data[$attrIdx] = $tableSchema['dependency_mapping'][$attr][$data[$attrIdx]];
+                }
+            }
+
             // Decode JSON if necessary
-            $requestDataEntry = (in_array($attr, $this->jsonAttributes[$tableName])) ? json_decode($data[$attrIdx], true) : $requestDataEntry = $data[$attrIdx];
-            
+            $requestDataEntry = (in_array($attr, $this->jsonAttributes[$tableName])) ? json_decode($data[$attrIdx], true) : $data[$attrIdx];
+
             // Add attribute to request data
             $requestData[$attr] = $requestDataEntry;
         }
 
         // Set a reference to the archive for helpful error reporting
-        $tableSchema['controller']->archiveAddress = $tableFileName.":".$row;
-
-        Log::info($entryAction.' '.$tableFileName.":".$row);
+        $tableController->archiveAddress = $tableFileName.":".$row;
 
         // Submit request
         $importRequest->request->add($requestData);
-        $importResponse = call_user_func(array($tableSchema['controller'], $controllerMethod), $importRequest, $entryID);
-        $importIDArray = array();
+        $importResponse = call_user_func(array($tableController, $controllerMethod), $importRequest, $entryID);
+        
+        // Store dependency mapping
+        foreach($tableSchema['dependent_attr'] as $attr => $dependentTables) {
+
+            // Collect mapping data
+            $old = $data[$attrMap[$attr]];
+            $new = (isset($importResponse['add'])) ? $importResponse['add'][$attr] : $importResponse[$attr];
+
+            foreach($dependentTables as $dependentTableName => $dependentTableAttrs) {
+                foreach($dependentTableAttrs as $dependentTableAttr) {
+
+                    // Create dependency mapping attribute array if it doesn't exist
+                    if(!isset($this->tableSchemas[$dependentTableName]['dependency_mapping'][$dependentTableAttr])) {
+                        $this->tableSchemas[$dependentTableName]['dependency_mapping'][$dependentTableAttr] = array();
+                    }
+
+                    // Add mapping
+                    $this->tableSchemas[$dependentTableName]['dependency_mapping'][$dependentTableAttr][$old] = $new;
+                }
+            }
+        }
 
         // Store added row IDs
+        $importIDArray = array();
         if(isset($importResponse['add'])) {
             array_push($importIDArray, $importResponse['add']['id']);
         } else {
@@ -534,7 +948,7 @@ class ArchiveController extends Controller
 
                 // Determine if image file is the same
                 $fileIsSame = false;
-                $imageEntry = $tableSchema['model']->where('id', '=', $importIDArray[0])->first();
+                $imageEntry = $tableModel->where('id', '=', $importIDArray[0])->first();
                 if($imageEntry[$imgAttr]) {
                     $origImgFilePath = Storage::disk('local')->path('images/'.$imageEntry[$imgAttr]);
                     if(file_exists($origImgFilePath)) {
@@ -545,10 +959,19 @@ class ArchiveController extends Controller
                 }
 
                 if(!$fileIsSame) {
+
+                    $requestData = array();
+                    if(strpos($imgAttr, 'front') !== false) {
+                        $requestData['face'] = 'front';
+                    } else if(strpos($imgAttr, 'rear') !== false) {
+                        $requestData['face'] = 'rear';
+                    }
+
                     $imgMimeType = Storage::mimeType('imports/images/'.$imgFileName);
                     $imgFile = array('file' => new UploadedFile($imgFilePath, $imgFileName, $imgMimeType, null, true));
-                    $imgRequest = (new Request())->duplicate([], [], [], [], $imgFile);
-                    $imageResponse = call_user_func(array($tableSchema['image_controller'], $tableSchema['image_controller_method']), $imgRequest, $importIDArray[0]);
+                    $imgRequest = (new Request())->duplicate($requestData, [], [], [], $imgFile);
+
+                    $imageResponse = call_user_func(array($tableImgController, $tableSchema['image_controller_method']), $imgRequest, $importIDArray[0]);
                 }
             }
         }

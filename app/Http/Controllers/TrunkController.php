@@ -273,7 +273,7 @@ class TrunkController extends Controller
         $trunk->b_port = ($floorplanType == null) ? null : $data['b_port'];
 
         // Store group ID
-        $trunk->group_id = $data['group_id'];
+        $trunk->group_id = ($data['group_id']) ? $data['group_id'] : null;
 
         // Save new trunk object
         $trunk->save();

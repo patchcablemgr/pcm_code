@@ -4,6 +4,7 @@ namespace App\Rules;
 
 use Illuminate\Contracts\Validation\Rule;
 use App\Models\CableModel;
+use Illuminate\Support\Facades\Log;
 
 class CableID implements Rule
 {
@@ -12,9 +13,9 @@ class CableID implements Rule
      *
      * @return void
      */
-    public function __construct()
+    public function __construct($archiveAddress=null)
     {
-        //
+        $this->archiveAddress = $archiveAddress;
     }
 
     /**
@@ -41,6 +42,6 @@ class CableID implements Rule
      */
     public function message()
     {
-        return 'Invalid cable ID.';
+        return 'Invalid cable ID. '.$this->archiveAddress;
     }
 }

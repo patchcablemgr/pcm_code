@@ -10,42 +10,17 @@
       >
         <b-col>
 
-          <b-card
-            title="Port Utilization"
-          >
-            <b-card-body>
+          <card-archive-archive/>
 
-              <!-- Download -->
-              <b-button
-                v-ripple.400="'rgba(255, 255, 255, 0.15)'"
-                variant="primary"
-                @click="Download()"
-                
-              >
-                Download
-              </b-button>
+        </b-col>
 
-              <!-- Upload -->
-              <b-button
-                v-ripple.400="'rgba(255, 255, 255, 0.15)'"
-                variant="primary"
-                v-b-modal.modal-file-upload-archive
-              >
-                Upload
-              </b-button>
+        <b-col>
 
-            </b-card-body>
-          </b-card>
+          <card-archive-convert/>
 
         </b-col>
       </b-row>
     </b-container>
-
-    <!-- Modal File Upload Archive -->
-    <modal-file-upload-archive
-      ModalTitle="Upload Archive"
-      ModalID="modal-file-upload-archive"
-    />
 
   </div>
 </template>
@@ -62,8 +37,9 @@ import {
 } from 'bootstrap-vue'
 import Ripple from 'vue-ripple-directive'
 import ToastGeneral from '@/views/templates/ToastGeneral.vue'
-import ModalFileUploadArchive from '@/views/templates/ModalFileUploadArchive.vue'
 import { PCM } from '@/mixins/PCM.js'
+import CardArchiveArchive from '@/views/templates/CardArchiveArchive.vue'
+import CardArchiveConvert from '@/views/templates/CardArchiveConvert.vue'
 
 export default {
   mixins: [PCM],
@@ -76,7 +52,8 @@ export default {
     BButton,
 
     ToastGeneral,
-    ModalFileUploadArchive
+    CardArchiveArchive,
+    CardArchiveConvert,
   },
   directives: {
     Ripple,
@@ -102,60 +79,26 @@ export default {
       const DependenciesReady = Dependencies.every(function(element){ return element == true })
       return DependenciesReady
     },
-    Objects() {
-      return this.$store.state.pcmObjects.Objects
-    },
     ObjectsReady: function() {
       return this.$store.state.pcmObjects.ObjectsReady
-    },
-    Organization() {
-      return this.$store.state.pcmOrganization.Organization
     },
     OrganizationReady: function() {
       return this.$store.state.pcmOrganization.OrganizationReady
     },
-    Connections() {
-      return this.$store.state.pcmConnections.Connections
-    },
     ConnectionsReady: function() {
       return this.$store.state.pcmConnections.ConnectionsReady
-    },
-    Templates() {
-      return this.$store.state.pcmTemplates.Templates
     },
     TemplatesReady: function() {
       return this.$store.state.pcmTemplates.TemplatesReady
     },
-    Categories() {
-      return this.$store.state.pcmCategories.Categories
-    },
     CategoriesReady: function() {
       return this.$store.state.pcmCategories.CategoriesReady
-    },
-    Locations() {
-      return this.$store.state.pcmLocations.Locations
     },
     LocationsReady: function() {
       return this.$store.state.pcmLocations.LocationsReady
     },
   },
-  methods: {
-    Download() {
-
-      const vm = this
-      
-      //https://stackoverflow.com/questions/53772331/vue-html-js-how-to-download-a-file-to-browser-using-the-download-tag
-      //https://stackoverflow.com/questions/57437531/how-do-i-download-a-zip-with-multiple-types-of-files-with-axios
-      vm.$http.get('/api/archive', {responseType: 'blob'}).then(response  => {
-        const blob = new Blob([response.data], { type: 'application/zip' })
-        const link = document.createElement('a')
-        link.href = URL.createObjectURL(blob)
-        link.download = 'pcmExport-'+Date.now()
-        link.click()
-        URL.revokeObjectURL(link.href)
-      })
-    },
-  },
+  methods: {},
   mounted() {},
 }
 </script>

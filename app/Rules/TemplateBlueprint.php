@@ -16,11 +16,12 @@ class TemplateBlueprint implements Rule
      *
      * @return void
      */
-    public function __construct($request, $id, $face)
+    public function __construct($request, $id, $face, $archiveAddress=null)
     {
 
         $this->returnMessage = 'Unknown error.';
         $this->ignore = false;
+        $this->archiveAddress = $archiveAddress;
 
         if(!is_null($id)) {
             
@@ -147,7 +148,7 @@ class TemplateBlueprint implements Rule
                                     $unitsAvailable[round($depth%2)] = $units;
                                     return $this->validatePartition($partition['children'], $unitsAvailable, $depth+1);
                                 } else {
-                                    $this->returnMessage = 'Invalid blueprint depth.  Depth: '.$depth;
+                                    $this->setErrorMessage('Invalid blueprint depth.  Depth: '.$depth);
                                     $valid = false;
                                 }
                             // Connectable partition
@@ -155,7 +156,7 @@ class TemplateBlueprint implements Rule
 
                                 // Validate children array is empty
                                 if(count($partition['children']) > 0) {
-                                    $this->returnMessage = 'Connectable partition "children" array must be empty.  Depth: '.$depth;
+                                    $this->setErrorMessage('Connectable partition "children" array must be empty.  Depth: '.$depth);
                                     $valid = false;
                                 }
 
@@ -185,41 +186,41 @@ class TemplateBlueprint implements Rule
                                             }
                                             if($validTypes) {
                                                 if($partition['port_layout']['cols'] > 100 && $partition['port_layout']['rows'] > 100) {
-                                                    $this->returnMessage = 'Invalid connectable port layout.  Max is 100.  Depth: '.$depth;
+                                                    $this->setErrorMessage('Invalid connectable port layout.  Max is 100.  Depth: '.$depth);
                                                     $valid = false;
                                                 }
                                             } else {
-                                                $this->returnMessage = 'Invalid connectable port layout key types.  Depth: '.$depth;
+                                                $this->setErrorMessage('Invalid connectable port layout key types.  Depth: '.$depth);
                                                 $valid = false;
                                             }
                                         } else {
-                                            $this->returnMessage = 'Invalid connectable port layout keys.  Depth: '.$depth;
+                                            $this->setErrorMessage('Invalid connectable port layout keys.  Depth: '.$depth);
                                             $valid = false;
                                         }
 
                                         // Validate media
                                         if (MediaModel::where('value', '=', $partition['media'])->count() == 0) {
-                                            $this->returnMessage = 'Invalid connectable port media.  Depth: '.$depth;
+                                            $this->setErrorMessage('Invalid connectable port media.  Depth: '.$depth);
                                             $valid = false;
                                         }
 
                                         // Validate port_connector
                                         if (PortConnectorModel::where('value', '=', $partition['port_connector'])->count() == 0) {
-                                            $this->returnMessage = 'Invalid connectable port connector.  Depth: '.$depth;
+                                            $this->setErrorMessage('Invalid connectable port connector.  Depth: '.$depth);
                                             $valid = false;
                                         }
 
                                         // Validate port_orientation
                                         if (PortOrientation::where('value', '=', $partition['port_orientation'])->count() == 0) {
-                                            $this->returnMessage = 'Invalid connectable port orientation.  Depth: '.$depth;
+                                            $this->setErrorMessage('Invalid connectable port orientation.  Depth: '.$depth);
                                             $valid = false;
                                         }
                                     } else {
-                                        $this->returnMessage = 'Invalid connectable partition key types.  Depth: '.$depth;
+                                        $this->setErrorMessage('Invalid connectable partition key types.  Depth: '.$depth);
                                         $valid = false;
                                     }
                                 } else {
-                                    $this->returnMessage = 'Invalid connectable partition keys.  Depth: '.$depth;
+                                    $this->setErrorMessage('Invalid connectable partition keys.  Depth: '.$depth);
                                     $valid = false;
                                 }
 
@@ -228,7 +229,7 @@ class TemplateBlueprint implements Rule
 
                                 // Validate children array is empty
                                 if(count($partition['children']) > 0) {
-                                    $this->returnMessage = 'Enclosure partition "children" array must be empty.  Depth: '.$depth;
+                                    $this->setErrorMessage('Enclosure partition "children" array must be empty.  Depth: '.$depth);
                                     $valid = false;
                                 }
 
@@ -252,43 +253,43 @@ class TemplateBlueprint implements Rule
                                             }
                                             if($validTypes) {
                                                 if($partition['enc_layout']['cols'] > 100 && $partition['enc_layout']['rows'] > 100) {
-                                                    $this->returnMessage = 'Invalid enclosure layout.  Max is 100.  Depth: '.$depth;
+                                                    $this->setErrorMessage('Invalid enclosure layout.  Max is 100.  Depth: '.$depth);
                                                     $valid = false;
                                                 }
                                             } else {
-                                                $this->returnMessage = 'Invalid enclosure layout key types.  Depth: '.$depth;
+                                                $this->setErrorMessage('Invalid enclosure layout key types.  Depth: '.$depth);
                                                 $valid = false;
                                             }
                                         } else {
-                                            $this->returnMessage = 'Invalid enclosure layout keys.  Depth: '.$depth;
+                                            $this->setErrorMessage('Invalid enclosure layout keys.  Depth: '.$depth);
                                             $valid = false;
                                         }
                                     } else {
-                                        $this->returnMessage = 'Invalid enclosure partition key types.  Depth: '.$depth;
+                                        $this->setErrorMessage('Invalid enclosure partition key types.  Depth: '.$depth);
                                         $valid = false;
                                     }
                                 } else {
-                                    $this->returnMessage = 'Invalid connectable partition keys.  Depth: '.$depth;
+                                    $this->setErrorMessage('Invalid connectable partition keys.  Depth: '.$depth);
                                     $valid = false;
                                 }
                             } else {
-                                $this->returnMessage = 'Invalid partition type.  Depth: '.$depth;
+                                $this->setErrorMessage('Invalid partition type.  Depth: '.$depth);
                                 $valid = false;
                             }
                         } else {
-                            $this->returnMessage = 'Invalid partition type.  Depth: '.$depth;
+                            $this->setErrorMessage('Invalid partition type.  Depth: '.$depth);
                             $valid = false;
                         }
                     } else {
-                        $this->returnMessage = 'Invalid partition size.  Depth: '.$depth;
+                        $this->setErrorMessage('Invalid partition size.  Depth: '.$depth);
                         $valid = false;
                     }
                 } else {
-                    $this->returnMessage = 'Invalid partition key types.  Depth: '.$depth;
+                    $this->setErrorMessage('Invalid partition key types.  Depth: '.$depth);
                     $valid = false;
                 }
             } else {
-                $this->returnMessage = 'Missing partition key.  Depth: '.$depth;
+                $this->setErrorMessage('Missing partition key.  Depth: '.$depth);
                 $valid = false;
             }
         }
@@ -337,7 +338,7 @@ class TemplateBlueprint implements Rule
                             // Validate value
                             $pattern = "/^[a-zA-Z0-9\\\\\/\-\_\=\+\|\*]+$/";
                             if(!preg_match($pattern, $field['value'])) {
-                                $this->returnMessage = 'Invalid static field value.';
+                                $this->setErrorMessage('Invalid static field value.');
                                 return false;
                             }
 
@@ -346,7 +347,7 @@ class TemplateBlueprint implements Rule
 
                             // Validate value
                             if(!preg_match('/^([1-9][0-9]*|[a-z]|[A-Z])$/', $field['value'])) {
-                                $this->returnMessage = 'Invalid incremental field value.';
+                                $this->setErrorMessage('Invalid incremental field value.');
                                 return false;
                             }
 
@@ -355,25 +356,37 @@ class TemplateBlueprint implements Rule
 
                             // Validate value
                             if(!preg_match('/^(,?[a-zA-Z0-9\\\\\/\-\_\=\+\|\*])*$/', $field['value'])) {
-                                $this->returnMessage = 'Invalid incremental field value.';
+                                $this->setErrorMessage('Invalid incremental field value.');
                                 return false;
                             }
                         }
                     } else {
-                        $this->returnMessage = 'Invalid field type.';
+                        $this->setErrorMessage('Invalid field type.');
                         return false;
                     }
 
                     
                 } else {
-                    $this->returnMessage = 'Invalid field key types.';
+                    $this->setErrorMessage('Invalid field key types.');
                     return false;
                 }
             } else {
-                $this->returnMessage = 'Invalid field keys.';
+                $this->setErrorMessage('Invalid field keys.');
                 return false;
             }
         }
+        return true;
+    }
+
+    /**
+     * Set error message
+     *
+     * @param string errMsg
+     * @return string
+     */
+    private function setErrorMessage($errMsg)
+    {
+        $this->returnMessage = ($this->archiveAddress) ? $errMsg.' '.$this->archiveAddress : $errMsg;
         return true;
     }
 }

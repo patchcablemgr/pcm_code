@@ -85,15 +85,10 @@ export const PCM = {
             const Context = vm.Context
 
             // Get Object
-            //const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
-            //const Object = vm.Objects[Context][ObjectIndex]
             const Object = vm.GetObject({ObjectID, Context})
 
             // Get Template
             const Template = vm.GetTemplate({ObjectID, Context})
-            //const TemplateID = Object.template_id
-            //const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-            //const Template = vm.Templates[Context][TemplateIndex]
 
             // Get Object Face
             let ObjectFace

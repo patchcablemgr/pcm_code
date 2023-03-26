@@ -69,7 +69,7 @@ class ConnectionController extends Controller
                 'sometimes',
                 'string',
                 'nullable',
-                new CableID
+                new CableID($this->archiveAddress)
             ],
             'b_id' => [
                 'sometimes',
@@ -92,7 +92,7 @@ class ConnectionController extends Controller
             'b_cable_id' => [
                 'string',
                 'nullable',
-                new CableID
+                new CableID($this->archiveAddress)
             ],
             'group_id' => [
                 'sometimes',

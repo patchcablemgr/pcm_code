@@ -260,6 +260,7 @@ class ArchiveController extends Controller
         'template' => array(),
         'location' => array(),
         'cable_path' => array(),
+        'object' => array(),
     );
 
     /**
@@ -538,7 +539,8 @@ class ArchiveController extends Controller
             '01 - Categories.csv',
             '02 - Templates.csv',
             '03 - Cabinets.csv',
-            '04 - Cabinet Cable Paths.csv'
+            '04 - Cabinet Cable Paths.csv',
+            '05 - Cabinet Objects.csv',
         );
 
         // Store legacy archive
@@ -586,8 +588,7 @@ class ArchiveController extends Controller
 
             $archiveSchemas = array(
                 'category' => array(
-                    'filename' => '01 - Categories.csv',
-                    'attr_mapping' => array(
+                    '01 - Categories.csv' => array(
                         array(
                             'new' => 'id',
                             'old' => 'Name',
@@ -628,14 +629,13 @@ class ArchiveController extends Controller
                     )
                 ),
                 'template' => array(
-                    'filename' => '02 - Templates.csv',
-                    'attr_mapping' => array(
+                    '02 - Templates.csv' => array(
                         array(
                             'new' => 'id',
                             'old' => 'Name',
                             'process' => function($data=null) {
                                 $ID = count($this->conversionMap['category'])+1;
-                                $this->conversionMap['category'][$data] = $ID;
+                                $this->conversionMap['template'][$data] = $ID;
                                 return $ID;
                             }
                         ),
@@ -760,8 +760,7 @@ class ArchiveController extends Controller
                     )
                 ),
                 'location' => array(
-                    'filename' => '03 - Cabinets.csv',
-                    'attr_mapping' => array(
+                    '03 - Cabinets.csv' => array(
                         array(
                             'new' => 'id',
                             'old' => 'Name',
@@ -856,14 +855,14 @@ class ArchiveController extends Controller
                     )
                 ),
                 'cable_path' => array(
-                    'filename' => '04 - Cabinet Cable Paths.csv',
-                    'attr_mapping' => array(
+                    '04 - Cabinet Cable Paths.csv' => array(
                         array(
                             'new' => 'id',
                             'old' => array('Cabinet A', 'Cabinet B'),
                             'process' => function($data=null) {
                                 $ID = count($this->conversionMap['cable_path'])+1;
-                                $this->conversionMap['location'][$data[0].$data[1]] = $ID;
+                                $conversionMapHash = implode("-", $data);
+                                $this->conversionMap['location'][$conversionMapHash] = $ID;
                                 return $ID;
                             }
                         ),
@@ -897,6 +896,121 @@ class ArchiveController extends Controller
                         ),
                     )
                 ),
+                'object' => array(
+                    '05 - Cabinet Objects.csv' => array(
+                        array(
+                            'new' => 'id',
+                            'old' => array('Cabinet', 'Name'),
+                            'process' => function($data=null) {
+                                $ID = count($this->conversionMap['object'])+1;
+                                $conversionMapHash = implode(".", $data);
+                                $this->conversionMap['object'][$conversionMapHash] = $ID;
+                                return $ID;
+                            }
+                        ),
+                        array(
+                            'new' => 'name',
+                            'old' => 'Name',
+                            'process' => function($data=null) {
+                                return $data;
+                            }
+                        ),
+                        array(
+                            'new' => 'template_id',
+                            'old' => '**Template',
+                            'process' => function($data=null) {
+                                $floorplanObjectArray = array(
+                                    'Walljack',
+                                    'Device',
+                                    'WAP',
+                                    'Camera'
+                                );
+                                if(in_array($data, $floorplanObjectArray)) {
+                                    return null;
+                                } else {
+                                    return $this->conversionMap['template'][$data];
+                                }
+                            }
+                        ),
+                        array(
+                            'new' => 'location_id',
+                            'old' => 'Cabinet',
+                            'process' => function($data=null) {
+                                return $this->conversionMap['location'][$data];
+                            }
+                        ),
+                        array(
+                            'new' => 'cabinet_ru',
+                            'old' => 'RU',
+                            'process' => function($data=null) {
+                                return $data;
+                            }
+                        ),
+                        array(
+                            'new' => 'cabinet_front',
+                            'old' => 'Cabinet Face',
+                            'process' => function($data=null) {
+                                return strtolower($data);
+                            }
+                        ),
+                        array(
+                            'new' => 'parent_id',
+                            'old' => 'Name',
+                            'process' => function($data=null) {
+                                return null;
+                            }
+                        ),
+                        array(
+                            'new' => 'parent_face',
+                            'old' => 'Name',
+                            'process' => function($data=null) {
+                                return null;
+                            }
+                        ),
+                        array(
+                            'new' => 'parent_partition_address',
+                            'old' => 'Name',
+                            'process' => function($data=null) {
+                                return null;
+                            }
+                        ),
+                        array(
+                            'new' => 'parent_enclosure_address',
+                            'old' => 'Name',
+                            'process' => function($data=null) {
+                                return null;
+                            }
+                        ),
+                        array(
+                            'new' => 'floorplan_address',
+                            'old' => array('**Flooplan Object X', '**Flooplan Object Y'),
+                            'process' => function($data=null) {
+                                if($data[0] && $data[1]) {
+                                    return json_encode($data);
+                                } else {
+                                    return null;
+                                }
+                            }
+                        ),
+                        array(
+                            'new' => 'floorplan_object_type',
+                            'old' => '**Template',
+                            'process' => function($data=null) {
+                                $floorplanObjectArray = array(
+                                    'Walljack' => 'walljack',
+                                    'Device' => 'device',
+                                    'WAP' => 'wap',
+                                    'Camera' => 'camera'
+                                );
+                                if(isset($floorplanObjectArray[$data])) {
+                                    return $floorplanObjectArray[$data];
+                                } else {
+                                    return null;
+                                }
+                            }
+                        ),
+                    )
+                ),
             );
 
             // Create/update entries
@@ -905,73 +1019,86 @@ class ArchiveController extends Controller
                 // Open temp stream to write CSV
                 $csvFile = fopen('php://temp', 'w');
 
-                // Open legacy archive file
-                $archiveFilename = $archiveSchema['filename'];
-                $archiveFilePath = Storage::disk('local')->path('imports/'.$archiveFilename);
-                $file = fopen($archiveFilePath, 'r');
-                $row = 1;
-                if($file !== FALSE) {
-                    
-                    while (($data = fgetcsv($file, 100000, ",")) !== FALSE) {
+                $archiveConversionCounter = 1;
+                foreach($archiveSchema as $archiveFilename => $attrConversions) {
 
-                        if($row == 1){
+                    // Open legacy archive file
+                    //$archiveFilename = $archiveSchema['filename'];
+                    $archiveFilePath = Storage::disk('local')->path('imports/'.$archiveFilename);
+                    $file = fopen($archiveFilePath, 'r');
+                    $row = 1;
+                    if($file !== FALSE) {
+                        
+                        while (($data = fgetcsv($file, 100000, ",")) !== FALSE) {
 
-                            // Process header
-                            $attrMap = $this->processCSVHeader($data);
-                            $workingArray = array();
-                            foreach($archiveSchema['attr_mapping'] as $attrIdx => $attrMapping) {
-                                array_push($workingArray, $attrMapping['new']);
-                            }
+                            if($row == 1 && $archiveConversionCounter == 1){
 
-                            // Add header to CSV file
-                            fputcsv($csvFile, $workingArray);
-                        } else {
-
-                            // Process entry
-                            $workingArray = array();
-                            foreach($archiveSchema['attr_mapping'] as $attrIdx => $attrMapping) {
-
-                                Log::info($tableName.':'.$row.' '.json_encode($attrMapping['old']));
-                                // Initialize legacy data
-                                $legacyData = null;
-
-                                // Retrieve legacy data
-                                if($attrMapping['old']) {
-                                    if(is_array($attrMapping['old'])) {
-                                        $legacyData = array();
-                                        foreach($attrMapping['old'] as $attr) {
-                                            array_push($legacyData, $data[$attrMap[$attr]]);
-                                        }
-                                    } else {
-                                        $legacyData = $data[$attrMap[$attrMapping['old']]];
-                                    }
+                                // Process header
+                                $attrMap = $this->processCSVHeader($data);
+                                $workingArray = array();
+                                /*
+                                foreach($archiveSchema['attr_mapping'] as $attrIdx => $attrMapping) {
+                                    array_push($workingArray, $attrMapping['new']);
+                                }
+                                */
+                                foreach($attrConversions as $attrIdx => $attrConversion) {
+                                    array_push($workingArray, $attrConversion['new']);
                                 }
 
-                                // Process legacy data
-                                $processedData = $attrMapping['process']($legacyData);
+                                // Add header to CSV file
+                                fputcsv($csvFile, $workingArray);
+                            } else {
 
-                                // Add processed data to row
-                                array_push($workingArray, $processedData);
+                                // Process entry
+                                $workingArray = array();
+                                //foreach($archiveSchema['attr_mapping'] as $attrIdx => $attrMapping) {
+                                foreach($attrConversions as $attrIdx => $attrConversion) {
+
+                                    Log::info($tableName.':'.$row.' '.json_encode($attrConversion['old']));
+                                    // Initialize legacy data
+                                    $legacyData = null;
+
+                                    // Retrieve legacy data
+                                    if($attrConversion['old']) {
+                                        if(is_array($attrConversion['old'])) {
+                                            $legacyData = array();
+                                            foreach($attrConversion['old'] as $attr) {
+                                                array_push($legacyData, $data[$attrMap[$attr]]);
+                                            }
+                                        } else {
+                                            $legacyData = $data[$attrMap[$attrConversion['old']]];
+                                        }
+                                    }
+
+                                    // Process legacy data
+                                    $processedData = $attrConversion['process']($legacyData);
+
+                                    // Add processed data to row
+                                    array_push($workingArray, $processedData);
+                                }
+
+                                // Add row to CSV file
+                                Log::info($workingArray);
+                                fputcsv($csvFile, $workingArray);
                             }
-
-                            // Add row to CSV file
-                            fputcsv($csvFile, $workingArray);
+                            $row++;
                         }
-                        $row++;
+
+                    } else {
+                        throw ValidationException::withMessages(['error' => 'Not able to open extracted file.']);
                     }
 
-                    // Store CSV to disk
-                    $filename = $tableName.'.csv';
-                    Storage::disk('local')->put($filename, $csvFile);
-                    fclose($csvFile);
-
-                    // Add CSV to ZIP
-                    $zip->addFile(Storage::disk('local')->path($filename), $filename);
-                    
-                } else {
-                    throw ValidationException::withMessages(['error' => 'Not able to open extracted file.']);
+                    $archiveConversionCounter;
+                    fclose($file);
                 }
-                fclose($file);
+
+                // Store CSV to disk
+                $filename = $tableName.'.csv';
+                Storage::disk('local')->put($filename, $csvFile);
+                fclose($csvFile);
+
+                // Add CSV to ZIP
+                $zip->addFile(Storage::disk('local')->path($filename), $filename);
             }
 
             // Close ZIP

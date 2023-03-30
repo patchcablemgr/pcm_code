@@ -245,8 +245,11 @@ export default {
       const ObjectIndex = vm.GetObjectIndex(vm.ObjectID, Context)
       const Object = vm.Objects[Context][ObjectIndex]
       const TemplateID = Object.template_id
+      /*
       const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
       const Template = vm.Templates[Context][TemplateIndex]
+      */
+      const Template = vm.GetTemplate({TemplateID, Context})
 
       // Get Object Face
       const ObjectFace = vm.ObjectFace
@@ -261,6 +264,7 @@ export default {
       return PartitionCollection
 
     },
+    /*
     GetTemplate: function() {
 
       // Initial variables
@@ -279,6 +283,7 @@ export default {
       // Return template
       return Template
     },
+    */
     GetEnclosureInsertID: function(encIndex, encCols) {
       
       const vm = this
@@ -308,17 +313,25 @@ export default {
       
       const vm = this
       const Context = event.dataTransfer.getData('context')
-      const InsertObjectID = event.dataTransfer.getData('object_id')
-      const TemplateID = event.dataTransfer.getData('template_id')
+      let InsertObjectID = event.dataTransfer.getData('object_id')
+      let TemplateID = event.dataTransfer.getData('template_id')
       const TemplateFace = event.dataTransfer.getData('template_face')
 
+      // getData() returns string which needs to be converted back to integer if it is a number
+      InsertObjectID = (vm.is_Numeric(InsertObjectID)) ? parseInt(InsertObjectID) : InsertObjectID
+      TemplateID = (vm.is_Numeric(TemplateID)) ? parseInt(TemplateID) : TemplateID
+
       // Validate dropped object template type
+      /*
       const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
       const Template = vm.Templates[Context][TemplateIndex]
+      */
+      const Template = vm.GetTemplate({TemplateID, Context})
       const TemplateType = Template.type
 
       if(TemplateType == 'insert') {
 
+        /*
         const data = {
           "drop_type": "enclosure",
           "context": Context,
@@ -331,7 +344,45 @@ export default {
           "template_face": TemplateFace,
         }
         
-        vm.$emit('InsertObjectDropped', data )
+        //vm.$emit('InsertObjectDropped', data )
+        */
+
+
+        let data = {}
+        let url
+
+        data.parent_id = ParentID
+        data.parent_face = ParentFace
+        data.parent_partition_address = ParentPartitionAddress
+        data.parent_enclosure_address = ParentEnclosureAddress
+
+        // POST new object
+        if(Context == 'template') {
+
+          data.template_id = TemplateID
+          data.template_face = TemplateFace
+
+          url = '/api/objects/insert'
+
+          // POST to objects
+          vm.$http.post(url, data).then(function(response){
+
+            vm.$store.commit('pcmObjects/ADD_Object', {pcmContext:'actual', data:response.data})
+
+          }).catch(error => {vm.DisplayError(error)})
+        } else {
+
+          data.object_id = InsertObjectID
+
+          url = '/api/objects/'+InsertObjectID
+
+          // POST to objects
+          vm.$http.patch(url, data).then(function(response){
+
+            vm.$store.commit('pcmObjects/UPDATE_Object', {pcmContext:'actual', data:response.data})
+
+          }).catch(error => {vm.DisplayError(error)})
+        }
       }
     },
     GetGlobalPartitionMax: function(Template, PartitionAddress) {
@@ -354,8 +405,9 @@ export default {
       // Store variables
       const vm = this
       const Context = vm.Context
+      const ObjectID = vm.ObjectID
       const Face = vm.ObjectFace
-      const Template = vm.GetTemplate()
+      const Template = vm.GetTemplate({ObjectID, Context})
       const PartitionDirection = vm.GetPartitionDirection(PartitionAddress)
       let WorkingMax = vm.GetGlobalPartitionMax(Template, PartitionAddress)
       let WorkingPartition = JSON.parse(JSON.stringify(Template.blueprint[Face]))

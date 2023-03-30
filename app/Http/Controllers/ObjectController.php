@@ -180,7 +180,7 @@ class ObjectController extends Controller
         }
 
         // Validate parent object enclosure occupancy
-        $Err = $PCM->validateEnclosureOccupancy($objectParentID, $objectParentFace, $objectParentPartitionAddress, $objectParentEnclosureAddress);
+        $Err = $PCM->validateEnclosureOccupancy(null, $objectParentID, $objectParentFace, $objectParentPartitionAddress, $objectParentEnclosureAddress);
         if($Err !== true) {
             throw ValidationException::withMessages($Err);
         }

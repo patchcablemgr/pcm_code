@@ -1922,6 +1922,9 @@ export const PCM = {
         },
         ConvertCmToMeters: function(cm) {
             return Math.round(cm*0.01)
+        },
+        is_Numeric(num) {
+            return !isNaN(parseFloat(num)) && isFinite(num)
         }
     }
 }

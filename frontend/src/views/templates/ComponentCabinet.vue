@@ -187,12 +187,15 @@ export default {
       const vm = this
       const Context = vm.Context
       const ObjectContext = event.dataTransfer.getData('context')
-      const ObjectID = event.dataTransfer.getData('object_id')
-      const TemplateID = event.dataTransfer.getData('template_id')
+      let ObjectID = event.dataTransfer.getData('object_id')
+      let TemplateID = event.dataTransfer.getData('template_id')
       const TemplateFace = event.dataTransfer.getData('template_face')
 
-      const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-      const Template = vm.Templates[Context][TemplateIndex]
+      // getData() returns string which needs to be converted back to integer if it is a number
+      ObjectID = (vm.is_Numeric(ObjectID)) ? parseInt(ObjectID) : ObjectID
+      TemplateID = (vm.is_Numeric(TemplateID)) ? parseInt(TemplateID) : TemplateID
+
+      const Template = vm.GetTemplate({TemplateID, Context})
       const TemplateType = Template.type
 
       if(TemplateType == 'standard') {

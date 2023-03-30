@@ -257,7 +257,9 @@ class ArchiveController extends Controller
 
     protected $conversionMap = array(
         'category' => array(),
-        'template' => array()
+        'template' => array(),
+        'location' => array(),
+        'cable_path' => array(),
     );
 
     /**
@@ -535,6 +537,8 @@ class ArchiveController extends Controller
         $manifest = array(
             '01 - Categories.csv',
             '02 - Templates.csv',
+            '03 - Cabinets.csv',
+            '04 - Cabinet Cable Paths.csv'
         );
 
         // Store legacy archive
@@ -674,14 +678,67 @@ class ArchiveController extends Controller
                             'new' => 'mount_config',
                             'old' => '**Mount Config',
                             'process' => function($data=null) {
+                                if($data == 'N/A') {
+                                    return null;
+                                }
                                 return ($data) ? $data : null;
+                            }
+                        ),
+                        array(
+                            'new' => 'insert_constraints',
+                            'old' => '**Template Structure',
+                            'process' => function($data=null) {
+                                $data = json_decode($data, true);
+                                if($data != null) {
+
+                                    $workingArray = array();
+                                    if($data['sizeX'] && $data['sizeY'] && $data['parentH'] && $data['parentV']) {
+                                        array_push($workingArray, array(
+                                            'part_layout' => array(
+                                                'height' => $data['parentV'],
+                                                'width' => $data['parentH']
+                                            ),
+                                            'enc_layout' => array(
+                                                'cols' => $data['sizeX'],
+                                                'rows' => $data['sizeY']
+                                            )
+                                        ));
+                                    } else {
+                                        return null;
+                                    }
+
+                                    if($data['nestedSizeX'] && $data['nestedSizeY'] && $data['nestedParentH'] && $data['nestedParentV']) {
+                                        array_push($workingArray, array(
+                                            'part_layout' => array(
+                                                'height' => $data['nestedParentV'],
+                                                'width' => $data['nestedParentH']
+                                            ),
+                                            'enc_layout' => array(
+                                                'cols' => $data['nestedSizeX'],
+                                                'rows' => $data['nestedSizeY']
+                                            )
+                                        ));
+                                    }
+                                    return json_encode($workingArray);
+                                } else {
+                                    return null;
+                                }
                             }
                         ),
                         array(
                             'new' => 'blueprint',
                             'old' => '**Template Structure',
                             'process' => function($data=null) {
-                                return ($data) ? $data : null;
+                                $data = json_decode($data, true);
+                                $structure = $data['structure'];
+                                $blueprint = array();
+                                if(isset($structure[0])) {
+                                    $blueprint['front'] = $this->processPartition($structure[0]);
+                                }
+                                if(isset($structure[1])) {
+                                    $blueprint['rear'] = $this->processPartition($structure[1]);
+                                }
+                                return json_encode($blueprint);
                             }
                         ),
                         array(
@@ -701,7 +758,145 @@ class ArchiveController extends Controller
                             }
                         ),
                     )
-                )
+                ),
+                'location' => array(
+                    'filename' => '03 - Cabinets.csv',
+                    'attr_mapping' => array(
+                        array(
+                            'new' => 'id',
+                            'old' => 'Name',
+                            'process' => function($data=null) {
+                                $ID = count($this->conversionMap['location'])+1;
+                                $this->conversionMap['location'][$data] = $ID;
+                                return $ID;
+                            }
+                        ),
+                        array(
+                            'new' => 'name',
+                            'old' => 'Name',
+                            'process' => function($data=null) {
+                                $nameArray = explode(".", $data);
+                                $name = end($nameArray);
+                                return $name;
+                            }
+                        ),
+                        array(
+                            'new' => 'type',
+                            'old' => 'Type',
+                            'process' => function($data=null) {
+                                return ($data) ? $data : null;
+                            }
+                        ),
+                        array(
+                            'new' => 'parent_id',
+                            'old' => 'Name',
+                            'process' => function($data=null) {
+                                $nameArray = explode(".", $data);
+                                array_pop($nameArray);
+                                if(count($nameArray)) {
+                                    return $this->conversionMap['location'][$data];
+                                } else {
+                                    return 0;
+                                }
+                            }
+                        ),
+                        array(
+                            'new' => 'size',
+                            'old' => 'RU Size',
+                            'process' => function($data=null) {
+                                return $data;
+                            }
+                        ),
+                        array(
+                            'new' => 'img',
+                            'old' => '**Floorplan Image',
+                            'process' => function($data=null) {
+                                return $data;
+                            }
+                        ),
+                        array(
+                            'new' => 'ru_orientation',
+                            'old' => 'RU Orientation',
+                            'process' => function($data=null) {
+                                if($data == 'BottomUp') {
+                                    return 'bottom-up';
+                                } else if($data == 'TopDown') {
+                                    return 'top-down';
+                                } else {
+                                    return $data;
+                                }
+                            }
+                        ),
+                        array(
+                            'new' => 'left_adj_cabinet_id',
+                            'old' => 'Adj Left',
+                            'process' => function($data=null) {
+                                $nameArray = explode(".", $data);
+                                array_pop($nameArray);
+                                if(count($nameArray)) {
+                                    return $this->conversionMap['location'][$data];
+                                } else {
+                                    return null;
+                                }
+                            }
+                        ),
+                        array(
+                            'new' => 'right_adj_cabinet_id',
+                            'old' => 'Adj Right',
+                            'process' => function($data=null) {
+                                $nameArray = explode(".", $data);
+                                array_pop($nameArray);
+                                if(count($nameArray)) {
+                                    return $this->conversionMap['location'][$data];
+                                } else {
+                                    return null;
+                                }
+                            }
+                        ),
+                    )
+                ),
+                'cable_path' => array(
+                    'filename' => '04 - Cabinet Cable Paths.csv',
+                    'attr_mapping' => array(
+                        array(
+                            'new' => 'id',
+                            'old' => array('Cabinet A', 'Cabinet B'),
+                            'process' => function($data=null) {
+                                $ID = count($this->conversionMap['cable_path'])+1;
+                                $this->conversionMap['location'][$data[0].$data[1]] = $ID;
+                                return $ID;
+                            }
+                        ),
+                        array(
+                            'new' => 'cabinet_a_id',
+                            'old' => 'Cabinet A',
+                            'process' => function($data=null) {
+                                return $this->conversionMap['location'][$data];
+                            }
+                        ),
+                        array(
+                            'new' => 'cabinet_b_id',
+                            'old' => 'Cabinet B',
+                            'process' => function($data=null) {
+                                return $this->conversionMap['location'][$data];
+                            }
+                        ),
+                        array(
+                            'new' => 'distance',
+                            'old' => 'Distance (m.)',
+                            'process' => function($data=null) {
+                                return $data;
+                            }
+                        ),
+                        array(
+                            'new' => 'notes',
+                            'old' => 'Notes',
+                            'process' => function($data=null) {
+                                return $data;
+                            }
+                        ),
+                    )
+                ),
             );
 
             // Create/update entries
@@ -736,16 +931,20 @@ class ArchiveController extends Controller
                             $workingArray = array();
                             foreach($archiveSchema['attr_mapping'] as $attrIdx => $attrMapping) {
 
+                                Log::info($tableName.':'.$row.' '.json_encode($attrMapping['old']));
                                 // Initialize legacy data
                                 $legacyData = null;
 
                                 // Retrieve legacy data
                                 if($attrMapping['old']) {
-                                    $legacyData = $data[$attrMap[$attrMapping['old']]];
-                                }
-
-                                if($attrMapping['new'] == 'id') {
-
+                                    if(is_array($attrMapping['old'])) {
+                                        $legacyData = array();
+                                        foreach($attrMapping['old'] as $attr) {
+                                            array_push($legacyData, $data[$attrMap[$attr]]);
+                                        }
+                                    } else {
+                                        $legacyData = $data[$attrMap[$attrMapping['old']]];
+                                    }
                                 }
 
                                 // Process legacy data
@@ -977,5 +1176,63 @@ class ArchiveController extends Controller
         }
 
         return $importIDArray;
+    }
+
+    /**
+     * process partition data
+     *
+     * @param   array $data
+     * @return  array
+     */
+    private function processPartition($data, $depth=0)
+    {
+        $workingArray = array();
+        foreach($data as $partition) {
+
+            $partitionType = strtolower($partition['partitionType']);
+            $partitionDirection = $partition['direction'];
+            
+            if($depth == 0 && $partitionDirection == 'row') {
+
+                // First partition is "row" so add generic 1st partition and proceed
+                $workingArray['type'] = 'generic';
+                $workingArray['units'] = 24;
+                $workingArray['children'] = array();
+                $depth++;
+                array_push($workingArray['children'], $this->processPartition($data, $depth));
+
+            } else {
+
+                $workingArray['type'] = $partitionType;
+                $workingArray['units'] = ($partitionDirection == 'row') ? $partition['vUnits'] : $partition['hUnits'];
+                $workingArray['children'] = array();
+
+
+                switch($partitionType) {
+                    case 'generic':
+                        $depth++;
+                        if(isset($partition['children'])) {
+                            array_push($workingArray['children'], $this->processPartition($partition['children'], $depth));
+                        }
+                        break;
+
+                    case 'connectable':
+                        $workingArray['port_format'] = $partition['portNameFormat'];
+                        $workingArray['media'] = $partition['mediaType'];
+                        $workingArray['port_connector'] = $partition['portType'];
+                        $workingArray['port_orientation'] = $partition['portOrientation'];
+                        break;
+
+                    case 'enclosure':
+                        $workingArray['enc_layout'] = array(
+                            'cols' => $partition['valueX'],
+                            'rows' => $partition['valueY']
+                        );
+                        break;
+                }
+            }
+        }
+
+        return $workingArray;
     }
 }

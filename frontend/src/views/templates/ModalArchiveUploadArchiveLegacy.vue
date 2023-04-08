@@ -96,9 +96,7 @@ export default {
         link.download = 'pcmExport-'+Date.now()
         link.click()
         URL.revokeObjectURL(link.href)
-      }).catch(error => {
-        vm.DisplayError(error)
-      })
+      }).catch(error => {vm.DisplayError(error)})
     },
   },
   mounted() {

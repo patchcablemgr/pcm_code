@@ -261,7 +261,205 @@ class ArchiveController extends Controller
         'location' => array(),
         'cable_path' => array(),
         'object' => array(),
+        'cable' => array(),
+        'connection' => array(),
+        'trunk' => array(),
     );
+
+    protected $templateArray = [
+        'Walljack' => [
+            'id' => 'walljack',
+            'name' => 'walljack',
+            'category_id' => 'walljack',
+            'type' => 'floorplan',
+            'function' => 'passive',
+            'mount_config' => 'N/A',
+            'insert_constraints' => null,
+            'blueprint' => [
+                'front' => [
+                    [
+                        'type' => 'connectable',
+                        'units' => 24,
+                        'children' => [],
+                        'port_format' => [
+                            [
+                                'type' => 'static',
+                                'value' => 'Port',
+                                'count' => 1,
+                                'order' => 0
+                            ],
+                            [
+                                'type' => 'incremental',
+                                'value' => '1',
+                                'count' => 48,
+                                'order' => 1
+                            ]
+                        ],
+                        'port_layout' => [
+                            'cols' => 24,
+                            'rows' => 1
+                        ],
+                        'media' => 1,
+                        'port_connector' => 1,
+                        'port_orientation' => 1
+                    ]
+                ],
+                'rear' => [
+                    [
+                        'type' => 'generic',
+                        'units' => 24,
+                        'children' => []
+                    ]
+                ]
+            ]
+        ],
+        'Device' => [
+            'id' => 'device',
+            'name' => 'device',
+            'category_id' => 'device',
+            'type' => 'floorplan',
+            'function' => 'endpoint',
+            'mount_config' => 'N/A',
+            'insert_constraints' => null,
+            'blueprint' => [
+                'front' => [
+                    [
+                        'type' => 'connectable',
+                        'units' => 24,
+                        'children' => [],
+                        'port_format' => [
+                            [
+                                'type' => 'static',
+                                'value' => 'Port',
+                                'count' => 1,
+                                'order' => 0
+                            ],
+                            [
+                                'type' => 'incremental',
+                                'value' => '1',
+                                'count' => 48,
+                                'order' => 1
+                            ]
+                        ],
+                        'port_layout' => [
+                            'cols' => 24,
+                            'rows' => 1
+                        ],
+                        'media' => 1,
+                        'port_connector' => 1,
+                        'port_orientation' => 1
+                    ]
+                ],
+                'rear' => [
+                    [
+                        'type' => 'generic',
+                        'units' => 24,
+                        'children' => []
+                    ]
+                ]
+            ]
+        ],
+        'WAP' => [
+            'id' => 'wap',
+            'name' => 'wap',
+            'category_id' => 'wap',
+            'type' => 'floorplan',
+            'function' => 'endpoint',
+            'mount_config' => 'N/A',
+            'insert_constraints' => null,
+            'blueprint' => [
+                'front' => [
+                    [
+                        'type' => 'connectable',
+                        'units' => 24,
+                        'children' => [],
+                        'port_format' => [
+                            [
+                                'type' => 'static',
+                                'value' => 'Port',
+                                'count' => 1,
+                                'order' => 0
+                            ],
+                            [
+                                'type' => 'incremental',
+                                'value' => '1',
+                                'count' => 48,
+                                'order' => 1
+                            ]
+                        ],
+                        'port_layout' => [
+                            'cols' => 24,
+                            'rows' => 1
+                        ],
+                        'media' => 1,
+                        'port_connector' => 1,
+                        'port_orientation' => 1
+                    ]
+                ],
+                'rear' => [
+                    [
+                        'type' => 'generic',
+                        'units' => 24,
+                        'children' => []
+                    ]
+                ]
+            ]
+        ],
+        'Camera' => [
+            'id' => 'camera',
+            'name' => 'camera',
+            'category_id' => 'camera',
+            'type' => 'floorplan',
+            'function' => 'endpoint',
+            'mount_config' => 'N/A',
+            'insert_constraints' => null,
+            'blueprint' => [
+                'front' => [
+                    [
+                        'type' => 'connectable',
+                        'units' => 24,
+                        'children' => [],
+                        'port_format' => [
+                            [
+                                'type' => 'static',
+                                'value' => 'Port',
+                                'count' => 1,
+                                'order' => 0
+                            ],
+                            [
+                                'type' => 'incremental',
+                                'value' => '1',
+                                'count' => 48,
+                                'order' => 1
+                            ]
+                        ],
+                        'port_layout' => [
+                            'cols' => 24,
+                            'rows' => 1
+                        ],
+                        'media' => 1,
+                        'port_connector' => 1,
+                        'port_orientation' => 1
+                    ]
+                ],
+                'rear' => [
+                    [
+                        'type' => 'generic',
+                        'units' => 24,
+                        'children' => []
+                    ]
+                ]
+            ]
+        ]
+    ];
+    
+    protected $objectArray = array();
+
+    protected $properToActualMapping = array();
+
+    protected $conversionEntryPasses = true;
+
+    protected $conversionArchiveAddress = '';
 
     /**
      * Store a newly created resource in storage.
@@ -541,7 +739,12 @@ class ArchiveController extends Controller
             '03 - Cabinets.csv',
             '04 - Cabinet Cable Paths.csv',
             '05 - Cabinet Objects.csv',
+            '06 - Object Inserts.csv',
+            '07 - Connections.csv',
+            '08 - Trunks.csv'
         );
+
+        $imgFileArray = array();
 
         // Store legacy archive
         $legacyArchivePath = $request->file('file')->store('imports');
@@ -563,8 +766,15 @@ class ArchiveController extends Controller
 
                 // Validate image filenames and add to manifest
                 $zippedFilename = $zip->getNameIndex($x);
-                if(preg_match("/^images\/[a-zA-Z0-9]{40}\.(jpg|png|gif)$/", $zippedFilename)) {
+                if(preg_match("/^(templateImages|floorplanImages)\/[a-zA-Z0-9]{32}\.(jpg|png|gif)$/", $zippedFilename)) {
                     array_push($manifest, $zippedFilename);
+
+                    // extract image filename
+                    $imgFilenameArray = explode('/', $zippedFilename);
+                    $imgFilename = array_pop($imgFilenameArray);
+
+                    // append image filename to image file array
+                    array_push($imgFileArray, array('path' => $zippedFilename, 'name' => $imgFilename));
                 }
 
                 // Validate file size
@@ -608,8 +818,9 @@ class ArchiveController extends Controller
                         array(
                             'new' => 'color',
                             'old' => 'Color',
-                            'process' => function($data=null) {
-                                return ($data) ? $data : null;
+                            'process' => function($data) {
+                                $colorCode = strtoupper($data.'FF');
+                                return $colorCode;
                             }
                         ),
                         array(
@@ -630,15 +841,23 @@ class ArchiveController extends Controller
                 ),
                 'template' => array(
                     '02 - Templates.csv' => array(
+
+                        // id
                         array(
                             'new' => 'id',
                             'old' => 'Name',
-                            'process' => function($data=null) {
+                            'process' => function($templateName) {
+
                                 $ID = count($this->conversionMap['category'])+1;
-                                $this->conversionMap['template'][$data] = $ID;
+
+                                $this->templateArray[$templateName] = array();
+                                $this->conversionMap['template'][$templateName] = $ID;
+
                                 return $ID;
                             }
                         ),
+
+                        // name
                         array(
                             'new' => 'name',
                             'old' => 'Name',
@@ -646,6 +865,8 @@ class ArchiveController extends Controller
                                 return ($data) ? $data : null;
                             }
                         ),
+
+                        // category_id
                         array(
                             'new' => 'category_id',
                             'old' => 'Category',
@@ -653,20 +874,38 @@ class ArchiveController extends Controller
                                 return $this->conversionMap['category'][$data];
                             }
                         ),
+
+                        // type
                         array(
                             'new' => 'type',
-                            'old' => '**Type',
-                            'process' => function($data=null) {
-                                return ($data) ? $data : null;
+                            'old' => array('Name', '**Type'),
+                            'process' => function($data) {
+
+                                $templateName = $data[0];
+                                $templateType = $data[1];
+
+                                $this->templateArray[$templateName]['type'] = $templateType;
+
+                                return $templateType;
                             }
                         ),
+
+                        // function
                         array(
                             'new' => 'function',
-                            'old' => '**Function',
-                            'process' => function($data=null) {
-                                return ($data) ? $data : null;
+                            'old' => array('Name', '**Function'),
+                            'process' => function($data) {
+                                
+                                $templateName = $data[0];
+                                $templateFunction = $data[1];
+
+                                $this->templateArray[$templateName]['function'] = $templateFunction;
+
+                                return $templateFunction;
                             }
                         ),
+
+                        // ru_size
                         array(
                             'new' => 'ru_size',
                             'old' => '**RU Size',
@@ -674,6 +913,8 @@ class ArchiveController extends Controller
                                 return ($data) ? $data : null;
                             }
                         ),
+
+                        // mount_config
                         array(
                             'new' => 'mount_config',
                             'old' => '**Mount Config',
@@ -684,6 +925,8 @@ class ArchiveController extends Controller
                                 return ($data) ? $data : null;
                             }
                         ),
+
+                        // insert_constraints
                         array(
                             'new' => 'insert_constraints',
                             'old' => '**Template Structure',
@@ -725,19 +968,34 @@ class ArchiveController extends Controller
                                 }
                             }
                         ),
+
+                        // blueprint
                         array(
                             'new' => 'blueprint',
-                            'old' => '**Template Structure',
+                            'old' => array('Name', '**Template Structure'),
                             'process' => function($data=null) {
-                                $data = json_decode($data, true);
-                                $structure = $data['structure'];
+                                $templateName = $data[0];
+                                $templateStructure = json_decode($data[1], true);
+                                $structure = $templateStructure['structure'];
                                 $blueprint = array();
                                 if(isset($structure[0])) {
                                     $blueprint['front'] = $this->processPartition($structure[0]);
                                 }
                                 if(isset($structure[1])) {
                                     $blueprint['rear'] = $this->processPartition($structure[1]);
+                                } else {
+                                    $blueprint['rear'] = array(
+                                        array(
+                                            'type' => 'generic',
+                                            'units' => 24,
+                                            'children' => array()
+                                        )
+                                    );
                                 }
+
+                                // Store template blueprint
+                                $this->templateArray[$templateName]['blueprint'] = $blueprint;
+
                                 return json_encode($blueprint);
                             }
                         ),
@@ -898,16 +1156,24 @@ class ArchiveController extends Controller
                 ),
                 'object' => array(
                     '05 - Cabinet Objects.csv' => array(
+
+                        // id
                         array(
                             'new' => 'id',
                             'old' => array('Cabinet', 'Name'),
                             'process' => function($data=null) {
+
                                 $ID = count($this->conversionMap['object'])+1;
-                                $conversionMapHash = implode(".", $data);
-                                $this->conversionMap['object'][$conversionMapHash] = $ID;
+                                $objectDN = implode(".", $data);
+
+                                $this->objectArray[$objectDN] = array();
+                                $this->conversionMap['object'][$objectDN] = $ID;
+
                                 return $ID;
                             }
                         ),
+
+                        // name
                         array(
                             'new' => 'name',
                             'old' => 'Name',
@@ -915,23 +1181,41 @@ class ArchiveController extends Controller
                                 return $data;
                             }
                         ),
+
+                        // template_id
                         array(
                             'new' => 'template_id',
-                            'old' => '**Template',
+                            'old' => array('Name', 'Cabinet', '**Template'),
                             'process' => function($data=null) {
+                                $objectName = $data[0];
+                                $cabinetName = $data[1];
+                                $templateName = $data[2];
                                 $floorplanObjectArray = array(
                                     'Walljack',
                                     'Device',
                                     'WAP',
                                     'Camera'
                                 );
-                                if(in_array($data, $floorplanObjectArray)) {
+
+                                $objectDN = $cabinetName.'.'.$objectName;
+
+                                if(in_array($templateName, $floorplanObjectArray)) {
+
+                                    // Store object template_name
+                                    $this->objectArray[$objectDN]['template_name'] = $templateName;
+
                                     return null;
                                 } else {
-                                    return $this->conversionMap['template'][$data];
+
+                                    // Store object template_name
+                                    $this->objectArray[$objectDN]['template_name'] = $templateName;
+                                    
+                                    return $this->conversionMap['template'][$templateName];
                                 }
                             }
                         ),
+
+                        // location_id
                         array(
                             'new' => 'location_id',
                             'old' => 'Cabinet',
@@ -939,6 +1223,8 @@ class ArchiveController extends Controller
                                 return $this->conversionMap['location'][$data];
                             }
                         ),
+
+                        // cabinet_ru
                         array(
                             'new' => 'cabinet_ru',
                             'old' => 'RU',
@@ -946,6 +1232,8 @@ class ArchiveController extends Controller
                                 return $data;
                             }
                         ),
+
+                        // cabinet_front
                         array(
                             'new' => 'cabinet_front',
                             'old' => 'Cabinet Face',
@@ -953,6 +1241,8 @@ class ArchiveController extends Controller
                                 return strtolower($data);
                             }
                         ),
+
+                        // parent_id
                         array(
                             'new' => 'parent_id',
                             'old' => 'Name',
@@ -960,6 +1250,8 @@ class ArchiveController extends Controller
                                 return null;
                             }
                         ),
+
+                        // parent_face
                         array(
                             'new' => 'parent_face',
                             'old' => 'Name',
@@ -1009,8 +1301,799 @@ class ArchiveController extends Controller
                                 }
                             }
                         ),
+                    ),
+                    '06 - Object Inserts.csv' => array(
+
+                        // id
+                        array(
+                            'new' => 'id',
+                            'old' => array('**Object', 'Insert Name'),
+                            'process' => function($data) {
+
+                                $parentDN = $data[0];
+                                $objectName = $data[1];
+
+                                // Skip if name is blank
+                                if($objectName == '') {
+                                    $this->conversionEntryPasses = false;
+                                    return null;
+                                }
+
+                                $ID = count($this->conversionMap['object'])+1;
+
+                                // Get object DN proper separator
+                                $parent = $this->objectArray[$parentDN];
+                                $parentTemplateName = $parent['template_name'];
+                                $parentTemplate = $this->templateArray[$parentTemplateName];
+                                $parentTemplateType = $parentTemplate['type'];
+                                $parentTemplateFunction = $parentTemplate['function'];
+                                $separator = ($parentTemplateFunction == 'Passive' || $parentTemplateType == 'Standard') ? '.' : '';
+
+                                $objectDNArray = array($parentDN, $objectName);
+                                $objectDNProper = implode($separator, $objectDNArray);
+                                $objectDN = implode('.', $objectDNArray);
+
+                                $this->objectArray[$objectDN] = array();
+                                $this->properToActualMapping[$objectDNProper] = $objectDN;
+                                $this->conversionMap['object'][$objectDN] = $ID;
+
+                                return $ID;
+                            }
+                        ),
+
+                        // name
+                        array(
+                            'new' => 'name',
+                            'old' => 'Insert Name',
+                            'process' => function($data=null) {
+                                return $data;
+                            }
+                        ),
+
+                        // template_id
+                        array(
+                            'new' => 'template_id',
+                            'old' => array('**Object', 'Insert Name', '**Insert Template'),
+                            'process' => function($data) {
+
+                                $parentDN = $data[0];
+                                $objectName = $data[1];
+                                $templateName = $data[2];
+
+                                if($templateName != '') {
+
+                                    // Get object DN
+                                    $objectDNArray = array($parentDN, $objectName);
+                                    $objectDN = implode('.', $objectDNArray);
+
+                                    $this->objectArray[$objectDN]['template_name'] = $templateName;
+                                    return $this->conversionMap['template'][$templateName];
+                                } else {
+                                    return null;
+                                }
+                            }
+                        ),
+
+                        // location_id
+                        array(
+                            'new' => 'location_id',
+                            'old' => 'Insert Name',
+                            'process' => function($data=null) {
+                                return null;
+                            }
+                        ),
+
+                        // cabinet_ru
+                        array(
+                            'new' => 'cabinet_ru',
+                            'old' => 'Insert Name',
+                            'process' => function($data=null) {
+                                return null;
+                            }
+                        ),
+
+                        // cabinet_front
+                        array(
+                            'new' => 'cabinet_front',
+                            'old' => 'Insert Name',
+                            'process' => function($data=null) {
+                                return null;
+                            }
+                        ),
+
+                        // parent_id
+                        array(
+                            'new' => 'parent_id',
+                            'old' => '**Object',
+                            'process' => function($data=null) {
+                                return $this->conversionMap['object'][$data];
+                            }
+                        ),
+
+                        // parent_face
+                        array(
+                            'new' => 'parent_face',
+                            'old' => '**Face',
+                            'process' => function($data=null) {
+                                return strtolower($data);
+                            }
+                        ),
+
+                        // parent_partition_address
+                        array(
+                            'new' => 'parent_partition_address',
+                            'old' => array('**Object', '**Face', '**Slot'),
+                            'process' => function($data=null) {
+                                if($data[0]) {
+
+                                    $parentObjectName = $data[0];
+                                    $templateFace = strtolower($data[1]);
+                                    $slotString = $data[2];
+                                    
+                                    // Get partition depth
+                                    $slotComponents = preg_split('/[A-Z][a-z]+/', $slotString);
+                                    array_shift($slotComponents);
+                                    $partitionDepth = $slotComponents[0];
+
+                                    // Get parent template blueprint
+                                    $parentTemplateName = $this->objectArray[$parentObjectName]['template_name'];
+                                    $template = $this->templateArray[$parentTemplateName];
+                                    $blueprint = $template['blueprint'][$templateFace];
+
+                                    // Get partition address
+                                    $partitionAddress = $this->getPartitionAddress($blueprint, $partitionDepth);
+                                    return json_encode($partitionAddress);
+                                } else {
+                                    return null;
+                                }
+                            }
+                        ),
+
+                        // parent_enclosure_address
+                        array(
+                            'new' => 'parent_enclosure_address',
+                            'old' => '**Slot',
+                            'process' => function($data=null) {
+                                if($data) {
+
+                                    $slotString = $data;
+                                    $charArray = array('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z');
+                                    
+                                    // Extract original enclosure address
+                                    $slotComponents = preg_split('/[A-Z][a-z]+/', $slotString);
+                                    array_shift($slotComponents);
+                                    $enclosureAddress_orig = $slotComponents[1];
+
+                                    // Extract enclosure address components
+                                    preg_match('/[A-Z]+/', $enclosureAddress_orig, $row_orig);
+                                    preg_match('/[0-9]+/', $enclosureAddress_orig, $col_orig);
+                                    
+
+                                    // Prepare enclosure address components
+                                    $charIdx = 0;
+                                    foreach($charArray as $char) {
+                                        if($row_orig[0] == $char) {
+                                            break;
+                                        }
+                                        $charIdx++;
+                                    }
+                                    //$row = array_search($row_orig[0], $charArray);
+                                    $row = $charIdx;
+                                    $col = intval($col_orig[0]);
+
+                                    return json_encode(array($row, $col));
+                                }
+                            }
+                        ),
                     )
                 ),
+                'cable' => array(
+                    '07 - Connections.csv' => array(
+                        array(
+                            'new' => 'id',
+                            'old' => array('CableA ID', 'CableB ID'),
+                            'process' => function($data=null) {
+                                if($data[0] == 'None' && $data[1] = 'None') {
+                                    $this->conversionEntryPasses = false;
+                                }
+                                $ID = count($this->conversionMap['cable'])+1;
+                                $conversionMapHash = implode(".", $data);
+                                $this->conversionMap['cable'][$conversionMapHash] = $ID;
+                                return $ID;
+                            }
+                        ),
+                        array(
+                            'new' => 'a_id',
+                            'old' => 'CableA ID',
+                            'process' => function($data=null) {
+                                $cableID = ($data == null or $data == 'None') ? null : $data;
+
+                                return $cableID;
+                            }
+                        ),
+                        array(
+                            'new' => 'a_connector_id',
+                            'old' => 'CableA Connector Type',
+                            'process' => function($data=null) {
+
+                                $cableConnectorArray = array(
+                                    'RJ45' => 1,
+                                    'LC' => 2,
+                                    'SC' => 3,
+                                    'MPO-12' => 5,
+                                    'MPO-24' => 6,
+                                    'Unspecified' => 7
+                                );
+                                $connectorID = (isset($cableConnectorArray[$data])) ? $cableConnectorArray[$data] : null;
+
+                                return $connectorID;
+                            }
+                        ),
+                        array(
+                            'new' => 'b_id',
+                            'old' => 'CableB ID',
+                            'process' => function($data=null) {
+                                $cableID = ($data == null or $data == 'None') ? null : $data;
+
+                                return $cableID;
+                            }
+                        ),
+                        array(
+                            'new' => 'b_connector_id',
+                            'old' => 'CableB Connector Type',
+                            'process' => function($data=null) {
+
+                                $cableConnectorArray = array(
+                                    'RJ45' => 1,
+                                    'LC' => 2,
+                                    'SC' => 3,
+                                    'MPO-12' => 5,
+                                    'MPO-24' => 6,
+                                    'Unspecified' => 7
+                                );
+                                $connectorID = (isset($cableConnectorArray[$data])) ? $cableConnectorArray[$data] : null;
+
+                                return $connectorID;
+                            }
+                        ),
+                        array(
+                            'new' => 'media_id',
+                            'old' => 'Media Type',
+                            'process' => function($data=null) {
+
+                                $mediaArray = array(
+                                    'Cat5e' => 1,
+                                    'Cat6' => 2,
+                                    'Cat6a' => 3,
+                                    'SM-OS1' => 5,
+                                    'MM-OM4' => 6,
+                                    'MM-OM3' => 7,
+                                    'Unspecified' => 8,
+                                );
+                                $mediaID = (isset($mediaArray[$data])) ? $mediaArray[$data] : null;
+
+                                return $mediaID;
+                            }
+                        ),
+                        array(
+                            'new' => 'length',
+                            'old' => 'Length',
+                            'process' => function($data=null) {
+
+                                if($data == 'None') {
+                                    return null;
+                                } else {
+                                    $lengthArray = explode(' ', $data);
+
+                                    if(count($lengthArray) != 2) {
+                                        return null;
+                                    }
+
+                                    if(!is_numeric($lengthArray[0])) {
+                                        return null;
+                                    }
+
+                                    if(!in_array($lengthArray[1], array('m.', 'ft.'))) {
+                                        return null;
+                                    }
+
+                                    if($lengthArray[1] == 'm.') {
+                                        return intval($lengthArray[0]) * 100;
+                                    } else if($lengthArray[1] == 'ft.') {
+                                        return intval($lengthArray[0]) * 30.48;
+                                    } else {
+                                        return null;
+                                    }
+                                }
+
+                                return $connectorID;
+                            }
+                        ),
+                    )
+                ),
+                'connection' => array(
+                    '07 - Connections.csv' => array(
+
+                        // id
+                        array(
+                            'new' => 'id',
+                            'old' => array('CableA ID', 'CableB ID'),
+                            'process' => function($data=null) {
+                                $ID = count($this->conversionMap['connection'])+1;
+                                $conversionMapHash = implode(".", $data);
+                                $this->conversionMap['connection'][$conversionMapHash] = $ID;
+                                return $ID;
+                            }
+                        ),
+
+                        // a_id
+                        array(
+                            'new' => 'a_id',
+                            'old' => 'PortA',
+                            'process' => function($portDN) {
+
+                                if($portDN == null or strtolower($portDN) == 'none') {
+                                    return null;
+                                }
+                                
+                                $objectDN = $this->extractObjectDN($portDN);
+
+                                if(isset($this->conversionMap['object'][$objectDN])) {
+                                    return $this->conversionMap['object'][$objectDN];
+                                } else {
+                                    return null;
+                                }
+                            }
+                        ),
+
+                        // a_face
+                        array(
+                            'new' => 'a_face',
+                            'old' => 'PortA',
+                            'process' => function($portDN) {
+
+                                if($portDN == null or strtolower($portDN) == 'none') {
+                                    return null;
+                                }
+                                
+                                $objectDN = $this->extractObjectDN($portDN);
+                                $portName = $this->extractPortName($objectDN, $portDN);
+
+                                if(isset($this->conversionMap['object'][$objectDN])) {
+
+                                    $portData = $this->resolvePortDN($objectDN, $portDN);
+                                    if(isset($portData[$portName])) {
+                                        return $portData[$portName]['face'];
+                                    } else {
+                                        return 'Port not found';
+                                    }
+                                } else {
+                                    return 'Object not found';
+                                }
+                            }
+                        ),
+
+                        // a_partition
+                        array(
+                            'new' => 'a_face',
+                            'old' => 'PortA',
+                            'process' => function($portDN) {
+
+                                if($portDN == null or strtolower($portDN) == 'none') {
+                                    return null;
+                                }
+                                
+                                $objectDN = $this->extractObjectDN($portDN);
+                                $portName = $this->extractPortName($objectDN, $portDN);
+
+                                if(isset($this->conversionMap['object'][$objectDN])) {
+
+                                    $portData = $this->resolvePortDN($objectDN, $portDN);
+                                    if(isset($portData[$portName])) {
+                                        return json_encode($portData[$portName]['partition_address']);
+                                    } else {
+                                        return 'Port not found';
+                                    }
+                                } else {
+                                    return 'Object not found';
+                                }
+                            }
+                        ),
+
+                        // a_port
+                        array(
+                            'new' => 'a_port',
+                            'old' => 'PortA',
+                            'process' => function($portDN) {
+
+                                if($portDN == null or strtolower($portDN) == 'none') {
+                                    return null;
+                                }
+                                
+                                $objectDN = $this->extractObjectDN($portDN);
+                                $portName = $this->extractPortName($objectDN, $portDN);
+
+                                if(isset($this->conversionMap['object'][$objectDN])) {
+
+                                    $portData = $this->resolvePortDN($objectDN, $portDN);
+                                    if(isset($portData[$portName])) {
+                                        return $portData[$portName]['port_id'];
+                                    } else {
+                                        return 'Port not found';
+                                    }
+                                } else {
+                                    return 'Object not found';
+                                }
+                            }
+                        ),
+
+                        // a_cable_id
+                        array(
+                            'new' => 'a_cable_id',
+                            'old' => 'CableA ID',
+                            'process' => function($data) {
+
+                                if($data == null or strtolower($data) == 'none') {
+                                    return null;
+                                } else {
+                                    return $data;
+                                }
+                            }
+                        ),
+
+                        // b_id
+                        array(
+                            'new' => 'b_id',
+                            'old' => 'PortB',
+                            'process' => function($portDN) {
+
+                                if($portDN == null or strtolower($portDN) == 'none') {
+                                    return null;
+                                }
+                                
+                                $objectDN = $this->extractObjectDN($portDN);
+
+                                if(isset($this->conversionMap['object'][$objectDN])) {
+                                    return $this->conversionMap['object'][$objectDN];
+                                } else {
+                                    return null;
+                                }
+                            }
+                        ),
+
+                        // b_face
+                        array(
+                            'new' => 'b_face',
+                            'old' => 'PortB',
+                            'process' => function($portDN) {
+
+                                if($portDN == null or strtolower($portDN) == 'none') {
+                                    return null;
+                                }
+                                
+                                $objectDN = $this->extractObjectDN($portDN);
+                                $portName = $this->extractPortName($objectDN, $portDN);
+
+                                if(isset($this->conversionMap['object'][$objectDN])) {
+
+                                    $portData = $this->resolvePortDN($objectDN, $portDN);
+                                    if(isset($portData[$portName])) {
+                                        return $portData[$portName]['face'];
+                                    } else {
+                                        return 'Port not found';
+                                    }
+                                } else {
+                                    return 'Object not found';
+                                }
+                            }
+                        ),
+
+                        // b_partition
+                        array(
+                            'new' => 'b_face',
+                            'old' => 'PortB',
+                            'process' => function($portDN) {
+
+                                if($portDN == null or strtolower($portDN) == 'none') {
+                                    return null;
+                                }
+                                
+                                $objectDN = $this->extractObjectDN($portDN);
+                                $portName = $this->extractPortName($objectDN, $portDN);
+
+                                if(isset($this->conversionMap['object'][$objectDN])) {
+
+                                    $portData = $this->resolvePortDN($objectDN, $portDN);
+                                    if(isset($portData[$portName])) {
+                                        return json_encode($portData[$portName]['partition_address']);
+                                    } else {
+                                        return 'Port not found';
+                                    }
+                                } else {
+                                    return 'Object not found';
+                                }
+                            }
+                        ),
+
+                        // b_port
+                        array(
+                            'new' => 'b_port',
+                            'old' => 'PortB',
+                            'process' => function($portDN) {
+
+                                if($portDN == null or strtolower($portDN) == 'none') {
+                                    return null;
+                                }
+                                
+                                $objectDN = $this->extractObjectDN($portDN);
+                                $portName = $this->extractPortName($objectDN, $portDN);
+
+                                if(isset($this->conversionMap['object'][$objectDN])) {
+
+                                    $portData = $this->resolvePortDN($objectDN, $portDN);
+                                    if(isset($portData[$portName])) {
+                                        return $portData[$portName]['port_id'];
+                                    } else {
+                                        return 'Port not found';
+                                    }
+                                } else {
+                                    return 'Object not found';
+                                }
+                            }
+                        ),
+
+                        // b_cable_id
+                        array(
+                            'new' => 'b_cable_id',
+                            'old' => 'CableB ID',
+                            'process' => function($data) {
+
+                                if($data == null or strtolower($data) == 'none') {
+                                    return null;
+                                } else {
+                                    return $data;
+                                }
+                            }
+                        ),
+                    )
+                ),
+                'trunk' => array(
+                    '08 - Trunks.csv' => array(
+
+                        // id
+                        array(
+                            'new' => 'id',
+                            'old' => array('Trunk Peer A', 'Trunk Peer B'),
+                            'process' => function($data=null) {
+                                $ID = count($this->conversionMap['trunk'])+1;
+                                $conversionMapHash = implode(".", $data);
+                                $this->conversionMap['trunk'][$conversionMapHash] = $ID;
+                                return $ID;
+                            }
+                        ),
+
+                        // a_id
+                        array(
+                            'new' => 'a_id',
+                            'old' => 'Trunk Peer A',
+                            'process' => function($trunkDN) {
+
+                                $trunkDNArray = explode(' ', $trunkDN);
+                                $portDN = $trunkDNArray[0];
+                                
+                                $objectDN = $this->extractObjectDN($portDN);
+
+                                if(isset($this->conversionMap['object'][$objectDN])) {
+                                    return $this->conversionMap['object'][$objectDN];
+                                } else {
+                                    return null;
+                                }
+                            }
+                        ),
+
+                        // a_face
+                        array(
+                            'new' => 'a_face',
+                            'old' => 'Trunk Peer A',
+                            'process' => function($trunkDN) {
+
+                                $trunkDNArray = explode(' ', $trunkDN);
+                                $portDN = $trunkDNArray[0];
+                                
+                                $objectDN = $this->extractObjectDN($portDN);
+                                $portName = $this->extractPortName($objectDN, $portDN);
+
+                                if(isset($this->conversionMap['object'][$objectDN])) {
+
+                                    $portData = $this->resolvePortDN($objectDN, $portDN);
+                                    if(isset($portData[$portName])) {
+                                        return $portData[$portName]['face'];
+                                    } else {
+                                        return 'Port not found';
+                                    }
+                                } else {
+                                    return 'Object not found';
+                                }
+                            }
+                        ),
+
+                        // a_partition
+                        array(
+                            'new' => 'a_face',
+                            'old' => 'Trunk Peer A',
+                            'process' => function($trunkDN) {
+
+                                $trunkDNArray = explode(' ', $trunkDN);
+                                $portDN = $trunkDNArray[0];
+                                
+                                $objectDN = $this->extractObjectDN($portDN);
+                                $portName = $this->extractPortName($objectDN, $portDN);
+
+                                if(isset($this->conversionMap['object'][$objectDN])) {
+
+                                    $portData = $this->resolvePortDN($objectDN, $portDN);
+                                    if(isset($portData[$portName])) {
+                                        return json_encode($portData[$portName]['partition_address']);
+                                    } else {
+                                        return 'Port not found';
+                                    }
+                                } else {
+                                    return 'Object not found';
+                                }
+                            }
+                        ),
+
+                        // a_port
+                        array(
+                            'new' => 'a_port',
+                            'old' => 'Trunk Peer A',
+                            'process' => function($trunkDN) {
+
+                                return null;
+                            }
+                        ),
+
+                        // b_id
+                        array(
+                            'new' => 'b_id',
+                            'old' => 'Trunk Peer B',
+                            'process' => function($trunkDN) {
+
+                                $trunkDNArray = explode(' ', $trunkDN);
+                                $portDN = $trunkDNArray[0];
+                                
+                                $objectDN = $this->extractObjectDN($portDN);
+
+                                if(isset($this->conversionMap['object'][$objectDN])) {
+                                    return $this->conversionMap['object'][$objectDN];
+                                } else {
+                                    return null;
+                                }
+                            }
+                        ),
+
+                        // b_face
+                        array(
+                            'new' => 'b_face',
+                            'old' => 'Trunk Peer B',
+                            'process' => function($trunkDN) {
+
+                                $trunkDNArray = explode(' ', $trunkDN);
+                                $portDN = $trunkDNArray[0];
+                                
+                                $objectDN = $this->extractObjectDN($portDN);
+                                $portName = $this->extractPortName($objectDN, $portDN);
+
+                                if(isset($this->conversionMap['object'][$objectDN])) {
+
+                                    $portData = $this->resolvePortDN($objectDN, $portDN);
+                                    if(isset($portData[$portName])) {
+                                        return $portData[$portName]['face'];
+                                    } else {
+                                        return json_encode($portData);
+                                    }
+                                } else {
+                                    return 'Object not found';
+                                }
+                            }
+                        ),
+
+                        // b_partition
+                        array(
+                            'new' => 'b_face',
+                            'old' => 'Trunk Peer B',
+                            'process' => function($trunkDN) {
+
+                                $trunkDNArray = explode(' ', $trunkDN);
+                                $portDN = $trunkDNArray[0];
+                                
+                                $objectDN = $this->extractObjectDN($portDN);
+                                $portName = $this->extractPortName($objectDN, $portDN);
+
+                                if(isset($this->conversionMap['object'][$objectDN])) {
+
+                                    $portData = $this->resolvePortDN($objectDN, $portDN);
+                                    if(isset($portData[$portName])) {
+                                        return json_encode($portData[$portName]['partition_address']);
+                                    } else {
+                                        return 'Port not found';
+                                    }
+                                } else {
+                                    return 'Object not found';
+                                }
+                            }
+                        ),
+
+                        // b_port
+                        array(
+                            'new' => 'b_port',
+                            'old' => 'Trunk Peer B',
+                            'process' => function($trunkDN) {
+
+                                return null;
+                            }
+                        ),
+                    )
+                ),
+                'port' => array(
+                    '07 - Connections.csv' => array(
+
+                        // id
+                        array(
+                            'new' => 'id',
+                            'old' => array('PortA'),
+                            'process' => function($data=null) {
+                                $this->conversionEntryPasses = false;
+                                return null;
+                            }
+                        ),
+
+                        // object_id
+                        array(
+                            'new' => 'object_id',
+                            'old' => array('PortA'),
+                            'process' => function($data=null) {
+                                return null;
+                            }
+                        ),
+
+                        // object_face
+                        array(
+                            'new' => 'object_face',
+                            'old' => array('PortA'),
+                            'process' => function($data=null) {
+                                return null;
+                            }
+                        ),
+
+                        // object_partition
+                        array(
+                            'new' => 'object_partition',
+                            'old' => array('PortA'),
+                            'process' => function($data=null) {
+                                return null;
+                            }
+                        ),
+
+                        // port_id
+                        array(
+                            'new' => 'port_id',
+                            'old' => array('PortA'),
+                            'process' => function($data=null) {
+                                return null;
+                            }
+                        ),
+
+                        // description
+                        array(
+                            'new' => 'description',
+                            'old' => array('PortA'),
+                            'process' => function($data=null) {
+                                return null;
+                            }
+                        ),
+                    )
+                )
             );
 
             // Create/update entries
@@ -1031,27 +2114,27 @@ class ArchiveController extends Controller
                         
                         while (($data = fgetcsv($file, 100000, ",")) !== FALSE) {
 
-                            if($row == 1 && $archiveConversionCounter == 1){
+                            $this->conversionEntryPasses = true;
+                            $this->conversionArchiveAddress = $archiveFilename.':'.$row;
+
+                            if($row == 1){
 
                                 // Process header
                                 $attrMap = $this->processCSVHeader($data);
                                 $workingArray = array();
-                                /*
-                                foreach($archiveSchema['attr_mapping'] as $attrIdx => $attrMapping) {
-                                    array_push($workingArray, $attrMapping['new']);
-                                }
-                                */
+                                
                                 foreach($attrConversions as $attrIdx => $attrConversion) {
                                     array_push($workingArray, $attrConversion['new']);
                                 }
 
                                 // Add header to CSV file
-                                fputcsv($csvFile, $workingArray);
+                                if($archiveConversionCounter == 1) {
+                                    fputcsv($csvFile, $workingArray);
+                                }
                             } else {
 
                                 // Process entry
                                 $workingArray = array();
-                                //foreach($archiveSchema['attr_mapping'] as $attrIdx => $attrMapping) {
                                 foreach($attrConversions as $attrIdx => $attrConversion) {
 
                                     Log::info($tableName.':'.$row.' '.json_encode($attrConversion['old']));
@@ -1078,8 +2161,9 @@ class ArchiveController extends Controller
                                 }
 
                                 // Add row to CSV file
-                                Log::info($workingArray);
-                                fputcsv($csvFile, $workingArray);
+                                if($this->conversionEntryPasses) {
+                                    fputcsv($csvFile, $workingArray);
+                                }
                             }
                             $row++;
                         }
@@ -1088,7 +2172,7 @@ class ArchiveController extends Controller
                         throw ValidationException::withMessages(['error' => 'Not able to open extracted file.']);
                     }
 
-                    $archiveConversionCounter;
+                    $archiveConversionCounter++;
                     fclose($file);
                 }
 
@@ -1099,6 +2183,13 @@ class ArchiveController extends Controller
 
                 // Add CSV to ZIP
                 $zip->addFile(Storage::disk('local')->path($filename), $filename);
+            }
+
+            // Add image files to ZIP
+            foreach($imgFileArray as $imgFileData) {
+                $srcPath = Storage::disk('local')->path('imports/'.$imgFileData['path']);
+                $dstPath = 'images/'.$imgFileData['name'];
+                $zip->addFile($srcPath, $dstPath);
             }
 
             // Close ZIP
@@ -1313,9 +2404,10 @@ class ArchiveController extends Controller
      */
     private function processPartition($data, $depth=0)
     {
-        $workingArray = array();
+        $partitionArray = array();
         foreach($data as $partition) {
 
+            $workingArray = array();
             $partitionType = strtolower($partition['partitionType']);
             $partitionDirection = $partition['direction'];
             
@@ -1326,7 +2418,7 @@ class ArchiveController extends Controller
                 $workingArray['units'] = 24;
                 $workingArray['children'] = array();
                 $depth++;
-                array_push($workingArray['children'], $this->processPartition($data, $depth));
+                $workingArray['children'] = $this->processPartition($data, $depth);
 
             } else {
 
@@ -1339,12 +2431,16 @@ class ArchiveController extends Controller
                     case 'generic':
                         $depth++;
                         if(isset($partition['children'])) {
-                            array_push($workingArray['children'], $this->processPartition($partition['children'], $depth));
+                            $workingArray['children'] = $this->processPartition($partition['children'], $depth);
                         }
                         break;
 
                     case 'connectable':
                         $workingArray['port_format'] = $partition['portNameFormat'];
+                        $workingArray['port_layout'] = array(
+                            'cols' => $partition['valueX'],
+                            'rows' => $partition['valueY']
+                        );
                         $workingArray['media'] = $partition['mediaType'];
                         $workingArray['port_connector'] = $partition['portType'];
                         $workingArray['port_orientation'] = $partition['portOrientation'];
@@ -1358,8 +2454,270 @@ class ArchiveController extends Controller
                         break;
                 }
             }
+            array_push($partitionArray, $workingArray);
         }
 
-        return $workingArray;
+        return $partitionArray;
+    }
+
+    /**
+     * get partition address
+     *
+     * @param   array $blueprint
+     * @param   integer $partitionDepth
+     * @return  array
+     */
+    private function getPartitionAddress($blueprint, $partitionDepth, $partitionAddress=array(0), &$depthCounter=0, $partitionIdx=0)
+    {
+
+        foreach($blueprint as $partition) {
+
+            $partitionAddress[count($partitionAddress)-1] = $partitionIdx;
+
+            if($depthCounter == $partitionDepth) {
+                return $partitionAddress;
+            } else {
+                $depthCounter++;
+                $partitionIdx++;
+            }
+
+            if(count($partition['children'])) {
+                $tempPartitionAddress = $partitionAddress;
+                array_push($tempPartitionAddress, 0);
+                $workingPartitionAddress = $this->getPartitionAddress($partition['children'], $partitionDepth, $tempPartitionAddress, $depthCounter);
+                if($workingPartitionAddress) {
+                    return $workingPartitionAddress;
+                }
+            }
+            
+        }
+        return false;
+    }
+
+    /**
+     * resolve port DN
+     *
+     * @param   string $portDN
+     * @return  array
+     */
+    private function resolvePortDN($objectDN, $portDN)
+    {
+        $faceArray = array('front', 'rear');
+        $portIDArray = array();
+
+        if(isset($this->objectArray[$objectDN])) {
+
+            // Retrieve template
+            $templateName = $this->objectArray[$objectDN]['template_name'];
+            $template = $this->templateArray[$templateName];
+
+            // Store blueprint
+            $blueprint = $template['blueprint'];
+
+            foreach($faceArray as $face) {
+                
+                $this->findPortDN($blueprint[$face], $face, $portIDArray);
+            }
+        }
+
+        return $portIDArray;
+    }
+
+    /**
+     * find port DN
+     *
+     * @param   array   $partitionSet
+     * @param   string  $portName
+     * @return  array
+     */
+    private function findPortDN($partitionSet, $face, &$portIDArray, $partitionAddress=array(0))
+    {
+
+        // Loop through partition sets
+        foreach($partitionSet as $partition) {
+
+            // Set partition index
+            $partitionSetIdx = count($partitionAddress)-1;
+
+            // Search for matching port name
+            if($partition['type'] == 'connectable') {
+
+                // Gather some data
+                $portLayout = $partition['port_layout'];
+                $portFormat = $partition['port_format'];
+                $portTotal = $portLayout['cols'] * $portLayout['rows'];
+
+                for($x=0; $x<$portTotal; $x++) {
+                    $portID = $this->generatePortID($x, $portTotal, $portFormat);
+                    $portIDArray[$portID] = array(
+                        'face' => $face,
+                        'partition_address' => $partitionAddress,
+                        'port_id' => $x,
+                    );
+                }
+            }
+
+            // Loop through children
+            if(count($partition['children'])) {
+
+                // Append new partition set index to temporary partition address
+                $tempPartitionAddress = $partitionAddress;
+                array_push($tempPartitionAddress, 0);
+
+                // Process child partition set
+                $this->findPortDN($partition['children'], $face, $portIDArray, $tempPartitionAddress);
+            }
+
+            // Increment partition set index
+            $partitionAddress[$partitionSetIdx] = $partitionAddress[$partitionSetIdx] + 1;
+            
+        }
+        return;
+    }
+
+    /**
+     * generate port ID
+     *
+     * @param   int     $index
+     * @param   int     $portTotal
+     * @param   array   $portFormat
+     * @return  array
+     */
+    function generatePortID($Index, $PortTotal, $PortFormat)
+    {
+        $portString = '';
+		$incrementalCount = 0;
+		
+		// Create character arrays
+		$lowercaseIncrementArray = array();
+		$uppercaseIncrementArray = array();
+		for($x=97; $x<=122; $x++) {
+			array_push($lowercaseIncrementArray, chr($x));
+		}
+		for($x=65; $x<=90; $x++) {
+			array_push($uppercaseIncrementArray, chr($x));
+		}
+		
+		// Account for infinite count incrementals
+		foreach($PortFormat as &$itemA) {
+			$type = $itemA['type'];
+			
+			if($type == 'incremental' or $type == 'series') {
+				$incrementalCount++;
+				if($itemA['count'] == 0) {
+					$itemA['count'] = $PortTotal;
+				}
+			}
+		}
+		
+		foreach($PortFormat as $itemB) {
+			$type = $itemB['type'];
+			$value = $itemB['value'];
+			$order = $itemB['order'];
+			$count = $itemB['count'];
+			
+			if($type == 'static') {
+				$portString = $portString.$value;
+			} else if($type == 'incremental' or $type == 'series') {
+				$numerator = 1;
+				if($order < $incrementalCount) {
+					foreach($PortFormat as $itemC) {
+						$typeC = $itemC['type'];
+						$orderC = $itemC['order'];
+						$countC = $itemC['count'];
+						
+						if($typeC == 'incremental' or $typeC == 'series') {
+							if($order < $orderC) {
+								$numerator *= $countC;
+							}
+						}
+					}
+				}
+				
+				$howMuchToIncrement = floor($Index / $numerator);
+				
+				if($howMuchToIncrement >= $count) {
+					$rollOver = floor($howMuchToIncrement / $count);
+					$howMuchToIncrement = $howMuchToIncrement - ($rollOver * $count);
+				}
+				
+				if($type == 'incremental') {
+					if(is_numeric($value)) {
+						$value = $value + $howMuchToIncrement;
+						$portString = $portString.$value;
+					} else {
+						$asciiValue = ord($value);
+						$asciiIndex = $asciiValue + $howMuchToIncrement;
+						if($asciiValue >= 65 && $asciiValue <= 90) {
+							// Uppercase
+							
+							while($asciiIndex > 90) {
+								$portString = $portString.$uppercaseIncrementArray[0];
+								$asciiIndex -= 26;
+							}
+							$portString = $portString.$uppercaseIncrementArray[$asciiIndex-65];
+						} else if($asciiValue >= 97 && $asciiValue <= 122) {
+							// Lowercase
+							while($asciiIndex > 122) {
+								$portString = $portString.$lowercaseIncrementArray[0];
+								$asciiIndex -= 26;
+							}
+							$portString = $portString.$lowercaseIncrementArray[$asciiIndex-97];
+						}
+					}
+					
+				} else if($type == 'series') {
+					$portString = $portString.$value[$howMuchToIncrement];
+				}
+			}
+		}
+			
+		return $portString;
+    }
+
+    /**
+     * extract object DN from port DN
+     *
+     * @param   string     $portDN
+     * @return  string
+     */
+    function extractObjectDN($portDN)
+    {
+        $longestMatch = false;
+        $maxLength = 0;
+        
+        foreach (array_keys($this->properToActualMapping) as $objectDNProper) {
+            
+            $length = strlen($objectDNProper);
+            if (strpos($portDN, $objectDNProper) === 0 && $length > $maxLength) {
+                $longestMatch = $objectDNProper;
+                $maxLength = $length;
+            }
+        }
+
+        if(!$longestMatch) {
+            $portDNArray = explode('.', $portDN);
+            array_pop($portDNArray);
+            $objectDN = implode('.', $portDNArray);
+        } else {
+            $objectDN = $this->properToActualMapping[$longestMatch];
+        }
+        return $objectDN;
+    }
+
+    /**
+     * extract object DN from port DN
+     *
+     * @param   string     $portDN
+     * @return  string
+     */
+    function extractPortName($objectDN, $portDN)
+    {
+        $objectDNMerged = str_replace('.', '', $objectDN);
+        $portDNMerged = str_replace('.', '', $portDN);
+
+        $portName = str_replace($objectDNMerged, '', $portDNMerged);
+
+        return $portName;
     }
 }

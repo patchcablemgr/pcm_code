@@ -1174,14 +1174,7 @@ export default {
         // Append new template to template array
         vm.$store.commit('pcmTemplates/ADD_Template', {pcmContext:'template', data:Template})
 
-      }).catch(error => {
-        // Display error to user via toast
-        vm.$bvToast.toast(JSON.stringify(error.response), {
-          title: 'Error',
-          variant: 'danger',
-        })
-
-      })
+      }).catch(error => {vm.DisplayError(error)})
     },
     onReset: function() {
       console.log("Debug (Reset): ")

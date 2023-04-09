@@ -76,7 +76,7 @@ export default {
         const blob = new Blob([response.data], { type: 'application/zip' })
         const link = document.createElement('a')
         link.href = URL.createObjectURL(blob)
-        link.download = 'pcmExport-'+Date.now()
+        link.download = 'pcmArchive-'+Date.now()
         link.click()
         URL.revokeObjectURL(link.href)
       })

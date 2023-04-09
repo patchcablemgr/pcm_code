@@ -452,6 +452,8 @@ class ArchiveController extends Controller
             ]
         ]
     ];
+
+    protected $locationArray = array();
     
     protected $objectArray = array();
 
@@ -771,10 +773,18 @@ class ArchiveController extends Controller
 
                     // extract image filename
                     $imgFilenameArray = explode('/', $zippedFilename);
-                    $imgFilename = array_pop($imgFilenameArray);
+                    $imgFilenameOld = array_pop($imgFilenameArray);
+
+                    // Generate new filename
+                    $imgFilenameExtensionArray = explode('.', $imgFilenameOld);
+                    $imgFilenameExtension = array_pop($imgFilenameExtensionArray);
+                    $imgFilenameNew = $this->generateFilename().'.'.$imgFilenameExtension;
 
                     // append image filename to image file array
-                    array_push($imgFileArray, array('path' => $zippedFilename, 'name' => $imgFilename));
+                    $imgFileArray[$imgFilenameOld] = array(
+                        'path' => $zippedFilename,
+                        'name' => $imgFilenameNew
+                    );
                 }
 
                 // Validate file size
@@ -796,16 +806,133 @@ class ArchiveController extends Controller
         $zipFilePath = Storage::disk('local')->path($zipFilename);
         if($zip->open($zipFilePath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
 
+            $conversionMapping = array(
+                'category' => array(
+                    '01 - Categories.csv' => array(
+                        'fields' => array('Name'),
+                        'process' => function($data) {
+                            $conversionMapHash = implode(".", $data);
+                            $ID = count($this->conversionMap['category'])+1;
+                            $this->conversionMap['category'][$conversionMapHash] = $ID;
+                            return;
+                        }
+                    )
+                ),
+                'template' => array(
+                    '02 - Templates.csv' => array(
+                        'fields' => array('Name'),
+                        'process' => function($data) {
+                            $conversionMapHash = implode(".", $data);
+                            $ID = count($this->conversionMap['template'])+1;
+                            $this->conversionMap['template'][$conversionMapHash] = $ID;
+                            return;
+                        }
+                    )
+                ),
+                'location' => array(
+                    '03 - Cabinets.csv' => array(
+                        'fields' => array('Name'),
+                        'process' => function($data) {
+                            $conversionMapHash = implode(".", $data);
+                            $ID = count($this->conversionMap['location'])+1;
+                            $this->conversionMap['location'][$conversionMapHash] = $ID;
+                            return;
+                        }
+                    )
+                ),
+                'cable_path' => array(
+                    '04 - Cabinet Cable Paths.csv' => array(
+                        'fields' => array('Cabinet A', 'Cabinet B'),
+                        'process' => function($data) {
+                            $conversionMapHash = implode("-", $data);
+                            $ID = count($this->conversionMap['cable_path'])+1;
+                            $this->conversionMap['cable_path'][$conversionMapHash] = $ID;
+                            return;
+                        }
+                    )
+                ),
+                'object' => array(
+                    '05 - Cabinet Objects.csv' => array(
+                        'fields' => array('Cabinet', 'Name'),
+                        'process' => function($data) {
+                            $conversionMapHash = implode(".", $data);
+                            $ID = count($this->conversionMap['object'])+1;
+                            $this->conversionMap['object'][$conversionMapHash] = $ID;
+                            return;
+                        }
+                    ),
+                    '06 - Object Inserts.csv' => array(
+                        'fields' => array('**Object', 'Insert Name'),
+                        'process' => function($data) {
+
+                            $parentDN = $data[0];
+                            $objectName = $data[1];
+
+                            // Skip if name is blank
+                            if($objectName !== '') {
+
+                                $ID = count($this->conversionMap['object'])+1;
+
+                                $objectDNArray = array($parentDN, $objectName);
+                                $objectDN = implode('.', $objectDNArray);
+
+                                $this->conversionMap['object'][$objectDN] = $ID;
+                                return;
+                            }
+                        }
+                    )
+                ),
+                'cable' => array(
+                    '07 - Connections.csv' => array(
+                        'fields' => array('CableA ID', 'CableB ID'),
+                        'process' => function($data) {
+                            $conversionMapHash = implode(".", $data);
+                            $ID = count($this->conversionMap['cable'])+1;
+                            $this->conversionMap['cable'][$conversionMapHash] = $ID;
+                            return;
+                        }
+                    )
+                ),
+                'connection' => array(
+                    '07 - Connections.csv' => array(
+                        'fields' => array('CableA ID', 'CableB ID'),
+                        'process' => function($data) {
+                            $conversionMapHash = implode(".", $data);
+                            $ID = count($this->conversionMap['connection'])+1;
+                            $this->conversionMap['connection'][$conversionMapHash] = $ID;
+                            return;
+                        }
+                    )
+                ),
+                'trunk' => array(
+                    '08 - Trunks.csv' => array(
+                        'fields' => array('Trunk Peer A', 'Trunk Peer B'),
+                        'process' => function($data) {
+                            $conversionMapHash = implode(".", $data);
+                            $ID = count($this->conversionMap['trunk'])+1;
+                            $this->conversionMap['trunk'][$conversionMapHash] = $ID;
+                            return;
+                        }
+                    )
+                ),
+                'port' => array(
+                    '07 - Connections.csv' => array(
+                        'fields' => array('PortA'),
+                        'process' => function($data) {
+                            return;
+                        }
+                    )
+                ),
+            );
+
             $archiveSchemas = array(
                 'category' => array(
                     '01 - Categories.csv' => array(
                         array(
                             'new' => 'id',
                             'old' => 'Name',
-                            'process' => function($data=null) {
-                                $ID = count($this->conversionMap['category'])+1;
-                                $this->conversionMap['category'][$data] = $ID;
-                                return $ID;
+                            'process' => function($data) {
+                                return $this->conversionMap['category'][$data];
                             }
                         ),
                         array(
@@ -826,15 +953,15 @@ class ArchiveController extends Controller
                         array(
                             'new' => 'default',
                             'old' => false,
-                            'process' => function($data=null) {
-                                return ($data) ? $data : null;
+                            'process' => function($data) {
+                                return ($data) ? 1 : 0;
                             }
                         ),
                         array(
                             'new' => 'visible',
                             'old' => false,
-                            'process' => function($data=null) {
-                                return ($data) ? $data : null;
+                            'process' => function($data) {
+                                return 1;
                             }
                         ),
                     )
@@ -846,14 +973,8 @@ class ArchiveController extends Controller
                         array(
                             'new' => 'id',
                             'old' => 'Name',
-                            'process' => function($templateName) {
-
-                                $ID = count($this->conversionMap['category'])+1;
-
-                                $this->templateArray[$templateName] = array();
-                                $this->conversionMap['template'][$templateName] = $ID;
-
-                                return $ID;
+                            'process' => function($data) {
+                                return $this->conversionMap['template'][$data];
                             }
                         ),
 
@@ -882,7 +1003,7 @@ class ArchiveController extends Controller
                             'process' => function($data) {
 
                                 $templateName = $data[0];
-                                $templateType = $data[1];
+                                $templateType = strtolower($data[1]);
 
                                 $this->templateArray[$templateName]['type'] = $templateType;
 
@@ -897,7 +1018,7 @@ class ArchiveController extends Controller
                             'process' => function($data) {
                                 
                                 $templateName = $data[0];
-                                $templateFunction = $data[1];
+                                $templateFunction = strtolower($data[1]);
 
                                 $this->templateArray[$templateName]['function'] = $templateFunction;
 
@@ -908,9 +1029,12 @@ class ArchiveController extends Controller
                         // ru_size
                         array(
                             'new' => 'ru_size',
-                            'old' => '**RU Size',
-                            'process' => function($data=null) {
-                                return ($data) ? $data : null;
+                            'old' => array('Name', '**RU Size'),
+                            'process' => function($data) {
+                                $templateName = $data[0];
+                                $RUSize = $data[1];
+                                $this->templateArray[$templateName]['ru_size'] = $RUSize;
+                                return ($RUSize) ? $RUSize : null;
                             }
                         ),
 
@@ -918,11 +1042,12 @@ class ArchiveController extends Controller
                         array(
                             'new' => 'mount_config',
                             'old' => '**Mount Config',
-                            'process' => function($data=null) {
+                            'process' => function($data) {
                                 if($data == 'N/A') {
                                     return null;
+                                } else {
+                                    return strtolower($data);
                                 }
-                                return ($data) ? $data : null;
                             }
                         ),
 
@@ -999,35 +1124,56 @@ class ArchiveController extends Controller
                                 return json_encode($blueprint);
                             }
                         ),
+
+                        // img_front
                         array(
                             'new' => 'img_front',
                             'old' => '**Template Structure',
-                            'process' => function($data=null) {
+                            'process' => function($data) {
                                 $data = json_decode($data, true);
-                                return ($data) ? $data['frontImage'] : null;
+                                if($data['frontImage']) {
+                                    $imgFilename = $data['frontImage'];
+                                    if(isset($imgFileArray[$imgFilename])) {
+                                        return $imgFileArray[$imgFilename]['name'];
+                                    }
+                                } else {
+                                    return null;
+                                }
                             }
                         ),
+
+                        // img_rear
                         array(
                             'new' => 'img_rear',
                             'old' => '**Template Structure',
-                            'process' => function($data=null) {
+                            'process' => function($data) {
                                 $data = json_decode($data, true);
-                                return ($data) ? $data['rearImage'] : null;
+                                if($data['frontImage']) {
+                                    $imgFilename = $data['frontImage'];
+                                    if(isset($imgFileArray[$imgFilename])) {
+                                        return $imgFileArray[$imgFilename]['name'];
+                                    }
+                                } else {
+                                    return null;
+                                }
                             }
                         ),
                     )
                 ),
                 'location' => array(
                     '03 - Cabinets.csv' => array(
+
+                        // id
                         array(
                             'new' => 'id',
                             'old' => 'Name',
-                            'process' => function($data=null) {
-                                $ID = count($this->conversionMap['location'])+1;
-                                $this->conversionMap['location'][$data] = $ID;
-                                return $ID;
+                            'process' => function($data) {
+                                $this->locationArray[$data] = array();
+                                return $this->conversionMap['location'][$data];
                             }
                         ),
+
+                        // name
                         array(
                             'new' => 'name',
                             'old' => 'Name',
@@ -1037,6 +1183,8 @@ class ArchiveController extends Controller
                                 return $name;
                             }
                         ),
+
+                        // type
                         array(
                             'new' => 'type',
                             'old' => 'Type',
@@ -1044,6 +1192,8 @@ class ArchiveController extends Controller
                                 return ($data) ? $data : null;
                             }
                         ),
+
+                        // parent_id
                         array(
                             'new' => 'parent_id',
                             'old' => 'Name',
@@ -1051,12 +1201,15 @@ class ArchiveController extends Controller
                                 $nameArray = explode(".", $data);
                                 array_pop($nameArray);
                                 if(count($nameArray)) {
-                                    return $this->conversionMap['location'][$data];
+                                    $conversionMapHash = implode(".", $nameArray);
+                                    return $this->conversionMap['location'][$conversionMapHash];
                                 } else {
                                     return 0;
                                 }
                             }
                         ),
+
+                        // size
                         array(
                             'new' => 'size',
                             'old' => 'RU Size',
@@ -1064,26 +1217,45 @@ class ArchiveController extends Controller
                                 return $data;
                             }
                         ),
+
+                        // img
                         array(
                             'new' => 'img',
                             'old' => '**Floorplan Image',
-                            'process' => function($data=null) {
-                                return $data;
-                            }
-                        ),
-                        array(
-                            'new' => 'ru_orientation',
-                            'old' => 'RU Orientation',
-                            'process' => function($data=null) {
-                                if($data == 'BottomUp') {
-                                    return 'bottom-up';
-                                } else if($data == 'TopDown') {
-                                    return 'top-down';
+                            'process' => function($data) {
+                                if($data) {
+                                    if(isset($imgFileArray[$data])) {
+                                        return $imgFileArray[$data]['name'];
+                                    }
                                 } else {
-                                    return $data;
+                                    return null;
                                 }
                             }
                         ),
+
+                        // ru_orientation
+                        array(
+                            'new' => 'ru_orientation',
+                            'old' => array('Name', 'RU Orientation'),
+                            'process' => function($data) {
+
+                                $locationName = $data[0];
+                                $locationRUOrientation = $data[1];
+
+                                if($locationRUOrientation == 'BottomUp') {
+                                    $ru_orientation = 'bottom-up';
+                                } else if($locationRUOrientation == 'TopDown') {
+                                    $ru_orientation = 'top-down';
+                                } else {
+                                    $ru_orientation = $locationRUOrientation;
+                                }
+
+                                $this->locationArray[$locationName]['ru_orientation'] = $ru_orientation;
+                                return $ru_orientation;
+                            }
+                        ),
+
+                        // left_adj_cabinet_id
                         array(
                             'new' => 'left_adj_cabinet_id',
                             'old' => 'Adj Left',
@@ -1097,6 +1269,8 @@ class ArchiveController extends Controller
                                 }
                             }
                         ),
+
+                        // right_adj_cabinet_id
                         array(
                             'new' => 'right_adj_cabinet_id',
                             'old' => 'Adj Right',
@@ -1114,16 +1288,18 @@ class ArchiveController extends Controller
                 ),
                 'cable_path' => array(
                     '04 - Cabinet Cable Paths.csv' => array(
+
+                        // id
                         array(
                             'new' => 'id',
                             'old' => array('Cabinet A', 'Cabinet B'),
-                            'process' => function($data=null) {
-                                $ID = count($this->conversionMap['cable_path'])+1;
+                            'process' => function($data) {
                                 $conversionMapHash = implode("-", $data);
-                                $this->conversionMap['location'][$conversionMapHash] = $ID;
-                                return $ID;
+                                return $this->conversionMap['cable_path'][$conversionMapHash];
                             }
                         ),
+
+                        // cabinet_a_id
                         array(
                             'new' => 'cabinet_a_id',
                             'old' => 'Cabinet A',
@@ -1163,13 +1339,9 @@ class ArchiveController extends Controller
                             'old' => array('Cabinet', 'Name'),
                             'process' => function($data=null) {
 
-                                $ID = count($this->conversionMap['object'])+1;
-                                $objectDN = implode(".", $data);
-
-                                $this->objectArray[$objectDN] = array();
-                                $this->conversionMap['object'][$objectDN] = $ID;
-
-                                return $ID;
+                                $conversionMapHash = implode(".", $data);
+                                $this->objectArray[$conversionMapHash] = array();
+                                return $this->conversionMap['object'][$conversionMapHash];
                             }
                         ),
 
@@ -1227,9 +1399,29 @@ class ArchiveController extends Controller
                         // cabinet_ru
                         array(
                             'new' => 'cabinet_ru',
-                            'old' => 'RU',
-                            'process' => function($data=null) {
-                                return $data;
+                            'old' => array('Cabinet', '**Template', 'RU'),
+                            'process' => function($data) {
+                                $cabinetName = $data[0];
+                                $templateName = $data[1];
+                                $cabinetRU = $data[2];
+
+                                if($cabinetRU) {
+
+                                    // Get cabinet ru_orientation
+                                    $location = $this->locationArray[$cabinetName];
+                                    $locationRUOrientation = $location['ru_orientation'];
+
+                                    // Get template ru_size
+                                    $template = $this->templateArray[$templateName];
+                                    $RUSize = $template['ru_size'];
+
+                                    if($locationRUOrientation == 'bottom-up') {
+                                        $cabinetRU = $cabinetRU + ($RUSize - 1);
+                                    } else {
+                                        $cabinetRU = $cabinetRU - ($RUSize - 1);
+                                    }
+                                }
+                                return $cabinetRU;
                             }
                         ),
 
@@ -1319,15 +1511,13 @@ class ArchiveController extends Controller
                                     return null;
                                 }
 
-                                $ID = count($this->conversionMap['object'])+1;
-
                                 // Get object DN proper separator
                                 $parent = $this->objectArray[$parentDN];
                                 $parentTemplateName = $parent['template_name'];
                                 $parentTemplate = $this->templateArray[$parentTemplateName];
-                                $parentTemplateType = $parentTemplate['type'];
-                                $parentTemplateFunction = $parentTemplate['function'];
-                                $separator = ($parentTemplateFunction == 'Passive' || $parentTemplateType == 'Standard') ? '.' : '';
+                                $parentTemplateType = strtolower($parentTemplate['type']);
+                                $parentTemplateFunction = strtolower($parentTemplate['function']);
+                                $separator = ($parentTemplateFunction == 'passive' || $parentTemplateType == 'standard') ? '.' : '';
 
                                 $objectDNArray = array($parentDN, $objectName);
                                 $objectDNProper = implode($separator, $objectDNArray);
@@ -1335,9 +1525,8 @@ class ArchiveController extends Controller
 
                                 $this->objectArray[$objectDN] = array();
                                 $this->properToActualMapping[$objectDNProper] = $objectDN;
-                                $this->conversionMap['object'][$objectDN] = $ID;
 
-                                return $ID;
+                                return $this->conversionMap['object'][$objectDN];
                             }
                         ),
 
@@ -1492,14 +1681,13 @@ class ArchiveController extends Controller
                         array(
                             'new' => 'id',
                             'old' => array('CableA ID', 'CableB ID'),
-                            'process' => function($data=null) {
+                            'process' => function($data) {
                                 if($data[0] == 'None' && $data[1] = 'None') {
                                     $this->conversionEntryPasses = false;
                                 }
-                                $ID = count($this->conversionMap['cable'])+1;
+
                                 $conversionMapHash = implode(".", $data);
-                                $this->conversionMap['cable'][$conversionMapHash] = $ID;
-                                return $ID;
+                                return $this->conversionMap['cable'][$conversionMapHash];
                             }
                         ),
                         array(
@@ -1618,11 +1806,14 @@ class ArchiveController extends Controller
                         array(
                             'new' => 'id',
                             'old' => array('CableA ID', 'CableB ID'),
-                            'process' => function($data=null) {
-                                $ID = count($this->conversionMap['connection'])+1;
+                            'process' => function($data) {
+
+                                if($data[0] == 'None' && $data[1] = 'None') {
+                                    $this->conversionEntryPasses = false;
+                                }
+                                
                                 $conversionMapHash = implode(".", $data);
-                                $this->conversionMap['connection'][$conversionMapHash] = $ID;
-                                return $ID;
+                                return $this->conversionMap['connection'][$conversionMapHash];
                             }
                         ),
 
@@ -1641,6 +1832,7 @@ class ArchiveController extends Controller
                                 if(isset($this->conversionMap['object'][$objectDN])) {
                                     return $this->conversionMap['object'][$objectDN];
                                 } else {
+                                    throw ValidationException::withMessages(['error' => 'Not able to resolve PortA object. '.$this->conversionArchiveAddress]);
                                     return null;
                                 }
                             }
@@ -1665,9 +1857,11 @@ class ArchiveController extends Controller
                                     if(isset($portData[$portName])) {
                                         return $portData[$portName]['face'];
                                     } else {
+                                        throw ValidationException::withMessages(['error' => 'Not able to resolve port in PortA column. '.$this->conversionArchiveAddress]);
                                         return 'Port not found';
                                     }
                                 } else {
+                                    throw ValidationException::withMessages(['error' => 'Not able to resolve object in PortA column. '.$this->conversionArchiveAddress]);
                                     return 'Object not found';
                                 }
                             }
@@ -1864,11 +2058,9 @@ class ArchiveController extends Controller
                         array(
                             'new' => 'id',
                             'old' => array('Trunk Peer A', 'Trunk Peer B'),
-                            'process' => function($data=null) {
-                                $ID = count($this->conversionMap['trunk'])+1;
+                            'process' => function($data) {
                                 $conversionMapHash = implode(".", $data);
-                                $this->conversionMap['trunk'][$conversionMapHash] = $ID;
-                                return $ID;
+                                return $this->conversionMap['trunk'][$conversionMapHash];
                             }
                         ),
 
@@ -2096,22 +2288,47 @@ class ArchiveController extends Controller
                 )
             );
 
+            $tableDependencies = array(
+                'location' => array('parent_id', 'id'),
+                'object' => array('parent_id', 'id')
+            );
+
             // Create/update entries
             foreach($archiveSchemas as $tableName => $archiveSchema) {
 
-                // Open temp stream to write CSV
-                $csvFile = fopen('php://temp', 'w');
+                // Working CSV array
+                $csvArray = array();
 
                 $archiveConversionCounter = 1;
                 foreach($archiveSchema as $archiveFilename => $attrConversions) {
 
                     // Open legacy archive file
-                    //$archiveFilename = $archiveSchema['filename'];
                     $archiveFilePath = Storage::disk('local')->path('imports/'.$archiveFilename);
                     $file = fopen($archiveFilePath, 'r');
-                    $row = 1;
                     if($file !== FALSE) {
+
+                        // populate conversion map
+                        $row = 1;
+                        while (($data = fgetcsv($file, 100000, ",")) !== FALSE) {
+
+                            if($row == 1){
+                                // Process header
+                                $attrMap = $this->processCSVHeader($data);
+                            }
+
+                            $fieldData = array();
+                            foreach($conversionMapping[$tableName][$archiveFilename]['fields'] as $field) {
+                                array_push($fieldData, $data[$attrMap[$field]]);
+                            }
+                            $conversionMapping[$tableName][$archiveFilename]['process']($fieldData);
+
+                            $row++;
+                        }
                         
+                        rewind($file);
+
+                        // process rows
+                        $row = 1;
                         while (($data = fgetcsv($file, 100000, ",")) !== FALSE) {
 
                             $this->conversionEntryPasses = true;
@@ -2129,7 +2346,7 @@ class ArchiveController extends Controller
 
                                 // Add header to CSV file
                                 if($archiveConversionCounter == 1) {
-                                    fputcsv($csvFile, $workingArray);
+                                    array_push($csvArray, $workingArray);
                                 }
                             } else {
 
@@ -2137,7 +2354,6 @@ class ArchiveController extends Controller
                                 $workingArray = array();
                                 foreach($attrConversions as $attrIdx => $attrConversion) {
 
-                                    Log::info($tableName.':'.$row.' '.json_encode($attrConversion['old']));
                                     // Initialize legacy data
                                     $legacyData = null;
 
@@ -2162,7 +2378,7 @@ class ArchiveController extends Controller
 
                                 // Add row to CSV file
                                 if($this->conversionEntryPasses) {
-                                    fputcsv($csvFile, $workingArray);
+                                    array_push($csvArray, $workingArray);
                                 }
                             }
                             $row++;
@@ -2174,6 +2390,78 @@ class ArchiveController extends Controller
 
                     $archiveConversionCounter++;
                     fclose($file);
+                }
+
+                // Sort $csvArray according to dependencies
+                if(isset($tableDependencies[$tableName])) {
+
+                    // Initialize some variables
+                    $parentIDAttr = $tableDependencies[$tableName][0];
+                    $IDAttr = $tableDependencies[$tableName][1];
+                    $workingArray = array();
+                    $parentIDValueArray = array();
+
+                    $row = 1;
+                    foreach($csvArray as $csvRow) {
+
+                        if($row == 1){
+
+                            // Process header
+                            $attrMap = $this->processCSVHeader($csvRow);
+                            array_push($workingArray, $csvRow);
+                        } else {
+                        
+                            // Collect dependecy data
+                            $parentIDValue = $csvRow[$attrMap[$parentIDAttr]];
+                            $IDValue = $csvRow[$attrMap[$IDAttr]];
+                            
+                            // Map parent ID to child ID
+                            if($parentIDValue) {
+                                $parentIDValueArray[$parentIDValue] = $IDValue;
+                            }
+                            
+                            $inserted = false;
+                            if(isset($parentIDValueArray[$IDValue])) {
+
+                                // Get array index of child
+                                $idx = $this->findIndex($parentIDValueArray[$IDValue], $workingArray, $attrMap[$IDAttr]);
+
+                                if($idx !== false) {
+
+                                    // Cut the working array in half where the row should be inserted
+                                    $beginning = array_slice($workingArray, 0, $idx);
+                                    $ending = array_slice($workingArray, $idx);
+
+                                    // Recompile the working array inserting the row
+                                    $workingArray = array();
+                                    foreach($beginning as $elem) {
+                                        array_push($workingArray, $elem);
+                                    }
+                                    array_push($workingArray, $csvRow);
+                                    foreach($ending as $elem) {
+                                        array_push($workingArray, $elem);
+                                    }
+
+                                    // Flag this row as being inserted
+                                    $inserted = true;
+                                }
+                            }
+                            
+                            // Add row to CSV data
+                            if(!$inserted) {
+                                array_push($workingArray, $csvRow);
+                            }
+                        }
+                        $row++;
+                    }
+
+                    $csvArray = $workingArray;
+                }
+
+                // Open temp stream to write CSV
+                $csvFile = fopen('php://temp', 'w');
+                foreach($csvArray as $csvRow) {
+                    fputcsv($csvFile, $csvRow);
                 }
 
                 // Store CSV to disk
@@ -2415,7 +2703,7 @@ class ArchiveController extends Controller
 
                 // First partition is "row" so add generic 1st partition and proceed
                 $workingArray['type'] = 'generic';
-                $workingArray['units'] = 24;
+                $workingArray['units'] = intval($partition['hUnits']);
                 $workingArray['children'] = array();
                 $depth++;
                 $workingArray['children'] = $this->processPartition($data, $depth);
@@ -2423,9 +2711,8 @@ class ArchiveController extends Controller
             } else {
 
                 $workingArray['type'] = $partitionType;
-                $workingArray['units'] = ($partitionDirection == 'row') ? $partition['vUnits'] : $partition['hUnits'];
+                $workingArray['units'] = ($partitionDirection == 'row') ? intval($partition['vUnits']) : intval($partition['hUnits']);
                 $workingArray['children'] = array();
-
 
                 switch($partitionType) {
                     case 'generic':
@@ -2436,20 +2723,20 @@ class ArchiveController extends Controller
                         break;
 
                     case 'connectable':
-                        $workingArray['port_format'] = $partition['portNameFormat'];
+                        $workingArray['port_format'] = $this->processPortFormat($partition['portNameFormat']);
                         $workingArray['port_layout'] = array(
-                            'cols' => $partition['valueX'],
-                            'rows' => $partition['valueY']
+                            'cols' => intval($partition['valueX']),
+                            'rows' => intval($partition['valueY'])
                         );
-                        $workingArray['media'] = $partition['mediaType'];
-                        $workingArray['port_connector'] = $partition['portType'];
-                        $workingArray['port_orientation'] = $partition['portOrientation'];
+                        $workingArray['media'] = intval($partition['mediaType']);
+                        $workingArray['port_connector'] = intval($partition['portType']);
+                        $workingArray['port_orientation'] = intval($partition['portOrientation']);
                         break;
 
                     case 'enclosure':
                         $workingArray['enc_layout'] = array(
-                            'cols' => $partition['valueX'],
-                            'rows' => $partition['valueY']
+                            'cols' => intval($partition['valueX']),
+                            'rows' => intval($partition['valueY'])
                         );
                         break;
                 }
@@ -2719,5 +3006,67 @@ class ArchiveController extends Controller
         $portName = str_replace($objectDNMerged, '', $portDNMerged);
 
         return $portName;
+    }
+
+    /**
+     * generate random alphanumeric string of 40 characters
+     *
+     * @return  string
+     */
+    function generateFilename()
+    {
+        $length = 40;
+        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $randomString = '';
+        $maxCharIndex = strlen($characters) - 1;
+    
+        for ($i = 0; $i < $length; $i++) {
+            $randomString .= $characters[random_int(0, $maxCharIndex)];
+        }
+    
+        return $randomString;
+    }
+
+    /**
+     * process port_format
+     *
+     * @return  string
+     */
+    function processPortFormat($portFormat)
+    {
+
+        $portFormatArray = array();
+        foreach($portFormat as $portFormatField) {
+
+            $addPortFormatField = true;
+
+            // Exclude static fields with empty value
+            if($portFormatField['type'] == "static" && $portFormatField['value'] == "") {
+                $addPortFormatField = false;
+            }
+
+            if($addPortFormatField) {
+                array_push($portFormatArray, $portFormatField);
+            }
+        }
+        return $portFormatArray;
+    }
+
+    /**
+     * process port_format
+     *
+     * @param   integer $needle
+     * @param   array   $haystack
+     * @param   integer $IDIndex
+     * @return  string
+     */
+    function findIndex($needle, $haystack, $IDIndex)
+    {
+        foreach($haystack as $idx => $hay) {
+            if($hay[$IDIndex] == $needle) {
+                return $idx;
+            }
+        }
+        return false;
     }
 }

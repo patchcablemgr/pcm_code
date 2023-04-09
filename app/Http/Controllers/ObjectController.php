@@ -51,7 +51,7 @@ class ObjectController extends Controller
         $validatorRules = [
             'name' => [
                 'sometimes',
-                'regex:/^[A-Za-z0-9\/\_]+$/',
+                'regex:/^[A-Za-z0-9\/\_\-]+$/',
                 'min:1',
                 'max:255'
             ],

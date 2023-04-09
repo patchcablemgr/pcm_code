@@ -67,14 +67,10 @@ class LocationController extends Controller
             'floorplan'
         ];
 
-        $validatorInput = [
-            'parent-id' => $request->parent_id,
-            'type' => $request->type,
-        ];
-
         $validatorRules = [
-            'parent-id' => [
+            'parent_id' => [
                 'required',
+                'exclude_if:parent_id,0',
                 'integer',
                 'exists:location,id'
             ],
@@ -85,11 +81,11 @@ class LocationController extends Controller
         ];
 
         $validatorMessages = $PCM->transformValidationMessages($validatorRules, $this->archiveAddress);
-        $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
+        $customValidator = Validator::make($request->all(), $validatorRules, $validatorMessages);
         $customValidator->stopOnFirstFailure();
         $customValidator->validate();
 
-        $parentID = $request->parent_id;
+        $parentID = intval($request->parent_id);
         $locationType = $request->type;
 
         if($parentID !== 0) {

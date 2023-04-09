@@ -26,6 +26,7 @@ class TemplateBlueprint implements Rule
         if(!is_null($id)) {
             
             // Update operation
+            Log::info('Update template type: '.$template['type']);
             $template = TemplateModel::where('id', $id)->first();
             if($template['type'] == 'standard') {
                 $width = 24;
@@ -40,6 +41,7 @@ class TemplateBlueprint implements Rule
         } else {
 
             // Create operation
+            Log::info('Create template type: '.$request->type);
             if($request->type == 'standard') {
                 $width = 24;
                 $height = $request->ru_size*2;
@@ -133,6 +135,8 @@ class TemplateBlueprint implements Rule
 
                     // Validate partition units
                     $units = $partition['units'];
+                    Log::info($units.' - '.$unitsAvailable[round($depth%2)]);
+                    Log::info($unitsAvailable);
                     if($units <= $unitsAvailable[round($depth%2)]) {
 
                         // Validate partition type

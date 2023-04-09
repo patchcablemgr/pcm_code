@@ -88,15 +88,18 @@ export default {
       }
       data.append('file', vm.File)
 
-      // POST floorplan image
+      // POST legacy archive
       vm.$http.post(url, data, options).then(function(response){
         const blob = new Blob([response.data], { type: 'application/zip' })
         const link = document.createElement('a')
         link.href = URL.createObjectURL(blob)
-        link.download = 'pcmExport-'+Date.now()
+        link.download = 'pcmArchiveConverted-'+Date.now()
         link.click()
         URL.revokeObjectURL(link.href)
-      }).catch(error => {vm.DisplayError(error)})
+      }).catch(async(error) => {
+        const errMsg = JSON.parse(await error.response.data.text())
+        vm.DisplayError({'response':{'data':errMsg}})
+      })
     },
   },
   mounted() {

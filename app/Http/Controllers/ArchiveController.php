@@ -463,6 +463,8 @@ class ArchiveController extends Controller
 
     protected $conversionArchiveAddress = '';
 
+    protected $partitionPrepended = array();
+
     /**
      * Store a newly created resource in storage.
      *
@@ -1451,6 +1453,8 @@ class ArchiveController extends Controller
                                 return null;
                             }
                         ),
+
+                        // parent_partition_address
                         array(
                             'new' => 'parent_partition_address',
                             'old' => 'Name',
@@ -1458,6 +1462,8 @@ class ArchiveController extends Controller
                                 return null;
                             }
                         ),
+
+                        // parent_enclosure_address
                         array(
                             'new' => 'parent_enclosure_address',
                             'old' => 'Name',
@@ -1465,6 +1471,8 @@ class ArchiveController extends Controller
                                 return null;
                             }
                         ),
+
+                        // floorplan_address
                         array(
                             'new' => 'floorplan_address',
                             'old' => array('**Flooplan Object X', '**Flooplan Object Y'),
@@ -1476,6 +1484,8 @@ class ArchiveController extends Controller
                                 }
                             }
                         ),
+
+                        // floorplan_object_type
                         array(
                             'new' => 'floorplan_object_type',
                             'old' => '**Template',
@@ -1613,24 +1623,31 @@ class ArchiveController extends Controller
                             'new' => 'parent_partition_address',
                             'old' => array('**Object', '**Face', '**Slot'),
                             'process' => function($data=null) {
-                                if($data[0]) {
 
-                                    $parentObjectName = $data[0];
-                                    $templateFace = strtolower($data[1]);
-                                    $slotString = $data[2];
+                                $parentObject = $data[0];
+                                $parentFace = strtolower($data[1]);
+                                $slot = $data[2];
+
+                                if($slot) {
                                     
                                     // Get partition depth
-                                    $slotComponents = preg_split('/[A-Z][a-z]+/', $slotString);
+                                    $slotComponents = preg_split('/[A-Z][a-z]+/', $slot);
                                     array_shift($slotComponents);
                                     $partitionDepth = $slotComponents[0];
 
                                     // Get parent template blueprint
-                                    $parentTemplateName = $this->objectArray[$parentObjectName]['template_name'];
+                                    $parentTemplateName = $this->objectArray[$parentObject]['template_name'];
                                     $template = $this->templateArray[$parentTemplateName];
-                                    $blueprint = $template['blueprint'][$templateFace];
+                                    $blueprint = $template['blueprint'][$parentFace];
 
                                     // Get partition address
                                     $partitionAddress = $this->getPartitionAddress($blueprint, $partitionDepth);
+
+                                    // Addjust $partitionAddress if blueprint has been prepended
+                                    if(isset($blueprint[0]['prepended'])) {
+                                        array_unshift($partitionAddress, 0);
+                                    }
+
                                     return json_encode($partitionAddress);
                                 } else {
                                     return null;
@@ -1641,22 +1658,23 @@ class ArchiveController extends Controller
                         // parent_enclosure_address
                         array(
                             'new' => 'parent_enclosure_address',
-                            'old' => '**Slot',
-                            'process' => function($data=null) {
-                                if($data) {
+                            'old' => array('**Slot'),
+                            'process' => function($data) {
 
-                                    $slotString = $data;
+                                $slot = $data[0];
+
+                                if($slot) {
+
                                     $charArray = array('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z');
                                     
                                     // Extract original enclosure address
-                                    $slotComponents = preg_split('/[A-Z][a-z]+/', $slotString);
+                                    $slotComponents = preg_split('/[A-Z][a-z]+/', $slot);
                                     array_shift($slotComponents);
                                     $enclosureAddress_orig = $slotComponents[1];
 
                                     // Extract enclosure address components
                                     preg_match('/[A-Z]+/', $enclosureAddress_orig, $row_orig);
                                     preg_match('/[0-9]+/', $enclosureAddress_orig, $col_orig);
-                                    
 
                                     // Prepare enclosure address components
                                     $charIdx = 0;
@@ -1668,12 +1686,30 @@ class ArchiveController extends Controller
                                     }
                                     //$row = array_search($row_orig[0], $charArray);
                                     $row = $charIdx;
-                                    $col = intval($col_orig[0]);
+                                    $col = intval($col_orig[0]) - 1;
 
                                     return json_encode(array($row, $col));
                                 }
                             }
                         ),
+
+                        // floorplan_address
+                        array(
+                            'new' => 'floorplan_address',
+                            'old' => array('Insert Name'),
+                            'process' => function($data) {
+                                return null;
+                            }
+                        ),
+
+                        // floorplan_object_type
+                        array(
+                            'new' => 'floorplan_object_type',
+                            'old' => array('Insert Name'),
+                            'process' => function($data) {
+                                return null;
+                            }
+                        )
                     )
                 ),
                 'cable' => array(
@@ -1811,7 +1847,7 @@ class ArchiveController extends Controller
                                 if($data[0] == 'None' && $data[1] = 'None') {
                                     $this->conversionEntryPasses = false;
                                 }
-                                
+
                                 $conversionMapHash = implode(".", $data);
                                 return $this->conversionMap['connection'][$conversionMapHash];
                             }
@@ -2597,6 +2633,8 @@ class ArchiveController extends Controller
             }
 
             // Decode JSON if necessary
+            Log::info($tableFileName.":".$row.' '.$attr);
+            Log::info($data);
             $requestDataEntry = (in_array($attr, $this->jsonAttributes[$tableName])) ? json_decode($data[$attrIdx], true) : $data[$attrIdx];
 
             // Add attribute to request data
@@ -2703,6 +2741,7 @@ class ArchiveController extends Controller
 
                 // First partition is "row" so add generic 1st partition and proceed
                 $workingArray['type'] = 'generic';
+                $workingArray['prepended'] = true;
                 $workingArray['units'] = intval($partition['hUnits']);
                 $workingArray['children'] = array();
                 $depth++;
@@ -2954,6 +2993,7 @@ class ArchiveController extends Controller
 					}
 					
 				} else if($type == 'series') {
+                    $value = explode(',', $value);
 					$portString = $portString.$value[$howMuchToIncrement];
 				}
 			}
@@ -3044,6 +3084,16 @@ class ArchiveController extends Controller
             if($portFormatField['type'] == "static" && $portFormatField['value'] == "") {
                 $addPortFormatField = false;
             }
+
+            // Convert series array into comma delimited string
+            if($portFormatField['type'] == 'series') {
+                $portFormatField['value'] = implode(',', $portFormatField['value']);
+            }
+
+            $portFormatField['type'] = strval($portFormatField['type']);
+            $portFormatField['value'] = strval($portFormatField['value']);
+            $portFormatField['count'] = intval($portFormatField['count']);
+            $portFormatField['order'] = intval($portFormatField['order']);
 
             if($addPortFormatField) {
                 array_push($portFormatArray, $portFormatField);

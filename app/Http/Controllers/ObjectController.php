@@ -176,12 +176,28 @@ class ObjectController extends Controller
         // Validate parent object partition
         $Err = $PCM->validateParentPartition($parentObjectTemplateID, $objectParentFace, $objectParentPartitionAddress, $objectParentEnclosureAddress);
         if($Err !== true) {
+
+            // Append archive address if set
+            if($this->archiveAddress) {
+                foreach($Err as &$errMsg) {
+                    $errMsg = $errMsg.' '.$this->archiveAddress;
+                }
+            }
+
             throw ValidationException::withMessages($Err);
         }
 
         // Validate parent object enclosure occupancy
         $Err = $PCM->validateEnclosureOccupancy(null, $objectParentID, $objectParentFace, $objectParentPartitionAddress, $objectParentEnclosureAddress);
         if($Err !== true) {
+
+            // Append archive address if set
+            if($this->archiveAddress) {
+                foreach($Err as &$errMsg) {
+                    $errMsg = $errMsg.' '.$this->archiveAddress;
+                }
+            }
+
             throw ValidationException::withMessages($Err);
         }
 

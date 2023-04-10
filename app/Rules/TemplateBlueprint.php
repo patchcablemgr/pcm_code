@@ -26,7 +26,6 @@ class TemplateBlueprint implements Rule
         if(!is_null($id)) {
             
             // Update operation
-            Log::info('Update template type: '.$template['type']);
             $template = TemplateModel::where('id', $id)->first();
             if($template['type'] == 'standard') {
                 $width = 24;
@@ -41,7 +40,6 @@ class TemplateBlueprint implements Rule
         } else {
 
             // Create operation
-            Log::info('Create template type: '.$request->type);
             if($request->type == 'standard') {
                 $width = 24;
                 $height = $request->ru_size*2;
@@ -135,8 +133,6 @@ class TemplateBlueprint implements Rule
 
                     // Validate partition units
                     $units = $partition['units'];
-                    Log::info($units.' - '.$unitsAvailable[round($depth%2)]);
-                    Log::info($unitsAvailable);
                     if($units <= $unitsAvailable[round($depth%2)]) {
 
                         // Validate partition type
@@ -310,10 +306,10 @@ class TemplateBlueprint implements Rule
     {
 
         $fieldKeys = array(
-            'type' => 'string',
-            'value' => 'string',
-            'count' => 'integer',
-            'order' => 'integer'
+            'type' => array('string'),
+            'value' => array('string', 'array'),
+            'count' => array('integer'),
+            'order' => array('integer')
         );
         $fieldTypes = array(
             'static',
@@ -327,9 +323,15 @@ class TemplateBlueprint implements Rule
             if(count(array_intersect(array_keys($field), array_keys($fieldKeys))) == count($fieldKeys)) {
 
                 // Validate field key types
-                $validTypes = true;
-                foreach($fieldKeys as $key => $keyType) {
-                    $validTypes = (gettype($field[$key]) == $keyType) ? $validTypes : false;
+                $validTypes = false;
+                foreach($fieldKeys as $key => $keyTypeArray) {
+
+                    foreach($keyTypeArray as $keyType) {
+                        if(gettype($field[$key]) == $keyType) {
+                            $validTypes = true;
+                        }
+                    }
+                    //$validTypes = (gettype($field[$key]) == $keyType) ? $validTypes : false;
                 }
                 if($validTypes) {
 
@@ -350,7 +352,7 @@ class TemplateBlueprint implements Rule
                         } else if($field['type'] == 'incremental') {
 
                             // Validate value
-                            if(!preg_match('/^([1-9][0-9]*|[a-z]|[A-Z])$/', $field['value'])) {
+                            if(!preg_match('/^(0|[1-9][0-9]*|[a-z]|[A-Z])$/', $field['value'])) {
                                 $this->setErrorMessage('Invalid incremental field value.');
                                 return false;
                             }
@@ -359,9 +361,19 @@ class TemplateBlueprint implements Rule
                         } else if($field['type'] == 'series') {
 
                             // Validate value
-                            if(!preg_match('/^(,?[a-zA-Z0-9\\\\\/\-\_\=\+\|\*])*$/', $field['value'])) {
-                                $this->setErrorMessage('Invalid incremental field value.');
-                                return false;
+                            if(is_array($field['type'])) {
+                                foreach($field['type'] as $elem) {
+                                    $pattern = "/^[a-zA-Z0-9\\\\\/\-\_\=\+\|\*]+$/";
+                                    if(!preg_match($pattern, $elem)) {
+                                        $this->setErrorMessage('Invalid series field value.');
+                                        return false;
+                                    }
+                                }
+                            } else {
+                                if(!preg_match('/^(,?[a-zA-Z0-9\\\\\/\-\_\=\+\|\*])*$/', $field['value'])) {
+                                    $this->setErrorMessage('Invalid series field value.');
+                                    return false;
+                                }
                             }
                         }
                     } else {

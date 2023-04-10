@@ -1,3 +1,8 @@
+## 1.4.3
+
+Fixes:
+- Version 1.4.1 seeder missing CableConnectorModel
+
 ## 1.4.2
 
 Fixes:

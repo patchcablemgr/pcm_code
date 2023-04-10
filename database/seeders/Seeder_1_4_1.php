@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use App\Models\PortConnectorModel;
+use App\Models\CableConnectorModel;
 
 class Seeder_1_4_1 extends Seeder
 {

@@ -123,7 +123,7 @@ class TrunkController extends Controller
         // Gather peer data
         $peerID = $request->b_id;
         $peerFace = $request->b_face;
-        $peerPartitionAddress = $request->a_partition;
+        $peerPartitionAddress = $request->b_partition;
         $peer = ObjectModel::where('id', $peerID)->first();
         $peerTemplateID = $peer->template_id;
         $peerTemplate = TemplateModel::where('id', $peerTemplateID)->first();

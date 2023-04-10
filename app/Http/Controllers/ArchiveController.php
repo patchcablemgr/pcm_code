@@ -465,6 +465,8 @@ class ArchiveController extends Controller
 
     protected $partitionPrepended = array();
 
+    protected $trunkGroupIDArray = array();
+
     /**
      * Store a newly created resource in storage.
      *
@@ -2323,7 +2325,48 @@ class ArchiveController extends Controller
                         // b_port
                         array(
                             'new' => 'b_port',
-                            'old' => 'Trunk Peer B',
+                            'old' => array('Trunk Peer A', 'Trunk Peer B'),
+                            'process' => function($data) {
+
+                                $peerA = $data[0];
+                                $peerB = $data[1];
+
+                                $peerATrunkDNArray = explode(' ', $peerA);
+                                $peerAportDN = $peerATrunkDNArray[0];
+                                $peerAObjectDN = $this->extractObjectDN($peerAportDN);
+                                $peerAPortName = $this->extractPortName($peerAObjectDN, $peerAportDN);
+
+                                $peerBTrunkDNArray = explode(' ', $peerB);
+                                $peerBportDN = $peerBTrunkDNArray[0];
+                                $peerBObjectDN = $this->extractObjectDN($peerBportDN);
+                                $peerBPortName = $this->extractPortName($peerBObjectDN, $peerBportDN);
+
+                                if(isset($this->conversionMap['object'][$peerBObjectDN])) {
+
+                                    // Get object floorplan type
+                                    $peerAObject = $this->objectArray[$peerAObjectDN];
+                                    $peerAObjectFloorplanType = $peerAObject['floorplan_object_type'];
+
+                                    if($peerAObjectFloorplanType) {
+                                        $portData = $this->resolvePortDN($peerBObjectDN, $peerBportDN);
+                                        if(isset($portData[$peerBPortName])) {
+                                            return $portData[$peerBPortName]['port_id'];
+                                        } else {
+                                            return 'Port not found';
+                                        }
+                                    } else {
+                                        return null;
+                                    }
+                                } else {
+                                    return 'Object not found';
+                                }
+                            }
+                        ),
+
+                        // group_id
+                        array(
+                            'new' => 'group_id',
+                            'old' => 'Trunk Peer A',
                             'process' => function($trunkDN) {
 
                                 $trunkDNArray = explode(' ', $trunkDN);
@@ -2339,15 +2382,20 @@ class ArchiveController extends Controller
                                     $objectFloorplanType = $object['floorplan_object_type'];
 
                                     if($objectFloorplanType) {
-                                        return 0;
+                                        if(isset($this->trunkGroupIDArray[$objectDN])) {
+                                            return $this->trunkGroupIDArray[$objectDN];
+                                        } else {
+                                            $groupID = rand(1, 999999999);
+                                            $this->trunkGroupIDArray[$objectDN] = $groupID;
+                                            return $groupID;
+                                        }
                                     } else {
-                                        return null;
+                                        $groupID = rand(1, 999999999);
+                                        return $groupID;
                                     }
-                                } else {
-                                    return 'Object not found';
                                 }
                             }
-                        ),
+                        )
                     )
                 ),
                 'port' => array(

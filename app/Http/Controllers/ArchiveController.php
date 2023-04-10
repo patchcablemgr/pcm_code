@@ -1488,17 +1488,25 @@ class ArchiveController extends Controller
                         // floorplan_object_type
                         array(
                             'new' => 'floorplan_object_type',
-                            'old' => '**Template',
+                            'old' => array('Cabinet', 'Name', '**Template'),
                             'process' => function($data=null) {
+
+                                $cabinetName = $data[0];
+                                $objectName = $data[1];
+                                $templateName = $data[2];
+                                $objectDN = implode(".", array($cabinetName, $objectName));
+
                                 $floorplanObjectArray = array(
                                     'Walljack' => 'walljack',
                                     'Device' => 'device',
                                     'WAP' => 'wap',
                                     'Camera' => 'camera'
                                 );
-                                if(isset($floorplanObjectArray[$data])) {
-                                    return $floorplanObjectArray[$data];
+                                if(isset($floorplanObjectArray[$templateName])) {
+                                    $this->objectArray[$objectDN]['floorplan_object_type'] = $floorplanObjectArray[$templateName];
+                                    return $floorplanObjectArray[$templateName];
                                 } else {
+                                    $this->objectArray[$objectDN]['floorplan_object_type'] = null;
                                     return null;
                                 }
                             }
@@ -1633,20 +1641,20 @@ class ArchiveController extends Controller
                                     // Get partition depth
                                     $slotComponents = preg_split('/[A-Z][a-z]+/', $slot);
                                     array_shift($slotComponents);
-                                    $partitionDepth = $slotComponents[0];
+                                    $partitionDepth = intval($slotComponents[0]);
 
                                     // Get parent template blueprint
                                     $parentTemplateName = $this->objectArray[$parentObject]['template_name'];
                                     $template = $this->templateArray[$parentTemplateName];
                                     $blueprint = $template['blueprint'][$parentFace];
 
+                                    // Increase partition depth to account for prepended partition
+                                    if(isset($blueprint[0]['prepended'])) {
+                                        $partitionDepth++;
+                                    }
+
                                     // Get partition address
                                     $partitionAddress = $this->getPartitionAddress($blueprint, $partitionDepth);
-
-                                    // Addjust $partitionAddress if blueprint has been prepended
-                                    if(isset($blueprint[0]['prepended'])) {
-                                        array_unshift($partitionAddress, 0);
-                                    }
 
                                     return json_encode($partitionAddress);
                                 } else {
@@ -1705,8 +1713,15 @@ class ArchiveController extends Controller
                         // floorplan_object_type
                         array(
                             'new' => 'floorplan_object_type',
-                            'old' => array('Insert Name'),
+                            'old' => array('**Object', 'Insert Name'),
                             'process' => function($data) {
+
+                                $parentDN = $data[0];
+                                $objectName = $data[1];
+
+                                $objectDN = implode('.', array($parentDN, $objectName));
+
+                                $this->objectArray[$objectDN]['floorplan_object_type'] = null;
                                 return null;
                             }
                         )
@@ -2133,11 +2148,19 @@ class ArchiveController extends Controller
 
                                 if(isset($this->conversionMap['object'][$objectDN])) {
 
-                                    $portData = $this->resolvePortDN($objectDN, $portDN);
-                                    if(isset($portData[$portName])) {
-                                        return $portData[$portName]['face'];
+                                    // Get object floorplan type
+                                    $object = $this->objectArray[$objectDN];
+                                    $objectFloorplanType = $object['floorplan_object_type'];
+
+                                    if($objectFloorplanType === null) {
+                                        $portData = $this->resolvePortDN($objectDN, $portDN);
+                                        if(isset($portData[$portName])) {
+                                            return $portData[$portName]['face'];
+                                        } else {
+                                            return 'Port not found';
+                                        }
                                     } else {
-                                        return 'Port not found';
+                                        return 'front';
                                     }
                                 } else {
                                     return 'Object not found';
@@ -2147,7 +2170,7 @@ class ArchiveController extends Controller
 
                         // a_partition
                         array(
-                            'new' => 'a_face',
+                            'new' => 'a_partition',
                             'old' => 'Trunk Peer A',
                             'process' => function($trunkDN) {
 
@@ -2159,11 +2182,19 @@ class ArchiveController extends Controller
 
                                 if(isset($this->conversionMap['object'][$objectDN])) {
 
-                                    $portData = $this->resolvePortDN($objectDN, $portDN);
-                                    if(isset($portData[$portName])) {
-                                        return json_encode($portData[$portName]['partition_address']);
+                                    // Get object floorplan type
+                                    $object = $this->objectArray[$objectDN];
+                                    $objectFloorplanType = $object['floorplan_object_type'];
+
+                                    if($objectFloorplanType === null) {
+                                        $portData = $this->resolvePortDN($objectDN, $portDN);
+                                        if(isset($portData[$portName])) {
+                                            return json_encode($portData[$portName]['partition_address']);
+                                        } else {
+                                            return 'Port not found';
+                                        }
                                     } else {
-                                        return 'Port not found';
+                                        return json_encode(array(0));
                                     }
                                 } else {
                                     return 'Object not found';
@@ -2177,7 +2208,26 @@ class ArchiveController extends Controller
                             'old' => 'Trunk Peer A',
                             'process' => function($trunkDN) {
 
-                                return null;
+                                $trunkDNArray = explode(' ', $trunkDN);
+                                $portDN = $trunkDNArray[0];
+                                
+                                $objectDN = $this->extractObjectDN($portDN);
+                                $portName = $this->extractPortName($objectDN, $portDN);
+
+                                if(isset($this->conversionMap['object'][$objectDN])) {
+
+                                    // Get object floorplan type
+                                    $object = $this->objectArray[$objectDN];
+                                    $objectFloorplanType = $object['floorplan_object_type'];
+
+                                    if($objectFloorplanType) {
+                                        return 0;
+                                    } else {
+                                        return null;
+                                    }
+                                } else {
+                                    return 'Object not found';
+                                }
                             }
                         ),
 
@@ -2214,11 +2264,21 @@ class ArchiveController extends Controller
 
                                 if(isset($this->conversionMap['object'][$objectDN])) {
 
-                                    $portData = $this->resolvePortDN($objectDN, $portDN);
-                                    if(isset($portData[$portName])) {
-                                        return $portData[$portName]['face'];
+                                    // Get object floorplan type
+                                    $object = $this->objectArray[$objectDN];
+                                    Log::info($objectDN);
+                                    Log::info(json_encode($object));
+                                    $objectFloorplanType = $object['floorplan_object_type'];
+
+                                    if($objectFloorplanType === null) {
+                                        $portData = $this->resolvePortDN($objectDN, $portDN);
+                                        if(isset($portData[$portName])) {
+                                            return $portData[$portName]['face'];
+                                        } else {
+                                            return 'Port not found';
+                                        }
                                     } else {
-                                        return json_encode($portData);
+                                        return 'front';
                                     }
                                 } else {
                                     return 'Object not found';
@@ -2228,7 +2288,7 @@ class ArchiveController extends Controller
 
                         // b_partition
                         array(
-                            'new' => 'b_face',
+                            'new' => 'b_partition',
                             'old' => 'Trunk Peer B',
                             'process' => function($trunkDN) {
 
@@ -2240,11 +2300,19 @@ class ArchiveController extends Controller
 
                                 if(isset($this->conversionMap['object'][$objectDN])) {
 
-                                    $portData = $this->resolvePortDN($objectDN, $portDN);
-                                    if(isset($portData[$portName])) {
-                                        return json_encode($portData[$portName]['partition_address']);
+                                    // Get object floorplan type
+                                    $object = $this->objectArray[$objectDN];
+                                    $objectFloorplanType = $object['floorplan_object_type'];
+
+                                    if($objectFloorplanType === null) {
+                                        $portData = $this->resolvePortDN($objectDN, $portDN);
+                                        if(isset($portData[$portName])) {
+                                            return json_encode($portData[$portName]['partition_address']);
+                                        } else {
+                                            return 'Port not found';
+                                        }
                                     } else {
-                                        return 'Port not found';
+                                        return json_encode(array(0));
                                     }
                                 } else {
                                     return 'Object not found';
@@ -2258,7 +2326,26 @@ class ArchiveController extends Controller
                             'old' => 'Trunk Peer B',
                             'process' => function($trunkDN) {
 
-                                return null;
+                                $trunkDNArray = explode(' ', $trunkDN);
+                                $portDN = $trunkDNArray[0];
+                                
+                                $objectDN = $this->extractObjectDN($portDN);
+                                $portName = $this->extractPortName($objectDN, $portDN);
+
+                                if(isset($this->conversionMap['object'][$objectDN])) {
+
+                                    // Get object floorplan type
+                                    $object = $this->objectArray[$objectDN];
+                                    $objectFloorplanType = $object['floorplan_object_type'];
+
+                                    if($objectFloorplanType) {
+                                        return 0;
+                                    } else {
+                                        return null;
+                                    }
+                                } else {
+                                    return 'Object not found';
+                                }
                             }
                         ),
                     )
@@ -2802,14 +2889,15 @@ class ArchiveController extends Controller
 
             if($depthCounter == $partitionDepth) {
                 return $partitionAddress;
-            } else {
-                $depthCounter++;
-                $partitionIdx++;
             }
+
+            $depthCounter++;
+            $partitionIdx++;
 
             if(count($partition['children'])) {
                 $tempPartitionAddress = $partitionAddress;
                 array_push($tempPartitionAddress, 0);
+                
                 $workingPartitionAddress = $this->getPartitionAddress($partition['children'], $partitionDepth, $tempPartitionAddress, $depthCounter);
                 if($workingPartitionAddress) {
                     return $workingPartitionAddress;

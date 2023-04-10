@@ -104,5 +104,11 @@ class DatabaseSeeder extends Seeder
             $org->save();
         }
 
+        // 1.4.1 -> 1.4.2
+        if(version_compare($org->version, '1.4.1') === 0) {
+            $org->version = '1.4.2';
+            $org->save();
+        }
+
     }
 }

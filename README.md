@@ -1,3 +1,8 @@
+## 1.4.2
+
+Fixes:
+- Add timestamps to attributes_port_connector
+
 ## 1.4.1
 
 Features:

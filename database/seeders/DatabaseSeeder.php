@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\DB;
 use App\Models\OrganizationModel;
 use Database\Seeders\Seeder_1_0_0;
 use Database\Seeders\Seeder_1_2_0;
+use Database\Seeders\Seeder_1_3_0;
+use Database\Seeders\Seeder_1_4_1;
 
 class DatabaseSeeder extends Seeder
 {
@@ -90,6 +92,13 @@ class DatabaseSeeder extends Seeder
         // 1.3.1 -> 1.4.0
         if(version_compare($org->version, '1.3.1') === 0) {
             $org->version = '1.4.0';
+            $org->save();
+        }
+
+        // 1.4.0 -> 1.4.1
+        if(version_compare($org->version, '1.4.0') === 0) {
+            $this->call([Seeder_1_4_1::class]);
+            $org->version = '1.4.1';
             $org->save();
         }
 

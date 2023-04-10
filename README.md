@@ -1,3 +1,11 @@
+## 1.4.1
+
+Features:
+- Archive conversion
+
+Fixes:
+- Not able to drop templates into cabinet
+
 ## 1.4.0
 
 Features:

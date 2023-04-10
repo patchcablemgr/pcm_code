@@ -97,6 +97,8 @@ class DatabaseSeeder extends Seeder
 
         // 1.4.0 -> 1.4.1
         if(version_compare($org->version, '1.4.0') === 0) {
+            // Rerun this seeder as it was not included in v1.3.0
+            $this->call([Seeder_1_3_0::class]);
             $this->call([Seeder_1_4_1::class]);
             $org->version = '1.4.1';
             $org->save();

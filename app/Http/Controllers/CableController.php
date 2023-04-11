@@ -160,7 +160,38 @@ class CableController extends Controller
                 'required',
                 'integer',
                 'exists:cable,id'
-            ]
+            ],
+            'a_id' => [
+                'required',
+                'string',
+                'unique:cable,a_id',
+                'unique:cable,b_id',
+            ],
+            'a_connector_id' => [
+                'required',
+                'integer',
+                'exists:attributes_cable_connector,value',
+            ],
+            'b_id' => [
+                'required',
+                'string',
+                'unique:cable,a_id',
+                'unique:cable,b_id',
+            ],
+            'b_connector_id' => [
+                'required',
+                'integer',
+                'exists:attributes_cable_connector,value',
+            ],
+            'media_id' => [
+                'required',
+                'integer',
+                'exists:attributes_media,value',
+            ],
+            'length' => [
+                'required',
+                'integer',
+            ],
         ];
 
         $validatorMessages = $PCM->transformValidationMessages($validatorRules, $this->archiveAddress);
@@ -170,6 +201,52 @@ class CableController extends Controller
 
         // Validate location is type cabinet
         $cable = CableModel::where('id', $request->id)->first();
+
+        // Store request data
+        $data = $request->all();
+
+        // Update cable record
+        foreach($data as $key => $value) {
+
+            if($key == 'a_id') {
+
+                // Update cable end A ID
+                $cable->a_id = $value;
+            }
+
+            if($key == 'a_connector_id') {
+
+                // 
+                $cable->a_connector_id = $value;
+            }
+
+            if($key == 'b_id') {
+
+                // 
+                $cable->b_id = $value;
+            }
+
+            if($key == 'b_connector_id') {
+
+                // 
+                $cable->b_connector_id = $value;
+            }
+
+            if($key == 'media_id') {
+
+                // 
+                $cable->media_id = $value;
+            }
+
+            if($key == 'length') {
+
+                // 
+                $cable->length = $value;
+            }
+
+        }
+
+        $cable->save();
 
         return $cable;
 

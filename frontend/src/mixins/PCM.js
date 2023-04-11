@@ -1757,7 +1757,7 @@ export const PCM = {
                     return PseudoObjectID
                 } else if (Key == 'parent_face') {
                     return PseudoObjectParentFace
-                } else if (Key == 'parent_part_addr') {
+                } else if (Key == 'parent_partition_address') {
                     return PseudoObjectParentPartitionAddress
                 } else if (Key == 'parent_enclosure_address') {
                     return PseudoObjectParentEnclosureAddress

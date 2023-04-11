@@ -68,6 +68,12 @@ class LocationController extends Controller
         ];
 
         $validatorRules = [
+            'name' => [
+                'sometimes',
+                'alpha_dash',
+                'min:1',
+                'max:255'
+            ],
             'parent_id' => [
                 'required',
                 'exclude_if:parent_id,0',
@@ -85,6 +91,7 @@ class LocationController extends Controller
         $customValidator->stopOnFirstFailure();
         $customValidator->validate();
 
+        $name = (isset($request->name)) ? $request->name : null;
         $parentID = intval($request->parent_id);
         $locationType = $request->type;
 
@@ -114,7 +121,7 @@ class LocationController extends Controller
 
         $location = new LocationModel;
 
-        $location->name = "New_".ucfirst($locationType);
+        $location->name = ($name) ? $name : "New_".ucfirst($locationType);
         $location->parent_id = $parentID;
         $location->type = $locationType;
         $location->img = null;

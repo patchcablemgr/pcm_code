@@ -73,11 +73,11 @@
           :style="{ 'grid-area': 'area'+(encIndex-1) }"
         >
           <component-object
-            v-if="GetEnclosureInsertID(encIndex-1, Partition.enc_layout.cols)"
+            v-if="GetEnclosureInsertID(GetPartitionAddress(PartitionIndex), encIndex-1, Partition.enc_layout.cols)"
             :TemplateRUSize="TemplateRUSize"
             :InitialPartitionAddress=[]
             :Context="Context"
-            :ObjectID="GetEnclosureInsertID(encIndex-1, Partition.enc_layout.cols)"
+            :ObjectID="GetEnclosureInsertID(GetPartitionAddress(PartitionIndex), encIndex-1, Partition.enc_layout.cols)"
             :CabinetFace="CabinetFace"
             :PartitionAddressHovered="PartitionAddressHovered"
             :ObjectsAreDraggable="ObjectsAreDraggable"
@@ -264,33 +264,17 @@ export default {
       return PartitionCollection
 
     },
-    /*
-    GetTemplate: function() {
-
-      // Initial variables
-      const vm = this
-      const ObjectID = vm.ObjectID
-      const Templates = vm.Templates
-      const Context = vm.Context
-
-      // Get template index
-      const TemplateID = vm.GetTemplateID(ObjectID, Context)
-      const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-
-      // Get template
-      const Template = Templates[Context][TemplateIndex]
-
-      // Return template
-      return Template
-    },
-    */
-    GetEnclosureInsertID: function(encIndex, encCols) {
+    GetEnclosureInsertID: function(partitionAddress, encIndex, encCols) {
       
       const vm = this
       const Context = vm.Context
       const ObjectID = vm.ObjectID
       const EnclosureAddress = vm.GetEnclosureAddress(encIndex, encCols)
-      const InsertIndex = vm.Objects[Context].findIndex((object) => object.parent_id == ObjectID && object.parent_enclosure_address[0] == EnclosureAddress[0] && object.parent_enclosure_address[1] == EnclosureAddress[1])
+      const InsertIndex = vm.Objects[Context].findIndex(function(object) {
+        console.log(JSON.stringify(object.parent_partition_address) + " == "+ JSON.stringify(partitionAddress))
+        console.log(JSON.stringify(object.parent_enclosure_address) + " == "+ JSON.stringify(EnclosureAddress))
+        return object.parent_id == ObjectID && JSON.stringify(object.parent_partition_address) == JSON.stringify(partitionAddress) && JSON.stringify(object.parent_enclosure_address) == JSON.stringify(EnclosureAddress)
+      })
       let EnclosureInsertID = false
 			
       if(InsertIndex !== -1) {

@@ -816,7 +816,7 @@ class ArchiveController extends Controller
                         'fields' => array('Name'),
                         'process' => function($data) {
                             $conversionMapHash = implode(".", $data);
-                            $ID = count($this->conversionMap['category'])+1;
+                            $ID = 'C-'.count($this->conversionMap['category'])+1;
                             $this->conversionMap['category'][$conversionMapHash] = $ID;
                             return;
                         }
@@ -827,7 +827,7 @@ class ArchiveController extends Controller
                         'fields' => array('Name'),
                         'process' => function($data) {
                             $conversionMapHash = implode(".", $data);
-                            $ID = count($this->conversionMap['template'])+1;
+                            $ID = 'C-'.count($this->conversionMap['template'])+1;
                             $this->conversionMap['template'][$conversionMapHash] = $ID;
                             return;
                         }
@@ -838,7 +838,7 @@ class ArchiveController extends Controller
                         'fields' => array('Name'),
                         'process' => function($data) {
                             $conversionMapHash = implode(".", $data);
-                            $ID = count($this->conversionMap['location'])+1;
+                            $ID = 'C-'.count($this->conversionMap['location'])+1;
                             $this->conversionMap['location'][$conversionMapHash] = $ID;
                             return;
                         }
@@ -849,7 +849,7 @@ class ArchiveController extends Controller
                         'fields' => array('Cabinet A', 'Cabinet B'),
                         'process' => function($data) {
                             $conversionMapHash = implode("-", $data);
-                            $ID = count($this->conversionMap['cable_path'])+1;
+                            $ID = 'C-'.count($this->conversionMap['cable_path'])+1;
                             $this->conversionMap['cable_path'][$conversionMapHash] = $ID;
                             return;
                         }
@@ -860,7 +860,7 @@ class ArchiveController extends Controller
                         'fields' => array('Cabinet', 'Name'),
                         'process' => function($data) {
                             $conversionMapHash = implode(".", $data);
-                            $ID = count($this->conversionMap['object'])+1;
+                            $ID = 'C-'.count($this->conversionMap['object'])+1;
                             $this->conversionMap['object'][$conversionMapHash] = $ID;
                             return;
                         }
@@ -875,7 +875,7 @@ class ArchiveController extends Controller
                             // Skip if name is blank
                             if($objectName !== '') {
 
-                                $ID = count($this->conversionMap['object'])+1;
+                                $ID = 'C-'.count($this->conversionMap['object'])+1;
 
                                 $objectDNArray = array($parentDN, $objectName);
                                 $objectDN = implode('.', $objectDNArray);
@@ -891,7 +891,7 @@ class ArchiveController extends Controller
                         'fields' => array('CableA ID', 'CableB ID'),
                         'process' => function($data) {
                             $conversionMapHash = implode(".", $data);
-                            $ID = count($this->conversionMap['cable'])+1;
+                            $ID = 'C-'.count($this->conversionMap['cable'])+1;
                             $this->conversionMap['cable'][$conversionMapHash] = $ID;
                             return;
                         }
@@ -902,7 +902,7 @@ class ArchiveController extends Controller
                         'fields' => array('CableA ID', 'CableB ID'),
                         'process' => function($data) {
                             $conversionMapHash = implode(".", $data);
-                            $ID = count($this->conversionMap['connection'])+1;
+                            $ID = 'C-'.count($this->conversionMap['connection'])+1;
                             $this->conversionMap['connection'][$conversionMapHash] = $ID;
                             return;
                         }
@@ -913,7 +913,7 @@ class ArchiveController extends Controller
                         'fields' => array('Trunk Peer A', 'Trunk Peer B'),
                         'process' => function($data) {
                             $conversionMapHash = implode(".", $data);
-                            $ID = count($this->conversionMap['trunk'])+1;
+                            $ID = 'C-'.count($this->conversionMap['trunk'])+1;
                             $this->conversionMap['trunk'][$conversionMapHash] = $ID;
                             return;
                         }
@@ -1858,14 +1858,19 @@ class ArchiveController extends Controller
                         // id
                         array(
                             'new' => 'id',
-                            'old' => array('CableA ID', 'CableB ID'),
+                            'old' => array('PortA', 'PortB', 'CableA ID', 'CableB ID'),
                             'process' => function($data) {
 
-                                if($data[0] == 'None' && $data[1] = 'None') {
+                                $portA = $data[0];
+                                $portB = $data[1];
+                                $cableAID = $data[2];
+                                $cableBID = $data[3];
+
+                                if(strtolower($portA) == 'none' && strtolower($portB) == 'none') {
                                     $this->conversionEntryPasses = false;
                                 }
 
-                                $conversionMapHash = implode(".", $data);
+                                $conversionMapHash = implode(".", array($cableAID, $cableBID));
                                 return $this->conversionMap['connection'][$conversionMapHash];
                             }
                         ),
@@ -1922,7 +1927,7 @@ class ArchiveController extends Controller
 
                         // a_partition
                         array(
-                            'new' => 'a_face',
+                            'new' => 'a_partition',
                             'old' => 'PortA',
                             'process' => function($portDN) {
 
@@ -2037,7 +2042,7 @@ class ArchiveController extends Controller
 
                         // b_partition
                         array(
-                            'new' => 'b_face',
+                            'new' => 'b_partition',
                             'old' => 'PortB',
                             'process' => function($portDN) {
 
@@ -2268,8 +2273,6 @@ class ArchiveController extends Controller
 
                                     // Get object floorplan type
                                     $object = $this->objectArray[$objectDN];
-                                    Log::info($objectDN);
-                                    Log::info(json_encode($object));
                                     $objectFloorplanType = $object['floorplan_object_type'];
 
                                     if($objectFloorplanType === null) {
@@ -2768,8 +2771,6 @@ class ArchiveController extends Controller
             }
 
             // Decode JSON if necessary
-            Log::info($tableFileName.":".$row.' '.$attr);
-            Log::info($data);
             $requestDataEntry = (in_array($attr, $this->jsonAttributes[$tableName])) ? json_decode($data[$attrIdx], true) : $data[$attrIdx];
 
             // Add attribute to request data

@@ -702,7 +702,9 @@ class ArchiveController extends Controller
                     // Find entries to delete
                     foreach($tableModel->all() as $dbEntry) {
                         $dbEntryID = $dbEntry['id'];
-                        if(!in_array($dbEntryID, $tableSchema['entryIDArray'])) {
+
+                        // Do not process entries that have been added by the import or already deleted
+                        if(!in_array($dbEntryID, $tableSchema['entryIDArray']) && !in_array($dbEntryID, $this->tableSchemas[$tableName]['deletedEntryIDArray'])) {
 
                             // Set a reference to the archive for helpful error reporting
                             $tableController->archiveAddress = 'Delete '.$tableName.":".$dbEntryID;
@@ -714,12 +716,12 @@ class ArchiveController extends Controller
                                 foreach($newResponse as $responseTableName => $deleteIDArray) {
                                     $this->tableSchemas[$responseTableName]['deletedEntryIDArray'] = array_merge($this->tableSchemas[$responseTableName]['deletedEntryIDArray'], $deleteIDArray);
                                 }
-                            }
-
-                            if($tableName == 'location') {
+                            } else if($tableName == 'location') {
                                 foreach($newResponse as $responseTableName => $deleteIDArray) {
                                     $this->tableSchemas[$responseTableName]['deletedEntryIDArray'] = array_merge($this->tableSchemas[$responseTableName]['deletedEntryIDArray'], $deleteIDArray);
                                 }
+                            } else {
+                                array_push($this->tableSchemas[$responseTableName]['deletedEntryIDArray'], $newResponse['id']);
                             }
                             
                         }
@@ -3034,4 +3036,260 @@ class ArchiveController extends Controller
         foreach($partitionSet as $partition) {
 
             // Set partition index
-            $partitionSetIdx = count($partitionAddres
+            $partitionSetIdx = count($partitionAddress) - 1;
+
+            // Search for matching port name
+            if($partition['type'] == 'connectable') {
+
+                // Gather some data
+                $portLayout = $partition['port_layout'];
+                $portFormat = $partition['port_format'];
+                $portTotal = $portLayout['cols'] * $portLayout['rows'];
+
+                for($x=0; $x<$portTotal; $x++) {
+                    $portID = $this->generatePortID($x, $portTotal, $portFormat);
+                    $portIDArray[$portID] = array(
+                        'face' => $face,
+                        'partition_address' => $partitionAddress,
+                        'port_id' => $x,
+                    );
+                }
+            }
+
+            // Loop through children
+            if(count($partition['children'])) {
+
+                // Append new partition set index to temporary partition address
+                $tempPartitionAddress = $partitionAddress;
+                array_push($tempPartitionAddress, 0);
+
+                // Process child partition set
+                $this->findPortDN($partition['children'], $face, $portIDArray, $tempPartitionAddress);
+            }
+
+            // Increment partition set index
+            $partitionAddress[$partitionSetIdx] = $partitionAddress[$partitionSetIdx] + 1;
+            
+        }
+        return;
+    }
+
+    /**
+     * generate port ID
+     *
+     * @param   int     $index
+     * @param   int     $portTotal
+     * @param   array   $portFormat
+     * @return  array
+     */
+    function generatePortID($Index, $PortTotal, $PortFormat)
+    {
+        $portString = '';
+		$incrementalCount = 0;
+		
+		// Create character arrays
+		$lowercaseIncrementArray = array();
+		$uppercaseIncrementArray = array();
+		for($x=97; $x<=122; $x++) {
+			array_push($lowercaseIncrementArray, chr($x));
+		}
+		for($x=65; $x<=90; $x++) {
+			array_push($uppercaseIncrementArray, chr($x));
+		}
+		
+		// Account for infinite count incrementals
+		foreach($PortFormat as &$itemA) {
+			$type = $itemA['type'];
+			
+			if($type == 'incremental' or $type == 'series') {
+				$incrementalCount++;
+				if($itemA['count'] == 0) {
+					$itemA['count'] = $PortTotal;
+				}
+			}
+		}
+		
+		foreach($PortFormat as $itemB) {
+			$type = $itemB['type'];
+			$value = $itemB['value'];
+			$order = $itemB['order'];
+			$count = $itemB['count'];
+			
+			if($type == 'static') {
+				$portString = $portString.$value;
+			} else if($type == 'incremental' or $type == 'series') {
+				$numerator = 1;
+				if($order < $incrementalCount) {
+					foreach($PortFormat as $itemC) {
+						$typeC = $itemC['type'];
+						$orderC = $itemC['order'];
+						$countC = $itemC['count'];
+						
+						if($typeC == 'incremental' or $typeC == 'series') {
+							if($order < $orderC) {
+								$numerator *= $countC;
+							}
+						}
+					}
+				}
+				
+				$howMuchToIncrement = floor($Index / $numerator);
+				
+				if($howMuchToIncrement >= $count) {
+					$rollOver = floor($howMuchToIncrement / $count);
+					$howMuchToIncrement = $howMuchToIncrement - ($rollOver * $count);
+				}
+				
+				if($type == 'incremental') {
+					if(is_numeric($value)) {
+						$value = $value + $howMuchToIncrement;
+						$portString = $portString.$value;
+					} else {
+						$asciiValue = ord($value);
+						$asciiIndex = $asciiValue + $howMuchToIncrement;
+						if($asciiValue >= 65 && $asciiValue <= 90) {
+							// Uppercase
+							
+							while($asciiIndex > 90) {
+								$portString = $portString.$uppercaseIncrementArray[0];
+								$asciiIndex -= 26;
+							}
+							$portString = $portString.$uppercaseIncrementArray[$asciiIndex-65];
+						} else if($asciiValue >= 97 && $asciiValue <= 122) {
+							// Lowercase
+							while($asciiIndex > 122) {
+								$portString = $portString.$lowercaseIncrementArray[0];
+								$asciiIndex -= 26;
+							}
+							$portString = $portString.$lowercaseIncrementArray[$asciiIndex-97];
+						}
+					}
+					
+				} else if($type == 'series') {
+                    $value = explode(',', $value);
+					$portString = $portString.$value[$howMuchToIncrement];
+				}
+			}
+		}
+			
+		return $portString;
+    }
+
+    /**
+     * extract object DN from port DN
+     *
+     * @param   string     $portDN
+     * @return  string
+     */
+    function extractObjectDN($portDN)
+    {
+        $longestMatch = false;
+        $maxLength = 0;
+        
+        foreach (array_keys($this->properToActualMapping) as $objectDNProper) {
+            
+            $length = strlen($objectDNProper);
+            if (strpos($portDN, $objectDNProper) === 0 && $length > $maxLength) {
+                $longestMatch = $objectDNProper;
+                $maxLength = $length;
+            }
+        }
+
+        if(!$longestMatch) {
+            $portDNArray = explode('.', $portDN);
+            array_pop($portDNArray);
+            $objectDN = implode('.', $portDNArray);
+        } else {
+            $objectDN = $this->properToActualMapping[$longestMatch];
+        }
+        return $objectDN;
+    }
+
+    /**
+     * extract object DN from port DN
+     *
+     * @param   string     $portDN
+     * @return  string
+     */
+    function extractPortName($objectDN, $portDN)
+    {
+        $objectDNMerged = str_replace('.', '', $objectDN);
+        $portDNMerged = str_replace('.', '', $portDN);
+
+        $portName = str_replace($objectDNMerged, '', $portDNMerged);
+
+        return $portName;
+    }
+
+    /**
+     * generate random alphanumeric string of 40 characters
+     *
+     * @return  string
+     */
+    function generateFilename()
+    {
+        $length = 40;
+        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $randomString = '';
+        $maxCharIndex = strlen($characters) - 1;
+    
+        for ($i = 0; $i < $length; $i++) {
+            $randomString .= $characters[random_int(0, $maxCharIndex)];
+        }
+    
+        return $randomString;
+    }
+
+    /**
+     * process port_format
+     *
+     * @return  string
+     */
+    function processPortFormat($portFormat)
+    {
+
+        $portFormatArray = array();
+        foreach($portFormat as $portFormatField) {
+
+            $addPortFormatField = true;
+
+            // Exclude static fields with empty value
+            if($portFormatField['type'] == "static" && $portFormatField['value'] == "") {
+                $addPortFormatField = false;
+            }
+
+            // Convert series array into comma delimited string
+            if($portFormatField['type'] == 'series') {
+                $portFormatField['value'] = implode(',', $portFormatField['value']);
+            }
+
+            $portFormatField['type'] = strval($portFormatField['type']);
+            $portFormatField['value'] = strval($portFormatField['value']);
+            $portFormatField['count'] = intval($portFormatField['count']);
+            $portFormatField['order'] = intval($portFormatField['order']);
+
+            if($addPortFormatField) {
+                array_push($portFormatArray, $portFormatField);
+            }
+        }
+        return $portFormatArray;
+    }
+
+    /**
+     * process port_format
+     *
+     * @param   integer $needle
+     * @param   array   $haystack
+     * @param   integer $IDIndex
+     * @return  string
+     */
+    function findIndex($needle, $haystack, $IDIndex)
+    {
+        foreach($haystack as $idx => $hay) {
+            if($hay[$IDIndex] == $needle) {
+                return $idx;
+            }
+        }
+        return false;
+    }
+}

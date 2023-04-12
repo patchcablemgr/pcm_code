@@ -533,6 +533,8 @@ class LocationController extends Controller
         if (! Gate::allows('operator')) {
             abort(403);
         }
+
+        $PCM = new PCM;
         
         $validatorInput = [
             'id' => $id
@@ -541,41 +543,36 @@ class LocationController extends Controller
             'id' => [
                 'required',
                 'integer',
-                'exists:location',
-                'unique:object,location_id'
+                'exists:location'
             ]
         ];
-        $validatorMessages = [
-            'id.unique' => 'The location contains objects and cannot be deleted.'
-        ];
+        $validatorMessages = [];
         $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
         $customValidator->stopOnFirstFailure();
         $customValidator->validate();
 
-        // Clear stale adjacencies
-        $clearAdjacencies = array(
-            'left_adj_cabinet_id',
-            'left_adj_cabinet_id'
+        $locationID = intval($id);
+        $deleteArray = array(
+            'cable_path' => array(),
+            'location' => array()
         );
-        foreach($clearAdjacencies as $adjacency) {
-            $staleCabinets = LocationModel::where($adjacency, $id)->get();
-            foreach($staleCabinets as $staleCabinet) {
-                $staleCabinet[$adjacency] = null;
-                $staleCabinet->save();
+
+		$result = $PCM->deleteLocation($locationID, $deleteArray);
+
+        // Validate parent object partition
+        if($result !== true) {
+
+            // Append archive address if set
+            if($this->archiveAddress) {
+                foreach($result as &$errMsg) {
+                    $errMsg = $errMsg.' '.$this->archiveAddress;
+                }
             }
+
+            throw ValidationException::withMessages($result);
         }
 
-        // Clear stale cable paths
-        $staleCablePaths = CablePathModel::where('cabinet_a_id', $id)->orWhere('cabinet_b_id', $id)->get();
-        foreach($staleCablePaths as $staleCablePath) {
-            $staleCablePath->delete();
-        }
-
-        $location = LocationModel::where('id', $id)->first();
-
-        $location->delete();
-
-        return array('id' => $id);
+        return $deleteArray;
     }
 
         /**

@@ -159,47 +159,51 @@ export default {
         const url = '/api/locations/'+LocationID
         vm.$http.delete(url).then(function(response){
 
-          // Clear stale adjacencies
-          const AdjacencyAttributes = ['right_adj_cabinet_id', 'left_adj_cabinet_id']
-          AdjacencyAttributes.forEach(function(AdjacencyAttribute) {
-            const AdjacentCabinetIndex = vm.Locations[Context].findIndex((location) => location[AdjacencyAttribute] == LocationID)
-            if(AdjacentCabinetIndex !== -1) {
-
-              // Update adjacent cabinet
-              const AdjacentCabinet = vm.Locations[Context][AdjacentCabinetIndex]
-              const UpdatedAdjacentCabinet = JSON.parse(JSON.stringify(AdjacentCabinet), function (Key, Value) {
-                if(Key == AdjacencyAttribute) {
-                  return null
-                } else {
-                  return Value
-                }
-              })
-
-              // Update store
-              vm.$store.commit('pcmLocations/UPDATE_Location', {pcmContext:Context, data:UpdatedAdjacentCabinet})
-            }
-          })
-
-          // Clear stale cable paths
-          const StaleCablePaths = vm.CablePaths[Context].filter((CablePath) => CablePath.cabinet_a_id == LocationID || CablePath.cabinet_b_id == LocationID)
-          StaleCablePaths.forEach(function(StaleCablePath) {
-            vm.$store.commit('pcmCablePaths/REMOVE_CablePath', {pcmContext:Context, data:StaleCablePath})
-          })
-
           // Clear node selection
           vm.$store.commit('pcmState/DEFAULT_Selected_All', {pcmContext:Context})
 
-          // Remove node from store
-          vm.$store.commit('pcmLocations/REMOVE_Location', {pcmContext:Context, data:response.data})
+          response.data.cable_path.forEach(function(DeletedCablePathID){
+            // Clear stale cable paths
+            const StaleCablePaths = vm.CablePaths[Context].filter((CablePath) => CablePath.cabinet_a_id == DeletedCablePathID || CablePath.cabinet_b_id == DeletedCablePathID)
+            StaleCablePaths.forEach(function(StaleCablePath) {
+              vm.$store.commit('pcmCablePaths/REMOVE_CablePath', {pcmContext:Context, data:StaleCablePath})
+            })
+          })
 
-          // Delete node from tree
-          const ReturnedLocationID = response.data.id
-          const Criteria = function(node){
-            return node.data.id == ReturnedLocationID
-          }
-          let Node = vm.$refs[TreeRef].find(Criteria)[0]
-          Node.remove()
-          
+          response.data.location.forEach(function(DeletedLocationID){
+
+            // Clear stale adjacencies
+            const AdjacencyAttributes = ['right_adj_cabinet_id', 'left_adj_cabinet_id']
+            AdjacencyAttributes.forEach(function(AdjacencyAttribute) {
+              const AdjacentCabinetIndex = vm.Locations[Context].findIndex((location) => location[AdjacencyAttribute] == DeletedLocationID)
+              if(AdjacentCabinetIndex !== -1) {
+
+                // Update adjacent cabinet
+                const AdjacentCabinet = vm.Locations[Context][AdjacentCabinetIndex]
+                const UpdatedAdjacentCabinet = JSON.parse(JSON.stringify(AdjacentCabinet), function (Key, Value) {
+                  if(Key == AdjacencyAttribute) {
+                    return null
+                  } else {
+                    return Value
+                  }
+                })
+
+                // Update store
+                vm.$store.commit('pcmLocations/UPDATE_Location', {pcmContext:Context, data:UpdatedAdjacentCabinet})
+              }
+            })
+
+            // Delete node from tree
+            const Criteria = function(node){
+              return node.data.id == DeletedLocationID
+            }
+            let Node = vm.$refs[TreeRef].find(Criteria)[0]
+            Node.remove()
+
+            // Remove node from store
+            vm.$store.commit('pcmLocations/REMOVE_Location', {pcmContext:Context, data:{id:DeletedLocationID}})
+
+          })
         }).catch(error => {vm.DisplayError(error)})
 
       } else {

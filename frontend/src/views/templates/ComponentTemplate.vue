@@ -271,8 +271,6 @@ export default {
       const ObjectID = vm.ObjectID
       const EnclosureAddress = vm.GetEnclosureAddress(encIndex, encCols)
       const InsertIndex = vm.Objects[Context].findIndex(function(object) {
-        console.log(JSON.stringify(object.parent_partition_address) + " == "+ JSON.stringify(partitionAddress))
-        console.log(JSON.stringify(object.parent_enclosure_address) + " == "+ JSON.stringify(EnclosureAddress))
         return object.parent_id == ObjectID && JSON.stringify(object.parent_partition_address) == JSON.stringify(partitionAddress) && JSON.stringify(object.parent_enclosure_address) == JSON.stringify(EnclosureAddress)
       })
       let EnclosureInsertID = false

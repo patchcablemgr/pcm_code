@@ -6,6 +6,12 @@ use Illuminate\Support\Facades\App;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
+
+use App\Http\Controllers\CablePathController;
+use App\Http\Controllers\ConnectionController;
+use App\Http\Controllers\TrunkController;
+
+use App\Models\CablePathModel;
 use App\Models\LocationModel;
 use App\Models\ObjectModel;
 use App\Models\TemplateModel;
@@ -213,8 +219,6 @@ class PCM extends Controller
 
             while($workingPort['id']) {
 
-                Log::info($index.' - '.$workingPort['id']);
-
                 // Generate port hash
                 $portHash = md5(implode('-', array($workingPort['id'], $port['face'], json_encode($port['partition']), $port['port_id'])));
                 
@@ -283,8 +287,6 @@ class PCM extends Controller
                         $workingPort['id'] = $trunk[$remoteSide.'_id'];
                         $workingPort['face'] = $trunk[$remoteSide.'_face'];
                         $workingPort['partition'] = $trunk[$remoteSide.'_partition'];
-
-                        Log::info($index.' - '.$workingPort['id'].' (trunk)');
 
                         // Generate port hash
                         $portHashArray = array(
@@ -464,21 +466,88 @@ class PCM extends Controller
     }
 
     /**
-     * Return patched blueprint
+     * Delete object and dependencies returning entry IDs
      *
      * @param  int  $objectID
-     * @return boolean
+     * @param  array  $deleteArray
+     * @return array
      */
-    public function deleteObject($objectID)
+    public function deleteObject($objectID, &$deleteArray)
     {
         $objectChildren = ObjectModel::where('parent_id', $objectID)->get();
         foreach($objectChildren as $objectChild) {
-            $this->deleteObject($objectChild['id']);
+            $this->deleteObject($objectChild['id'], $deleteArray);
         }
 
         ObjectModel::where('id', $objectID)->delete();
-        TrunkModel::where('a_id', $objectID)->orWhere('b_id', $objectID)->delete();
-        ConnectionModel::where('a_id', $objectID)->orWhere('b_id', $objectID)->delete();
+        array_push($deleteArray['object'], $objectID);
+
+        $trunks = TrunkModel::where('a_id', $objectID)->orWhere('b_id', $objectID)->get();
+        foreach($trunks as $trunk) {
+            $trunkID = $trunk['id'];
+            $trunkController = new TrunkController;
+            $trunkResponse = call_user_func(array($trunkController, 'destroy'), $trunkID);
+            array_push($deleteArray['trunk'], $trunkResponse['id']);
+        }
+
+        $connections = ConnectionModel::where('a_id', $objectID)->orWhere('b_id', $objectID)->get();
+        foreach($connections as $connection) {
+            $connectionID = $connection['id'];
+            $connectionController = new ConnectionController;
+            $connectionResponse = call_user_func(array($connectionController, 'destroy'), $trunkID);
+            array_push($deleteArray['connection'], $connectionResponse['id']);
+        }
+
+		return true;
+    }
+
+    /**
+     * Delete locations and dependencies returning entry IDs
+     *
+     * @param  int  $locationID
+     * @param  array  $deleteArray
+     * @return array
+     */
+    public function deleteLocation($locationID, &$deleteArray)
+    {
+        $locationChildren = LocationModel::where('parent_id', $locationID)->get();
+        foreach($locationChildren as $locationChild) {
+            $result = $this->deleteLocation($locationChild['id'], $deleteArray);
+            if($result !== true) {
+                return $result;
+            }
+        }
+
+        // Check that objects do not exist in location
+        if (ObjectModel::where('location_id', '=', $locationID)->exists()) {
+            return ['id' => 'The location on one of its children contains objects and cannot be deleted.'];
+        }
+
+        // Delete location
+        LocationModel::where('id', $locationID)->delete();
+        array_push($deleteArray['location'], $locationID);
+
+        // Clear stale cable paths
+        $cablePaths = CablePathModel::where('cabinet_a_id', $locationID)->orWhere('cabinet_b_id', $locationID)->get();
+        foreach($cablePaths as $cablePath) {
+            $cablePathID = $cablePath['id'];
+            $cablePathController = new CablePathController;
+            $cablePathResponse = call_user_func(array($cablePathController, 'destroy'), $cablePathID);
+            array_push($deleteArray['cable_path'], $cablePathResponse['id']);
+        }
+
+        // Clear stale adjacencies
+        $clearAdjacencies = array(
+            'left_adj_cabinet_id',
+            'left_adj_cabinet_id'
+        );
+        foreach($clearAdjacencies as $adjacency) {
+            $staleCabinets = LocationModel::where($adjacency, $locationID)->get();
+            foreach($staleCabinets as $staleCabinet) {
+                $staleCabinet[$adjacency] = null;
+                $staleCabinet->save();
+            }
+        }
 
 		return true;
     }

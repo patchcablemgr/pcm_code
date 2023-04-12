@@ -490,6 +490,15 @@ class ObjectController extends Controller
 
         $PCM = new PCM;
 
+        $objects = ObjectModel::All()->toArray();
+        $tempArray = array();
+        foreach($objects as $object) {
+            array_push($tempArray, $object['id']);
+        }
+        if($id == 15535) {
+            Log::info(json_encode($tempArray));
+        }
+
         $validatorInput = [
             'id' => $id
         ];
@@ -504,9 +513,16 @@ class ObjectController extends Controller
         $customValidator = Validator::make($validatorInput, $validatorRules, $validatorMessages);
         $customValidator->stopOnFirstFailure();
         $customValidator->validate();
-				
-		$PCM->deleteObject($id);
+		
+        $objectID = intval($id);
+        $deleteArray = array(
+            'trunk' => array(),
+            'connection' => array(),
+            'object' => array(),
+        );
 
-        return array('id' => $id);
+		$PCM->deleteObject($objectID, $deleteArray);
+
+        return $deleteArray;
     }
 }

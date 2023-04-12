@@ -63,14 +63,11 @@ class RUOccupancy implements Rule
         $objectTemplate = TemplateModel::where('id', $templateID)->first();
         $objectMountConfig = $objectTemplate['mount_config'];
         $objectRUSize = $objectTemplate['ru_size'];
-        Log::info('$objectRUSize: '.$objectRUSize);
         for($x=0; $x<$objectRUSize; $x++) {
             $ruPosition = $cabinetRU + $x;
-            Log::info('$ruPosition: '.$ruPosition);
             if($objectMountConfig == '4-post') {
                 if(isset($occupiedRUArray['front'][$ruPosition])) {
                     if($occupiedRUArray['front'][$ruPosition] != $objectID) {
-                        Log::info('$occupiedRUArray: '.json_encode($occupiedRUArray['front']));
                         $collision = true;
                     }
                 }

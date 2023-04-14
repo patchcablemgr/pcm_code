@@ -5,6 +5,7 @@ Enhancements:
 
 Fixes:
 - Inserts displaying in all enclosure partitions
+- Template images broken
 
 ## 1.4.3
 

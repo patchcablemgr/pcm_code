@@ -496,7 +496,7 @@ class PCM extends Controller
         foreach($connections as $connection) {
             $connectionID = $connection['id'];
             $connectionController = new ConnectionController;
-            $connectionResponse = call_user_func(array($connectionController, 'destroy'), $trunkID);
+            $connectionResponse = call_user_func(array($connectionController, 'destroy'), $connectionID);
             array_push($deleteArray['connection'], $connectionResponse['id']);
         }
 

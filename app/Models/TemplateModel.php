@@ -19,7 +19,7 @@ class TemplateModel extends Model
     * @param  string  $value
     * @return string
     */
-    public function getImageFrontAttribute($value)
+    public function getImgFrontAttribute($value)
     {
 		if($value) {
 			$imgPath = '/images/'.$value;
@@ -39,7 +39,7 @@ class TemplateModel extends Model
     * @param  string  $value
     * @return string
     */
-    public function getImageRearAttribute($value)
+    public function getImgRearAttribute($value)
     {
         if($value) {
 			$imgPath = '/images/'.$value;

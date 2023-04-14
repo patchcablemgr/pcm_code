@@ -77,6 +77,7 @@ export default {
     FileSubmitted: function() {
 
       const vm = this
+      vm.$emit('upload-start')
 
       const url = '/api/archive/convert'
       let data = new FormData()
@@ -96,9 +97,11 @@ export default {
         link.download = 'pcmArchiveConverted-'+Date.now()
         link.click()
         URL.revokeObjectURL(link.href)
+        vm.$emit('upload-stop')
       }).catch(async(error) => {
         const errMsg = JSON.parse(await error.response.data.text())
         vm.DisplayError({'response':{'data':errMsg}})
+        vm.$emit('upload-stop')
       })
     },
   },

@@ -1,3 +1,11 @@
+## 1.4.4
+
+Enhancements:
+- Completed legacy archive conversion feature
+
+Fixes:
+- Inserts displaying in all enclosure partitions
+
 ## 1.4.3
 
 Fixes:

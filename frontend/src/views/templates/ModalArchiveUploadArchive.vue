@@ -78,6 +78,8 @@ export default {
 
       const vm = this
 
+      vm.$emit('upload-start')
+
       const url = '/api/archive'
       let data = new FormData()
       const options = {
@@ -90,8 +92,10 @@ export default {
       // POST floorplan image
       vm.$http.post(url, data, options).then(function(response){
         vm.DisplaySuccess('Archive has been imported.')
+        vm.$emit('upload-stop')
       }).catch(error => {
         vm.DisplayError(error)
+        vm.$emit('upload-stop')
       })
     },
   },

@@ -19,8 +19,11 @@
         v-ripple.400="'rgba(255, 255, 255, 0.15)'"
         variant="primary"
         @click="Download()"
-        
       >
+        <b-spinner
+          v-if="ExportBtnLoading"
+          small
+        />
         Export
       </b-button>
 
@@ -30,6 +33,10 @@
         variant="primary"
         v-b-modal.modal-archive-upload-archive
       >
+        <b-spinner
+          v-if="ImportBtnLoading"
+          small
+        />
         Import
       </b-button>
 
@@ -40,6 +47,8 @@
   <modal-file-upload-archive
     ModalTitle="Upload Archive"
     ModalID="modal-archive-upload-archive"
+    @upload-start="UploadStart"
+    @upload-stop="UploadStop"
   />
 
 </div>
@@ -52,6 +61,7 @@ import {
   BCardBody,
   BButton,
   VBTooltip,
+  BSpinner,
 } from 'bootstrap-vue'
 import Ripple from 'vue-ripple-directive'
 import { PCM } from '@/mixins/PCM.js'
@@ -79,6 +89,7 @@ export default {
     BCardBody,
     BButton,
     VBTooltip,
+    BSpinner,
 
     ModalFileUploadArchive,
   },
@@ -90,6 +101,8 @@ export default {
   data() {
     return {
       ToolTipCardTitle,
+      ImportBtnLoading:false,
+      ExportBtnLoading:false,
     }
   },
   computed: {},
@@ -97,6 +110,7 @@ export default {
     Download() {
 
       const vm = this
+      vm.ExportBtnLoading = true
       
       //https://stackoverflow.com/questions/53772331/vue-html-js-how-to-download-a-file-to-browser-using-the-download-tag
       //https://stackoverflow.com/questions/57437531/how-do-i-download-a-zip-with-multiple-types-of-files-with-axios
@@ -107,8 +121,18 @@ export default {
         link.download = 'pcmArchive-'+Date.now()
         link.click()
         URL.revokeObjectURL(link.href)
+        vm.ExportBtnLoading = false
+      }).catch(async(error) => {
+        vm.DisplayError(error)
+        vm.ExportBtnLoading = false
       })
     },
+    UploadStart: function() {
+      this.ImportBtnLoading = true
+    },
+    UploadStop: function() {
+      this.ImportBtnLoading = false
+    }
   }
 }
 </script>

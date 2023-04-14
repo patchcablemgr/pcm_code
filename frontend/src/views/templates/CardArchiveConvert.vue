@@ -20,6 +20,10 @@
         variant="primary"
         v-b-modal.modal-archive-upload-archive-legacy
       >
+        <b-spinner
+          v-if="UploadBtnLoading"
+          small
+        />
         Upload
       </b-button>
 
@@ -30,6 +34,8 @@
   <modal-archive-upload-archive-legacy
     ModalTitle="Upload Legacy Archive"
     ModalID="modal-archive-upload-archive-legacy"
+    @upload-start="UploadStart"
+    @upload-stop="UploadStop"
   />
 
 </div>
@@ -42,6 +48,7 @@ import {
   BCardBody,
   BButton,
   VBTooltip,
+  BSpinner,
 } from 'bootstrap-vue'
 import Ripple from 'vue-ripple-directive'
 import { PCM } from '@/mixins/PCM.js'
@@ -67,6 +74,7 @@ export default {
     BCardBody,
     BButton,
     VBTooltip,
+    BSpinner,
 
     ModalArchiveUploadArchiveLegacy,
   },
@@ -78,9 +86,17 @@ export default {
   data() {
     return {
       ToolTipCardTitle,
+      UploadBtnLoading:false,
     }
   },
   computed: {},
-  methods: {}
+  methods: {
+    UploadStart: function() {
+      this.UploadBtnLoading = true
+    },
+    UploadStop: function() {
+      this.UploadBtnLoading = false
+    }
+  }
 }
 </script>

@@ -116,12 +116,11 @@ export const PCM = {
 
             return ObjectFace
         },
-        GetObjectCategoryColor(ObjectID) {
+        GetObjectCategoryColor(ObjectID, Context='actual') {
 
             const vm = this
             let CategoryColor
             if(ObjectID) {
-                const Context = 'actual'
                 const TemplateID = vm.GetTemplateID(ObjectID, Context)
                 const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
                 const Template = vm.Templates[Context][TemplateIndex]

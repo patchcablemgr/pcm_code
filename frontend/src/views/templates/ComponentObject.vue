@@ -8,7 +8,7 @@
       pcm_template_partition_hovered: PartitionIsHovered({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'PartitionAddress': InitialPartitionAddress, 'PortID': null}),
     }"
     :style="{
-      'background-color': TemplateColor(ObjectID),
+      'background-color': GetObjectCategoryColor(ObjectID, Context),
       'height': '100%',
     }"
     @click.stop=" PartitionClicked({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'PartitionAddress': InitialPartitionAddress, 'PortID': null}) "
@@ -113,35 +113,6 @@ export default {
       e.dataTransfer.setData('template_id', TransferData.template_id)
       e.dataTransfer.setData('template_face', TransferData.template_face)
       e.dataTransfer.setData('object_face', TransferData.object_face)
-    },
-    TemplateColor: function(ObjectID) {
-
-      // Initial variables
-      const vm = this
-      const Context = vm.Context
-      let TemplateColor = '#FFFFFF00'
-
-      // Get Template
-      const TemplateID = vm.GetTemplateID(ObjectID, Context)
-      const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-
-      if (TemplateIndex !== -1) {
-
-        const Template = vm.Templates[Context][TemplateIndex]
-        if (!Template.id.toString().includes('pseudo')) {
-
-          // Get category index
-          const ObjectCategoryID = Template.category_id
-          const ObjectCategoryIndex = vm.Categories[Context].findIndex((category) => category.id == ObjectCategoryID)
-
-          // Get category
-          const Category = vm.Categories[Context][ObjectCategoryIndex]
-          TemplateColor = Category.color
-        }
-      }
-
-      // Return category
-      return TemplateColor
     },
   },
   mounted() {

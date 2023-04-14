@@ -449,16 +449,5 @@ export default {
 
     }
   },
-  updated() {
-
-    const vm = this
-    const Context = vm.Context
-
-    const SelectedFace = vm.StateSelected[Context]['object_face']
-    vm.SelectedObjectID = vm.StateSelected[Context]['object_id']
-    vm.SelectedPartition = vm.StateSelected[Context]['partition'][SelectedFace]
-    vm.SelectedPortID = vm.StateSelected[Context]['port_id'][SelectedFace]
-
-  }
 }
 </script>

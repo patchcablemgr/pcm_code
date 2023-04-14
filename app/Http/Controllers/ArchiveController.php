@@ -721,7 +721,7 @@ class ArchiveController extends Controller
                                     $this->tableSchemas[$responseTableName]['deletedEntryIDArray'] = array_merge($this->tableSchemas[$responseTableName]['deletedEntryIDArray'], $deleteIDArray);
                                 }
                             } else {
-                                array_push($this->tableSchemas[$responseTableName]['deletedEntryIDArray'], $newResponse['id']);
+                                array_push($this->tableSchemas[$tableName]['deletedEntryIDArray'], $newResponse['id']);
                             }
                             
                         }
@@ -733,6 +733,16 @@ class ArchiveController extends Controller
             }
         } else {
             throw ValidationException::withMessages(['error' => 'Not able to open archive.']);
+        }
+
+        // Clean up import files
+        $files = Storage::disk('local')->allFiles('imports');
+        foreach($files as $file) {
+            Storage::disk('local')->delete($file);
+        }
+        $directories = Storage::disk('local')->allDirectories('imports');
+        foreach($directories as $directory) {
+            Storage::disk('local')->deleteDirectory($directory);
         }
 
         return true;

@@ -87,10 +87,7 @@
               <component-cabinet
                 Context="actual"
                 :TemplateFaceSelected="TemplateFaceSelected"
-                :PartitionAddressHovered="PartitionAddressHovered"
                 :ObjectsAreDraggable="ObjectsAreDraggable"
-                @StandardObjectDropped="StandardObjectDropped($event)"
-                @InsertObjectDropped="InsertObjectDropped($event)"
               />
             </b-card-body>
           </b-card>
@@ -371,106 +368,6 @@ export default {
         })
 
       });
-    },
-    InsertObjectDropped: function(EmitData) {
-
-      const vm = this
-      const Context = EmitData.context
-      const ParentID = EmitData.parent_id
-      const ParentFace = EmitData.parent_face
-      const ParentPartitionAddress = EmitData.parent_partition_address
-      const ParentEnclosureAddress = EmitData.parent_enclosure_address
-      let data = {}
-      let url
-
-      data.parent_id = ParentID
-      data.parent_face = ParentFace
-      data.parent_partition_address = ParentPartitionAddress
-      data.parent_enclosure_address = ParentEnclosureAddress
-
-      // POST new object
-      if(Context == 'template') {
-
-        const TemplateID = EmitData.template_id
-        const TemplateFace = EmitData.template_face
-
-        data.template_id = TemplateID
-        data.template_face = TemplateFace
-
-        url = '/api/objects/insert'
-
-        // POST to objects
-        vm.$http.post(url, data).then(function(response){
-
-          vm.$store.commit('pcmObjects/ADD_Object', {pcmContext:'actual', data:response.data})
-
-        }).catch(error => {vm.DisplayError(error)})
-      } else {
-
-        const ObjectID = EmitData.object_id
-
-        data.object_id = ObjectID
-
-        url = '/api/objects/'+ObjectID
-
-        // POST to objects
-        vm.$http.patch(url, data).then(function(response){
-
-          vm.$store.commit('pcmObjects/UPDATE_Object', {pcmContext:'actual', data:response.data})
-
-        }).catch(error => {vm.DisplayError(error)})
-      }
-    },
-    StandardObjectDropped: function(EmitData) {
-
-      const vm = this
-      const Context = EmitData.context
-      const LocationID = EmitData.location_id
-      const CabinetFace = EmitData.cabinet_face
-      const CabinetRU = EmitData.cabinet_ru
-      let data
-      let url
-
-      data = {
-        "location_id": LocationID,
-        "cabinet_face": CabinetFace,
-        "cabinet_ru": CabinetRU,
-      }
-
-      // POST new object
-      if(Context == 'template') {
-
-        const TemplateID = EmitData.template_id
-        const TemplateFace = EmitData.template_face
-
-        data.template_id = TemplateID
-        data.template_face = TemplateFace
-
-        url = '/api/objects/standard'
-
-        // POST to objects
-        vm.$http.post(url, data).then(function(response){
-
-          vm.$store.commit('pcmObjects/ADD_Object', {pcmContext:'actual', data:response.data})
-
-        }).catch(error => {vm.DisplayError(error)})
-
-      // PATCH existing object
-      } else {
-
-        const ObjectID = EmitData.object_id
-
-        data.object_id = ObjectID
-
-        url = '/api/objects/'+ObjectID
-
-        // POST to objects
-        vm.$http.patch(url, data).then(function(response){
-
-          vm.$store.commit('pcmObjects/UPDATE_Object', {pcmContext:'actual', data:response.data})
-
-        }).catch(error => {vm.DisplayError(error)})
-      }
     },
   },
   watch: {

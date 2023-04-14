@@ -3,8 +3,14 @@ export const PCM = {
         Categories() {
             return this.$store.state.pcmCategories.Categories
         },
+        Connections() {
+            return this.$store.state.pcmConnections.Connections
+        },
         Templates() {
             return this.$store.state.pcmTemplates.Templates
+        },
+        Trunks() {
+            return this.$store.state.pcmTrunks.Trunks
         },
         Objects() {
             return this.$store.state.pcmObjects.Objects
@@ -14,6 +20,12 @@ export const PCM = {
         },
         FloorplanCategories() {
             return this.$store.state.pcmFloorplanCategories.FloorplanCategories
+        },
+        StateSelected() {
+            return this.$store.state.pcmState.Selected
+        },
+        StateHovered() {
+            return this.$store.state.pcmState.Hovered
         },
     },
     methods: {
@@ -604,10 +616,10 @@ export const PCM = {
             if(HonorHover) {
                 let WorkingHovered = vm.StateHovered[Context]
 
-                WorkingHovered.object_id = ObjectID
-                WorkingHovered.object_face = Face
-                WorkingHovered.partition[Face] = (HoverState) ? PartitionAddress : false
-                WorkingHovered.port_id[Face] = PortID
+                WorkingHovered.object_id = (HoverState) ? ObjectID : null
+                WorkingHovered.object_face = (HoverState) ? Face : null
+                WorkingHovered.partition[Face] = (HoverState) ? PartitionAddress : null
+                WorkingHovered.port_id[Face] = (HoverState) ? PortID : null
 
                 vm.$store.commit('pcmState/UPDATE_Hovered', {pcmContext:Context, data:WorkingHovered})
             }

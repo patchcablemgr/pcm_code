@@ -1873,7 +1873,7 @@ class ArchiveController extends Controller
                                     }
 
                                     if($lengthArray[1] == 'm.') {
-                                        return intval($lengthArray[0]) * 100;
+                                        return intval($lengthArray[0]);
                                     } else if($lengthArray[1] == 'ft.') {
                                         return intval($lengthArray[0]) * 30.48;
                                     } else {
@@ -2813,8 +2813,6 @@ class ArchiveController extends Controller
 
         // Set a reference to the archive for helpful error reporting
         $tableController->archiveAddress = $tableFileName.":".$row;
-
-        Log::info('Process: '.$tableFileName);
 
         // Submit request
         $importRequest->request->add($requestData);

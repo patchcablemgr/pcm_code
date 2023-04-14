@@ -19,14 +19,11 @@
         :rowspan=" GetObjectSize( RackObjectID(CabinetRU) ) "
       >
         <component-object
-          :TemplateRUSize=" GetObjectSize( RackObjectID(CabinetRU) ) "
           :InitialPartitionAddress=[]
           :Context="Context"
           :ObjectID="RackObjectID(CabinetRU)"
           :CabinetFace="TemplateFaceSelected[Context]"
-          :PartitionAddressHovered="PartitionAddressHovered"
           :ObjectsAreDraggable="ObjectsAreDraggable"
-          @InsertObjectDropped=" $emit('InsertObjectDropped', $event) "
         />
       </td>
       <td
@@ -65,7 +62,6 @@ export default {
   props: {
     Context: {type: String},
     TemplateFaceSelected: {type: Object},
-    PartitionAddressHovered: {type: Object},
     ObjectsAreDraggable: {type: Boolean},
   },
   data() {

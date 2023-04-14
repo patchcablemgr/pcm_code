@@ -16,15 +16,14 @@
     @mouseleave.stop=" PartitionHovered({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'PartitionAddress': InitialPartitionAddress, 'PortID': null, 'HoverState': false}) "
   >
     <component-template
-      :TemplateRUSize="TemplateRUSize"
       :InitialPartitionAddress=" InitialPartitionAddress "
       :Context="Context"
       :ObjectID="ObjectID"
       :CabinetFace="CabinetFace"
       :ObjectFace="ObjectFace"
-      :PartitionAddressHovered="PartitionAddressHovered"
       :ObjectsAreDraggable="ObjectsAreDraggable"
-      @InsertObjectDropped=" $emit('InsertObjectDropped', $event) "
+      :SelectedPortInfo="SelectedPortInfo"
+      :HoveredPortInfo="HoveredPortInfo"
     />
   </div>
 </template>
@@ -44,12 +43,10 @@ export default {
     ComponentTemplate,
   },
   props: {
-    TemplateRUSize: {type: Number},
     InitialPartitionAddress: {type: Array},
     Context: {type: String},
     ObjectID: {},
     CabinetFace: {type: String},
-    PartitionAddressHovered: {type: Object},
     ObjectsAreDraggable: {type: Boolean},
   },
   computed: {
@@ -83,6 +80,30 @@ export default {
       const ObjectFace = vm.GetObjectFace(vm.ObjectID, vm.CabinetFace)
       
       return ObjectFace
+    },
+    SelectedPortInfo() {
+      const vm = this
+      const Context = vm.Context
+      const SelectedObjectID = vm.StateSelected[Context]['object_id']
+      const SelectedObjectFace = vm.StateSelected[Context]['object_face']
+
+      if(vm.ObjectID == SelectedObjectID && vm.ObjectFace == SelectedObjectFace) {
+        return vm.StateSelected[Context]
+      } else {
+        return false
+      }
+    },
+    HoveredPortInfo() {
+      const vm = this
+      const Context = vm.Context
+      const HoveredObjectID = vm.StateHovered[Context]['object_id']
+      const HoveredObjectFace = vm.StateHovered[Context]['object_face']
+
+      if(vm.ObjectID == HoveredObjectID && vm.ObjectFace == HoveredObjectFace) {
+        return vm.StateHovered[Context]
+      } else {
+        return false
+      }
     },
   },
   methods: {

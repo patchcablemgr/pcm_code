@@ -3,32 +3,30 @@
   <div
     :class="TemplateClasses"
   >
-    
     <div
       v-for="(Partition, PartitionIndex) in GetPartitionCollection()"
       :key=" GetPartitionAddress(PartitionIndex).join('-') "
       class=" pcm_template_partition_box "
       :class="{
-        pcm_template_partition_selected: PartitionIsSelected({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'PartitionAddress': GetPartitionAddress(PartitionIndex), 'PortID': null}),
-        pcm_template_partition_hovered: PartitionIsHovered({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'PartitionAddress': GetPartitionAddress(PartitionIndex), 'PortID': null}),
+        pcm_template_partition_selected: IsPartitionSelected(GetPartitionAddress(PartitionIndex)),
+        pcm_template_partition_hovered: IsPartitionHovered(GetPartitionAddress(PartitionIndex)),
       }"
       :style="{ 'flex-grow': GetPartitionFlexGrow(Partition.units, PartitionIndex) }"
       @click.stop=" PartitionClicked({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'PartitionAddress': GetPartitionAddress(PartitionIndex), 'PortID': null}) "
-      @mouseover.stop=" PartitionHovered({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'PartitionAddress': GetPartitionAddress(PartitionIndex), 'PortID': null, 'HoverState': true}) "
-      @mouseleave.stop=" PartitionHovered({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'PartitionAddress': GetPartitionAddress(PartitionIndex), 'PortID': null, 'HoverState': false}) "
+      @mouseover.stop="PartitionHovered({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'PartitionAddress': GetPartitionAddress(PartitionIndex), 'PortID': null, 'HoverState': true}) "
+      @mouseleave.stop="PartitionHovered({'Context': Context, 'ObjectID': ObjectID, 'ObjectFace': ObjectFace, 'PartitionAddress': GetPartitionAddress(PartitionIndex), 'PortID': null, 'HoverState': false}) "
     >
       <!-- Generic partition -->
       <ComponentTemplate
         v-if=" Partition.type == 'generic' "
-        :TemplateRUSize="TemplateRUSize"
         :InitialPartitionAddress="GetPartitionAddress(PartitionIndex)"
         :Context="Context"
         :ObjectID="ObjectID"
         :CabinetFace="CabinetFace"
         :ObjectFace="ObjectFace"
-        :PartitionAddressHovered="PartitionAddressHovered"
         :ObjectsAreDraggable="ObjectsAreDraggable"
-        @InsertObjectDropped=" $emit('InsertObjectDropped', $event) "
+        :SelectedPortInfo="SelectedPortInfo"
+        :HoveredPortInfo="HoveredPortInfo"
       />
 
       <!-- Connectable partition -->
@@ -49,9 +47,10 @@
           :Context="Context"
           :ObjectID="ObjectID"
           :ObjectFace="ObjectFace"
-          :TemplateID="GetTemplateID(ObjectID)"
           :PartitionAddress="GetPartitionAddress(PartitionIndex)"
           :PortID="(portIndex-1)"
+          :PortSelected="IsPortSelected(GetPartitionAddress(PartitionIndex), (portIndex-1))"
+          :PortHovered="IsPortHovered(GetPartitionAddress(PartitionIndex), (portIndex-1))"
         >
         </component-port-r>
       </div>
@@ -74,14 +73,11 @@
         >
           <component-object
             v-if="GetEnclosureInsertID(GetPartitionAddress(PartitionIndex), encIndex-1, Partition.enc_layout.cols)"
-            :TemplateRUSize="TemplateRUSize"
             :InitialPartitionAddress=[]
             :Context="Context"
             :ObjectID="GetEnclosureInsertID(GetPartitionAddress(PartitionIndex), encIndex-1, Partition.enc_layout.cols)"
             :CabinetFace="CabinetFace"
-            :PartitionAddressHovered="PartitionAddressHovered"
             :ObjectsAreDraggable="ObjectsAreDraggable"
-            @InsertObjectDropped=" $emit('InsertObjectDropped', $event) "
           />
           <div
             v-else
@@ -112,31 +108,25 @@ export default {
     ComponentObject: () => import('./ComponentObject.vue'),
   },
   props: {
-    TemplateRUSize: {type: Number},
     InitialPartitionAddress: {type: Array},
     Context: {type: String},
     ObjectID: {},
     CabinetFace: {type: String},
     ObjectFace: {type: String},
-    TemplateFaceSelected: {type: Object},
-    PartitionAddressHovered: {type: Object},
     ObjectsAreDraggable: {type: Boolean},
+    SelectedPortInfo: {},
+    HoveredPortInfo: {},
+  },
+  data() {
+    return {
+    }
   },
   computed: {
-    Categories() {
-      return this.$store.state.pcmCategories.Categories
-    },
-    Templates() {
-      return this.$store.state.pcmTemplates.Templates
-    },
     Objects() {
       return this.$store.state.pcmObjects.Objects
     },
     StateSelected() {
       return this.$store.state.pcmState.Selected
-    },
-    StateHovered() {
-      return this.$store.state.pcmState.Hovered
     },
     IsPseudo: function() {
 
@@ -240,16 +230,10 @@ export default {
       // Initial variables
       const vm = this
       const Context = vm.Context
+      const ObjectID = vm.ObjectID
 
       // Get Template
-      const ObjectIndex = vm.GetObjectIndex(vm.ObjectID, Context)
-      const Object = vm.Objects[Context][ObjectIndex]
-      const TemplateID = Object.template_id
-      /*
-      const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-      const Template = vm.Templates[Context][TemplateIndex]
-      */
-      const Template = vm.GetTemplate({TemplateID, Context})
+      const Template = vm.GetTemplate({ObjectID, Context})
 
       // Get Object Face
       const ObjectFace = vm.ObjectFace
@@ -304,31 +288,10 @@ export default {
       TemplateID = (vm.is_Numeric(TemplateID)) ? parseInt(TemplateID) : TemplateID
 
       // Validate dropped object template type
-      /*
-      const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-      const Template = vm.Templates[Context][TemplateIndex]
-      */
       const Template = vm.GetTemplate({TemplateID, Context})
       const TemplateType = Template.type
 
       if(TemplateType == 'insert') {
-
-        /*
-        const data = {
-          "drop_type": "enclosure",
-          "context": Context,
-          "parent_id": ParentID,
-          "parent_face": ParentFace,
-          "parent_partition_address": ParentPartitionAddress,
-          "parent_enclosure_address": ParentEnclosureAddress,
-          "object_id": InsertObjectID,
-          "template_id": TemplateID,
-          "template_face": TemplateFace,
-        }
-        
-        //vm.$emit('InsertObjectDropped', data )
-        */
-
 
         let data = {}
         let url
@@ -417,6 +380,85 @@ export default {
 
       return PartitionFlexGrow
     },
+    IsPartitionSelected: function(PartitionAddress) {
+
+      const vm = this
+      const SelectedPortInfo = vm.SelectedPortInfo
+      const ObjectFace = vm.ObjectFace
+
+      if(SelectedPortInfo) {
+        if(JSON.stringify(PartitionAddress) == JSON.stringify(SelectedPortInfo['partition'][ObjectFace])) {
+          return true
+        } else {
+          return false
+        }
+      } else {
+        return false
+      }
+
+    },
+    IsPartitionHovered: function(PartitionAddress) {
+
+      const vm = this
+      const HoveredPortInfo = vm.HoveredPortInfo
+      const ObjectFace = vm.ObjectFace
+
+      if(HoveredPortInfo) {
+        if(JSON.stringify(PartitionAddress) == JSON.stringify(HoveredPortInfo['partition'][ObjectFace])) {
+          return true
+        } else {
+          return false
+        }
+      } else {
+        return false
+      }
+
+    },
+    IsPortSelected: function(PartitionAddress, PortID) {
+
+      const vm = this
+      const SelectedPortInfo = vm.SelectedPortInfo
+      const ObjectFace = vm.ObjectFace
+
+      if(SelectedPortInfo) {
+        if(JSON.stringify(PartitionAddress) == JSON.stringify(SelectedPortInfo['partition'][ObjectFace]) && PortID == SelectedPortInfo['port_id'][ObjectFace]) {
+          return true
+        } else {
+          return false
+        }
+      } else {
+        return false
+      }
+
+    },
+    IsPortHovered: function(PartitionAddress, PortID) {
+
+      const vm = this
+      const HoveredPortInfo = vm.HoveredPortInfo
+      const ObjectFace = vm.ObjectFace
+
+      if(HoveredPortInfo) {
+        if(JSON.stringify(PartitionAddress) == JSON.stringify(HoveredPortInfo['partition'][ObjectFace]) && PortID == HoveredPortInfo['port_id'][ObjectFace]) {
+          return true
+        } else {
+          return false
+        }
+      } else {
+        return false
+      }
+
+    }
   },
+  updated() {
+
+    const vm = this
+    const Context = vm.Context
+
+    const SelectedFace = vm.StateSelected[Context]['object_face']
+    vm.SelectedObjectID = vm.StateSelected[Context]['object_id']
+    vm.SelectedPartition = vm.StateSelected[Context]['partition'][SelectedFace]
+    vm.SelectedPortID = vm.StateSelected[Context]['port_id'][SelectedFace]
+
+  }
 }
 </script>

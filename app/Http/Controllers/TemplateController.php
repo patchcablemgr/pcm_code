@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use App\Models\TemplateModel;
+use App\Models\TemplateModelNoImgData;
 use App\Models\CategoryModel;
 use App\Http\Controllers\PCM;
 use App\Http\Controllers\CategoryController;
@@ -379,7 +380,20 @@ class TemplateController extends Controller
         ];
         Validator::make($validatorInput, $validatorRules, $validatorMessages)->validate();
 				
-		$template = TemplateModel::where('id', $id)->first();
+		$template = TemplateModelNoImgData::where('id', $id)->first();
+
+        $imgAttrs = array(
+            'img_front',
+            'img_rear'
+        );
+        foreach($imgAttrs as $imgAttr) {
+            if($template[$imgAttr]) {
+                $filename = 'images/'.$template[$imgAttr];
+                if(Storage::disk('local')->exists($filename)) {
+                    Storage::disk('local')->delete($filename);
+                }
+            }
+        }
 
         $template->delete();
 

@@ -438,7 +438,10 @@
     </b-form>
 
     <!-- Category Modal -->
-    <modal-templates-category/>
+    <modal-templates-category
+      ModalTitle="Template Categories"
+      ModalID="modal-templates-category"
+    />
 
     <!-- Port ID Modal -->
     <modal-edit-template-port-id

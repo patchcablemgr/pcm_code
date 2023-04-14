@@ -784,6 +784,7 @@ class ArchiveController extends Controller
         );
 
         $manifest = array(
+            'Version.txt',
             '01 - Categories.csv',
             '02 - Templates.csv',
             '03 - Cabinets.csv',
@@ -845,6 +846,13 @@ class ArchiveController extends Controller
             // Extract legacy archive
             if(!$zip->extractTo($legacyArchiveDestPath, $manifest)) {
                 throw ValidationException::withMessages(['error' => 'Not able to extract legacy archive.']);
+            }
+
+            // Validate version
+            $versionFilePath = Storage::disk('local')->path('imports/Version.txt');
+            $version = file_get_contents($versionFilePath, false, null, 0, 6);
+            if(!version_compare($version, '0.3.19', '==')) {
+                throw ValidationException::withMessages(['error' => 'Incompatible version.  Expecting 0.3.19.']);
             }
         }
 

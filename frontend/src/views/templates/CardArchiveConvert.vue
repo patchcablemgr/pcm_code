@@ -2,9 +2,16 @@
 
 <template>
 <div>
-  <b-card
-    title="Convert Legacy Archive"
-  >
+  <b-card>
+    <b-card-title>
+      <h4>
+        Convert Legacy Archive
+        <feather-icon
+          icon="HelpCircleIcon"
+          v-b-tooltip.hover.html="ToolTipCardTitle"
+        />
+      </h4>
+    </b-card-title>
     <b-card-body>
 
       <!-- Upload -->
@@ -31,28 +38,47 @@
 <script>
 import {
   BCard,
+  BCardTitle,
   BCardBody,
   BButton,
+  VBTooltip,
 } from 'bootstrap-vue'
 import Ripple from 'vue-ripple-directive'
 import { PCM } from '@/mixins/PCM.js'
 import ModalArchiveUploadArchiveLegacy from '@/views/templates/ModalArchiveUploadArchiveLegacy.vue'
 
+const ToolTipCardTitle = {
+  title: `
+    <div class="text-left">
+      <div>
+        Convert legacy archives to be imported.<br><br>Note:
+        <br>
+        Legacy archive must be version 0.3.19.
+      </div>
+    </div>
+  `
+}
+
 export default {
   mixins: [PCM],
   components: {
     BCard,
+    BCardTitle,
     BCardBody,
     BButton,
+    VBTooltip,
 
     ModalArchiveUploadArchiveLegacy,
   },
 	directives: {
     Ripple,
+    'b-tooltip': VBTooltip,
 	},
   props: {},
   data() {
-    return {}
+    return {
+      ToolTipCardTitle,
+    }
   },
   computed: {},
   methods: {}

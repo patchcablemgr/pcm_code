@@ -2,9 +2,16 @@
 
 <template>
 <div>
-  <b-card
-    title="Archive"
-  >
+  <b-card>
+    <b-card-title>
+      <h4>
+        Archive
+        <feather-icon
+          icon="HelpCircleIcon"
+          v-b-tooltip.hover.html="ToolTipCardTitle"
+        />
+      </h4>
+    </b-card-title>
     <b-card-body>
 
       <!-- Download -->
@@ -41,28 +48,49 @@
 <script>
 import {
   BCard,
+  BCardTitle,
   BCardBody,
   BButton,
+  VBTooltip,
 } from 'bootstrap-vue'
 import Ripple from 'vue-ripple-directive'
 import { PCM } from '@/mixins/PCM.js'
 import ModalFileUploadArchive from '@/views/templates/ModalArchiveUploadArchive.vue'
 
+const ToolTipCardTitle = {
+  title: `
+    <div class="text-left">
+      <div>
+        Export an archive to backup data.  Import an archive to restore data.
+        <br><br>
+        Note:
+        <br>
+        Import destroys data that is not present in the archive.
+      </div>
+    </div>
+  `
+}
+
 export default {
   mixins: [PCM],
   components: {
     BCard,
+    BCardTitle,
     BCardBody,
     BButton,
+    VBTooltip,
 
     ModalFileUploadArchive,
   },
 	directives: {
     Ripple,
+    'b-tooltip': VBTooltip,
 	},
   props: {},
   data() {
-    return {}
+    return {
+      ToolTipCardTitle,
+    }
   },
   computed: {},
   methods: {

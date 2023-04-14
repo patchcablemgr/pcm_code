@@ -1,8 +1,8 @@
 <template>
     <!-- Template categories modal -->
     <b-modal
-      id="modal-templates-category"
-      title="Template Categories"
+      :id="ModalID"
+      :title="ModalTitle"
       size="lg"
       ok-only
       ok-title="OK"
@@ -153,7 +153,10 @@ export default {
   directives: {
     Ripple,
   },
-  props: {},
+  props: {
+    ModalTitle: {type: String},
+    ModalID: {type: String},
+  },
   data () {
     return {
       DefaultCategoryName,

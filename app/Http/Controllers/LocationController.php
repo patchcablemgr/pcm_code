@@ -295,7 +295,7 @@ class LocationController extends Controller
         $customValidator->validate();
 
         // Retrieve location record
-        $location = LocationModelNoImgData::where('id', $id)->first();
+        $location = LocationModel::where('id', $id)->first();
         $locationType = $location['type'];
         $locationParentID = $location['parent_id'];
 
@@ -326,7 +326,7 @@ class LocationController extends Controller
 
                 if($value != 0) {
 
-                    $parentLocation = LocationModel::where('id', $value)->first();
+                    $parentLocation = LocationModelNoImgData::where('id', $value)->first();
                     $parentLocationType = $parentLocation['type'];
 
                     $typeCompatibility = array(

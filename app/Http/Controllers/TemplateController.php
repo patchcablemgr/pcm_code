@@ -382,6 +382,7 @@ class TemplateController extends Controller
 				
 		$template = TemplateModelNoImgData::where('id', $id)->first();
 
+        // Delete image files
         $imgAttrs = array(
             'img_front',
             'img_rear'

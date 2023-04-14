@@ -3,16 +3,18 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\App;
-use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 
+use App\Http\Controllers\Controller;
 use App\Http\Controllers\CablePathController;
 use App\Http\Controllers\ConnectionController;
 use App\Http\Controllers\TrunkController;
 
 use App\Models\CablePathModel;
 use App\Models\LocationModel;
+use App\Models\LocationModelNoImgData;
 use App\Models\ObjectModel;
 use App\Models\TemplateModel;
 use App\Models\TrunkModel;
@@ -510,7 +512,7 @@ class PCM extends Controller
      */
     public function deleteLocation($locationID, &$deleteArray)
     {
-        $locationChildren = LocationModel::where('parent_id', $locationID)->get();
+        $locationChildren = LocationModelNoImgData::where('parent_id', $locationID)->get();
         foreach($locationChildren as $locationChild) {
             $result = $this->deleteLocation($locationChild['id'], $deleteArray);
             if($result !== true) {
@@ -523,8 +525,22 @@ class PCM extends Controller
             return ['id' => 'The location on one of its children contains objects and cannot be deleted.'];
         }
 
-        // Delete location
-        LocationModel::where('id', $locationID)->delete();
+        // Retrieve location to delete
+        $location = LocationModelNoImgData::where('id', $locationID)->first();
+
+        // Delete image files
+        $imgAttrs = array(
+            'img',
+        );
+        foreach($imgAttrs as $imgAttr) {
+            if($location[$imgAttr]) {
+                $filename = 'images/'.$location[$imgAttr];
+                if(Storage::disk('local')->exists($filename)) {
+                    Storage::disk('local')->delete($filename);
+                }
+            }
+        }
+        $location->delete();
         array_push($deleteArray['location'], $locationID);
 
         // Clear stale cable paths

@@ -120,6 +120,70 @@
         </dd>
       </dl>
 
+      <!-- Front Image -->
+      <dl class="row">
+        <dt class="col-sm-3">
+          Front Image
+        </dt>
+        <dd class="col-sm-1 my-auto">
+          <b-button
+            v-ripple.400="'rgba(40, 199, 111, 0.15)'"
+            variant="flat-success"
+            class="btn-icon"
+            v-b-modal.modal-template-img-front-select
+          >
+            <feather-icon icon="EditIcon" />
+          </b-button>
+        </dd>
+        <dd class="col-sm-8">
+          <img
+            v-if="TemplateImgFront"
+            :src="TemplateImgFront"
+            :style="{ width: '100%' }"
+          />
+          <div
+            v-else
+          >
+            None
+          </div>
+        </dd>
+      </dl>
+
+      <!-- Rear Image -->
+      <dl class="row">
+        <dt class="col-sm-3">
+          Rear Image
+        </dt>
+        <dd class="col-sm-1 my-auto">
+          <b-button
+            v-ripple.400="'rgba(40, 199, 111, 0.15)'"
+            variant="flat-success"
+            class="btn-icon"
+            v-b-modal.modal-template-img-rear-select
+            :disabled="TemplateType == 'insert' || TemplateMountConfig == '2-post'"
+          >
+            <feather-icon icon="EditIcon" />
+          </b-button>
+        </dd>
+        <dd class="col-sm-8">
+          <img
+            v-if="TemplateImgRear && TemplateType == 'standard' && TemplateMountConfig == '4-post'"
+            :src="TemplateImgRear"
+            :style="{ width: '100%' }"
+          />
+          <div
+            v-else-if="TemplateType == 'standard' && TemplateMountConfig == '4-post'"
+          >
+            None
+          </div>
+          <div
+            v-else
+          >
+            N/A
+          </div>
+        </dd>
+      </dl>
+
 <!--
   ### Partition ###
 -->
@@ -451,6 +515,20 @@
       :TemplateFaceSelected="TemplateFaceSelected"
     />
 
+    <!-- Image Modal -->
+    <modal-template-img-select
+      ModalTitle="Template Image - Front"
+      ModalID="modal-template-img-front-select"
+      @file-selected="LoadImage($event, 'front')"
+    />
+
+    <!-- Image Modal -->
+    <modal-template-img-select
+      ModalTitle="Template Image - Rear"
+      ModalID="modal-template-img-rear-select"
+      @file-selected="LoadImage($event, 'rear')"
+    />
+
   </b-row>
 </template>
 
@@ -459,6 +537,7 @@ import { BContainer, BRow, BCol, BForm, BFormGroup, BFormInput, BFormSelect, BFo
 import Ripple from 'vue-ripple-directive'
 import ModalTemplatesCategory from './ModalTemplatesCategory.vue'
 import ModalEditTemplatePortId from './ModalEditTemplatePortId.vue'
+import ModalTemplateImgSelect from './ModalTemplateImgSelect.vue'
 import { PCM } from '@/mixins/PCM.js'
 
 export default {
@@ -477,6 +556,7 @@ export default {
 
     ModalTemplatesCategory,
     ModalEditTemplatePortId,
+    ModalTemplateImgSelect,
   },
   directives: {
     Ripple,
@@ -681,6 +761,48 @@ export default {
           const Face = 'front'
           vm.$emit('SetTemplateFaceSelected', {Context, Face})
         }
+      }
+    },
+    TemplateImgFront: {
+      get() {
+
+        const Context = this.Context
+        const Template = this.GetTemplateSelected(Context)
+        const ReturnData = (Template) ? Template.img_front : ''
+
+        return ReturnData
+      },
+      set(newValue) {
+
+        const vm = this
+        const Context = vm.Context
+        const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
+        const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
+
+        Template.img_front = newValue
+        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
+
+      }
+    },
+    TemplateImgRear: {
+      get() {
+
+        const Context = this.Context
+        const Template = this.GetTemplateSelected(Context)
+        const ReturnData = (Template) ? Template.img_rear : ''
+
+        return ReturnData
+      },
+      set(newValue) {
+
+        const vm = this
+        const Context = vm.Context
+        const TemplateIndex = vm.GetSelectedTemplateIndex(Context)
+        const Template = JSON.parse(JSON.stringify(vm.Templates[Context][TemplateIndex]))
+
+        Template.img_rear = newValue
+        vm.$store.commit('pcmTemplates/UPDATE_Template', {pcmContext:Context, data:Template})
+
       }
     },
     PartitionType: {
@@ -987,6 +1109,14 @@ export default {
     },
   },
   methods: {
+    LoadImage: function(Data, Face) {
+      const vm = this
+      if(Face == 'front') {
+        vm.TemplateImgFront = Data
+      } else {
+        vm.TemplateImgRear = Data
+      }
+    },
     PartitionAdd: function(Position) {
 
       const vm = this

@@ -22,8 +22,9 @@
           :InitialPartitionAddress=[]
           :Context="Context"
           :ObjectID="RackObjectID(CabinetRU)"
-          :CabinetFace="TemplateFaceSelected[Context]"
+          :CabinetFace="SelectedCabinetFace"
           :ObjectsAreDraggable="ObjectsAreDraggable"
+          :TemplateView="TemplateView"
         />
       </td>
       <td
@@ -61,8 +62,9 @@ export default {
   },
   props: {
     Context: {type: String},
-    TemplateFaceSelected: {type: Object},
+    SelectedCabinetFace: {type: String},
     ObjectsAreDraggable: {type: Boolean},
+    TemplateView: {type: String},
   },
   data() {
     return {
@@ -120,7 +122,7 @@ export default {
       const vm = this
       const Context = vm.Context
       const LocationID = vm.LocationID
-      const TemplateFace = vm.TemplateFaceSelected[Context]
+      const TemplateFace = vm.SelectedCabinetFace
 
       const ObjectIndex = vm.Objects[Context].findIndex(function(Object, ObjectIndex) {
         if(Object.location_id == LocationID && Object.cabinet_ru == CabinetRU) {
@@ -146,7 +148,7 @@ export default {
       const Context = vm.Context
       const Objects = vm.Objects
       const Templates = vm.Templates
-      const TemplateFaceSelected = vm.TemplateFaceSelected[Context]
+      const SelectedCabinetFace = vm.SelectedCabinetFace
       const CabinetObjects = Objects[Context].filter((object) => object.location_id == CabinetID);
       let ObjectIsPresent = false
 
@@ -169,7 +171,7 @@ export default {
         const ObjectLastRU = ObjectFirstRU + (TemplateSize - 1)
 
         // Determine if object is present at cabinet RU
-        if(ObjectCabinetFace == TemplateFaceSelected || TemplateMountConfig == "4-post") {
+        if(ObjectCabinetFace == SelectedCabinetFace || TemplateMountConfig == "4-post") {
           if(CabinetRU <= ObjectLastRU && CabinetRU >= ObjectFirstRU) {
             ObjectIsPresent = true
           }
@@ -196,7 +198,7 @@ export default {
 
       if(TemplateType == 'standard') {
         const LocationID = vm.LocationID
-        const CabinetFace = vm.TemplateFaceSelected[Context]
+        const CabinetFace = vm.SelectedCabinetFace
         let CabinetFront
         if(CabinetFace == 'front') {
           CabinetFront = TemplateFace

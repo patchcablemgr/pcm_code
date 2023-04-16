@@ -1,5 +1,9 @@
 ## 1.4.4
 
+Features:
+- Set template image during configuration
+- Selecte template view (template/image)
+
 Enhancements:
 - Completed legacy archive conversion feature
 

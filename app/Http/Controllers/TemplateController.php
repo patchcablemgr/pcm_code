@@ -3,20 +3,24 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\Rule;
 use App\Models\TemplateModel;
 use App\Models\TemplateModelNoImgData;
 use App\Models\CategoryModel;
+
 use App\Http\Controllers\PCM;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ImageController;
+
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Http\UploadedFile;
-use App\Rules\TemplateBlueprint;
-use App\Rules\TemplateInsertParentData;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Gate;
+
+use App\Rules\TemplateBlueprint;
+use App\Rules\TemplateInsertParentData;
+use App\Rules\Base64Img;
 
 class TemplateController extends Controller
 {
@@ -229,6 +233,18 @@ class TemplateController extends Controller
                 'min:1',
                 'max:100',
                 new TemplateBlueprint($request, null, 'rear', $this->archiveAddress)
+            ],
+            'img_front' => [
+                'sometimes',
+                'nullable',
+                'string',
+                new Base64Img($request->img_front)
+            ],
+            'img_rear' => [
+                'sometimes',
+                'nullable',
+                'string',
+                new Base64Img($request->img_rear)
             ]
         ];
 
@@ -236,26 +252,64 @@ class TemplateController extends Controller
         $customValidator = Validator::make($request->all(), $validatorRules, $validatorMessages);
         $customValidator->stopOnFirstFailure();
         $customValidator->validate();
+
+        $data = $request->all();
+
+        // Store front image if it exists
+        $faceArray = array('front', 'rear');
+        $imgFilenameArray = array(
+            'front' => null,
+            'rear' => null
+        );
+
+        foreach($imgFilenameArray as $face => &$filename) {
+
+            if(isset($data['img_'.$face])) {
+
+                $imgData = $data['img_'.$face];
+
+                if($imgData) {
+                    // $imgData = data:image/jpeg;base64,/9j/4AAQSkZJRgABAQE
+                    list($preamble, $imgBase64) = explode(',', $imgData);
+                    $imgBase64 = str_replace(' ', '+', $imgBase64);
+                    // $preamble = data:image/jpeg;base64
+                    // $imgBase64 = /9j/4AAQSkZJRgABAQE
+                    list($metaData,) = explode(';', $preamble);
+                    // $metaData = data:image/jpeg
+                    list(, $mimeType) = explode(':', $metaData);
+                    // $mimeType = image/jpeg
+                    list(, $fileExt) = explode('/', $mimeType);
+
+                    $fileName = 'import-temp.'.$fileExt;
+                    $filePath = 'images/'.$fileName;
+
+                    Storage::disk('local')->put($filePath, base64_decode($imgBase64));
+                    $file = array('file' => new UploadedFile(base_path('storage/app/'.$filePath), $fileName, $mimeType, null, true));
+                    $requestData = array('face' => $face);
+                    $request = (new Request())->duplicate($requestData, [], [], [], $file);
+
+                    // Store image
+                    $path = $request->file('file')->store('images');
+
+                    // Extract filename
+                    $pathArray = explode('/', $path);
+                    $filename = end($pathArray);
+                }
+            }
+        }
 				
         $template = new TemplateModel;
 
-        $template->name = $request->name;
-        $template->category_id = $request->category_id;
-        $template->type = $request->type;
-        $template->ru_size = null;
-        $template->function = $request->function;
-        $template->mount_config = null;
-        $template->insert_constraints = null;
-        $template->blueprint = $request->blueprint;
-				
-        if($request->type == 'insert') {
-            
-            $template->insert_constraints = $request->insert_constraints;
-        } else {
-
-            $template->ru_size = $request->ru_size;
-            $template->mount_config = $request->mount_config;
-        }
+        $template->name = $data['name'];
+        $template->category_id = $data['category_id'];
+        $template->type = $data['type'];
+        $template->ru_size = ($data['type'] == 'standard') ? $data['ru_size'] : null;
+        $template->function = $data['function'];
+        $template->mount_config = ($data['type'] == 'standard') ? $data['mount_config'] : null;
+        $template->insert_constraints = ($data['type'] == 'insert') ? $data['insert_constraints'] : null;
+        $template->blueprint = $data['blueprint'];
+        $template->img_front = $imgFilenameArray['front'];
+        $template->img_rear = $imgFilenameArray['rear'];
 
         $template->save();
 

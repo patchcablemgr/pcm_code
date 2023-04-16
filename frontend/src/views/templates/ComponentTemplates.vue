@@ -86,6 +86,7 @@
                     :CabinetFace="TemplateFaceSelected[Context]"
                     :PartitionAddressHovered="PartitionAddressHovered"
                     :ObjectsAreDraggable="ObjectsAreDraggable"
+                    TemplateView="template"
                   />
                 </td>
               </tr>

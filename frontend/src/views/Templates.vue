@@ -25,49 +25,14 @@
           xl="4"
         >
 
-          <b-card
-            :class="{ pcm_sticky: IsSticky, pcm_scroll: IsSticky }"
-          >
-            <b-card-title  class="mb-0">
-              Preview
-            </b-card-title>
-            <b-card-body
-              v-if=" PreviewDisplay == 'cabinet' "
-            >
-              <div class="demo-inline-spacing">
-                
-                <b-form-radio
-                  v-model="TemplateFaceSelected.workspace"
-                  value="front"
-                  :disabled="TemplateFaceToggleIsDisabled"
-                >Front
-                </b-form-radio>
-
-                <b-form-radio
-                  v-model="TemplateFaceSelected.workspace"
-                  value="rear"
-                  :disabled="TemplateFaceToggleIsDisabled"
-                >Rear
-                </b-form-radio>
-
-                <b-form-checkbox
-                  v-model="IsSticky"
-                  switch
-                >Sticky
-                </b-form-checkbox>
-              </div>
-              <component-cabinet
-                Context="workspace"
-                :TemplateFaceSelected="TemplateFaceSelected"
-                :PartitionAddressHovered="PartitionAddressHovered"
-              />
-            </b-card-body>
-            <b-card-body
-              v-if=" PreviewDisplay == 'insertInstructions' "
-            >
-              Select enclosure
-            </b-card-body>
-          </b-card>
+        <card-cabinet
+          Context="workspace"
+          CardTitle="Preview"
+          :PreviewDisplay="PreviewDisplay"
+          :ObjectsAreDraggable=false
+          :CabinetFaceSelectIsDisabled="CabinetFaceSelectIsDisabled"
+          @SetTemplateFaceSelected="SetTemplateFaceSelected($event)"
+        />
 
         </b-col>
         <b-col>
@@ -101,11 +66,11 @@
 import { BContainer, BRow, BCol, BCard, BCardTitle, BCardBody, BCardText, BFormCheckbox, BFormRadio, } from 'bootstrap-vue'
 import TemplatesForm from './templates/TemplatesForm.vue'
 import ToastGeneral from './templates/ToastGeneral.vue'
-import ComponentCabinet from './templates/ComponentCabinet.vue'
 import ComponentTemplateObjectDetails from './templates/ComponentTemplateObjectDetails.vue'
 import ComponentTemplates from './templates/ComponentTemplates.vue'
 import ModalTemplatesEdit from './templates/ModalTemplatesEdit.vue'
 import { PCM } from '@/mixins/PCM.js'
+import CardCabinet from '@/views/templates/CardCabinet.vue'
 
 const IsSticky = false
 const TemplateFaceSelected = {
@@ -164,10 +129,10 @@ export default {
 
     TemplatesForm,
     ToastGeneral,
-    ComponentCabinet,
     ComponentTemplateObjectDetails,
     ComponentTemplates,
     ModalTemplatesEdit,
+    CardCabinet,
   },
   data() {
     return {
@@ -248,7 +213,7 @@ export default {
 
       return PreviewDisplay
     },
-    TemplateFaceToggleIsDisabled: function() {
+    CabinetFaceSelectIsDisabled: function() {
 
       const vm = this
       const Context = 'workspace'

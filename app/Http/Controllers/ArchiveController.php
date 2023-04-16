@@ -2812,21 +2812,30 @@ class ArchiveController extends Controller
         $requestData = array();
         foreach(array_keys($attrMap) as $attr) {
 
-            // Get array index of attribute
-            $attrIdx = $attrMap[$attr];
+            // Set img attributes to null... they will be applied later
+            if(in_array($attr, $this->imgAttributes[$tableName])) {
 
-            // Apply attribute value mapping
-            if(isset($tableSchema['dependency_mapping'][$attr])) {
-                if(isset($tableSchema['dependency_mapping'][$attr][$data[$attrIdx]])) {
-                    $data[$attrIdx] = $tableSchema['dependency_mapping'][$attr][$data[$attrIdx]];
+                // Add attribute to request data
+                $requestData[$attr] = null;
+                
+            } else {
+
+                // Get array index of attribute
+                $attrIdx = $attrMap[$attr];
+
+                // Apply attribute value mapping
+                if(isset($tableSchema['dependency_mapping'][$attr])) {
+                    if(isset($tableSchema['dependency_mapping'][$attr][$data[$attrIdx]])) {
+                        $data[$attrIdx] = $tableSchema['dependency_mapping'][$attr][$data[$attrIdx]];
+                    }
                 }
+
+                // Decode JSON if necessary
+                $requestDataEntry = (in_array($attr, $this->jsonAttributes[$tableName])) ? json_decode($data[$attrIdx], true) : $data[$attrIdx];
+
+                // Add attribute to request data
+                $requestData[$attr] = $requestDataEntry;
             }
-
-            // Decode JSON if necessary
-            $requestDataEntry = (in_array($attr, $this->jsonAttributes[$tableName])) ? json_decode($data[$attrIdx], true) : $data[$attrIdx];
-
-            // Add attribute to request data
-            $requestData[$attr] = $requestDataEntry;
         }
 
         // Set a reference to the archive for helpful error reporting

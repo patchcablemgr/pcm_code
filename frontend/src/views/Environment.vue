@@ -59,47 +59,13 @@
           cols="12"
           xl="4"
         >
-          <b-card
-            title="Cabinet"
-            :class="{ pcm_sticky: IsSticky, pcm_scroll: IsSticky }"
-          >
-
-            <b-card-body
-              v-if=" PreviewDisplay == 'none' "
-            >
-              Please select a cabinet from the Locations and Cabinets tree.
-            </b-card-body>
-
-            <b-card-body
-              v-if=" PreviewDisplay == 'cabinet' "
-            >
-              <div class="demo-inline-spacing">
-                <b-form-radio
-                  v-model="TemplateFaceSelected.actual"
-                  value="front"
-                >Front
-                </b-form-radio>
-                <b-form-radio
-                  v-model="TemplateFaceSelected.actual"
-                  value="rear"
-                >Rear
-                </b-form-radio>
-                <b-form-checkbox
-                    v-model="IsSticky"
-                    switch
-                  >Sticky
-                </b-form-checkbox>
-              </div>
-              <component-cabinet
-                Context="actual"
-                :TemplateFaceSelected="TemplateFaceSelected"
-                :PartitionAddressHovered="PartitionAddressHovered"
-                :ObjectsAreDraggable="ObjectsAreDraggable"
-                @StandardObjectDropped="StandardObjectDropped($event)"
-                @InsertObjectDropped="InsertObjectDropped($event)"
-              />
-            </b-card-body>
-          </b-card>
+        <card-cabinet
+          Context="actual"
+          CardTitle="Cabinet"
+          :PreviewDisplay="PreviewDisplay"
+          :ObjectsAreDraggable=true
+          :CabinetFaceSelectIsDisabled=false
+        />
 
         </b-col>
         <b-col
@@ -152,7 +118,6 @@ import {
 import ToastGeneral from './templates/ToastGeneral.vue'
 import ComponentLocationTree from '@/views/templates/ComponentLocationTree.vue'
 import ComponentCabinetDetails from '@/views/templates/ComponentCabinetDetails.vue'
-import ComponentCabinet from './templates/ComponentCabinet.vue'
 import ComponentTemplateObjectDetails from './templates/ComponentTemplateObjectDetails.vue'
 import ComponentTemplates from './templates/ComponentTemplates.vue'
 import ModalTemplatesEdit from './templates/ModalTemplatesEdit.vue'
@@ -160,6 +125,7 @@ import { PCM } from '@/mixins/PCM.js'
 import ComponentFloorplan from './templates/ComponentFloorplan.vue'
 import ComponentFloorplanObjects from './templates/ComponentFloorplanObjects.vue'
 import ComponentFloorplanObjectDetails from './templates/ComponentFloorplanObjectDetails.vue'
+import CardCabinet from '@/views/templates/CardCabinet.vue'
 
 const TemplateFaceSelected = {
   'actual': 'front',
@@ -208,13 +174,13 @@ export default {
     ToastGeneral,
     ComponentLocationTree,
     ComponentCabinetDetails,
-    ComponentCabinet,
     ComponentTemplateObjectDetails,
     ComponentTemplates,
     ModalTemplatesEdit,
     ComponentFloorplan,
     ComponentFloorplanObjects,
     ComponentFloorplanObjectDetails,
+    CardCabinet,
   },
   directives: {
     'b-tooltip': VBTooltip,

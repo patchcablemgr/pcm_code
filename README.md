@@ -1,3 +1,8 @@
+## 1.4.5
+
+Fixes:
+- Multiple RU templates not filling entire space in Firefox
+
 ## 1.4.4
 
 Features:

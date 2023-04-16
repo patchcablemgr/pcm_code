@@ -76,15 +76,14 @@
                 <td
                   class="pcm_cabinet_ru"
                   :rowspan=" (RU == 1) ? 0 : '' "
+                  :style="{height:(25*Template.ru_size)+'px'}"
                 >
                   <component-object
                     v-if=" RU == 1 && GetObjectID(Template.id)"
-                    :TemplateRUSize=" Template.ru_size "
                     :InitialPartitionAddress=[]
                     :Context="Context"
                     :ObjectID="GetObjectID(Template.id)"
                     :CabinetFace="TemplateFaceSelected[Context]"
-                    :PartitionAddressHovered="PartitionAddressHovered"
                     :ObjectsAreDraggable="ObjectsAreDraggable"
                     TemplateView="template"
                   />

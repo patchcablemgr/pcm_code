@@ -17,6 +17,7 @@
         v-if=" RackObjectID(CabinetRU) !== false "
         class="pcm_cabinet_ru"
         :rowspan=" GetObjectSize( RackObjectID(CabinetRU) ) "
+        :style="{height:(25*GetObjectSize( RackObjectID(CabinetRU) ))+'px'}"
       >
         <component-object
           :InitialPartitionAddress=[]

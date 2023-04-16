@@ -57,20 +57,11 @@ export const PCM = {
             // Store variables
             const vm = this
             const Context = vm.Context
-            const Templates = vm.Templates
-            const Objects = vm.Objects
+
+            // Get Template
+            const Template = vm.GetTemplate({ObjectID, Context})
         
-            // Get object index
-            const ObjectIndex = Objects[Context].findIndex((object) => object.id == ObjectID);
-        
-            // Get template index
-            const TemplateID = Objects[Context][ObjectIndex].template_id
-            const TemplateIndex = Templates[Context].findIndex((template) => template.id == TemplateID);
-        
-            // Get template
-            const ObjectPreviewData = Templates[Context][TemplateIndex]
-        
-            const ObjectSize = ObjectPreviewData.ru_size
+            const ObjectSize = (Template) ? Template.ru_size : 0
         
             return ObjectSize
         },

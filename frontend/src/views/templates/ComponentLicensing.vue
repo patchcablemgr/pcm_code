@@ -1,7 +1,9 @@
 <!-- Template/Object Details -->
 
 <template>
-<div>
+<div
+  v-if="DependenciesReady"
+>
   <b-card>
     <b-card-title>
       <div class="d-flex flex-wrap justify-content-between">
@@ -186,6 +188,16 @@ export default {
     return {}
   },
   computed: {
+    DependenciesReady: function() {
+
+      const vm = this
+      const Dependencies = [
+        vm.OrganizationReady
+      ]
+
+      const DependenciesReady = Dependencies.every(function(element){ return element == true })
+      return DependenciesReady
+    },
     Users: function() {
       return this.$store.state.pcmUsers.Users
     },
@@ -194,6 +206,9 @@ export default {
     },
     Organization() {
       return this.$store.state.pcmOrganization.Organization
+    },
+    OrganizationReady: function() {
+      return this.$store.state.pcmOrganization.OrganizationReady
     },
     Objects() {
       return this.$store.state.pcmObjects.Objects

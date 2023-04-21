@@ -1,3 +1,11 @@
+## 1.4.6
+
+Enhancements:
+- Remove server management capabilities from Admin page
+- Remove dark/light toggle
+- Remove empty "Actions" dropdown in connection path card
+- Moved version to "About" modal
+
 ## 1.4.5
 
 Fixes:

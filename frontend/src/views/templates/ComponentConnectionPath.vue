@@ -9,7 +9,7 @@
 				<div class="demo-inline-spacing">
           {{CardTitle}}
         </div>
-        <div class="demo-inline-spacing">
+        <!--div class="demo-inline-spacing">
           <b-dropdown
             v-ripple.400="'rgba(255, 255, 255, 0.15)'"
             right
@@ -19,7 +19,7 @@
           >
 
           </b-dropdown>
-        </div>
+        </div-->
       </div>
     </b-card-title>
 		<b-card-body

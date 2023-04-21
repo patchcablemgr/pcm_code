@@ -355,6 +355,28 @@ export default {
         vm.DisplayError(error)
       })
     },
+    GETOrganization() {
+
+      const vm = this
+
+      vm.$http.get('/api/organization').then(function(response){
+
+        vm.$store.commit('pcmOrganization/SET_Organization', {data: response.data})
+        vm.$store.commit('pcmOrganization/SET_Ready', {ReadyState:true})
+      })
+    },
+    GETUsers() {
+
+      const vm = this
+
+      // GET users
+      vm.$http.get('/api/users').then(response => {
+        vm.$store.commit('pcmUsers/SET_Users', {data:response.data})
+        vm.$store.commit('pcmUsers/SET_Ready', {ReadyState:true})
+      }).catch(error => {
+        vm.DisplayError(error)
+      })
+    },
     SetDefaultCategory() {
 
       const vm = this
@@ -520,6 +542,8 @@ export default {
         vm.GETMedia()
         vm.GETMediaType()
         vm.GETOrientations()
+        vm.GETOrganization()
+        vm.GETUsers()
 
         vm.GenerateWorkspaceLocations()
         vm.GenerateWorkspaceObjects()

@@ -1,8 +1,8 @@
 ### Site metadata ###
 
-site_name: MkDocs Quickstart
+site_name: PatchCableMgr
 site_description: Starter template for a MkDocs docs site on GH Pages - including CI
-site_url: https://michaelcurrin.github.io/mkdocs-quickstart/
+site_url: https://patchcablemgr.com
 
 repo_url: https://github.com/MichaelCurrin/mkdocs-quickstart
 edit_uri: edit/master/docs/docs
@@ -12,12 +12,8 @@ edit_uri: edit/master/docs/docs
 theme: readthedocs
 
 nav:
-  - Home: index.md
-  - About MkDocs: about-mkdocs.md
-  - Tutorial:
-      - TL;DR: tutorial/tldr.md
-      - Installation: tutorial/installation.md
-      - Set up project: tutorial/setup-project.md
-      - Advanced: tutorial/advanced.md
-      - Usage: tutorial/usage.md
-      - Deploy: tutorial/deploy.md
+  - Introduction: index.md
+  - Installation:
+      - Overview: installation/overview.md
+      - Hosted: installation/hosted.md
+      - Self-Hosted: installation/selfhosted.md

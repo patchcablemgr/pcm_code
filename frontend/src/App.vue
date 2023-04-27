@@ -15,8 +15,7 @@
 
 // This will be populated in `beforeCreate` hook
 import { $themeColors, $themeBreakpoints, $themeConfig } from '@themeConfig'
-import { provideToast } from 'vue-toastification/composition'
-import { watch } from '@vue/composition-api'
+import { watch } from 'vue'
 import useAppConfig from '@core/app-config/useAppConfig'
 
 import { useWindowSize, useCssVar } from '@vueuse/core'
@@ -568,18 +567,6 @@ export default {
 
     // If skin is dark when initialized => Add class to body
     if (skin.value === 'dark') document.body.classList.add('dark-layout')
-
-    // Provide toast for Composition API usage
-    // This for those apps/components which uses composition API
-    // Demos will still use Options API for ease
-    provideToast({
-      hideProgressBar: true,
-      closeOnClick: false,
-      closeButton: false,
-      icon: false,
-      timeout: 3000,
-      transition: 'Vue-Toastification__fade',
-    })
 
     // Set Window Width in store
     store.commit('app/UPDATE_WINDOW_WIDTH', window.innerWidth)

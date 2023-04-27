@@ -1,4 +1,4 @@
-import { ref } from '@vue/composition-api'
+import { ref } from 'vue'
 import { isNavLinkActive } from '@core/layouts/utils'
 
 export default function useHorizontalNavMenuHeaderGroup(item) {

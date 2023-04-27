@@ -106,7 +106,7 @@ import useAppConfig from '@core/app-config/useAppConfig'
 import { BNavbar } from 'bootstrap-vue'
 import { useScrollListener } from '@core/comp-functions/misc/event-listeners'
 
-import { onUnmounted } from '@vue/composition-api'
+import { onUnmounted } from 'vue'
 
 // Content Renderer
 import LayoutContentRendererDefault from '@core/layouts/components/layout-content-renderer/LayoutContentRendererDefault.vue'

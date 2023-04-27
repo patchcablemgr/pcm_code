@@ -1,3 +1,8 @@
+## 1.4.7
+
+Enhancements:
+- Upgrade to Vue.js 2.7.14
+
 ## 1.4.6
 
 Enhancements:

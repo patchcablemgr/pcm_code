@@ -1,6 +1,6 @@
 import router from '@/router'
 // eslint-disable-next-line object-curly-newline
-import { reactive, getCurrentInstance, watch, toRefs } from '@vue/composition-api'
+import { reactive, getCurrentInstance, watch, toRefs } from 'vue'
 
 export const isObject = obj => typeof obj === 'object' && obj !== null
 

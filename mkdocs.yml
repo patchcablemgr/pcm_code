@@ -1,11 +1,10 @@
 ### Site metadata ###
 
 site_name: PatchCableMgr
-site_description: Starter template for a MkDocs docs site on GH Pages - including CI
+site_description: PatchCableMgr user guide and documentation
 site_url: https://patchcablemgr.com
 
-repo_url: https://github.com/MichaelCurrin/mkdocs-quickstart
-edit_uri: edit/master/docs/docs
+repo_url: https://github.com/patchcablemgr/pcm_code
 
 ### Build settings ###
 

@@ -17,3 +17,4 @@ nav:
       - Overview: installation/overview.md
       - Hosted: installation/hosted.md
       - Self-Hosted: installation/selfhosted.md
+  - Markdown Cheat Sheet: cheatsheet.md

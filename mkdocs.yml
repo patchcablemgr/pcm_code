@@ -1,0 +1,23 @@
+### Site metadata ###
+
+site_name: MkDocs Quickstart
+site_description: Starter template for a MkDocs docs site on GH Pages - including CI
+site_url: https://michaelcurrin.github.io/mkdocs-quickstart/
+
+repo_url: https://github.com/MichaelCurrin/mkdocs-quickstart
+edit_uri: edit/master/docs/docs
+
+### Build settings ###
+
+theme: readthedocs
+
+nav:
+  - Home: index.md
+  - About MkDocs: about-mkdocs.md
+  - Tutorial:
+      - TL;DR: tutorial/tldr.md
+      - Installation: tutorial/installation.md
+      - Set up project: tutorial/setup-project.md
+      - Advanced: tutorial/advanced.md
+      - Usage: tutorial/usage.md
+      - Deploy: tutorial/deploy.md

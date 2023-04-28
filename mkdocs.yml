@@ -12,3 +12,7 @@ theme: readthedocs
 
 nav:
   - Introduction: index.md
+  - Installation:
+    - Overview: installationion/overview.md
+    - Hosted: installation/hosted.md
+    - Self-Hosted: installation/selfhosted.md

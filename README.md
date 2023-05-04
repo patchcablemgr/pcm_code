@@ -1,3 +1,8 @@
+## 1.4.8
+
+Enhancements:
+- Initial markdown documentation
+
 ## 1.4.7
 
 Enhancements:

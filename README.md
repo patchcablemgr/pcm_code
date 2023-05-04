@@ -1,3 +1,8 @@
+## 1.4.9
+
+Fixes:
+- Data sync preventing registration under certain conditions
+
 ## 1.4.8
 
 Enhancements:

@@ -127,15 +127,6 @@ export default {
 
 	    vm.$http.get('/api/auth/logout').then(
 
-        // Clear UserData
-        localStorage.clear(),
-
-        // Clear Data Sync interval
-        clearInterval(vm.$store.state.pcmState.DataSyncIntervalID),
-
-        // Clear Data Sync interval ID
-        vm.$store.commit('pcmState/UPDATE_DataSyncIntervalID', {IntervalID:null}),
-
         // Navigate to login page
         vm.$router.push({name: 'login'})
         

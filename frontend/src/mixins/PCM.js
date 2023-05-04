@@ -27,6 +27,9 @@ export const PCM = {
         StateHovered() {
             return this.$store.state.pcmState.Hovered
         },
+        StateDataSyncIntervalID() {
+        return this.$store.state.pcmState.DataSyncIntervalID
+        },
     },
     methods: {
 
@@ -1882,6 +1885,17 @@ export const PCM = {
         DisplayError: function(errData) {
 
             if(errData.response.status == 401) {
+
+                // Clear UserData
+                localStorage.clear()
+
+                // Clear Data Sync interval
+                clearInterval(this.$store.state.pcmState.DataSyncIntervalID)
+
+                // Clear Data Sync interval ID
+                this.$store.commit('pcmState/UPDATE_DataSyncIntervalID', {IntervalID:null})
+
+                // Navigate to login
                 this.$router.push('login')
             } else {
                 const errMsg = errData.response.data

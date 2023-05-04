@@ -211,18 +211,18 @@ export default {
       let CurrentIDs = {}
       tables.forEach(function(table){
           
-          CurrentIDs[table.name] = []
+        CurrentIDs[table.name] = []
 
-          const tableContexts = table.contexts
-          if(tableContexts[0]) {
-            table.object.actual.forEach(function(entry){
-              CurrentIDs[table.name].push(entry.id)
-            })
-          } else {
-            table.object.forEach(function(entry){
-              CurrentIDs[table.name].push(entry.id)
-            })
-          }
+        const tableContexts = table.contexts
+        if(tableContexts[0]) {
+          table.object.actual.forEach(function(entry){
+            CurrentIDs[table.name].push(entry.id)
+          })
+        } else {
+          table.object.forEach(function(entry){
+            CurrentIDs[table.name].push(entry.id)
+          })
+        }
       })
 
       const data = {

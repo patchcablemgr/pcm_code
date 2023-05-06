@@ -13,3 +13,4 @@ theme: readthedocs
 nav:
   - Introduction: index.md
   - Installation: installation.md
+  - Cheat_Sheet: cheatsheet.md

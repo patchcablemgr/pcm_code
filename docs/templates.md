@@ -40,7 +40,7 @@
 
 > <u>Enclosure Layout:</u> This configuration is exclusive to enclosure partition types. Enclosure layout columns and rows determine the slots available to install insert objects.
 
-## Properties
+## Preview
 > The **Preview** card displays the template as it is created.
 
 > The **Face** dropdown selects which cabinet face is displayed.  The **View** dropdown selects the mode in which the template is displayed.  The **Sticky** switch determines if the preview box scrolls with the page keeping the template visible even when working at the end of the long list of properties.  A yellow highlight appears around the selected partition and indicates that any partition specific configuration will be applied to it.

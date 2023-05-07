@@ -50,11 +50,11 @@
 
 > The following template properties are able to be edited:
 
-- Template Name
-- Category
-- Image
+> - Template Name
+> - Category
+> - Image
 
 > The following actions can be performed:
 
-- Clone
-- Delete
+> - Clone
+> - Delete

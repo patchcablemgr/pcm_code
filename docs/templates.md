@@ -54,7 +54,12 @@
 > - Category
 > - Image
 
-> The following actions can be performed:
+> The following template actions can be performed:
 
 > - Clone
 > - Delete
+
+## Templates
+> The **Templates** card lists all templates grouped by category.
+
+> Front and Back radio buttons toggle the face of all available templates. Clicking on an object will highlight the selected partition and display information in the **Template Details** card.  The filter field allows you to display only templates containing one or more strings of text.

@@ -29,6 +29,10 @@
 ## Cabinet Details
 > The **Cabinet Details** card displays information about the selected cabinet.
 
-The "RU Size" and "RU Orientation" properties are editable.
-The "Cable Paths" table lists other cabinets which the selected cabinet has cable path to. This information is used by path finder for calculating cable paths.
-The "Cabinet Adjacencies" table lists cabinets which are adjacent to the selected cabinet. This information is used by path finder for calculating cable paths. Path finder assumes that there is cable path to adjacent cabinets.
+> <u>RU Size</u> adjusts the size or number of rack units a cabinet is.
+
+> <u>RU Orientation</u> adjusts whether the RU numbers of a cabinet increment top-down or bottom-up.
+
+> <u>Cable Paths</u> represent physical cable paths that exist between two cabinets.  This information is used by path finder for calculating cable paths.
+
+> <u>Cabinet Adjacencies</u> represent a left/right adjacent relationship between two cabinets.  This information is used by path finder for calculating cable paths. Path finder assumes that there is cable path to adjacent cabinets.

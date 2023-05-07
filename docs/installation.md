@@ -6,7 +6,7 @@
 ## Hosted
 > A hosted account is hosted on PCM servers. Everything related to server maintenance and support (server configuration, OS updates, app upgrades, SSL certificates, etc.) is handled by PCM. Upon registration, a tenant is created with a unique domain name (ie. acme.patchcablemgr.com) and database creating an isolated environment.
 
-Click [here](https://register.patchcablemgr.com/register-tenant) to register.
+> Click [here](https://register.patchcablemgr.com/register-tenant) to register.
 
 ## Self-Hosted
 > A self-hosted account runs on a virtual machine hosted on your server and is maintained by you.
@@ -15,4 +15,4 @@ Click [here](https://register.patchcablemgr.com/register-tenant) to register.
 # git clone https://github.com/patchcablemgr/pcm_selfhosted.git
 # ansible-playbook pcm_selfhosted/playbook.yaml --ask-become-pass --tags install
 ```
-The installation could take 5 to 10 minutes.  Once the installation completes, the application can be accessed by navigating to https://<SERVER_IP>
+> The installation could take 5 to 10 minutes.  Once the installation completes, the application can be accessed by navigating to https://<SERVER_IP>

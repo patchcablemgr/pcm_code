@@ -36,3 +36,22 @@
 > <u>Cable Paths</u> represent physical cable paths that exist between two cabinets.  This information is used by path finder for calculating cable paths.
 
 > <u>Cabinet Adjacencies</u> represent a left/right adjacent relationship between two cabinets.  This information is used by path finder for calculating cable paths. Path finder assumes that there is cable path to adjacent cabinets.
+
+## Object Details
+> The **Object Details** card displays information about the selected object and object partition.
+
+>> <u>Object Name</u> Specifies the object name. A valid template name contains alphanumeric characters as well as underscores (_) and hyphens (-).
+
+> > <u>Template Name</u> Reflects the object's template. Object templates cannot be changed.
+
+> <u>Category</u> Reflects the object's template category. Template categories can be changed from the **Templates** page.
+
+> <u>Type</u> Reflects the object's template type. Template type cannot be changed.
+
+> <u>Function</u> Reflects the object's template function. Template function cannot be changed.
+
+> <u>RU Size</u> Reflects the object's template RU size. Template RU size cannot be changed.
+
+> <u>Mount Config</u> Reflects the object's template mounting configuration. Template mounting configuration cannot be changed.
+
+> <u>Image</u> Reflects the object's template image for the selected face. Template image can be changed from the **Templates** page.

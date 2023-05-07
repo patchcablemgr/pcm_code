@@ -4,4 +4,4 @@
 ## Properties
 > The **Properties** card contains all the configuration properties needed to create a template.
 
-> Name: Specifies the name of the template.  A valid template name contains alphanumeric characters as well as underscores (_) and hyphens (-).
+> <u>Name:</u> Specifies the name of the template.  A valid template name contains alphanumeric characters as well as underscores (_) and hyphens (-).

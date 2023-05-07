@@ -49,11 +49,13 @@
 > The **Template Details** card displays information about the template selected in the **Templates** card.
 
 > The following template properties are able to be edited:
+
 > - Template Name
 > - Category
 > - Image
 
 > The following template actions can be performed:
+
 > - Clone
 > - Delete
 

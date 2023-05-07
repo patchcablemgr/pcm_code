@@ -11,9 +11,14 @@
 > - **Floorplan Objects** displays all objects deployed in the selected floorplan.
 
 ## Locations and Cabinets
-> The **Location Tree** card contains an editable tree of locations and cabinets.  Right click on a location to rename, delete, or create a new location, pod, or cabinet nested within it.
+> The **Locations and Cabinets** card contains an editable tree of locations and cabinets.  Right click on a location to rename, delete, or create a new location, pod, or cabinet nested within it.
 
-<u>A location can represent a physical region, building, floor, or room. Locations can only be nested under other locations.
-<u>A pod represents a group of cabinets within a location. Pods are assumed to have cable path between adjacent cabinets. Pods can only be nested under locations.
-<u>A cabinet represents a physical rack or cabinet that can contain objects. Cabinets can be nested under locations or pods.
-<u>A floorplan represents the floor of a building. Floor plans can be nested under locations.
+<u>Locations</u> represent a physical region, building, floor, or room. Locations can only be nested under other locations.
+<u>Pods</u> represent a group of cabinets within a location. Pods are assumed to have cable path between adjacent cabinets. Pods can only be nested under locations.
+<u>Cabinets</u> represent a physical rack or cabinet that can contain objects. Cabinets can be nested under locations or pods.
+<u>Floorplans</u> represent the floor of a building. Floorplans can be nested under locations.
+
+## Cabinet
+> The **Cabinet** card displays the selected cabinet and all of the objects it contains.
+
+> The **Face** dropdown selects which cabinet face is displayed.  The **View** dropdown selects the mode in which the template is displayed.  The **Sticky** switch determines if the preview box scrolls with the page keeping the template visible even when working at the end of the long list of properties.  A yellow highlight appears around the selected partition and indicates that any partition specific configuration will be applied to it.

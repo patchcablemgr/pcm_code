@@ -26,9 +26,9 @@
 
 > <u>Port ID:</u> The format describing how the template ports will be identified. Clicking the edit button will open a window allowing you to add/change/delete fields that will be used to compile each port ID (ie "Port-1a"). You can configure up to 5 fields of 3 possible field types.
 
-- A **Static** field will be compiled into the port ID as it is defined by the user.
-- An **Incremental** field accepts a single alphanumeric character and will increment with the port numbers.
-- A **Series** field accepts a comma separated list of strings that will be cycled through when compiling the port ID.
+> - A **Static** field will be compiled into the port ID as it is defined by the user.
+> - An **Incremental** field accepts a single alphanumeric character and will increment with the port numbers.
+> - A **Series** field accepts a comma separated list of strings that will be cycled through when compiling the port ID.
 
 > <u>Port Layout:</u> Number of port columns and rows in the selected connectable partition.
 
@@ -49,13 +49,11 @@
 > The **Template Details** card displays information about the template selected in the **Templates** card.
 
 > The following template properties are able to be edited:
-
 > - Template Name
 > - Category
 > - Image
 
 > The following template actions can be performed:
-
 > - Clone
 > - Delete
 

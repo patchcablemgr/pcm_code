@@ -10,9 +10,20 @@
 
 ## Self-Hosted
 > A self-hosted account runs on a virtual machine hosted on your server and is maintained by you.
+
+> Recommended requirements:
+
+> - CPU: 2 cores
+> - Memory: 4 GB
+> - Disk: 100 GB
+> - OS: Ubuntu 22.04 LTS
+
+> Use the commands below to download, install, and run PatchCableMgr:
+
 ```
-# apt install ansible
-# git clone https://github.com/patchcablemgr/pcm_selfhosted.git
-# ansible-playbook pcm_selfhosted/playbook.yaml --ask-become-pass --tags install
+apt install ansible
+git clone https://github.com/patchcablemgr/pcm_selfhosted.git
+ansible-playbook pcm_selfhosted/playbook.yaml --ask-become-pass --tags install
 ```
-> The installation could take 5 to 10 minutes.  Once the installation completes, the application can be accessed by navigating to https://<SERVER_IP>
+
+> The installation could take 5 to 10 minutes.  Once the installation completes, the application can be accessed by navigating to https://SERVER_IP

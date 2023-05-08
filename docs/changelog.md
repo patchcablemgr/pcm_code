@@ -1,11 +1,13 @@
 ## 1.4.10
 
 Enhancements:
+
 - Moved documentation to Read the Docs
 
 ## 1.4.9
 
 Fixes:
+
 - Data sync preventing registration under certain conditions
 
 ## 1.4.8

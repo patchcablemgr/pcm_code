@@ -13,16 +13,19 @@ Fixes:
 ## 1.4.8
 
 Enhancements:
+
 - Initial markdown documentation
 
 ## 1.4.7
 
 Enhancements:
+
 - Upgrade to Vue.js 2.7.14
 
 ## 1.4.6
 
 Enhancements:
+
 - Remove server management capabilities from Admin page
 - Remove dark/light toggle
 - Remove empty "Actions" dropdown in connection path card

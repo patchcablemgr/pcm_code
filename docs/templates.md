@@ -14,9 +14,9 @@
 
 >> <u>Template Function:</u> Defines the template as an endpoint or passive.
 
->> - An **endpoint** template will always terminate a cable path (switch, router, server, etc.).
+>> - **Endpoint** templates will always terminate a cable path (switch, router, server, etc.).
 
->> - A **passive** template is part of the physical cable infrastructure (patch panel, fiber insert, etc.).
+>> - **Passive** templates is part of the physical cable infrastructure (patch panel, fiber insert, etc.).
 
 >> <u>Mounting Configuration:</u> A 2-post template will only be visible on one side of the installed cabinet and can have another 2-post template installed behind it. A 4-post template will have a front and a back which occupy both sides of the cabinet it is installed in.
 
@@ -30,7 +30,7 @@
 
 >> - A **Static** field will be compiled into the port ID as it is defined by the user.
 >> - An **Incremental** field accepts a single alphanumeric character and will increment with the port numbers.
->> - A **Series** field accepts a comma separated list of strings that will be cycled through when compiling the port ID.
+> - A **Series** field accepts a comma separated list of strings that will be cycled through when compiling the port ID.
 
 >> <u>Port Layout:</u> Number of port columns and rows in the selected connectable partition.
 

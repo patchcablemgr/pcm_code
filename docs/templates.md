@@ -1,4 +1,4 @@
-# Overview
+# Templates
 > Use the Template page to create and edit custom templates which represent objects in your environment. The template page is separated into 4 cards:
 
 ## Properties
@@ -30,7 +30,7 @@
 
 >> - **Static** fields will be compiled into the port ID as it is defined by the user.
 >> - **Incremental** fields accept a single alphanumeric character and will increment with the port numbers.
-> - **Series** fields accept a comma separated list of strings that will be cycled through when compiling the port ID.
+>> - **Series** fields accept a comma separated list of strings that will be cycled through when compiling the port ID.
 
 >> <u>Port Layout:</u> Number of port columns and rows in the selected connectable partition.
 

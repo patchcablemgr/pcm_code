@@ -1,4 +1,4 @@
-# Overview
+# Explore
 > The **Explore** page allows you to navigate the environment and display information about objects and how they are connected. The **Explore** page is separated into multiple cards depending on location tree selection:
 
 > - **Locations and Cabinets** displays the environment tree.

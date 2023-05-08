@@ -1,4 +1,4 @@
-# Overview
+# Dashboard
 > The Dashboard provides a quick overview of your organization's environment.
 
 ## Port Utilzation

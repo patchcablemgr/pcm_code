@@ -754,17 +754,18 @@ export default {
           // Get template
           const ObjectID = vm.StateSelected[Context].object_id
           const Template = vm.GetTemplate({ObjectID, Context})
-          const TemplateType = Template.type
+          const TemplateFunction = Template.function
 
-          if(TemplateType == 'passive') {
+          if(TemplateFunction == 'passive') {
 
             if(Partition.type == 'connectable') {
               const MediaID = Partition.media
               const MediaIndex = vm.GetMediaIndex(MediaID)
               MediaType = vm.Media[MediaIndex].name
+            } else {
+              MediaType = 'N/A'
             }
           } else {
-
             MediaType = 'N/A'
           }
         }

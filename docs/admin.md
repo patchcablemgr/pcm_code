@@ -1,4 +1,4 @@
-# Overview
+# Admin
 > The **Admin** page allows organization administrators to perform privileged functions.  The **Admin** page is separated into multiple cards:
 
 > - **Users** display and manage users.

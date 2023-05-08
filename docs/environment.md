@@ -1,4 +1,4 @@
-# Overview
+# Environment
 > The **Environment** page allows you to create a hierarchical representation of your environment's locations, pods, cabinets, floorplans, and objects as well as their relationship to each other. The **Environment** page is separated into multiple cards depending on location tree selection:
 
 > - **Locations and Cabinets** displays and manages environment tree.

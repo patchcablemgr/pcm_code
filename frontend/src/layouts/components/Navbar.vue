@@ -53,6 +53,19 @@
           <span>About</span>
         </b-dropdown-item>
 
+        <b-dropdown-item link-class="d-flex align-items-center">
+          <feather-icon
+            size="16"
+            icon="BookIcon"
+            class="mr-50"
+          />
+          <span
+            @click="openInNewTab('https://patchcablemgr.readthedocs.io/en/main/')"
+          >
+            Documentation &#x2197;
+          </span>
+        </b-dropdown-item>
+
         <b-dropdown-item link-class="d-flex align-items-center" @click="profile">
           <feather-icon
             size="16"
@@ -121,6 +134,9 @@ export default {
     },
   },
   methods: {
+    openInNewTab(url) {
+      window.open(url, '_blank', 'noreferrer');
+    },
     logout() {
 
       const vm = this

@@ -1,4 +1,4 @@
-# Overview
+# Installation
 > PatchCableMgr offers two different deployment methods; hosted and self-hosted.
 
 > - Hosted deployment method is the easiest and fastest way to get to get started.  Your PatchCableMgr instance runs on our AWS servers.  Server, OS, Software, and SSL maintenance are all managed by PatchCableMgr.

@@ -1,3 +1,13 @@
+## 1.4.11
+
+Fixes:
+
+- Object/template details card was not displaying partition media type
+
+Enhancements:
+
+- Added Documentation link to user dropdown
+
 ## 1.4.10
 
 Enhancements:

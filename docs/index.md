@@ -6,8 +6,9 @@
 
 ## How does it work?
 > By modeling your cable infrastructure, PatchCableMgr is able to provide quick reference to various aspects including:
-- A-to-Z path visualization
-- Space planning
-- Port utilization
-- Shortest distance calculation
-- And more!
+
+> - A-to-Z path visualization
+> - Space planning
+> - Port utilization
+> - Shortest distance calculation
+> - And more!

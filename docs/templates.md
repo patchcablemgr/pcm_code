@@ -28,9 +28,9 @@
 
 >> <u>Port ID:</u> The format describing how the template ports will be identified. Clicking the edit button will open a window allowing you to add/change/delete fields that will be used to compile each port ID (ie "Port-1a"). You can configure up to 5 fields of 3 possible field types.
 
->> - A **Static** field will be compiled into the port ID as it is defined by the user.
->> - An **Incremental** field accepts a single alphanumeric character and will increment with the port numbers.
-> - A **Series** field accepts a comma separated list of strings that will be cycled through when compiling the port ID.
+>> - **Static** fields will be compiled into the port ID as it is defined by the user.
+>> - **Incremental** fields accept a single alphanumeric character and will increment with the port numbers.
+> - **Series** fields accept a comma separated list of strings that will be cycled through when compiling the port ID.
 
 >> <u>Port Layout:</u> Number of port columns and rows in the selected connectable partition.
 

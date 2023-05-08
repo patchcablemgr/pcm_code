@@ -28,4 +28,6 @@ git clone https://github.com/patchcablemgr/pcm_selfhosted.git
 ansible-playbook pcm_selfhosted/playbook.yaml --ask-become-pass --tags install
 ```
 
+> **Note:** You must be in the parent directory of the pcm_selfhosted repository.
+
 > The installation could take 5 to 10 minutes.  Once the installation completes, the application can be accessed by navigating to https://SERVER_IP

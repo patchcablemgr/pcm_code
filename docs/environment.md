@@ -35,23 +35,50 @@
 
 >> <u>Cable Paths</u> represent physical cable paths that exist between two cabinets.  This information is used by path finder for calculating cable paths.
 
->> <u>Cabinet Adjacencies</u> represent a left/right adjacent relationship between two cabinets.  This information is used by path finder for calculating cable paths. Path finder assumes that there is cable path to adjacent cabinets.
+>> <u>Cabinet Adjacencies</u> represent a left/right adjacent relationship between two cabinets.  This information is used by path finder for calculating cable paths.  Path finder assumes that there is cable path to adjacent cabinets.
 
 ## Object Details
 > The **Object Details** card displays information about the selected object and object partition.
 
+> The following object properties are able to be edited:
+
+> - Object Name
+> - Trunked To
+
+> The following template actions can be performed:
+
+> - Delete
+> - Clear Trunk
+
 >> <u>Object Name</u> Specifies the object name. A valid template name contains alphanumeric characters as well as underscores (_) and hyphens (-).
 
->> <u>Template Name</u> Reflects the object's template. Object templates cannot be changed.
+>> <u>Template Name</u> Reflects the object's template.
 
 >> <u>Category</u> Reflects the object's template category. Template categories can be changed from the **Templates** page.
 
->> <u>Type</u> Reflects the object's template type. Template type cannot be changed.
+>> <u>Type</u> Reflects the object's template type.
 
->> <u>Function</u> Reflects the object's template function. Template function cannot be changed.
+>> <u>Function</u> Reflects the object's template function.
 
->> <u>RU Size</u> Reflects the object's template RU size. Template RU size cannot be changed.
+>> <u>RU Size</u> Reflects the object's template RU size.
 
->> <u>Mount Config</u> Reflects the object's template mounting configuration. Template mounting configuration cannot be changed.
+>> <u>Mount Config</u> Reflects the object's template mounting configuration.
 
 >> <u>Image</u> Reflects the object's template image for the selected face. Template image can be changed from the **Templates** page.
+
+>> <u>Partition Type</u> Reflects the object's template partition type.
+
+>> <u>Trunked To</u> Reflects the trunk peer of the selected partition.  Only connectable partitions can be trunked to other connectable partitions.  When trunking a passive partition to another passive partition, the number of ports must be equal and the media type must match.  When trunking a passive partition to an endpoint partition, the number of ports must be equal and the endpoint partition port type must be RJ45.  An endpoint partition cannot be trunked to another endpoint partition.
+
+>> <u>Port Range</u> Reflects the port range of the selected partition.  Template port range can be changed from the **Templates** page.
+
+>> <u>Port Orientation</u> Reflects the port orientation or direction of the selected partition.  Template port orientation can be changed from the **Templates** page.
+
+>> <u>Port Type</u> Reflects the port type of the selected partition.
+
+>> <u>Media Type</u> Reflects the port media of the selected partition.
+
+## Templates
+> The **Templates** card lists all templates grouped by category.
+
+> Front and Back radio buttons toggle the face of all available templates. Clicking on an object will highlight the selected partition.  The filter field allows you to display only templates containing one or more strings of text.  Drag and drop templates to a cabinet to install them.

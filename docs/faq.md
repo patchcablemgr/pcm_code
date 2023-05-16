@@ -20,3 +20,11 @@ ansible-playbook pcm_selfhosted/playbook.yaml --ask-become-pass --tags install -
 > **Warning:** This command will delete all data and reinstall the application from scratch.
 
 > **Note:** You must be in the parent directory of the pcm_selfhosted repository.
+
+
+## How do I upgrade from beta?
+> Starting with version 1.0.0, PatchCableMgr has been completely rebuilt using modern frameworks to help deliver features, enhancements, and fixes faster.  Unfortunately, this means there is no direct upgrade path from beta (<1.0.0).  Follow these steps to upgrade from beta to mainline code.
+
+> 1. Login to your beta PatchCableMgr app and ensure that you are running version >= 0.3.19.  Click on the user icon in the top right corner of the page and click **About**
+
+>> ![Accessing About](https://imgur.com/a/En8YZ1W "Accessing About")

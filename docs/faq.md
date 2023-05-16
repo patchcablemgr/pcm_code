@@ -27,4 +27,4 @@ ansible-playbook pcm_selfhosted/playbook.yaml --ask-become-pass --tags install -
 
 > 1. Login to your beta PatchCableMgr app and ensure that you are running version >= 0.3.19.  Click on the user icon in the top right corner of the page and click **About**
 
->> ![Accessing About](https://imgur.com/a/En8YZ1W "Accessing About")
+>> ![Accessing About](https://pcm-documentation-images.s3.us-west-2.amazonaws.com/public/Beta_Accessing_About.PNG "Accessing About")

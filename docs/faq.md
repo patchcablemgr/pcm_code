@@ -22,7 +22,7 @@ ansible-playbook pcm_selfhosted/playbook.yaml --ask-become-pass --tags install -
 > **Note:** You must be in the parent directory of the pcm_selfhosted repository.
 
 
-## How do I upgrade from legacy?
+## How do I migrate from legacy?
 > Starting with version 1.0.0, PatchCableMgr has been completely rebuilt using modern frameworks to help deliver features, enhancements, and fixes faster.  Unfortunately, this means there is no direct upgrade path from legacy (<1.0.0).  Follow these steps to upgrade from legacy to mainline code.
 
 > 1. <u>**Verify Legacy Version:**</u>

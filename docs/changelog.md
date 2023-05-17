@@ -1,3 +1,9 @@
+## 1.4.12
+
+Enhancements:
+
+- Added legacy migration procedure to documentation FAQ
+
 ## 1.4.11
 
 Fixes:

@@ -91,7 +91,7 @@ import {
   BFormCheckbox,
   BFormSelect,
 } from 'bootstrap-vue'
-import ComponentCanvas from './ComponentCanvas.vue'
+import ComponentCanvas from '@/views/templates/ComponentCanvas.vue'
 import ComponentPortR from '@/views/templates/ComponentPortR.vue'
 import Ripple from 'vue-ripple-directive'
 import { PCM } from '@/mixins/PCM.js'
@@ -205,38 +205,6 @@ export default {
     },
   },
   methods: {
-    /*
-    GetCategory: function(ObjectID){
-
-      const vm = this
-      const Context = vm.Context
-      const TemplateID = vm.GetTemplateID(ObjectID, Context)
-      let Category
-
-      return vm.GetCategory({ObjectID})
-      
-      if(TemplateID) {
-
-        // Get template category
-        const TemplateIndex = vm.GetTemplateIndex(TemplateID, Context)
-        const Template = vm.Templates[Context][TemplateIndex]
-        const CategoryID = Template.category_id
-        const CategoryIndex = vm.Categories[Context].findIndex((category) => category.id == CategoryID )
-        Category = vm.Categories[Context][CategoryIndex]
-      } else {
-
-        // Get floorplan category
-        const ObjectIndex = vm.GetObjectIndex(ObjectID, Context)
-        const Object = vm.Objects[Context][ObjectIndex]
-        const FloorplanObjectType = Object['floorplan_object_type']
-        const CategoryIndex = vm.Categories['floorplan'].findIndex((category) => category.id == FloorplanObjectType )
-        Category = vm.Categories['floorplan'][CategoryIndex]
-      }
-
-      return Category
-
-    },
-    */
   },
   watch: {
     ConnectionPath: {

@@ -1,55 +1,74 @@
 <template>
-  <!-- Template categories modal -->
-  <table>
-    <tr>
-      <td class="pcm_cabinet" colspan=3>
-        {{ LocationData.name }}
-      </td>
-    </tr>
-    <tr
-      class="pcm_cabinet_row"
-      v-for="CabinetRU in LocationData.size"
-      :key="CabinetRU"
-      :CabinetID="LocationID"
-    >
-      <td class="pcm_cabinet">{{ GetRUNumber(CabinetRU) }}</td>
-      <td
-        v-if=" RackObjectID(CabinetRU) !== false "
-        class="pcm_cabinet_ru"
-        :rowspan=" GetObjectSize( RackObjectID(CabinetRU) ) "
-        :style="{height:(25*GetObjectSize( RackObjectID(CabinetRU) ))+'px'}"
+
+<div
+  ref="CabinetCanvasParent"
+>
+    <component-canvas
+      v-if="Mounted"
+      :CanvasHeight="ConnectionCanvasHeight"
+      :CanvasWidth="ConnectionCanvasWidth"
+      :ConnectionLineData="ConnectionLineData"
+      :TrunkLineData="TrunkLineData"
+    ></component-canvas>
+
+    <!-- Cabinet -->
+    <table>
+      <tr>
+        <td class="pcm_cabinet" colspan=3>
+          {{ LocationData.name }}
+        </td>
+      </tr>
+      <tr
+        class="pcm_cabinet_row"
+        v-for="CabinetRU in LocationData.size"
+        :key="CabinetRU"
+        :CabinetID="LocationID"
       >
-        <component-object
-          :InitialPartitionAddress=[]
-          :Context="Context"
-          :ObjectID="RackObjectID(CabinetRU)"
-          :CabinetFace="SelectedCabinetFace"
-          :ObjectsAreDraggable="ObjectsAreDraggable"
-          :TemplateView="TemplateView"
+        <td class="pcm_cabinet">{{ GetRUNumber(CabinetRU) }}</td>
+        <td
+          v-if=" RackObjectID(CabinetRU) !== false "
+          class="pcm_cabinet_ru"
+          :rowspan=" GetObjectSize( RackObjectID(CabinetRU) ) "
+          :style="{height:(25*GetObjectSize( RackObjectID(CabinetRU) ))+'px'}"
+        >
+          <component-object
+            :InitialPartitionAddress=[]
+            :Context="Context"
+            :ObjectID="RackObjectID(CabinetRU)"
+            :CabinetFace="SelectedCabinetFace"
+            :ObjectsAreDraggable="ObjectsAreDraggable"
+            :TemplateView="TemplateView"
+          />
+        </td>
+        <td
+          v-else-if="!RUIsOccupied(LocationID, CabinetRU)"
+          @drop="HandleDrop(CabinetRU, $event)"
+          @dragover.prevent
+          @dragenter.prevent
+          class="pcm_cabinet_ru"
         />
-      </td>
-      <td
-        v-else-if="!RUIsOccupied(LocationID, CabinetRU)"
-        @drop="HandleDrop(CabinetRU, $event)"
-        @dragover.prevent
-        @dragenter.prevent
-        class="pcm_cabinet_ru"
-      />
-      <td class="pcm_cabinet">{{ GetRUNumber(CabinetRU) }}</td>
-    </tr>
-    <tr>
-      <td class="pcm_cabinet" colspan=3>
-        {{ LocationData.name }}
-      </td>
-    </tr>
-  </table>
+        <td class="pcm_cabinet">{{ GetRUNumber(CabinetRU) }}</td>
+      </tr>
+      <tr>
+        <td class="pcm_cabinet" colspan=3>
+          {{ LocationData.name }}
+        </td>
+      </tr>
+    </table>
+  </div>
 </template>
 
 <script>
 import { BContainer, BRow, BCol, } from 'bootstrap-vue'
-import ComponentObject from './ComponentObject.vue'
+import ComponentObject from '@/views/templates/ComponentObject.vue'
+import ComponentCanvas from '@/views/templates/ComponentCanvas.vue'
 import CartDropdown from '../../@core/layouts/components/app-navbar/components/CartDropdown.vue'
 import { PCM } from '../../mixins/PCM.js'
+
+const ConnectionCanvasHeight = 0
+const ConnectionCanvasWidth = 0
+const ConnectionLineData = []
+const TrunkLineData = []
 
 export default {
   mixins: [PCM],
@@ -69,6 +88,10 @@ export default {
   },
   data() {
     return {
+      ConnectionCanvasHeight,
+      ConnectionCanvasWidth,
+      ConnectionLineData,
+      TrunkLineData,
     }
   },
   computed: {
@@ -100,7 +123,24 @@ export default {
       const LocationIndex = vm.Locations[Context].findIndex((location) => location.id == LocationID)
 
       return vm.Locations[Context][LocationIndex]
-    }
+    },
+    ConnectionPath: {
+      get(){
+
+        const vm = this
+        const Context = vm.Context
+        const ObjectID = vm.StateSelected[Context].object_id
+        const Face = vm.StateSelected[Context].object_face
+        const Partition = vm.StateSelected[Context].partition[Face]
+        const PortID = vm.StateSelected[Context].port_id[Face]
+
+        return vm.GetConnectionPath(ObjectID, Face, Partition, PortID, Context)
+        
+      },
+      set(){
+        return true
+      }
+    },
   },
   methods: {
     GetRUNumber: function(RUIndex) {
@@ -255,6 +295,83 @@ export default {
         }
       }
     },
-  }
+  },
+  watch: {
+    ConnectionPath: {
+      immediate: true,
+      handler: function (newVal, oldVal) {
+
+        // Required to push handling of this to end of queue stack
+        // Otherwise you will get the height before text replacement
+        setTimeout(() => {
+
+          const vm = this
+
+          vm.ConnectionLineData = []
+          vm.TrunkLineData = []
+
+          const ScrollLeft = document.documentElement.scrollLeft
+          const ScrollTop = document.documentElement.scrollTop
+
+          // Gather connection line data
+          const PathPorts = document.querySelectorAll(".ConnectionPathPort")
+          PathPorts.forEach(function(PathPort){
+
+            const ElementLeft = PathPort.getBoundingClientRect().left
+            const ElementTop = PathPort.getBoundingClientRect().top
+            
+            const PosX = ElementLeft + ScrollLeft
+            const PosY = ElementTop + ScrollTop
+
+            const PortPair = PathPort.dataset.portPair
+
+            const LineIndex = vm.ConnectionLineData.findIndex(line => line.port_pair == PortPair)
+            if(LineIndex !== -1) {
+              vm.ConnectionLineData[LineIndex].line_coords.push([PosX, PosY])
+            } else {
+              vm.ConnectionLineData.push({'line_coords': [[PosX, PosY]], 'port_pair': PortPair})
+            }
+          })
+
+          // Gather trunk line data
+          const PathObjects = document.querySelectorAll(".ConnectionPathObject")
+          PathObjects.forEach(function(PathObject){
+
+            const ElementWidth = PathObject.offsetWidth
+            const ElementHeight = PathObject.offsetHeight
+
+            const ElementLeftOffset = ElementWidth/2
+
+            const ElementLeft = PathObject.getBoundingClientRect().left
+            const ElementTop = PathObject.getBoundingClientRect().top
+            
+            const PosX = ElementLeft + ScrollLeft + ElementLeftOffset
+            const PosY = ElementTop + ScrollTop
+
+            const TrunkPair = PathObject.dataset.trunkPair
+
+            const LineIndex = vm.TrunkLineData.findIndex(line => line.trunk_pair == TrunkPair)
+            if(LineIndex !== -1) {
+              const ExistingElementTop = vm.TrunkLineData[LineIndex].element_top
+              const ExistingElementHeight = vm.TrunkLineData[LineIndex].element_height
+              if(ExistingElementTop < ElementTop) {
+                vm.TrunkLineData[LineIndex].line_coords[0][1] = vm.TrunkLineData[LineIndex].line_coords[0][1] + ExistingElementHeight
+              } else {
+                PosY = PosY + ElementHeight
+              }
+              vm.TrunkLineData[LineIndex].line_coords.push([PosX, PosY])
+            } else {
+              vm.TrunkLineData.push({'line_coords': [[PosX, PosY]], 'trunk_pair': TrunkPair, 'element_top': ElementTop, 'element_height': ElementHeight})
+            }
+          })
+
+          // Resize canvas
+          this.ConnectionCanvasHeight = this.$refs.ConnectionCanvasParent.clientHeight
+          this.ConnectionCanvasWidth = this.$refs.ConnectionCanvasParent.clientWidth
+
+        }, 0);
+      }
+    }
+  },
 }
 </script>

@@ -1,3 +1,13 @@
+## 1.4.13
+
+Fixes:
+
+- Legacy archive conversion incorrect floorplan device port format
+- Legacy archive conversion replace empty category name with "PCM_Generated"
+- Legacy archive conversion replace invalid location name characters with "_"
+- Legacy archive conversion incorrectly converting cabinet_ru installed in top-down cabinets
+- Archive import trunk assumes b_id is never floorplan device
+
 ## 1.4.12
 
 Enhancements:

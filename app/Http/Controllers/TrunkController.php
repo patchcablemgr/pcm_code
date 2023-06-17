@@ -91,11 +91,46 @@ class TrunkController extends Controller
         // Perform further validation
         $compatible = true;
 
+        // Validate that both objects are not floorplan objects
+        $aObjectID = $request->a_id;
+        $aObjectFace = $request->a_face;
+        $aObjectPartitionAddress = $request->a_partition;
+        $aObject = ObjectModel::where('id', $aObjectID)->first();
+        $aFloorplanObjectType = $aObject->floorplan_object_type;
+
+        $bObjectID = $request->b_id;
+        $bObjectFace = $request->b_face;
+        $bObjectPartitionAddress = $request->b_partition;
+        $bObject = ObjectModel::where('id', $bObjectID)->first();
+        $bFloorplanObjectType = $bObject->floorplan_object_type;
+
+        if(!is_null($aFloorplanObjectType) & !is_null($bFloorplanObjectType)) {
+            throw ValidationException::withMessages(['peer_data' => 'Trunk peer is not compatible. '.$this->archiveAddress]);
+        }
+
+        if($bFloorplanObjectType) {
+            $objectID = $bObjectID;
+            $objectFace = $bObjectFace;
+            $objectPartitionAddress = $bObjectPartitionAddress;
+            $object = $bObject;
+
+            $peerID = $aObjectID;
+            $peerFace = $aObjectFace;
+            $peerPartitionAddress = $aObjectPartitionAddress;
+            $peer = $aObject;
+        } else {
+            $objectID = $aObjectID;
+            $objectFace = $aObjectFace;
+            $objectPartitionAddress = $aObjectPartitionAddress;
+            $object = $aObject;
+
+            $peerID = $bObjectID;
+            $peerFace = $bObjectFace;
+            $peerPartitionAddress = $bObjectPartitionAddress;
+            $peer = $bObject;
+        }
+
         // Gather object data
-        $objectID = $request->a_id;
-        $objectFace = $request->a_face;
-        $objectPartitionAddress = $request->a_partition;
-        $object = ObjectModel::where('id', $objectID)->first();
         $floorplanType = $object->floorplan_object_type;
         if($floorplanType == null) {
             $objectTemplateID = $object->template_id;
@@ -121,10 +156,6 @@ class TrunkController extends Controller
         $objectPartitionMediaTypeID = $objectPartitionPortConnector->type_id;
 
         // Gather peer data
-        $peerID = $request->b_id;
-        $peerFace = $request->b_face;
-        $peerPartitionAddress = $request->b_partition;
-        $peer = ObjectModel::where('id', $peerID)->first();
         $peerTemplateID = $peer->template_id;
         $peerTemplate = TemplateModel::where('id', $peerTemplateID)->first();
         $peerTemplateFunction = $peerTemplate->function;
@@ -274,6 +305,8 @@ class TrunkController extends Controller
 
         // Store group ID
         $trunk->group_id = ($data['group_id']) ? $data['group_id'] : null;
+
+        
 
         // Save new trunk object
         $trunk->save();

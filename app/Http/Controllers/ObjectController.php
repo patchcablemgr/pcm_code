@@ -130,7 +130,7 @@ class ObjectController extends Controller
         $validatorRules = [
             'name' => [
                 'sometimes',
-                'regex:/^[A-Za-z0-9\/\_]+$/',
+                'regex:/^[A-Za-z0-9\/\_\-]+$/',
                 'min:1',
                 'max:255'
             ],
@@ -236,7 +236,7 @@ class ObjectController extends Controller
         $validatorRules = [
             'name' => [
                 'sometimes',
-                'regex:/^[A-Za-z0-9\/\_]+$/',
+                'regex:/^[A-Za-z0-9\/\_\-]+$/',
                 'min:1',
                 'max:255'
             ],
@@ -494,9 +494,6 @@ class ObjectController extends Controller
         $tempArray = array();
         foreach($objects as $object) {
             array_push($tempArray, $object['id']);
-        }
-        if($id == 15535) {
-            Log::info(json_encode($tempArray));
         }
 
         $validatorInput = [

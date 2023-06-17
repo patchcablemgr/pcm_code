@@ -339,7 +339,7 @@ class ArchiveController extends Controller
                         'port_format' => [
                             [
                                 'type' => 'static',
-                                'value' => 'Port',
+                                'value' => 'NIC',
                                 'count' => 1,
                                 'order' => 0
                             ],
@@ -351,7 +351,7 @@ class ArchiveController extends Controller
                             ]
                         ],
                         'port_layout' => [
-                            'cols' => 24,
+                            'cols' => 1,
                             'rows' => 1
                         ],
                         'media' => 1,
@@ -385,7 +385,7 @@ class ArchiveController extends Controller
                         'port_format' => [
                             [
                                 'type' => 'static',
-                                'value' => 'Port',
+                                'value' => 'NIC',
                                 'count' => 1,
                                 'order' => 0
                             ],
@@ -397,7 +397,7 @@ class ArchiveController extends Controller
                             ]
                         ],
                         'port_layout' => [
-                            'cols' => 24,
+                            'cols' => 1,
                             'rows' => 1
                         ],
                         'media' => 1,
@@ -431,7 +431,7 @@ class ArchiveController extends Controller
                         'port_format' => [
                             [
                                 'type' => 'static',
-                                'value' => 'Port',
+                                'value' => 'NIC',
                                 'count' => 1,
                                 'order' => 0
                             ],
@@ -443,7 +443,7 @@ class ArchiveController extends Controller
                             ]
                         ],
                         'port_layout' => [
-                            'cols' => 24,
+                            'cols' => 1,
                             'rows' => 1
                         ],
                         'media' => 1,
@@ -995,7 +995,7 @@ class ArchiveController extends Controller
                             'new' => 'name',
                             'old' => 'Name',
                             'process' => function($data=null) {
-                                return ($data) ? $data : null;
+                                return ($data) ? $data : 'PCM_Generated';
                             }
                         ),
                         array(
@@ -1236,6 +1236,7 @@ class ArchiveController extends Controller
                             'process' => function($data=null) {
                                 $nameArray = explode(".", $data);
                                 $name = end($nameArray);
+                                $name = preg_replace('/[^a-z0-9\_\-]/i', '_', $name);
                                 return $name;
                             }
                         ),
@@ -1268,9 +1269,12 @@ class ArchiveController extends Controller
                         // size
                         array(
                             'new' => 'size',
-                            'old' => 'RU Size',
-                            'process' => function($data=null) {
-                                return $data;
+                            'old' => array('Name', 'RU Size'),
+                            'process' => function($data) {
+                                $locationName = $data[0];
+                                $locationRUSize = $data[1];
+                                $this->locationArray[$locationName]['size'] = $locationRUSize;
+                                return $locationRUSize;
                             }
                         ),
 
@@ -1466,6 +1470,7 @@ class ArchiveController extends Controller
                                     // Get cabinet ru_orientation
                                     $location = $this->locationArray[$cabinetName];
                                     $locationRUOrientation = $location['ru_orientation'];
+                                    $cabinetSize = $location['size'];
 
                                     // Get template ru_size
                                     $template = $this->templateArray[$templateName];
@@ -1474,6 +1479,7 @@ class ArchiveController extends Controller
                                     if($locationRUOrientation == 'bottom-up') {
                                         $cabinetRU = $cabinetRU + ($RUSize - 1);
                                     } else {
+                                        $cabinetRU = $cabinetSize - ($cabinetRU - 1);
                                         $cabinetRU = $cabinetRU - ($RUSize - 1);
                                     }
                                 }
@@ -1964,6 +1970,7 @@ class ArchiveController extends Controller
                                 if(isset($this->conversionMap['object'][$objectDN])) {
 
                                     $portData = $this->resolvePortDN($objectDN, $portDN);
+
                                     if(isset($portData[$portName])) {
                                         return $portData[$portName]['face'];
                                     } else {

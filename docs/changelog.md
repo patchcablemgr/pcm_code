@@ -7,6 +7,7 @@ Fixes:
 - Legacy archive conversion replace invalid location name characters with "_"
 - Legacy archive conversion incorrectly converting cabinet_ru installed in top-down cabinets
 - Archive import trunk assumes b_id is never floorplan device
+- Legacy archive conversion assumes Trunk Peer B is never floorplan device
 
 ## 1.4.12
 

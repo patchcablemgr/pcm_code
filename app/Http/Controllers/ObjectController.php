@@ -87,6 +87,7 @@ class ObjectController extends Controller
         // Store new object variables
         $templateID = $request->template_id;
         $locationID = $request->location_id;
+        
         $cabinetRU = $PCM->getRUIndex($request->cabinet_ru, $cabinet->size, $cabinet->ru_orientation);
         $cabinetFront = $request->cabinet_front;
 
@@ -394,7 +395,7 @@ class ObjectController extends Controller
                     'sometimes',
                     'integer',
                     'between:1,52',
-                    new RUOccupancy($request->id, $request->location_id, $object['template_id'], $request->cabinet_ru, $request->cabinet_face, $this->archiveAddress)
+                    new RUOccupancy($request->id, $request->location_id, $object['template_id'], $request->cabinet_ru, $request->cabinet_front, $this->archiveAddress)
                 ],
             ];
             $validatorMessages = $PCM->transformValidationMessages($validatorRules, $this->archiveAddress);
@@ -409,7 +410,7 @@ class ObjectController extends Controller
                 $locationID = $object->location_id;
                 $cabinet = LocationModel::where('id', $locationID)->first();
                 $cabinetRU = $PCM->getRUIndex($request->cabinet_ru, $cabinet->size, $cabinet->ru_orientation);
-                $cabinetFace = $request->cabinet_face;
+                $cabinetFace = $request->cabinet_front;
 
             }
         }

@@ -83,6 +83,16 @@ class LocationController extends Controller
             'type' => [
                 'required',
                 Rule::in($locationTypeArray)
+            ],
+            'size' => [
+                'sometimes',
+                'integer',
+                'min:1',
+                'max:52'
+            ],
+            'ru_orientation' => [
+                'sometimes',
+                'in:top-down,bottom-up'
             ]
         ];
 
@@ -119,14 +129,34 @@ class LocationController extends Controller
 
         }
 
+        if($locationType == 'cabinet') {
+            if(isset($request->size)) {
+                $size = $request->size;
+            } else {
+                $size = 42;
+            }
+        } else {
+            $size = null;
+        }
+
+        if($locationType == 'cabinet') {
+            if(isset($request->ru_orientation)) {
+                $ruOrientation = $request->ru_orientation;
+            } else {
+                $ruOrientation = 'bottom-up';
+            }
+        } else {
+            $ruOrientation = null;
+        }
+
         $location = new LocationModel;
 
         $location->name = ($name) ? $name : "New_".ucfirst($locationType);
         $location->parent_id = $parentID;
         $location->type = $locationType;
         $location->img = null;
-        $location->size = ($locationType == 'cabinet') ? 42 : null;
-        $location->ru_orientation = ($locationType == 'cabinet') ? 'bottom-up' : null;
+        $location->size = $size;
+        $location->ru_orientation = $ruOrientation;
 
         $location->save();
 

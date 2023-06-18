@@ -43,6 +43,8 @@ class PCM extends Controller
         
         // Initialize some variables
         $occupiedRUArray = array('front' => [], 'rear' => []);
+        $location = LocationModel::where('id', $locationID)->first();
+        $locationRUOrientation = $location['ru_orientation'];
 
         // Populate occupied RU array
         $cabinetObjects = ObjectModel::where('location_id', $locationID)->get();
@@ -106,45 +108,18 @@ class PCM extends Controller
         $cabinetOrientation = $cabinet->ru_orientation;
 
         if($newSize < $cabinetSize) {
-            for($x=$cabinetSize; $x>$newSize; $x--) {
-                $ruIndex = $this->getRUIndex($x, $cabinetSize, $cabinetOrientation);
-                if(in_array($ruIndex, $occupiedRUArray['front']) || in_array($ruIndex, $occupiedRUArray['rear'])) {
-                    return ['cabinet_ru' => 'Cabinet cannot be smaller than highest object.'];
-                }
-            }
-
-        }
-
-        return true;
-    }
-
-	/**
-     * Validate RU occupancy
-     *
-     * @param  int  $locationID
-	 * @param  int  $templateID
-	 * @param  int  $cabinetRU
-     * @return arr
-     */
-    public function validateRUOccupancy($locationID, $templateID, $cabinetRU, $cabinetFace)
-    {
-        // Initialize some variables
-        $collision = false;
-        $occupiedRUArray = $this->generateOccupiedRUArray($locationID);
-
-        // Validate RU occupancy
-        $objectTemplate = TemplateModel::where('id', $templateID)->first();
-        $objectMountConfig = $objectTemplate['mount_config'];
-        $objectRUSize = $objectTemplate['ru_size'];
-        for($x=0; $x<$objectRUSize; $x++) {
-            $ruPosition = $cabinetRU + $x;
-            if($objectMountConfig == '4-post') {
-                if(in_array($ruPosition, $occupiedRUArray['front']) || in_array($ruPosition, $occupiedRUArray['rear'])) {
-                    return ['cabinet_ru' => 'Destination RU is occupied.'];
+            $sizeDiff = $cabinetSize - $newSize;
+            if($cabinetOrientation == 'bottom-up') {
+                for($x=1; $x<=$sizeDiff; $x++) {
+                    if(in_array($x, array_keys($occupiedRUArray['front'])) || in_array($x, array_keys($occupiedRUArray['rear']))) {
+                        return ['cabinet_ru' => 'Cabinet cannot be smaller than numerically highest RU occupied by an object.'];
+                    }
                 }
             } else {
-                if(in_array($ruPosition, $occupiedRUArray[$cabinetFace])) {
-                    return ['cabinet_ru' => 'Destination RU is occupied.'];
+                for($x=$cabinetSize; $x>$newSize; $x--) {
+                    if(in_array($x, array_keys($occupiedRUArray['front'])) || in_array($x, array_keys($occupiedRUArray['rear']))) {
+                        return ['cabinet_ru' => 'Cabinet cannot be smaller than numerically highest RU occupied by an object.'];
+                    }
                 }
             }
         }

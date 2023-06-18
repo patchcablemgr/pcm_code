@@ -2393,6 +2393,12 @@ class ArchiveController extends Controller
                                 $peerA = $data[0];
                                 $peerB = $data[1];
 
+                                if($peerB == 'Falun.DCB.B23_Floorplan.AP-B96-01.NIC1') {
+                                    $debug = true;
+                                } else {
+                                    $debug = false;
+                                }
+
                                 $peerATrunkDNArray = explode(' ', $peerA);
                                 $peerAportDN = $peerATrunkDNArray[0];
                                 $peerAObjectDN = $this->extractObjectDN($peerAportDN);
@@ -2405,9 +2411,13 @@ class ArchiveController extends Controller
 
                                 if(isset($this->conversionMap['object'][$peerBObjectDN])) {
 
-                                    // Get object floorplan type
+                                    // Get objectA floorplan type
                                     $peerAObject = $this->objectArray[$peerAObjectDN];
                                     $peerAObjectFloorplanType = $peerAObject['floorplan_object_type'];
+
+                                    // Get objectB floorplan type
+                                    $peerBObject = $this->objectArray[$peerBObjectDN];
+                                    $peerBObjectFloorplanType = $peerBObject['floorplan_object_type'];
 
                                     if($peerAObjectFloorplanType) {
                                         $portData = $this->resolvePortDN($peerBObjectDN, $peerBportDN);
@@ -2415,6 +2425,17 @@ class ArchiveController extends Controller
                                             return $portData[$peerBPortName]['port_id'];
                                         } else {
                                             return 'Port not found';
+                                        }
+                                    } else if($peerBObjectFloorplanType) {
+                                        if($peerBObjectFloorplanType == 'walljack') {
+                                            $portData = $this->resolvePortDN($peerBObjectDN, $peerBportDN);
+                                            if(isset($portData[$peerBPortName])) {
+                                                return $portData[$peerBPortName]['port_id'];
+                                            } else {
+                                                return 'Port not found';
+                                            }
+                                        } else {
+                                            return 0;
                                         }
                                     } else {
                                         return null;

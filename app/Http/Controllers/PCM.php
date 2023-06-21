@@ -185,22 +185,69 @@ class PCM extends Controller
 	 * @param  arr  $portB
      * @return boolean
      */
-    public function validateConnectionPath($portA, $portB)
+    public function validateConnectionPath($portA, $portB, $archiveAddress)
     {
         $visitedArray = array();
         $portArray = array($portA, $portB);
 
-        foreach($portArray as $index =>$port) {
+        $debugArray = array();
+        foreach($portArray as $index => $port) {
+            if($port['id']) {
+                $debugObject = ObjectModel::where('id', $port['id'])->first();
+                $debugObjectTemplateID = $debugObject['template_id'];
+                $debugLocationID = $debugObject['location_id'];
+                $debugLocation = LocationModel::where('id', $debugLocationID)->first();
+                $debugLocationArray = array($debugLocation['name'], $debugObject['name']);
+                $debugLocationParentID = $debugLocation['parent_id'];
+                while($debugLocationParentID != 0) {
+                    $debugLocationParent = LocationModel::where('id', $debugLocationParentID)->first();
+                    array_unshift($debugLocationArray, $debugLocationParent['name']);
+                    $debugLocationParentID = $debugLocationParent['parent_id'];
+                }
+                $debugObjectFace = $port['face'];
+                $debugObjectPartition = json_encode($port['partition']);
+                $debugObjectPortID = $port['port_id'];
+                $debugObjectTemplate = TemplateModel::where('id', $debugObjectTemplateID)->first();
+                array_push($debugArray, implode('.', $debugLocationArray).' - '.$debugObjectFace.' - '.$debugObjectPartition.' - '.$debugObjectPortID);
+            } else {
+                array_push($debugArray, 'Empy Port Data');
+            }
+        }
+
+        foreach($portArray as $index => $port) {
 
             $workingPort = $port;
 
             while($workingPort['id']) {
 
                 // Generate port hash
-                $portHash = md5(implode('-', array($workingPort['id'], $port['face'], json_encode($port['partition']), $port['port_id'])));
+                $portHashArray = array(
+                    $workingPort['id'],
+                    $port['face'],
+                    json_encode($port['partition']),
+                    $port['port_id']
+                );
+                $portHash = md5(implode('-', $portHashArray));
+
+                // if($debug) {
+                //     $debugObject = ObjectModel::where('id', $portHashArray[0])->first();
+                //     $debugObjectTemplateID = $debugObject['template_id'];
+                //     $debugObjectFace = $portHashArray[1];
+                //     $debugObjectPartition = $portHashArray[2];
+                //     $debugObjectPortID = $portHashArray[3];
+                //     $debugObjectTemplate = TemplateModel::where('id', $debugObjectTemplateID)->first();
+                //     Log::info($debugObject['name'].' - '.$debugObjectTemplate['name'].' - '.$debugObjectFace.' - '.$debugObjectPartition.' - '.$debugObjectPortID);
+                // }
+
+                // Generate port hash
+                //$portHash = md5(implode('-', array($workingPort['id'], $port['face'], json_encode($port['partition']), $port['port_id'])));
                 
                 // Check to see if port has been visited
                 if(in_array($portHash, $visitedArray)) {
+                    Log::info($archiveAddress);
+                    foreach($debugArray as $debugArrayEntry) {
+                        Log::info($debugArrayEntry);
+                    }
                     return false;
                 }
 
@@ -209,9 +256,18 @@ class PCM extends Controller
 
                 // Get template function
                 $object = ObjectModel::where('id', $workingPort['id'])->first();
-                $templateID = $object['template_id'];
-                $template = TemplateModel::where('id', $templateID)->first();
-                $templateFunction = $template['function'];
+                if($object['floorplan_object_type']) {
+                    $templateFunction = 'floorplan';
+                } else {
+                    $templateID = $object['template_id'];
+                    $template = TemplateModel::where('id', $templateID)->first();
+                    if($archiveAddress == 'connection.csv:333') {
+                        Log::info('$templateID: '.$object);
+                        Log::info('$templateID: '.$templateID);
+                        Log::info($template);
+                    }
+                    $templateFunction = $template['function'];
+                }
 
                 if($templateFunction == 'passive') {
 
@@ -273,9 +329,24 @@ class PCM extends Controller
                             $workingPort['port_id']
                         );
                         $portHash = md5(implode('-', $portHashArray));
+
+                        // if($debug) {
+                        //     Log::info('===Trunk===');
+                        //     $debugObject = ObjectModel::where('id', $portHashArray[0])->first();
+                        //     $debugObjectTemplateID = $debugObject['template_id'];
+                        //     $debugObjectFace = $portHashArray[1];
+                        //     $debugObjectPartition = $portHashArray[2];
+                        //     $debugObjectPortID = $portHashArray[3];
+                        //     $debugObjectTemplate = TemplateModel::where('id', $debugObjectTemplateID)->first();
+                        //     Log::info($debugObject['name'].' - '.$debugObjectTemplate['name'].' - '.$debugObjectFace.' - '.$debugObjectPartition.' - '.$debugObjectPortID);
+                        // }
                         
                         // Check to see if port has been visited
                         if(in_array($portHash, $visitedArray)) {
+                            Log::info($archiveAddress);
+                            foreach($debugArray as $debugArrayEntry) {
+                                Log::info($debugArrayEntry);
+                            }
                             return false;
                         }
 
@@ -317,9 +388,24 @@ class PCM extends Controller
                                     $workingPort['port_id']
                                 );
                                 $portHash = md5(implode('-', $portHashArray));
+
+                                // if($debug) {
+                                //     Log::info('---Connection---');
+                                //     $debugObject = ObjectModel::where('id', $portHashArray[0])->first();
+                                //     $debugObjectTemplateID = $debugObject['template_id'];
+                                //     $debugObjectFace = $portHashArray[1];
+                                //     $debugObjectPartition = $portHashArray[2];
+                                //     $debugObjectPortID = $portHashArray[3];
+                                //     $debugObjectTemplate = TemplateModel::where('id', $debugObjectTemplateID)->first();
+                                //     Log::info($debugObject['name'].' - '.$debugObjectTemplate['name'].' - '.$debugObjectFace.' - '.$debugObjectPartition.' - '.$debugObjectPortID);
+                                // }
                                 
                                 // Check to see if port has been visited
                                 if(in_array($portHash, $visitedArray)) {
+                                    Log::info($archiveAddress);
+                                    foreach($debugArray as $debugArrayEntry) {
+                                        Log::info($debugArrayEntry);
+                                    }
                                     return false;
                                 }
 

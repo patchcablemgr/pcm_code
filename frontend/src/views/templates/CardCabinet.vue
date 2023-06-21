@@ -25,11 +25,11 @@
         </b-form-group>
         <b-form-group
           class="w-25"
-          label-for="select-face"
+          label-for="select-view"
           description="View"
         >
           <b-form-select
-          id="select-face"
+          id="select-view"
             class="m-0"
             v-model="TemplateView"
             :options="TemplateViewOptions"

@@ -385,7 +385,7 @@ class ArchiveController extends Controller
                         'port_format' => [
                             [
                                 'type' => 'static',
-                                'value' => 'NIC',
+                                'value' => 'Port',
                                 'count' => 1,
                                 'order' => 0
                             ],
@@ -951,7 +951,7 @@ class ArchiveController extends Controller
                 ),
                 'connection' => array(
                     '07 - Connections.csv' => array(
-                        'fields' => array('CableA ID', 'CableB ID'),
+                        'fields' => array('PortA', 'PortB'),
                         'process' => function($data) {
                             $conversionMapHash = implode(".", $data);
                             $ID = 'C-'.count($this->conversionMap['connection'])+1;
@@ -1928,7 +1928,7 @@ class ArchiveController extends Controller
                                     $this->conversionEntryPasses = false;
                                 }
 
-                                $conversionMapHash = implode(".", array($cableAID, $cableBID));
+                                $conversionMapHash = implode(".", array($portA, $portB));
                                 return $this->conversionMap['connection'][$conversionMapHash];
                             }
                         ),
@@ -2271,23 +2271,57 @@ class ArchiveController extends Controller
                         // a_port
                         array(
                             'new' => 'a_port',
-                            'old' => 'Trunk Peer A',
-                            'process' => function($trunkDN) {
+                            'old' => array('Trunk Peer A', 'Trunk Peer B'),
+                            'process' => function($data) {
 
-                                $trunkDNArray = explode(' ', $trunkDN);
-                                $portDN = $trunkDNArray[0];
-                                
-                                $objectDN = $this->extractObjectDN($portDN);
-                                $portName = $this->extractPortName($objectDN, $portDN);
+                                $peerA = $data[0];
+                                $peerB = $data[1];
 
-                                if(isset($this->conversionMap['object'][$objectDN])) {
+                                if($peerB == 'Falun.DCB.B23_Floorplan.AP-B96-01.NIC1') {
+                                    $debug = true;
+                                } else {
+                                    $debug = false;
+                                }
 
-                                    // Get object floorplan type
-                                    $object = $this->objectArray[$objectDN];
-                                    $objectFloorplanType = $object['floorplan_object_type'];
+                                $peerATrunkDNArray = explode(' ', $peerA);
+                                $peerAportDN = $peerATrunkDNArray[0];
+                                $peerAObjectDN = $this->extractObjectDN($peerAportDN);
+                                $peerAPortName = $this->extractPortName($peerAObjectDN, $peerAportDN);
 
-                                    if($objectFloorplanType) {
-                                        return 0;
+                                $peerBTrunkDNArray = explode(' ', $peerB);
+                                $peerBportDN = $peerBTrunkDNArray[0];
+                                $peerBObjectDN = $this->extractObjectDN($peerBportDN);
+                                $peerBPortName = $this->extractPortName($peerBObjectDN, $peerBportDN);
+
+                                if(isset($this->conversionMap['object'][$peerAObjectDN])) {
+
+                                    // Get objectA floorplan type
+                                    $peerAObject = $this->objectArray[$peerAObjectDN];
+                                    $peerAObjectFloorplanType = $peerAObject['floorplan_object_type'];
+
+                                    // Get objectB floorplan type
+                                    $peerBObject = $this->objectArray[$peerBObjectDN];
+                                    $peerBObjectFloorplanType = $peerBObject['floorplan_object_type'];
+
+                                    if($peerAObjectFloorplanType) {
+                                        if($peerAObjectFloorplanType == 'walljack') {
+                                            // ToDo:  Return unique port ID
+                                            $portData = $this->resolvePortDN($peerBObjectDN, $peerBportDN);
+                                            if(isset($portData[$peerBPortName])) {
+                                                return $portData[$peerBPortName]['port_id'];
+                                            } else {
+                                                return 'Port not found';
+                                            }
+                                        } else {
+                                            return 0;
+                                        }
+                                    } else if($peerBObjectFloorplanType) {
+                                        $portData = $this->resolvePortDN($peerAObjectDN, $peerAportDN);
+                                        if(isset($portData[$peerAPortName])) {
+                                            return $portData[$peerAPortName]['port_id'];
+                                        } else {
+                                            return 'Port not found';
+                                        }
                                     } else {
                                         return null;
                                     }
@@ -2409,7 +2443,7 @@ class ArchiveController extends Controller
                                 $peerBObjectDN = $this->extractObjectDN($peerBportDN);
                                 $peerBPortName = $this->extractPortName($peerBObjectDN, $peerBportDN);
 
-                                if(isset($this->conversionMap['object'][$peerBObjectDN])) {
+                                if(isset($this->conversionMap['object'][$peerAObjectDN])) {
 
                                     // Get objectA floorplan type
                                     $peerAObject = $this->objectArray[$peerAObjectDN];
@@ -2428,9 +2462,10 @@ class ArchiveController extends Controller
                                         }
                                     } else if($peerBObjectFloorplanType) {
                                         if($peerBObjectFloorplanType == 'walljack') {
-                                            $portData = $this->resolvePortDN($peerBObjectDN, $peerBportDN);
-                                            if(isset($portData[$peerBPortName])) {
-                                                return $portData[$peerBPortName]['port_id'];
+                                            // ToDo:  Return unique port ID
+                                            $portData = $this->resolvePortDN($peerAObjectDN, $peerAportDN);
+                                            if(isset($portData[$peerAPortName])) {
+                                                return $portData[$peerAPortName]['port_id'];
                                             } else {
                                                 return 'Port not found';
                                             }

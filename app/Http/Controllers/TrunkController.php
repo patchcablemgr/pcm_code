@@ -191,7 +191,7 @@ class TrunkController extends Controller
             $objectMediaCateogoryID = $objectMedia->category_id;
             $peerMedia = MediaModel::where('value', $peerPartitionMediaID)->first();
             $peerMediaCateogoryID = $peerMedia->category_id;
-            if($objectMedia != $peerMedia) {
+            if($objectMedia['category_id'] != $peerMedia['category_id']) {
                 $compatible = false;
             }
         }

@@ -185,8 +185,9 @@ class ConnectionController extends Controller
             'partition' => $data['b_partition'],
             'port_id' => $data['b_port'],
         );
-        if (!$PCM->validateConnectionPath($portA, $portB)) {
-            throw ValidationException::withMessages(['path_validation' => 'Loop detected. '.$this->archiveAddress]);
+        Log::info($this->archiveAddress);
+        if (!$PCM->validateConnectionPath($portA, $portB, $this->archiveAddress)) {
+            //throw ValidationException::withMessages(['path_validation' => 'Loop detected. '.$this->archiveAddress]);
         }
 
         $returnData = array('remove' => array());

@@ -53,8 +53,6 @@ class RUOccupancy implements Rule
         $collision = false;
         $occupiedRUArray = $PCM->generateOccupiedRUArray($locationID);
 
-        Log::info('$occupiedRUArray: '.json_encode($occupiedRUArray));
-
         // Convert cabinet RU
         $location = LocationModel::where('id', $locationID)->first();
         $cabinetSize = $location->size;
@@ -79,7 +77,6 @@ class RUOccupancy implements Rule
                     }
                 }
             } else {
-                Log::info('$ruPosition: '.$ruPosition);
                 if(in_array($ruPosition, array_keys($occupiedRUArray[$cabinetFace]))) {
                     if($occupiedRUArray[$cabinetFace][$ruPosition] != $objectID) {
                         $collision = true;

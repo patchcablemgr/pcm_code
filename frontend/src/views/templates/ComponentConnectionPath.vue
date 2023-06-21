@@ -26,7 +26,7 @@
       ref="ConnectionCanvasParent"
     >
       <component-canvas
-        v-if="Mounted"
+        v-if="isMounted"
         :CanvasHeight="ConnectionCanvasHeight"
         :CanvasWidth="ConnectionCanvasWidth"
         :ConnectionLineData="ConnectionLineData"
@@ -96,7 +96,7 @@ import ComponentPortR from '@/views/templates/ComponentPortR.vue'
 import Ripple from 'vue-ripple-directive'
 import { PCM } from '@/mixins/PCM.js'
 
-const Mounted = false
+const isMounted = false
 const ConnectionCanvasHeight = 0
 const ConnectionCanvasWidth = 0
 const ConnectionLineData = []
@@ -128,7 +128,7 @@ export default {
   },
   data() {
     return {
-      Mounted,
+      isMounted,
       ConnectionCanvasHeight,
       ConnectionCanvasWidth,
       ConnectionLineData,
@@ -317,7 +317,7 @@ export default {
   },
   mounted() {
     const vm = this
-    vm.Mounted = true
+    vm.isMounted = true
   }
 }
 </script>

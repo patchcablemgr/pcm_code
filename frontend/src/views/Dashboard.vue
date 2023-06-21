@@ -5,8 +5,6 @@
     <b-container class="bv-example-row" fluid="xs">
       <b-row
         cols="1"
-        cols-md="2"
-        cols-xl="3"
       >
         <b-col>
 
@@ -14,12 +12,22 @@
             title="Port Utilization"
           >
             <b-card-body>
+              <b-pagination
+                v-model="currentPage"
+                :total-rows="rows"
+                :per-page="perPage"
+                aria-controls="PortUtilizationtable"
+              ></b-pagination>
               <b-table
+                id="PortUtilizationtable"
                 small
                 :fields="PortUtilizationFields"
                 :items="PortUtilizationList"
+                :sort-by="PortUtilizationSortBy"
+                :sort-desc="PortUtilizationSortDesc"
+                per-page="10"
+                :current-page="currentPage"
                 responsive="sm"
-                class="overflow-auto"
               >
 
                 <template #cell(name)="data">
@@ -68,6 +76,7 @@ import {
   BCardBody,
   BTable,
   BBadge,
+  BPagination,
   VBTooltip,
 } from 'bootstrap-vue'
 import Ripple from 'vue-ripple-directive'
@@ -75,11 +84,16 @@ import ToastGeneral from './templates/ToastGeneral.vue'
 import { PCM } from '@/mixins/PCM.js'
 
 const PortUtilizationFields = [
-  'name',
-  'total',
-  'populated',
-  'utilization',
+  {key: 'name', sortable: true},
+  {key: 'total', sortable: true},
+  {key: 'populated', sortable: true},
+  {key: 'utilization', sortable: true}
 ]
+
+const PortUtilizationSortBy = 'utilization'
+const PortUtilizationSortDesc = true
+const perPage = 3
+const currentPage = 1
 
 export default {
   mixins: [PCM],
@@ -91,6 +105,7 @@ export default {
     BCardBody,
     BTable,
     BBadge,
+    BPagination,
 
     ToastGeneral,
   },
@@ -102,9 +117,16 @@ export default {
     return {
       Context: 'actual',
       PortUtilizationFields,
+      PortUtilizationSortBy,
+      PortUtilizationSortDesc,
+      perPage,
+      currentPage
     }
   },
   computed: {
+    rows() {
+      return this.PortUtilizationList.length
+    },
     DependenciesReady: function() {
 
       const vm = this
